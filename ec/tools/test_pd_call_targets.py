@@ -44,7 +44,6 @@ import csv
 import importlib.util
 import io
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -140,38 +139,38 @@ class RefusesAndCombines(unittest.TestCase):
                 self.assertIn("cannot be combined", proc.stderr)
 
     def test_a_table_mismatch_still_runs_the_relationship_half(self):
-        # Both halves run and their return codes combine. Driven through the
-        # real CLI rather than by calling `check_table` and `check_coverage` in
+        # Both halves run and their return codes combine. Driven through
+        # `main()` rather than by calling `check_table` and `check_coverage` in
         # sequence, because the thing under test is that `--check` reaches both
-        # -- a `main()` that returned after the diff would pass a case that
-        # called the two functions itself.
+        # -- a `main()` that returned after the diff, or one that combined the
+        # codes with a short-circuiting `or`, would pass a case that called the
+        # two functions itself.
+        #
+        # Only the path `check_table` reads is redirected, to a tampered copy,
+        # so the diff is the real one and no committed file is the subject.
+        # `check_coverage` is not stubbed: the assertion reads what it printed,
+        # so one returning 0 without printing fails here rather than passing.
         with tempfile.TemporaryDirectory() as tmp:
             tampered = os.path.join(tmp, "pd-call-targets.csv")
             with open(pdct.TABLE_CSV, newline="") as handle:
                 text = handle.read()
             with open(tampered, "w", newline="") as handle:
                 handle.write(text.replace("decoded-lcall", "operand", 1))
-            # Both halves are invoked and their return codes combined, which is
-            # what `--check`'s last line does. The relationship half's own
-            # output is captured so the assertion can require that it ran: a
-            # `main()` that returned after the diff would leave this silent,
-            # and silence is exactly what the reviewer could not tell from the
-            # relationship passing.
+
+            real_check_table = pdct.check_table
+            pdct.check_table = (
+                lambda generated, path=None: real_check_table(
+                    generated, tampered if path is None else path))
             buf = io.StringIO()
             stdout, stderr = sys.stdout, sys.stderr
-            sys.stdout, sys.stderr = buf, io.StringIO()
+            sys.stdout, sys.stderr = buf, buf
             try:
-                table_rc = pdct.check_table(pdct.csv_table(CONTEXT), tampered)
-                coverage_rc = pdct.check_coverage(CONTEXT, REGION)
-                combined = table_rc or coverage_rc
+                rc = pdct.main(["--check"])
             finally:
+                pdct.check_table = real_check_table
                 sys.stdout, sys.stderr = stdout, stderr
-        self.assertEqual(table_rc, 1, "the tampered table did not fail its half")
-        self.assertEqual(coverage_rc, 0,
-                         "the relationship half failed on a table mismatch, "
-                         "so it is not independent of it")
-        self.assertEqual(combined, 1, "the combined return code is not the "
-                                      "failure either half reported")
+        self.assertEqual(rc, 1, "the tampered table did not fail --check, so "
+                                "the case never reached the mismatch it is for")
         self.assertIn("neither contains the other", buf.getvalue(),
                       "the relationship half did not run, so a table mismatch "
                       "silently skipped it")
@@ -407,49 +406,50 @@ class CoverageRelationships(unittest.TestCase):
                          "what they say")
 
     def test_a_landing_pd_listing_does_not_take_the_relationship_red(self):
-        # The case this suite exists for. A synthetic `pd` listing is added to
-        # a *copy* of the index -- the committed file is not touched -- and the
-        # relationship must still hold. It holds by construction, which is the
-        # claim: no landing `pd` listing can falsify it, so no landing `pd`
+        # The case this suite exists for. A synthetic `pd` listing is added and
+        # the relationship must still hold. It holds by construction, which is
+        # the claim: no landing `pd` listing can falsify it, so no landing `pd`
         # listing turns this suite red for a change that never touched the
         # tool. That is what the previous attempt's pinned figures did.
+        #
+        # The synthetic listing is handed to `check_coverage()` through the
+        # context's `extents`, which is where the function reads it from, so no
+        # committed file is written and restored. Swapping the index on disk
+        # instead would leave it replaced if the run were killed between the
+        # copy and the restore, and a check that can damage the tree it reads
+        # is worse than the hazard it tests.
+        #
+        # The row is still parsed as a row -- through `listing_extents()`'s own
+        # reading of the index, from a copy in a temp directory -- so this case
+        # covers a landing listing in the format one actually lands in, not
+        # only as a tuple this file built itself.
+        #
+        # A listing inside the region the walk reaches but no listing covers, so
+        # the added row moves the relationship rather than leaving it
+        # untouched.
+        synthetic = "pd,9999,pd_synthetic_landing,16,annotation,no,no,,,,,pd/9999.asm\r\n"
         with tempfile.TemporaryDirectory() as tmp:
             index = os.path.join(tmp, "listing-index.csv")
             with open(pdct.LISTING_INDEX, newline="", encoding="utf-8") as fh:
                 text = fh.read()
-            # A listing inside the region the walk reaches but no listing
-            # covers, so the added row moves the relationship rather than
-            # leaving it untouched.
-            synthetic = "pd,9999,pd_synthetic_landing,16,annotation,no,no,,,,,pd/9999.asm\r\n"
             with open(index, "w", newline="", encoding="utf-8") as fh:
                 fh.write(text.rstrip("\r\n") + "\r\n" + synthetic)
-            with open(pdct.LISTING_INDEX, newline="", encoding="utf-8") as fh:
-                original = fh.read()
-            try:
-                shutil.copy(pdct.LISTING_INDEX, pdct.LISTING_INDEX + ".bak")
-                shutil.copy(index, pdct.LISTING_INDEX)
-                stub = dict(CONTEXT)
-                stub["extents"] = pdct.Extents()
-                buf = io.StringIO()
-                stdout, stderr = sys.stdout, sys.stderr
-                sys.stdout, sys.stderr = buf, io.StringIO()
-                try:
-                    rc = pdct.check_coverage(stub, REGION)
-                finally:
-                    sys.stdout, sys.stderr = stdout, stderr
-                self.assertEqual(rc, 0,
-                                 f"a landing pd listing must not falsify the "
-                                 f"relationship:\n{buf.getvalue()}")
-                self.assertNotEqual(
-                    sum(size for _s, size, _n in stub["extents"].rows),
-                    sum(size for _s, size, _n in CONTEXT["extents"].rows),
-                    "the synthetic listing did not reach the copy, so this "
-                    "case proved nothing")
-            finally:
-                shutil.move(pdct.LISTING_INDEX + ".bak", pdct.LISTING_INDEX)
-            with open(pdct.LISTING_INDEX, newline="", encoding="utf-8") as fh:
-                self.assertEqual(fh.read(), original,
-                                 "the committed listing index was not restored")
+            landed = pdct.Extents(extents=pdct.listing_extents(index))
+        stub = dict(CONTEXT)
+        stub["extents"] = landed
+        buf = io.StringIO()
+        stdout, stderr = sys.stdout, sys.stderr
+        sys.stdout, sys.stderr = buf, io.StringIO()
+        try:
+            rc = pdct.check_coverage(stub, REGION)
+        finally:
+            sys.stdout, sys.stderr = stdout, stderr
+        self.assertEqual(rc, 0,
+                         f"a landing pd listing must not falsify the "
+                         f"relationship:\n{buf.getvalue()}")
+        self.assertIn(0x9999, landed.starts,
+                      "the synthetic listing did not reach the stub, so this "
+                      "case proved nothing")
 
 
 class TerminatorVocabulary(unittest.TestCase):

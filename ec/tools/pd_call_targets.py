@@ -235,15 +235,19 @@ def refuse_filtering() -> None:
         "       twice already.")
 
 
-def listing_extents():
+def listing_extents(path=LISTING_INDEX):
     """[(start, size, name)] for every committed `pd` listing, in address order.
 
     Read from `ec/decompiled/listing-index.csv`, the committed index the rest of
     the tree cross-checks against, rather than from the `.asm` files. Sorted,
     because `Extents` bisects it once per row and once per block decoded.
+
+    `path` defaults to that committed index. The suite's landing-listing case
+    passes a copy carrying one synthetic row, so the row is read in the format
+    one lands in without the committed file being written and restored.
     """
     out = []
-    with open(LISTING_INDEX, newline="", encoding="utf-8") as handle:
+    with open(path, newline="", encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
             if row["program"] != "pd":
                 continue
@@ -659,9 +663,9 @@ def boundary_ablation(d, extents, entries, max_depth=MAX_DEPTH,
     -- superset, and non-empty -- because a count of it is a number this
     repository's own listings would move, while the fact that the rule costs
     reach is a fact about the firmware under two methods. Recomputed on every
-    `--report` and `--check`, so it cannot go stale silently either: if the rule
-    stopped costing reach, the superset would be empty and the suite would say
-    so.
+    `--report`, and re-derived by a suite case on every run, so it cannot go
+    stale silently: if the rule stopped costing reach, the superset would be
+    empty and the suite would say so.
     """
     with_rule, without = set(), set()
     for seed in entries:
@@ -1145,9 +1149,13 @@ def main(argv=None):
     if args.check:
         # Both halves run and the return codes combine, so a table mismatch
         # does not skip the relationship check. The two failures are different
-        # and neither hides the other.
-        rc = check_table(csv_table(context))
-        return rc or check_coverage(context, region)
+        # and neither hides the other, which is why the calls are statements
+        # and only the combination is an expression: `rc or check_coverage(...)`
+        # short-circuits on a non-zero `rc` and never reaches the second half,
+        # so a table mismatch silently skipped the relationship check.
+        table_rc = check_table(csv_table(context))
+        coverage_rc = check_coverage(context, region)
+        return table_rc or coverage_rc
 
     if args.csv:
         sys.stdout.write(csv_table(context))
