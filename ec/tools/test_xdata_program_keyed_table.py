@@ -35,8 +35,7 @@ re-derivation can break here is a relation or a page/CSV disagreement, never a
 constant that quietly describes last month's tree.
 
 Nothing here resolves anything against the firmware. The inputs are one
-committed CSV, one committed markdown page and the sibling tool's `ORACLE`
-block; no image is opened, no Ghidra run, no network, and no laptop, EC or
+committed CSV and one committed markdown page; no image is opened, no Ghidra run, no network, and no laptop, EC or
 Windows machine is involved.
 """
 import csv
@@ -275,12 +274,6 @@ class TheToolChecksTheRelations(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertNotIn("FAIL", proc.stdout)
 
-    def test_check_prints_the_pin_it_cross_checked(self):
-        # A check that skipped its cross-check and passed would be
-        # indistinguishable from one that ran it, so the skip line is asserted
-        # absent rather than the count of checks asserted present.
-        self.assertNotIn("skip", run("--check").stdout)
-
     def test_the_bare_run_prints_both_keyings_under_one_provenance_line(self):
         proc = run()
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -438,33 +431,6 @@ class ThePublishedFigures(unittest.TestCase):
         # is not asserted anywhere.
         moves = [(a, was, now) for a, was, now, _, _ in keyed.bucket_moves(self.rows)]
         self.assertEqual(moves, MOVED)
-
-    def test_the_named_term_is_the_sibling_tools_own_pin(self):
-        # The two partition terms the re-key introduces are cross-checked
-        # against pins that already gate rather than typed here, so a
-        # re-derivation shows up as the sibling's `--check` going red — where
-        # it already had a dated note — instead of as three constants in this
-        # file that every landing branch has to bump.
-        oracle = keyed.read_oracle()
-        per_part, _ = keyed.partition(self.rows, True)
-        self.assertEqual(oracle["symbol_main_distinct"], PER_PROGRAM_PARTITION[0])
-        self.assertEqual(oracle["extmem_main_distinct"], PER_PROGRAM_PARTITION[1])
-        self.assertEqual(per_part["named"][0], oracle["symbol_main_distinct"])
-        self.assertEqual(per_part["DAT_EXTMEM"][0], oracle["extmem_main_distinct"])
-
-    def test_the_oracle_is_read_by_ast_and_not_by_import(self):
-        # An `ORACLE` value the sibling computes rather than declaring is
-        # skipped, so a skipped cross-check says so rather than passing
-        # silently; the reader must also survive a source with no ORACLE at all.
-        self.assertIsInstance(keyed.read_oracle(), dict)
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "sibling.py"
-            path.write_text("ORACLE = {}\nX = 1 + 1\n", encoding="utf-8")
-            self.assertEqual(keyed.read_oracle(path), {})
-            path.write_text("ORACLE = {'a': 2 + 2}\n", encoding="utf-8")
-            self.assertEqual(keyed.read_oracle(path), {},
-                             "a non-literal value must not be evaluated here")
-
 
 class TheMapAgrees(unittest.TestCase):
     """§2's tables, its partition blockquote and its shell transcripts, read

@@ -96,6 +96,25 @@ path incapable of it by construction rather than by discipline.
 three real watch sets and asserts every offset any of them puts on the wire is
 4-aligned; that is the check, and it is the one that would catch a leak.
 
+> **Corrected.** The paragraph above says an unaligned dword "is a four-byte
+> access", and that is superseded for the two public interpreters read at pinned
+> revisions in `docs/findings/acpi-interpreter-region-access.md`. `MMRW`'s
+> fields are `ByteAcc`, so `AcpiExDecodeFieldAccess` returns an access width of
+> 8 and `AcpiExExtractFromField` issues one `AcpiExFieldDatumIo` per datum —
+> `MMRD` reaches the region as four byte-wide accesses at four consecutive
+> addresses, aligned operand or not. The consequence for this section is worth
+> stating because it is the opposite of what the sentence implies: an *aligned*
+> `--block` sweep reaches the EC the same way, since `read_dword` issues
+> `IOCTL_MMRD` too, so on those two interpreters the sweep is not the four-byte
+> access this paragraph contrasts the escape with. The reasoning above survives
+> — a distinct name still keeps every sweep's operand 4-aligned, which is about
+> what the *tool* requests rather than what the interpreter issues, and
+> `manual_fan_ctrl_probe.py`'s `block_span` measures padded byte coverage either
+> way — but the "four-byte access" characterisation does not, and neither file's
+> arithmetic changes. This is a static read of two implementations; whether this
+> machine's own interpreter splits the access is not established here and never
+> was, and nothing about #94 is settled by it.
+
 **The command line takes an EC offset; `EC_BASE` is added in the tool**, so
 `ecrw.py mmrd 0x0751` and not `0xFE410751`. Every other command in the file
 speaks EC offsets (`read 0x7b9`, `dump 0x0700 0x100`) and the tool exists to
