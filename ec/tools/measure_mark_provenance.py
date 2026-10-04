@@ -34,10 +34,13 @@ writers. The write-up is
      suites are invisible to it, so what keeps a site from going stale is the
      two-way join in section 5, not the scan's coverage;
   2. **the committed fixtures** -- every `*.csv` under `ec/tools/testdata/`
-     and `evidence/ec-watch/` that holds a MARK row, with its mark count, its
-     column counts, whether it carries a `ts,addr,old,new` header and whether
-     it carries `#` rows. This is the count the issue's "how many committed
-     fixtures does each shape leave untouched" asks for;
+     and `evidence/ec-watch/`, with its mark count, its column counts, whether
+     it carries a `ts,addr,old,new` header and whether it carries `#` rows.
+     Reported as **two classes**, the ones holding a MARK row and the ones
+     holding none, because a census whose population is the files that have
+     marks is a census of a property rather than of the directory. This is
+     the count the issue's "how many committed fixtures does each shape leave
+     untouched" asks for;
   3. **what each shape costs each reader** -- `read_capture`,
      `existing_mark_labels` and `read_early_exits` on a constructed temp file,
      and `grade_timer_sweep.load` on a second one carrying a `resumed` mark.
@@ -73,6 +76,26 @@ writers. The write-up is
     committed directories. A capture taken at the machine and not committed
     is not counted, and "0 fixtures untouched" is a count over those two
     directories and never a census of every capture that exists anywhere.
+  * **Why a committed capture has no mark.** Section 2's second class is a
+    count over files, and *whether* a given capture could hold a mark is a
+    fact about the command that wrote it -- knowable from the writers'
+    source, and in no capture file. `ec_watch.py` builds its
+    `Marker` over a sink that is `None` without `--csv` and starts the thread
+    only under `--mark`, so a `MARK` row needs both flags;
+    `gpu_block_watch.py` and `system_id_probe.py` gate the same two ways. In
+    `ec_timer_capture.py` a mark comes from `--mark`, `--auto-mark` or
+    `--mark-input`. Each of those six gates is a citation below. No mark-free
+    capture under `evidence/ec-watch/` records the flags it was taken with; the
+    two that do record theirs say so in their own `#` headers.
+    **That the only mark-bearing captures are two arms of the timer family's
+    run is consistent with that gate and is not evidence of it**:
+    `Marker._loop` returns on EOF, so a run with `--mark` and nothing typed
+    leaves the same file a run without it does. **That is why
+    the mark-free class exists rather than why it is empty** -- a capture
+    legitimately has no marks, so this tool reports which files have none and
+    `check_capture_marks.py` holds the index to recording why per capture.
+    Neither tool decides that a mark should have been taken, and neither can
+    say which run was taken how.
   * **A run.** Nothing here opens a capture, so nothing here is evidence
     about the machine: no mark was typed, no block was written, no §3 block
     was run. Every figure is offline behaviour of a reader over a file
@@ -309,8 +332,18 @@ def reader_call_sites():
 
 
 def fixture_census():
-    """[(relpath, marks, sorted column counts, header?, '#' rows)] per
-    committed CSV holding at least one MARK row.
+    """[(relpath, marks, sorted column counts, header?, '#' rows, schema)]
+    per committed CSV, whether or not it holds a MARK row.
+
+    The mark-free files are in here because a census whose population is the
+    files that have marks is a census of a property rather than of the
+    directory, and the class it dropped is the one that decides whether a
+    timing claim over a capture is mechanical or inferred. `schema` is the
+    first field of the file's first non-comment row, reported rather than
+    judged: it is what lets a reader tell a change log (`ts`) from a derived
+    per-address summary (`addr`) from an annotation CSV that merely lives
+    under a fixture root (`program`, `scope`, `file_offset`) without this
+    tool deciding which of those is a capture.
 
     Read with `errors="replace"` for the reason `existing_mark_labels` gives
     its own docstring: `CsvSink` appends without ever decoding, so a byte the
@@ -325,6 +358,7 @@ def fixture_census():
                     continue
                 path = os.path.join(dirpath, name)
                 marks, cols, header, comments = 0, set(), False, 0
+                schema = ""
                 with open(path, newline="", errors="replace") as f:
                     for row in csv.reader(f):
                         if not row:
@@ -332,16 +366,27 @@ def fixture_census():
                         if row[0].startswith("#"):
                             comments += 1
                             continue
+                        if not schema:
+                            schema = row[0]
                         if row[0] == "ts":
                             header = True
                             continue
                         if len(row) > 1 and row[1] == "MARK":
                             marks += 1
                             cols.add(len(row))
-                if marks:
-                    out.append((repo_path(path), marks, sorted(cols), header,
-                                comments))
+                out.append((repo_path(path), marks, sorted(cols), header,
+                            comments, schema))
     return out
+
+
+def split_classes(census):
+    """(holding a MARK row, holding none), each over the whole census.
+
+    The split the caller would otherwise write inline at every use, and named
+    because the two halves answer different questions: the first is the
+    measurement's subject, the second is the population the first was silent
+    about. Neither is derived from the other, so a file cannot be in both."""
+    return ([c for c in census if c[1]], [c for c in census if not c[1]])
 
 
 def write_capture(path: str, rows, shape: str):
@@ -569,6 +614,29 @@ CITATIONS = [
      "are reconstructed rather than observed; "
      "`docs/findings/probe-log-capture-conversion.md` is what that costs, "
      "and every file this writes says so in its own `#` header"),
+    # -- the gates, which are why section 2's second class exists ------------
+    # The mark-free class is a count of files, and the reason a given file is
+    # in it lives in the writer rather than in any capture, so the claim that
+    # these gates are what produce it is the part that can go stale. Each is
+    # cited by its text, and each is one of the two halves: a `MARK` row needs
+    # a sink to land in *and* a thread to write it.
+    ("windows/tools/ec_watch.py", 601, "marker.start()",
+     "gate: the marker thread exists only under --mark, so a capture taken "
+     "without it cannot hold a MARK row however it was run"),
+    ("windows/tools/ec_watch.py", 597,
+     "sink = CsvSink(args.csv) if args.csv else None",
+     "gate: and the sink it writes is None without --csv, so the two flags "
+     "are both required rather than either"),
+    ("windows/tools/gpu_block_watch.py", 193, "marker.start()",
+     "gate: the same --mark gate, in the writer that imports ec_watch's "
+     "Marker rather than defining one"),
+    ("windows/tools/system_id_probe.py", 385, "marker.start()",
+     "gate: and again in the third class, which imports no ec_watch at all"),
+    ("ec/tools/ec_timer_capture.py", 324, "if args.auto_mark:",
+     "gate: the timer family's automatic marks -- the flag the two "
+     "mark-bearing captures under evidence/ec-watch/ are recorded as using"),
+    ("ec/tools/ec_timer_capture.py", 328, "for dev in args.mark_input:",
+     "gate: and its evdev marks, the third way a mark reaches that family"),
     # -- the header, which this measurement did not record ------------------
     # A format change to a mark row is also a change to the row that names
     # this capture's columns, and the two are not the same file: a
@@ -663,6 +731,11 @@ CITATIONS = [
      "a constructed row rather than a writer: `check_capture_encoding` builds "
      "one to hand a writer that takes a label alone, and the literal scan "
      "counts it as a consumer because the `.row(` call is on the next line"),
+    ("ec/tools/check_capture_marks.py", 147, 'if len(row) > 1 and row[1] == "MARK":',
+     "reader: the index check's own mark count, which is the rule this "
+     "tool's section 2 census and `grade_0751_isolation.read_capture` share "
+     "-- a file this counts zero marks in is a file neither of them finds one "
+     "in"),
     ("windows/tools/test_manual_fan_ctrl_probe.py", 510,
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
@@ -1066,20 +1139,44 @@ def main(argv=None) -> int:
           "and not listed.")
 
     census = fixture_census()
-    marks = sum(c[1] for c in census)
-    cols = sorted({n for c in census for n in c[2]})
+    marked, unmarked = split_classes(census)
+    marks = sum(c[1] for c in marked)
+    cols = sorted({n for c in marked for n in c[2]})
     print(f"\n2. The committed fixtures holding a MARK row, under "
           f"{' and '.join(repo_path(r) for r in FIXTURE_ROOTS)}")
-    print(f"   {len(census)} file(s), {marks} MARK row(s), column counts "
+    print(f"   {len(marked)} file(s), {marks} MARK row(s), column counts "
           f"{cols or 'none'}; header present in "
-          f"{sum(1 for c in census if c[3])}, `#` rows present in "
-          f"{sum(1 for c in census if c[4])}")
+          f"{sum(1 for c in marked if c[3])}, `#` rows present in "
+          f"{sum(1 for c in marked if c[4])}")
     for root in FIXTURE_ROOTS:
-        under = [c for c in census if c[0].startswith(repo_path(root) + os.sep)]
+        under = [c for c in marked if c[0].startswith(repo_path(root) + os.sep)]
         print(f"     {repo_path(root)}: {len(under)} file(s), "
               f"{sum(c[1] for c in under)} MARK row(s)")
     print("   a file a shape leaves untouched is one whose MARK rows keep the "
           "column counts above and whose `#` rows stay the skip rule's own")
+
+    # The class the block above used to drop. Reported with the same per-root
+    # split because the roots are not symmetric here -- the capture root holds
+    # committed captures and the fixture root holds hand-built ones and
+    # annotation CSVs that merely sit under it -- and a count with no split
+    # would read as eight captures.
+    print(f"   and the {len(unmarked)} committed CSV(s) holding no MARK row, "
+          "over the same roots")
+    for root in FIXTURE_ROOTS:
+        under = [c for c in unmarked if c[0].startswith(repo_path(root) + os.sep)]
+        print(f"     {repo_path(root)}: {len(under)} file(s)")
+    for path, _marks, _cols, _header, comments, schema in unmarked:
+        print(f"       {path}  schema {schema!r}, "
+              f"{'a `ts,addr,old,new` change log' if schema == 'ts' else 'not a `ts,addr,old,new` change log'}"
+              f"{f', {comments} `#` row(s)' if comments else ''}")
+    print("   a file in this class supports no timing claim mechanically: a "
+          "byte's move cannot be placed against\n   an event, because the "
+          "file records no event to place it against. `evidence/README.md` "
+          "carries the\n   reason per capture and `check_capture_marks.py` "
+          "holds it to one; the schema column above is\n   this tool's own "
+          "population, and it names what each file is rather than deciding "
+          "which is\n   a capture -- `ec/tools/testdata/` holds annotation "
+                  "CSVs beside the fixtures.")
 
     print("\n3. What each shape costs each reader, on a temp file")
     with tempfile.TemporaryDirectory() as tmp:
