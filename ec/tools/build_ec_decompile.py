@@ -2186,39 +2186,19 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len(_p) == 2 and "does not contain the name" in _p[0]
           and "still contains the placeholder" in _p[1], str(_p))
 
-    # The known answers, on the committed files. These are docs/findings.md §15
-    # as assertions: a re-export that moves a total fails here loudly and gets a
-    # conscious update to the table in the same change, which is the point.
-    # 2,708 -> 2,709 with issue #285's one seeded bank0 routine, 0xCC64, then
-    # 2,709 -> 2,710 with issue #262's one seeded bank1 routine, 0xC1E7. Its
-    # sibling 0xC118 could not be seeded -- it is the immediate byte of an
-    # instruction inside FUN_CODE_c0a8, not an entry -- so that issue moves the
-    # total by one, not two. 2,710 -> 2,714 with issue #267's four bank0
-    # routines 0xC278, 0xC2C2, 0xC33C and 0xC4E7. One of those four, 0xC278,
-    # is seeded inside what was a single function at 0xC26E, so that seed
-    # splits the old function in two rather than only adding: C26E keeps its
-    # row and loses the 0xC278 half (23 bytes -> 10), the 13 bytes handed to
-    # C278 adding back to 23, and C278 becomes a function of its own. The
-    # split adds one to both totals, so the movement is +4 and not +3 --
-    # C26E's row does not go away to pay for C278's.
-    # 2,714 -> 2,720 with issue #1101's six `pd` accessor stubs 0x4C12, 0x4C19,
-    # 0x52EF, 0x531F, 0x7B0D and 0x856F. Six seeds, six new functions, and
-    # nothing split or absorbed: the seven byte-identical
-    # `lcall 0xF739 ; mov dptr,#0x07D0 ; ret` units sit in no committed
-    # listing, so none of them swallowed a neighbour. Write-up:
-    # docs/findings/pd-07d0-accessor-stubs.md.
-    # 2,720 -> 2,721 with issue #337's one bank0 seed 0xC118, likewise a
-    # seed for an address no committed listing covered: it sat in the run
-    # between 0xC0E7 and 0xC124 that bank1's 0x19A8 names, so nothing split
-    # or absorbed and the twelve bytes became a function of their own.
-    # Write-up: docs/findings/bank0-c118-3202-bit0-thunk.md.
-    check("EC: index.csv is 2,721 rows, and the manifest records 2,721 "
-          "functions across 4 programs",
-          len(_ir) == 2721 and len(_mr) == 4
-          and sum(int(r["functions"]) for r in _mr) == 2721,
+    # The known answers, on the committed files, as relations rather than a
+    # total. The row count used to be pinned here, and every seeded routine
+    # moved it: the comment above the pin had grown a paragraph per seed. A
+    # seed is the point of the annotation layer, so the count is not a
+    # property worth failing on; that the three files agree with each other
+    # is. `wc -l`-style totals are `--check`'s output, not an assertion.
+    check("EC: the manifest records as many functions as index.csv has rows, "
+          "across 4 programs",
+          len(_ir) > 0 and len(_mr) == 4
+          and sum(int(r["functions"]) for r in _mr) == len(_ir),
           "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
-    check("EC: listing-index.csv is the same 2,721 rows", len(_lr) == 2721,
-          "%d row(s)" % len(_lr))
+    check("EC: listing-index.csv has the same number of rows as index.csv",
+          len(_lr) == len(_ir), "%d vs %d row(s)" % (len(_lr), len(_ir)))
     check("EC: the manifest's program set is the index's, with no label mapping "
           "in between",
           {r["program"] for r in _mr} == {r["program"] for r in _ir}
@@ -2231,7 +2211,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: addresses are uniformly 4 bare hex digits in both indexes, so "
           "string and int (program, addr) keys agree",
           all(len({(r["program"], r["addr"]) for r in rows})
-              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == 2721
+              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == len(rows)
               for rows in (_ir, _lr)))
     # The annotation layer's two committed CSVs, the same way. 1,769 records
     # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
