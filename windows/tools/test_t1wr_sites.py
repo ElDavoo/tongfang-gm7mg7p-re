@@ -33,6 +33,13 @@ different question.
 wrong: `0x71` is two arms, the first shadows the second, and a caller passing
 `0x71` reaches `:50657` and *cannot* reach `:50667`.
 
+**`PInvokeTests` holds the one caller shape the managed layer cannot read**, so
+that the write-up's shape list and the tool's parsing cannot drift apart
+unnoticed. A `[DllImport("ACPIDriverDll.dll")] TempWrite1(...)` call is an
+`extern` with no body of its own, so it is invisible to the search; the suite
+asserts that blind spot directly, and asserts against the committed tree that
+no such binding exists there today.
+
 **No figure of the tree is asserted.** What is held is the claim: which
 `ACPIDriver` codes the decrypted service can send (a named set, not a count),
 that none of the six Temp* codes is among them, that the CPU power-limit writes
@@ -650,6 +657,77 @@ class TempWriteOnlyTests(unittest.TestCase):
         self.assertIn("Method (T3WR", text)
         self.assertNotIn("EC0", text, "T3WR writes no EC field")
         self.assertIn("T3PC", text)
+
+
+class PInvokeTests(unittest.TestCase):
+    """The one caller shape the managed layer does not read, held as a shape.
+
+    A `[DllImport("ACPIDriverDll.dll")] TempWrite1(...)` call is how a .NET
+    application calls `TempWrite1`, so it is the shape most likely to carry the
+    caller this tool is looking for -- and `helpers()` cannot see it, because a
+    declaration with no body of its own is not a wrapper that forwards a
+    control code to a `DeviceIoControl`. These hold that gap where the write-up
+    names it, rather than leaving the two to disagree: the first case is the gap
+    itself, in the ILSpy spelling, and the second is the committed tree, which
+    binds no such declaration today.
+
+    The first is the important one. A gap named only in prose decays the moment
+    the parsing changes under it, and it would decay *silently* -- the negative
+    would keep printing "not found by this method" over a strictly smaller set
+    of shapes, which is exactly the failure `CLAUDE.md` §4o's discipline is
+    written to prevent. Asserting the blind spot here means a future change
+    that starts resolving P/Invoke sites has to come here and say so.
+    """
+
+    PINVOKE = (
+        '\t[DllImport("ACPIDriverDll.dll", CallingConvention = '
+        'CallingConvention.StdCall)]\n'
+        '\tpublic static extern int TempWrite1(uint method, int arg0, int arg1,'
+        ' int arg2);\n'
+        '\n'
+        '\tpublic void Send()\n'
+        '\t{\n'
+        '\t\tTempWrite1(2621482204u, 0x84, 0, 0);\n'
+        '\t}\n'
+    )
+
+    def test_a_PInvoke_call_site_is_not_read_as_a_site(self):
+        # Held as a property of the parser, not as an absence: this is what the
+        # write-up's "What this does not establish" bullet is describing. The
+        # route to closing it is to make `helpers()` record a DllImport extern
+        # for the driver DLL as a wrapper keyed on the export table -- a
+        # mutation of that function makes this case fail on the `TempWrite1`
+        # site it would start resolving.
+        sites = sites_of(self.PINVOKE)
+        self.assertEqual([s for s in sites if s["ioctl"] == S.T1WR_IOCTL], [],
+                         "a P/Invoke site now resolves; the write-up's shape "
+                         "list and the tool's parsing have diverged")
+        self.assertEqual(S.helpers([("pinvoke.cs", self.PINVOKE)]), {},
+                         "an extern declaration became a forwarding wrapper")
+
+    def test_no_committed_tree_binds_the_DLL(self):
+        # The supporting grep, run against the tree rather than trusted from
+        # the write-up: the shape is unread *and* absent, so the gap costs this
+        # answer nothing today. If a future dump binds one this goes red, which
+        # is the point -- the blind spot stops being free at that moment.
+        hits = subprocess.run(
+            ["grep", "-rn", 'DllImport("ACPIDriverDll', "windows/decompiled/"],
+            cwd=str(REPO), capture_output=True, text=True)
+        self.assertEqual(hits.returncode, 0, hits.stderr)
+        bindings = [ln for ln in hits.stdout.splitlines() if ln.strip()]
+        # Asserted by identity, not as a pinned `file:line` string: the claim is
+        # "the committed trees bind the driver DLL in one place, and that place
+        # is not a TempWrite export", and a literal here would go stale on any
+        # re-export while saying nothing the grep above does not already say.
+        files = sorted({ln.split(":")[0] for ln in bindings})
+        self.assertEqual(files, ["windows/decompiled/v3.1.39.0/GCUService/"
+                                 "MyECIO/AcpiCtrl.cs"],
+                         "a committed ACPIDriverDll.dll binding outside "
+                         "AcpiCtrl.cs, which the managed layer cannot resolve")
+        # And the binding that is there is SMAPCTable, not a TempWrite export.
+        self.assertTrue(all("TempWrite" not in ln for ln in bindings),
+                        "a committed tree binds a TempWrite export through "
+                        "P/Invoke, which this layer cannot see")
 
 
 class TempDirectoryTests(unittest.TestCase):

@@ -170,10 +170,14 @@ comparing a code it received, not a site issuing one; the `mov $…, %edx` rule 
 what keeps the two apart.
 
 **No committed PE calls a `TempWrite*` export**, and no other committed PE
-carries a `mov $0x9c40a4dc,%edx` site. The positive control rides along: the
-DLL is known to define `TempWrite1`, so a native layer that found nothing there
-would have read no listing rather than found nothing, and `--self-check` fails
-if that probe comes back zero.
+carries a `mov $0x9c40a4dc,%edx` site. One reader-preemption, because the
+byte-level grep this invites does return a hit: `GCUService.exe` holds the
+`T1WR` code once, at raw offset `0x13db47`, but as a four-byte entry in a
+five-byte-stride table of the `0x9c40a4xx` codes — a dispatch table, not a
+`mov` immediate. It is a code the binary *lists*, not one it issues. The
+positive control rides along: the DLL is known to define `TempWrite1`, so a
+native layer that found nothing there would have read no listing rather than
+found nothing, and `--self-check` fails if that probe comes back zero.
 
 ## What this does not establish
 
@@ -193,6 +197,14 @@ good as the inputs it could reach. These are the ones it could not:
 - **Anything in firmware**, including an ACPI component that calls `T1WR`. The
   DSDT only declares `\_SB.NPCF` `External`; no input in this repository can
   reach a caller there.
+- **The managed P/Invoke shape.** The managed layer resolves `DeviceIoControl`
+  sites and one hop of forwarding wrappers, so a
+  `[DllImport("ACPIDriverDll.dll")] TempWrite1(…)` call — how a .NET
+  application would call it, and so the shape most likely to carry the caller
+  this tool is looking for — is not among the shapes it reads. No committed
+  tree binds one: `grep -rn 'DllImport("ACPIDriverDll' windows/decompiled/`
+  returns a single hit, in `AcpiCtrl.cs`, and the export table maps that one
+  (`SMAPCTable`) to `SMRW`, not `T1WR`.
 
 The tool prints this list with its output rather than burying it, and the
 readability probes make a zero distinguishable from a scan that never opened the

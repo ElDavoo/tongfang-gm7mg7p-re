@@ -55,10 +55,12 @@ it reaches a `DeviceIoControl`.
 Every negative here is **"not found by this method"**. The unreadable inputs
 are printed with the result, not buried: the still-encrypted 3.1.6.0/3.9.18.0
 bodies, the installer payloads, the 27 MB UWP native core that only
-`windows/tools/extract.sh` stages, and anything in firmware, which no input in
-this repository can reach. A native layer that read nothing is reported as
-unreadable rather than as a clean tree -- the standing `PROBES` in
-`t1wr_callers.py` are the same idea and the reason they exist.
+`windows/tools/extract.sh` stages, the managed **P/Invoke** shape
+(`[DllImport("ACPIDriverDll.dll")]`, which is how a .NET application would call
+`TempWrite1` -- not among the shapes the managed layer reads), and anything in
+firmware, which no input in this repository can reach. A native layer that read
+nothing is reported as unreadable rather than as a clean tree -- the standing
+`PROBES` in `t1wr_callers.py` are the same idea and the reason they exist.
 
 Nothing here claims what the EC *does* with a value. A site that reaches arm
 `0x84` is evidence about **who writes `0x0785`**, not about whether writing it
@@ -161,6 +163,13 @@ UNSTAGED_INPUTS = [
     "anything in firmware, including an ACPI component that calls T1WR. The\n"
     "    DSDT only declares \\_SB.NPCF External; no input in this repository\n"
     "    can reach a caller there.",
+    "the managed P/Invoke shape. The managed layer resolves DeviceIoControl\n"
+    "    sites and one hop of forwarding wrappers, so a\n"
+    "    [DllImport(\"ACPIDriverDll.dll\")] TempWrite1(...) call -- how a .NET\n"
+    "    application would call it -- is not among the shapes it reads. No\n"
+    "    committed tree binds one: the only ACPIDriverDll.dll declaration in\n"
+    "    windows/decompiled/ is SMAPCTable, which the export table maps to\n"
+    "    SMRW rather than to T1WR.",
 ]
 
 # ---------------------------------------------------------------- managed ---
@@ -997,8 +1006,10 @@ PROBES = [
     ("WriteACPI", "the decrypted service declares it, so the managed path "
      "reaches the file every ACPI IOCTL in that binary passes through",
      ["windows/decompiled/v3.1.39.0/GCUService/MyECIO/AcpiCtrl.cs"]),
-    ("SMAPCTable", "the service's only ACPIDriverDll.dll P/Invoke, so the "
-     "DllImport path sees a real declaration",
+    ("SMAPCTable", "AcpiCtrl.cs holds a real ACPIDriverDll.dll declaration, so "
+     "the file a P/Invoke binding would live in was read rather than skipped. "
+     "That is a statement about the file; this tool does not follow the "
+     "binding -- UNSTAGED_INPUTS says so",
      ["windows/decompiled/v3.1.39.0/GCUService/MyECIO/AcpiCtrl.cs"]),
     ("TempWrite1", "ACPIDriverDll.dll's own export directory, so the native "
      "path reaches a PE that defines the wrapper",
