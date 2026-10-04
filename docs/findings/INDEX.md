@@ -293,6 +293,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)
 - [`xdata-export-ownership-refusal-contract.md`](xdata-export-ownership-refusal-contract.md) — The `--export-ownership` refusal contract
+- [`xdata-export-ownership-refusal-denominators.md`](xdata-export-ownership-refusal-denominators.md) — The export-ownership refusal now quotes the census it protects
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
