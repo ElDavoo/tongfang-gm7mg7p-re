@@ -16,6 +16,16 @@ asserts that the checker goes red *and names the problem* — a bare non-zero ex
 would pass just as well if the checker had started refusing everything, which is
 the other way a check quietly dies.
 
+Rule 2 is the one that had a gap worth a note here. It originally matched only
+the fully quoted citation form, so a bare `` `:NNN` `` — which is how the
+write-up names a line when it has just named the file — resolved to nothing at
+all and was checked against nothing. Two such pointers were wrong: each named a
+line that existed and said the opposite of its sentence, and one named a
+`byte_alignment = 2;` in the very paragraph arguing that the access granularity
+is 8. The rule now covers both forms and requires an excerpt pointer to quote
+the line it names, which is what stops the next one; the three cases under rule 2
+below are that, pinned.
+
 Every mutation happens in a `tempfile` copy, and the checker runs as a
 subprocess so the exit status under test is the real one. Nothing here writes to
 the repository: the excerpts and the write-up are committed evidence and an
@@ -175,6 +185,89 @@ class Refusals(unittest.TestCase):
         with sandbox() as (_, evidence, writeup):
             edit(writeup, "`/* Validate and translate the bit width */`", "`if`")
             self.assertRefused(run(evidence, writeup), "which that line does not contain")
+
+    def test_a_shorthand_citation_pointing_at_the_wrong_line_is_refused(self):
+        """The case this rule was widened for.
+
+        A bare `:NNN` inherits its file from the fully qualified pointer before
+        it, so it resolves against the same excerpt -- and against the wrong
+        line just as silently. This is the shape of the two pointers the first
+        draft of the checker was green over: `:196` and `:151` each named a line
+        that existed and said the opposite of the sentence, one of them a
+        `byte_alignment = 2;` in the paragraph arguing that `ByteAcc` yields an
+        8-bit granularity. Redirecting the shorthand is the same edit the fix
+        made to the write-up, and it has to go red.
+        """
+        with sandbox() as (_, evidence, writeup):
+            # Redirect the pointer, keeping the quotation: the mutation the fix
+            # to the write-up was, which is what the rule has to catch. The
+            # `edit` helper is not used because the pointer and its quotation
+            # straddle a line wrap in the write-up.
+            text = writeup.read_text(encoding="utf-8")
+            assert ":229" in text, "the pointer this case redirects is gone"
+            writeup.write_text(text.replace(":229", ":196", 1), encoding="utf-8")
+            self.assertRefused(run(evidence, writeup),
+                               "which that line does not contain")
+
+    def test_a_pointer_into_an_excerpt_with_no_quoted_text_is_refused(self):
+        """The other half of the same gap.
+
+        Widening the pattern to find bare `:NNN` is only half the fix: without
+        this, a pointer that quotes nothing resolves to a line number and is
+        then checked against nothing, which is how both pointers above passed
+        in the first place. Stripping the quotation from a pointer that the
+        committed write-up carries is the mutation.
+        """
+        with sandbox() as (_, evidence, writeup):
+            edit(writeup, "`:150` — `*value = (u64)ACPI_GET32(logical_addr_ptr);`",
+                 "`:150`")
+            self.assertRefused(run(evidence, writeup), "with no quoted text")
+
+    def test_a_shorthand_that_inherits_no_file_is_refused(self):
+        """Inheritance has to fail loudly rather than default to something.
+
+        The first fully qualified pointer in the write-up is what a shorthand
+        before it would inherit; removing it leaves a `:NNN` naming no file at
+        all, and the alternative to refusing is to guess one.
+        """
+        with sandbox() as (_, evidence, writeup):
+            # Remove the first fully qualified pointer in the write-up, so the
+            # bare pointers after it have nothing to inherit. The anchor spans
+            # a line wrap, so this is a direct replace rather than `edit`.
+            text = writeup.read_text(encoding="utf-8")
+            old = "`evidence/acpi/dsdt.dsl:50420`,\n`:50475`"
+            assert old in text, "the first qualified pointer moved"
+            writeup.write_text(text.replace(old, "`:50475`", 1), encoding="utf-8")
+            self.assertRefused(run(evidence, writeup),
+                               "which names no file: there is no evidence/acpi/<file>")
+
+    def test_a_new_excerpt_is_held_to_the_quotation_rule(self):
+        """The exemption is keyed on the file's shape, so it cannot widen.
+
+        The DSDT is this repository's own committed disassembly rather than a
+        fragment of upstream source at a pinned revision, and rule 3 re-derives
+        the structure its pointers are used for from the file itself -- so a
+        bare `:50422` into it is a locator rather than a citation, and requiring
+        a quotation would be a rule about a file in this tree.
+
+        The committed tree already relies on that (its DSDT pointers are bare),
+        so the negative control is what holds the exemption open. This case
+        holds the other edge: add a second `.txt` to the directory and point a
+        bare pointer at it, and it is an excerpt like any other -- it has to be
+        quoted, and a pointer that is not has to be refused. `is_excerpt` is
+        written against the shape rather than a filename precisely so that a new
+        excerpt cannot acquire the exemption by being added.
+        """
+        with sandbox() as (_, evidence, writeup):
+            shutil.copy(evidence / ACPICA, evidence / "second-excerpt.txt")
+            edit(evidence / "README.md", "- **`%s`**" % ACPICA,
+                 "- **`%s`**\n- **`second-excerpt.txt`**" % ACPICA)
+            # A pointer at a line of the new excerpt, with nothing quoted. The
+            # line exists and is in range, so only the quotation rule can
+            # redden it -- which is the point.
+            edit(writeup, "`evidence/acpi/dsdt.dsl:50420`",
+                 "`evidence/acpi/second-excerpt.txt:84`")
+            self.assertRefused(run(evidence, writeup), "with no quoted text")
 
     def test_an_excerpt_nobody_cites_is_refused(self):
         with sandbox() as (_, evidence, writeup):

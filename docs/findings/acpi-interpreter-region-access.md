@@ -95,7 +95,8 @@ There is an alignment test in the function, and it is the only one in the path.
 It is behind `#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED` at
 `evidence/acpi/acpica-region-access-excerpt.c.txt:115` — `#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED`
 — and computes the residue four lines below it, returning `AE_AML_ALIGNMENT` when
-it is non-zero at `:123`. The flag is defined in one place, and it is defined for
+it is non-zero at `:123` — `return_ACPI_STATUS (AE_AML_ALIGNMENT);`. The flag
+is defined in one place, and it is defined for
 Itanium only: `evidence/acpi/acpica-region-access-excerpt.c.txt:446` — `#define ACPI_MISALIGNMENT_NOT_SUPPORTED`
 — under `#if defined (__IA64__) || defined (__ia64__)`, with a comment saying x86-64
 supports misaligned transfers so there is no need to define it. This machine is
@@ -117,11 +118,15 @@ It is also the answer for the kernel. Linux `v6.6` still carries ACPICA under
 `drivers/acpi/acpica/` and builds it, and the copy is the same code with kernel
 naming: the same width switch, the same
 `#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED` at
-`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:100`, the same pointer
-arithmetic at `:118`, the same `ACPI_GET32` at `:151`, the same warning in
-`drivers/acpi/acpica/acmacros.h` at
-`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:439`. Two implementations,
-one answer. That matters for the reason this issue exists: it is the difference
+`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:100` —
+`#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED`, the same pointer
+arithmetic at `:118` — `logical_addr_ptr = mm->logical_address +`, the same
+`ACPI_GET32` at `:150` — `*value = (u64)ACPI_GET32(logical_addr_ptr);`, the same
+warning in `drivers/acpi/acpica/acmacros.h` at
+`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:439` —
+`* get into potential alignment issues -- see the STORE macros below.` Two
+implementations, one answer. That matters for the reason this issue exists: it
+is the difference
 between "the interpreter might test alignment" and "the interpreter does not".
 
 ### But `MMRW` never asks for a width of 32
@@ -131,29 +136,38 @@ conclusion. The `Field` declarations are all `ByteAcc`, and the access type is
 decoded before any of this. `AcpiExDecodeFieldAccess` switches on the encoded
 access type and returns the access granularity — and `AML_FIELD_ACCESS_BYTE`,
 which is what `ByteAcc` encodes, returns 8, not the field's declared 32
-(`evidence/acpi/acpica-region-access-excerpt.c.txt:204`, the case label, with
+(`evidence/acpi/acpica-region-access-excerpt.c.txt:204` —
+`case AML_FIELD_ACCESS_BYTE:`, the case label, with
 the `BitLength = 8` it returns four lines below it). `WordAcc`, `DWordAcc` and
 `QWordAcc` are in the same switch, returning 16, 32 and 64. The return value
 becomes `AccessByteWidth` at `evidence/acpi/acpica-region-access-excerpt.c.txt:267` — `ACPI_DIV_8 (AccessBitWidth);`
 — and the width handed to the region handler is that access width times eight,
 not the field's bit length: `evidence/acpi/acpica-region-access-excerpt.c.txt:324` — `ACPI_MUL_8 (ObjDesc->CommonField.AccessByteWidth), Value);`.
 The kernel's copy is the same at
-`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:196` and `:261`.
+`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:229` —
+`ACPI_DIV_8(access_bit_width);` — and `:261` — `ACPI_MUL_8(obj_desc->`.
 
 The read reaches that code by a path worth naming, because "the field read is
 split" is a claim about a route and not about a file, and every hop of it is in
 the excerpt. An `ACPI_TYPE_LOCAL_REGION_FIELD` source object is dispatched to
 `AcpiExReadDataFromField` at
 `evidence/acpi/acpica-region-access-excerpt.c.txt:459` — `Status = AcpiExReadDataFromField (WalkState, StackDesc, &ObjDesc);`
-— that calls `AcpiExExtractFromField` at `:467`, which is where a field read
-becomes a value and where the access count is decided. Each datum then goes
+— that calls `AcpiExExtractFromField` at `:467` —
+`Status = AcpiExExtractFromField (ObjDesc, Buffer, BufferLength);`, which is
+where a field read becomes a value and where the access count is decided. Each
+datum then goes
 `AcpiExFieldDatumIo` → `AcpiExAccessRegion` → the address-space dispatch: the
-`AcpiExFieldDatumIo` call site for `AcpiExAccessRegion` is at `:337`, and the
-dispatch the write-up quotes above is inside `AcpiExAccessRegion` — the
-function's own banner and signature are at `:313`, which is what places the
+`AcpiExFieldDatumIo` call site for `AcpiExAccessRegion` is at `:337` —
+`Status = AcpiExAccessRegion (`, and the dispatch
+the write-up quotes above is inside `AcpiExAccessRegion` — the
+function's own banner and signature are at `:313` — `AcpiExAccessRegion (` —,
+which is what places the
 `exfldio.c` 273-278 fragment there rather than in `AcpiExFieldDatumIo`. The
 kernel's copy carries the same three hops at
-`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:374`, `:382` and `:275`.
+`evidence/acpi/linux-acpi-region-access-excerpt.c.txt:374` —
+`acpi_ex_read_data_from_field(walk_state, stack_desc,` — `:382` —
+`status = acpi_ex_extract_from_field(obj_desc, buffer, buffer_length);` — and
+`:275` — `acpi_ex_access_region(obj_desc, field_datum_byte_offset,`.
 
 `AcpiExExtractFromField` then decides how many accesses to issue. It has a
 single-access shortcut, but it applies only when the field is exactly one datum
@@ -204,8 +218,9 @@ assembles the field least-significant-datum-first: the priming read is the datum
 at offset zero and becomes the low bits —
 `evidence/acpi/acpica-region-access-excerpt.c.txt:385` — `MergedDatum = RawDatum >> ObjDesc->CommonField.StartFieldBitOffset;`
 — and each subsequent datum is shifted up by the access width before being merged
-at `:414`. So for `MM32`, the byte at the lowest address becomes the
-least-significant byte of the returned Integer, and on little-endian x86 the order
+at `:414` — `MergedDatum |= RawDatum <<`. So for `MM32`, the byte at the lowest
+address becomes the least-significant byte of the returned Integer, and on
+little-endian x86 the order
 of the four is the order the interpreter read them in. The kernel's copy assembles
 the same way.
 

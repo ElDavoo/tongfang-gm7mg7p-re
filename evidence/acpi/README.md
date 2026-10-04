@@ -60,10 +60,13 @@ write-up instead, with the sentences the argument rests on quoted there.
 - **`fetch-acpi-sources.sh`** — re-derives both excerpts from a fresh fetch and
   diffs them against the committed files. **It needs the network and is
   therefore not part of any gate.** `tools/check_acpi_interpreter_sources.py`
-  checks the same excerpts offline — provenance fields, and that every
-  `evidence/acpi/<file>:NNN` citation in the write-up lands on a line that
-  really contains the quoted text — and that is what a reviewer can run without
-  egress.
+  checks the same excerpts offline — provenance fields, and that every pointer
+  the write-up makes into one of the `.c.txt` excerpts lands on a line that
+  really contains the text it quotes, whether the pointer spells out the path
+  or is a bare `:NNN` inheriting the one before it — and that is what a
+  reviewer can run without egress. Pointers into `dsdt.dsl` are locators and
+  are not held to that rule; the write-up's use of the DSDT is re-derived from
+  the file separately.
 
 ## Licences
 

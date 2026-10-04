@@ -29,7 +29,7 @@ checker is invoked by hand.
      `evidence/acpi/fetch-acpi-sources.sh` exists to make impossible.
 
   2. **Citations resolve, and resolve to the line the write-up quotes.** A
-     citation in the write-up is written as
+     pointer into one of the `.c.txt` excerpts is written as
 
          `evidence/acpi/<file>:NNN` — `<the text of that line>`
 
@@ -47,6 +47,26 @@ checker is invoked by hand.
      excerpt under `evidence/acpi/` that nothing in the write-up cites, which
      is how an evidence file that was fetched and then quietly stopped
      carrying anything gets noticed.
+
+     Two forms of pointer reach that rule, because the write-up would not be
+     readable if every one of them spelled out the path. A fully qualified
+     `` `evidence/acpi/<file>:NNN` `` names its own file, and a bare `` `:NNN` ``
+     inherits the file named by the nearest fully qualified pointer before it.
+     **A pointer into an excerpt must quote the line it names**, in either
+     form. That is the whole of what keeps the shorthand honest: a number with
+     nothing to check it against is a pointer that can name a line which says
+     the opposite of the sentence, which is exactly what this rule exists to
+     stop -- the first draft of it accepted `:196` and `:151` bare, both of
+     which resolved to a real line and neither of which was the line meant.
+
+     Pointers into `evidence/acpi/dsdt.dsl` are exempt, and deliberately so.
+     The DSDT is this repository's own committed disassembly rather than
+     upstream source at a pinned revision, rule 3 re-derives the structure
+     those pointers are used for from the file itself, and a reader who wants
+     the line has `grep -n` on a file in the tree. What must not happen is an
+     excerpt pointer escaping this rule, so the exemption is stated as "not an
+     excerpt" rather than as a list of filenames to keep in step with the
+     directory.
 
   3. **The identification is re-derived from the committed DSDT.** The write-up
      says `MMRW`/`MMRB`/`MMRD`/`MMWB`/`MMWD` are `Method (` declarations in the
@@ -118,9 +138,14 @@ FIELD_RE = re.compile(r"^[ \t]+(%s)[ \t]*:[ \t]*(\S.*?)[ \t]*$"
 # of either spelling because the write-up is prose and an em dash is what it
 # reads with; requiring one kind would be a formatting rule wearing a check's
 # clothes.
+#
+# The text is optional in the pattern and mandatory in the check below, because
+# the two jobs are different: the pattern has to *find* every pointer so it can
+# refuse one that quotes nothing, and a fully qualified pointer that carries no
+# quotation is exactly as uncheckable as a bare `:NNN`.
 CITATION_RE = re.compile(
-    r"`evidence/acpi/(?P<file>[\w.\-]+):(?P<line>\d+)`\s+(?:--|—|–)\s+"
-    r"`(?P<text>[^`]+)`")
+    r"`(?:evidence/acpi/(?P<file>[\w.\-]+))?:(?P<line>\d+)`"
+    r"(?:\s+(?:--|—|–)\s+`(?P<text>[^`]+)`)?")
 LINE_PREFIX_RE = re.compile(r"^\s*\d+:\s?")
 # The quoted text is required to *appear in* the line rather than to equal it,
 # with a floor on its length. Requiring equality would make the write-up quote
@@ -130,6 +155,18 @@ LINE_PREFIX_RE = re.compile(r"^\s*\d+:\s?")
 # is what keeps the loosened comparison from being a comparison anything passes;
 # `if` is not a citation.
 MIN_QUOTED = 12
+
+# Rule 2, again: which pointers have to quote the line they name. An excerpt is
+# a `.txt` under `evidence/acpi/` -- the same shape rule 1 holds provenance for,
+# rule 6 holds an index entry for, and `evidence_files` enumerates, so a file
+# added to the directory is an excerpt without anyone editing this.
+# `dsdt.dsl` is not one: it is this repository's own disassembly, not a fragment
+# of anything upstream, and rule 3 re-derives the structure its pointers are
+# used for from the file itself. Stated as a shape rather than as a filename so
+# that the exemption cannot widen by a new file being added, and cannot narrow
+# by an excerpt being renamed.
+def is_excerpt(name: str) -> bool:
+    return name.endswith(".txt")
 
 # Rule 3. `Device (INOU)` and the five methods, by name. The indentation is
 # part of the rule rather than a formatting habit: `Device (INOU)` sits at eight
@@ -203,8 +240,26 @@ def rule_provenance(report: Report, evidence: str) -> None:
 
 def rule_citations(report: Report, writeup: str, evidence: str) -> None:
     cited: set[str] = set()
+    # What a bare `:NNN` inherits: the nearest fully qualified pointer before it.
+    # Carried across the whole document rather than reset per paragraph because
+    # every pointer in this write-up resolves correctly under it, and a narrower
+    # scope would be a rule with no case that needs it. The failure mode of
+    # inheriting too widely is a refusal, not a pass -- a pointer aimed at the
+    # wrong file will not be found in the right one.
+    inherited: str | None = None
+
     for match in CITATION_RE.finditer(writeup):
         name, number, quoted = match.group("file"), int(match.group("line")), match.group("text")
+        if name is not None:
+            inherited = name
+        elif inherited is None:
+            report.fail("2", "cites `:%d`, which names no file: there is no "
+                        "evidence/acpi/<file> earlier in the write-up to inherit"
+                        % number)
+            continue
+        else:
+            name = inherited
+
         path = os.path.join(evidence, name)
         if not os.path.isfile(path):
             report.fail("2", "cites evidence/acpi/%s, which does not exist" % name)
@@ -214,6 +269,26 @@ def rule_citations(report: Report, writeup: str, evidence: str) -> None:
             report.fail("2", "cites evidence/acpi/%s:%d, which has %d lines"
                         % (name, number, len(lines)))
             continue
+
+        # An excerpt is upstream source at a pinned revision, so the line number
+        # is a rank into a file that gets regenerated and the quoted text is the
+        # only thing that says which line was meant. A pointer that quotes
+        # nothing therefore cannot be checked at all, and is refused rather than
+        # counted -- accepting it is how this rule came to be green over two
+        # pointers that named a real line and the wrong one.
+        if quoted is None:
+            if is_excerpt(name):
+                report.fail(
+                    "2",
+                    "cites evidence/acpi/%s:%d with no quoted text. A pointer into "
+                    "an excerpt must quote the line it names (`%s:%d` — `<text>`), "
+                    "or it names a line number that nothing checks"
+                    % (name, number, name, number),
+                )
+                continue
+            cited.add(name)
+            continue
+
         actual = LINE_PREFIX_RE.sub("", lines[number - 1]).rstrip()
         if len(quoted) < MIN_QUOTED or quoted not in actual:
             report.fail(
