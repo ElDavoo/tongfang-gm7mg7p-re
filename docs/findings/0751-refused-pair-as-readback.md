@@ -164,12 +164,25 @@ printing on are the ones where it was describing lines that do not exist. Over
 the same run the section now ends:
 
 ```
-  no dump pair here was compared, so there is no whole-block read to qualify: the pairs above were refused, and each says why
+  no dump pair here was compared, so there is no whole-block read to qualify: the pairs above were not compared, and each says why
 ```
 
-Said rather than dropped, because a silent ending after a refusal is the same
-defect one step down: a reader who reaches the end of the section has to be
-able to tell *compared nothing* from *compared nothing and said so here*.
+Said rather than dropped, because a silent ending after a pair goes
+un-compared is the same defect one step down: a reader who reaches the end of
+the section has to be able to tell *compared nothing* from *compared nothing
+and said so here*.
+
+The closing sentence reads *were not compared*, not the *were refused* it used
+to. `pair_refusal` is not the only thing that keeps a pair out of `graded`: this
+section already reported, under what it does not close, a pair whose two names
+name different blocks (skipped without being refused) and, on a `--block` run, a
+pair belonging to another block (named and skipped), and
+[`0751-dump-value-vs-block-value.md`](0751-dump-value-vs-block-value.md) adds a
+pair whose before side is mis-filed, withheld in place of the bracket. *Refused*
+covered `pair_refusal` and none of those, so it overstated what the paragraph
+speaks for. *Not compared* is what the paragraph has always claimed — that every
+pair it names above the closing sentence has said why — and it is the wording
+that claim survives under.
 
 ## The fix, and why it is one predicate rather than a second test
 

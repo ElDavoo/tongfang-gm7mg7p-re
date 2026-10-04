@@ -12,6 +12,7 @@ under 100 us, so nothing here is evidence about whether a host write holds.
 """
 import contextlib
 import csv
+import ast
 import importlib.util
 import io
 from pathlib import Path
@@ -24,6 +25,17 @@ from unittest.mock import patch
 ORIGINAL = 16400     # 0x4010, the value 0x0522 reads on this pack (§4m)
 TARGET = 16300       # 0x3FAC, the value the three live runs wrote (§4m)
 FLOOR = 12000        # charge_target_test.py:146, the 4S units check
+
+
+def tool_source_tree():
+    """charge_target_test.py parsed, for the declaration case below.
+
+    Parsed rather than grepped because the claim is about a keyword on one
+    particular call, and the anchor naming that call -- the `args.csv` its
+    first argument carries -- is not something a line of text can say.
+    """
+    return ast.parse((Path(__file__).with_name('charge_target_test.py'))
+                     .read_text(encoding='utf-8'))
 
 # A run that gets all the way through: lower the target, sample once,
 # acknowledge the write. --seconds 0 breaks the loop on its first pass, so the
@@ -287,7 +299,7 @@ class ChargeTargetTests(unittest.TestCase):
             self.assertEqual(ec.writes, TARGET_WRITES + RESTORE_WRITES)
             self.assertIn(f"restored 0x0522 -> {ORIGINAL} mV", out)
             # An errored run still leaves a CSV a reader can parse.
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
             self.assertEqual(rows, [COLS])
 
     def test_ctrl_c_partway_still_restores_the_target(self):
@@ -308,7 +320,7 @@ class ChargeTargetTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'run.csv'
             rc, _, _, _ = self.run_tool([*BASE, '--csv', str(path)])
-            rows = list(csv.reader(path.read_text().splitlines()))
+            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
             self.assertEqual(rc, 0)
             self.assertEqual(rows[0], COLS)
             self.assertEqual(len(rows), 2)          # header, and the one sample
@@ -323,8 +335,54 @@ class ChargeTargetTests(unittest.TestCase):
         self.assertTrue(traces, "no committed 0x0522 trace to check the header of")
         for trace in traces:
             with self.subTest(trace=trace.name):
-                header = next(csv.reader(trace.read_text().splitlines()))
+                header = next(csv.reader(trace.read_text(encoding="utf-8").splitlines()))
                 self.assertEqual(header, COLS)
+
+    # 7. The declaration. `args.phase` is operator-supplied free text written
+    #    into column 1 of every row, and before issue #1277 the `open()` took
+    #    the writing process's locale to write it with. Asserted over the
+    #    tool's source rather than over a run because on a utf-8 interpreter
+    #    the two are the same bytes -- a round-trip with no declaration would
+    #    pass here, which is why this is the case and not that one.
+    def test_the_capture_opener_declares_its_encoding(self):
+        calls = [n for n in ast.walk(tool_source_tree())
+                 if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                 and n.func.id == "open"]
+        openers = [c for c in calls
+                   if c.args and isinstance(c.args[0], ast.Attribute)
+                   and c.args[0].attr == "csv"]
+        self.assertTrue(openers, "no open() taking args.csv in the tool")
+        for call in openers:
+            with self.subTest(line=call.lineno):
+                self.assertIn("encoding",
+                              [k.arg for k in call.keywords
+                               if isinstance(k, ast.keyword)],
+                              f"charge_target_test.py's open() at line "
+                              f"{call.lineno} declares no encoding=, so a "
+                              f"phase label carrying a high byte is written in "
+                              f"whatever the writing process's locale prefers")
+
+    # 8. ... and the consequence, on the runner this suite happens to run on.
+    #     Holds that the declared codec admits what landed; it does not and
+    #     cannot hold that the declaration is what chose it. `§` in utf-8 is
+    #    0xC2 0xA7, so 0xA7 is present either way -- what separates the declared
+    #    codec from the cp1252 default is whether it ever stands alone.
+    def test_a_phase_label_above_0x7f_lands_as_utf8_on_disk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'run.csv'
+            rc, _, _, _ = self.run_tool(
+                [*BASE, '--csv', str(path), '--phase', '§3'])
+            raw = path.read_bytes()
+        self.assertEqual(rc, 0)
+        self.assertFalse(raw.startswith(b'\xef\xbb\xbf'),
+                         'the capture carries a BOM; the format is utf-8 with none')
+        self.assertIn('§3'.encode('utf-8'), raw)
+        self.assertEqual(raw.decode('utf-8').splitlines()[1].split(',')[1],
+                         '§3')
+        alone = [i for i, b in enumerate(raw)
+                 if b == 0xA7 and (i == 0 or raw[i - 1] != 0xC2)]
+        self.assertEqual(alone, [], 'a 0xA7 with no 0xC2 before it: the file '
+                                     'carries a one-byte character somewhere')
 
 
 if __name__ == '__main__':

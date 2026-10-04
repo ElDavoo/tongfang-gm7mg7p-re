@@ -1124,6 +1124,57 @@ the same page in opposite directions and come out byte for byte identical, so
 nothing inside a mis-filed bracket looks wrong. The group line above it is
 the whole of the attribution.
 
+**That is also why a group whose before-dump already holds its own block's
+value is not read — on a block whose control arm recorded something else.**
+§3 takes the `-before-` dump at step 0, before the control arm and before the
+write, so `<date>-0751-isolation-<value>-before-` cannot already hold
+`<value>` *because of that block's write*: that is what the block's own
+`wrote 0x0751=<value>` mark puts there, afterwards. The other half of the
+question is what the byte held before the block began, and the step order does
+not answer it — step 2 is "write the value already there back to itself", so a
+day that writes `<value>` onto a byte already at `<value>` is one §3 produces
+and nothing in the procedure rules it out. Your step-2 mark answers it
+directly: `no-op wrote 0x0751=<current>` records what was there. So the check
+is against **that**, and only where `<current>` is a different value from
+`<value>` is the file held not to be that block's before-dump.
+
+When it is, both sections say so rather than reporting on the files: §4.6
+withholds the readback in the place the verdict sentence would have been, with
+the per-file `0x0751 = 0xNN` lines still above it, because what each file
+holds is a fact about files on disk and is true whatever the comparison is not
+able to conclude from them; the whole-block report withholds the bracket in the
+place the comparison would have been, and still names the pair where you handed
+it in. The notice names the file, this block's own `no-op wrote
+0x0751=<current>` mark and the value it recorded, the `wrote 0x0751=<value>`
+mark that puts the value there afterwards, and the `<value>` the file name
+came from; it names no cause for the byte and sends you to no next step,
+because which of the two file names is the wrong one is a question about files
+and nothing here answers it. The exit code is unchanged and the rest of the run
+still reads: nothing in the capture is broken, the marks grade and both blocks
+print `intact`. What is withdrawn is a claim the files cannot support — on a
+two-block day whose two `<value>` stamps are transposed, each group's
+before-dump holds its own value and each group is filed under the other
+block's bytes, and `no block under test 0xNN is in this run` does not fire,
+because after a swap every value is still a block of the day.
+
+Four shapes it deliberately leaves alone, each because there is nothing there
+to withdraw. A group named by `--block` or `--wrote` rather than by a file
+name carries no name-derived claim, and §6 has you name the block yourself. A
+value the day never wrote is a different case and is disclosed already, by name
+and without guessing which file is wrong: `no block under test 0xNN is in this
+run` is the whole of that, and it says only what it knows. A block whose
+control arm recorded the value under test is a day the byte already held it,
+so a before-dump holding it is that block's before-dump and nothing is
+withheld. And a group whose before-dump holds its value *and* whose last dump
+holds it too keeps its §4.6 readback, because on that arm the sentence printed
+is true of the last file on disk and carries its own calibration, with the line
+above it naming both readings a group in that shape leaves open — the write did
+not take, or the dump named `before` was taken after it. Only the arm that
+says the byte moved back, and points at §3a, is a claim about the machine; that
+is the one withheld. In the whole-block report there is no such pair of arms to
+choose between: a bracket either prints or it does not, so the same
+disagreement withholds it there too.
+
 §3a's service-stopped pass is a second run with its own `<date>`, not a fourth
 block of this one: the Office/Turbo pair is required in both arms and §6's
 names carry no arm, so the two passes' `<value>`-stamped dumps would overwrite
