@@ -480,6 +480,74 @@ reaches this code, and the selector is read from `0x0F5F`, never from
 Whether some other path also calls the copy is not something a site scan can
 rule out — see the DPH construction above for why.
 
+> **Corrected 2026-10-04 (issue #1227); the paragraph above is left as it was
+> written.** "No site in §2 reaches this code" is true and the conclusion it
+> supports is wrong, because §2 is a scan of `0x0751` sites and the caller is
+> not one. **The handler is entered by a branch, not a call**, which is why the
+> `lcall`/`ljmp` searches that found §6's other answers do not find it:
+>
+> ```
+> 0x887a  90 06 c2   mov  dptr,#0x06c2
+> 0x887d  e0         movx a,@dptr
+> 0x887e  60 0d      jz    0x888d          ; 0x06C2 == 0 -> the mailbox handler
+> 0x8880  12 86 53   lcall 0x8653          ; the other arm: re-seed, duty 0x3C
+> 0x8883  74 3c      mov   a,#0x3c
+> 0x8885  12 bb 24   lcall 0xbb24
+> 0x8888  74 3c      mov   a,#0x3c
+> 0x888a  02 89 3e   ljmp  0x893e
+> ```
+>
+> `0x888D` is the **fall-through target of a conditional branch inside the
+> `0x8749` mode tick** (`mode_tick_084c_07a5_09ee`, whose own annotation row
+> describes the other arm), gated on `0x06C2` reading zero. A byte scan of
+> bank0 for `lcall`/`ljmp` naming `0x888D` finds **none**, which is the whole
+> of why §6 read this as host-triggered. Corroborated two ways in the tree:
+> `bank-relative-branch-targets.csv` records `0x0887E jz → 0x0888D` as the one
+> branch naming it, and `ec/decompiled/bank0/8749.asm` carries the same three
+> bytes. `r2 -a 8051` decodes it identically (§7's convention):
+>
+> ```console
+> $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/bank0.bin
+> $ r2 -a 8051 -e scr.color=0 -q -c 's 0x887a; pd 9' /tmp/bank0.bin
+> ```
+>
+> **So the handler is reachable from a scheduler pass whenever `0x06C2` reads
+> zero, and not only when a host asks** — reachable, not established as
+> reached, because what `0x06C2` holds is not established (the limit is the
+> paragraph below). The chain above closes to the divide-down scheduler:
+> `0x0DB6 lcall 0x0E40` → `0x0E40 ljmp 0x1552` → the far-call stub at `0x1552`
+> → bank0 `0x8502` → `lcall 0x8749`
+> (`charge-target-caller-chain.md` §1, `task-call-table.csv`). That is **a
+> different slot of the same dispatch block** from §4's `0xA7C8`, which is
+> reached on cases `0x02`/`0x0C` through `0x0E49` and stub `0x1564`, rather than
+> by this direct `lcall` — so the two are dispatched together in the sense of
+> recurring on the same scheduler, not on the same case value. Whether they
+> fire on the same pass is not established.
+>
+> **What this does not settle.** `0x06C2` is `XDATA_06C2`, `present-untested`,
+> with 15 direct reads and no writer found outside the `bank1:0x8001`-`0x8189`
+> sweep: a branch that exists is not a branch that is taken. The committed
+> `ec_watch` captures (`evidence/ec-watch/2026-09-24-06c2-06db-*.csv`) do carry
+> a reading of the gate, and it is a positive one — each has `0x06C2=0x00` on
+> its `# baseline` line and no `0x06c2` change row, so on the machine those
+> windows came from the byte held zero across the plain sweep, the
+> AC-out/Fn-power-mode-key/lid perturbation and the S3 suspend. That is the
+> argument `xdata-06c2-06db-sweep.md` §4a already makes for `0x0751` in the same
+> family: `ec_timer_capture.py`'s docstring puts the baseline line there so that
+> "a byte that never moved is still on record with the value it held". It is real
+> evidence the gate reads zero in ordinary operation, and it is still **not**
+> "the gate is normally open" — three windows, on one machine with no vendor
+> service running, are not a characterisation of every mode or every machine,
+> and what the byte holds outside them is **not** established. A live read of
+> `0x06C2` across a mode change is what would settle it, and `0x06C2` stays
+> `present-untested`. And the selector still comes from `0x0F5F`, so what the
+> branch changes
+> is *when* a table is copied, not *which* one: §6's "a mode change alone does
+> not reload the table" survives this correction, because `0x0751` still does
+> not reach the selector. Nothing here is behavioural — no register was read
+> back. The write-up is
+> [`ec-default-fan-tables.md`](../../docs/findings/ec-default-fan-tables.md).
+
 ## 7. Spot-checks against an independent disassembler
 
 `ec/tools/disasm8051.py` is a linear decoder, not a disassembler, so the two
@@ -561,6 +629,32 @@ than only the listings quoted here.
   comparing against the vendor's announced tables (`windows/tools/fan_table_replay.py`)
   would answer whether a Linux driver could skip shipping tables entirely and
   ask the EC for its own.
+
+  > **Closed 2026-10-04 (issue #1227); the bullet above is left as it was
+  > written.** Both halves are answered and the end is **measured**, not a
+  > pattern that stopped: the table holds **28** pointer pairs, and the 56
+  > tables they name tile `0x5672`-`0x60F1` contiguously — ending immediately
+  > below the pointer table's own first byte, which is the corroboration from
+  > the other side that makes the count a measurement rather than a run that
+  > happened to stop. The walk stops at `0x6162`, whose four bytes are
+  > `41 37 05 05`. The membership rule is the *relation* between a pair's two
+  > pointers — the second is the first plus `0xC0` — and not either pointer's
+  > magnitude: a "both below `0x8000`" test keeps accepting for a dozen
+  > entries past the break.
+  >
+  > The four the handler selects are decoded against the tables the vendor
+  > ships, and on CPU **neither mode that any committed project ships (`M1T1`,
+  > `M2T1`) matches on any row**. So the answer to the
+  > question this bullet poses is the one the issue wanted: a driver does not
+  > have to ship a table. Two exclusions are named rather than matched, and
+  > the comparison is bounded by both: no committed project ships the Turbo
+  > table `M3T1`, so Turbo has nothing to compare against; and every committed
+  > project ships an all-zero GPU row, so there is no shipped GPU curve to
+  > compare against either. The tool is `../tools/decode_fan_tables.py`, the
+  > evidence `../annotations/fan-table-curves.csv`, and the write-up is
+  > [`ec-default-fan-tables.md`](../../docs/findings/ec-default-fan-tables.md).
+  > `ec-fan-table-defaults.md` decoded the four selected tables and left this
+  > bullet's extent question open; that gap is what this closes.
 - **What the arms behind `0xB5F8` and `0xB758` do.** Both are a bare `ljmp`
   to a callee, and §9's `--callee-depth 1` follows exactly one level; the two
   routines they reach (`0xB716`, `0xB82E`) are themselves long. Following

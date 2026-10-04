@@ -130,6 +130,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-addr-reach-086x.md`](ec-addr-reach-086x.md) — Does the vendor service write any `0x08xx` byte, and how far did we look (issue #334)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
+- [`ec-default-fan-tables.md`](ec-default-fan-tables.md) — The pointer-pair table at `0x60F2` ends at `0x6162`, and `0x888D` is entered by a branch rather than a call
 - [`ec-fan-table-defaults.md`](ec-fan-table-defaults.md) — The EC's own fan tables: where they live, what they say, and how far they are from the vendor's
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ecrw-fake-mirror-surface.md`](ecrw-fake-mirror-surface.md) — The `ecrw` fixture's mirror claim, measured, and narrowed to what it carries (issue #356)
@@ -232,6 +233,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`shape-census-gate.md`](shape-census-gate.md) — The shape census at the top of `subsystems.md` §2 is held to a recount (issue #630)
 - [`sites-csv-regeneration.md`](sites-csv-regeneration.md) — The committed sites tables are re-derived from the firmware, not from the pages that print the command (issue #313)
 - [`sweep-summary-schema.md`](sweep-summary-schema.md) — The AC-plugin sweep summary has a schema, a reader, and two blind spots written down
+- [`system-id-probe-mark-labels.md`](system-id-probe-mark-labels.md) — The `0x0456` probe's mark labels are free-form by design, and its blank press records nothing (issue #1329)
 - [`table-reader-spellings.md`](table-reader-spellings.md) — The table reader has one spelling in the main EC and three in the PD image, and two of the PD three are not this family's layout
 - [`test-line-pin-repoint-563.md`](test-line-pin-repoint-563.md) — The two `:563` pins of finding 7 are repointed, and finding 6's four stale pins are deliberately not (issue #930)
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
@@ -257,6 +259,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
 - [`trampoline-target-reading.md`](trampoline-target-reading.md) — A trampoline target inside a `ret` run is a one-instruction far routine, and the bank-pointer reading is consistent with the stub's bytes (issue #1090)
+- [`two-hop-dptr-handoff.md`](two-hop-dptr-handoff.md) — The two hops that take a DPTR handoff further than one call
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
 - [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
 - [`unresolved-transfer-causes.md`](unresolved-transfer-causes.md) — Why the call-graph's unresolved and unreached rows are the ones they are

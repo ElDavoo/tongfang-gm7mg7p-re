@@ -56,12 +56,38 @@ A `none` cell that stays `none` after the follow means "not found by this
 method", never "this site does not access the register" -- 0x07B9 is the
 standing counter-example, and nothing here is measured on hardware.
 
+**Two columns exist because each is weaker than the one beside it, and that is
+the whole reason they are separate.** A `other->flow->read` cell was reached
+past a branch *and* through a call; a `handoff->callee->read` cell took two
+calls. Either is weaker than the one-hop `handoff->read` next to it -- two
+hops of this linear best-effort decode rather than one -- so neither shares a
+column with it, and a reader cannot average the two together or read one as
+the other. `other->flow` survives as its own column for the residue the second
+hop cannot apply to at all: a `movc` or `jmp` past a branch is a verdict, not
+a handoff, and it has no callee to resolve. Reaching these columns takes both
+flags together (`--follow-flow` with `--callee-depth 1`), because a handoff
+reached only by a branch is a different cell from one sitting at the site and
+the two must not be counted as one.
+
+At `--callee-depth 2 --follow-flow` the branch hop is kept and the second call
+is added to it, which is a third claim again and gets `other->flow->callee->`
+rather than `handoff->callee->`: the naming is parallel on purpose, so
+branch-then-call-then-call reads beside branch-then-call and call-then-call and
+none of the three can be mistaken for the one-hop column. The re-bucketing is
+flow-first at that mode for the same reason -- routing a flow cell through the
+handoff pair would drop the branch and file a cell that took a branch and two
+calls beside one that took a single call.
+
+`two_hop_census.py` is the committed record of which cells took each of these
+two hops, and `--check` on it re-derives them from this image.
+
 Usage:
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --csv > sites.csv
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2 --csv
     python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --follow-flow
+    python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1 --follow-flow
 """
 import argparse
 import collections
@@ -137,22 +163,122 @@ FLOW_CLASSES = (
     (NONE, "none"),
 )
 
+# What the `other->flow` column becomes once `--callee-depth` is given as well.
+# The name is the point and it names *both* hops: a `other->flow->read` cell
+# was reached past a branch and then through a call, which is weaker than
+# `read->flow` (one branch, no call) and weaker than the depth-1
+# `handoff->read` (one call, no branch) -- so it is a column of its own and
+# never shares one with either. The unchanged `other->flow` label survives as
+# the last member for the residue that has no callee to resolve at all: a
+# `movc` or `jmp` past a branch is a verdict, not a handoff, and giving it a
+# `->callee` column would claim a call that is not there. The `none` that
+# closed FLOW_CLASSES is a sibling of `other->flow` in that tuple rather than
+# part of what is replaced, and so is left alone.
+FLOW_CALLEE_CLASSES = (
+    ("DPTR handed to a call reached only by following a branch -> callee reads",
+     "other->flow->read"),
+    ("DPTR handed to a call reached only by following a branch -> callee writes",
+     "other->flow->write"),
+    ("DPTR handed to a call reached only by following a branch -> callee "
+     "reads+writes", "other->flow->r+w"),
+    ("DPTR handed to a call reached only by following a branch -> callee does "
+     "not settle a direction", "other->flow->unresolved"),
+    FLOW_CLASSES[3],
+)
+
+# What the handoff column becomes at --callee-depth 2. The first three are
+# HANDOFF_CLASSES' own labels and cells unchanged -- a `handoff->read` settled
+# one call from the site at depth 2 exactly as it did at depth 1 -- and the
+# next three are the cells the *second* hop is what settled, which is why they
+# are a column apart: `resolve_handoff()` hands back the same three label
+# strings at either depth, so without this split a cell reached through two
+# calls would print in the same column as one reached through a single call
+# and the table would be claiming the two are the same strength.
+#
+# The naming is deliberately parallel to the `other->flow->` names above:
+# `handoff->callee->read` is call-then-call and `other->flow->read` is
+# branch-then-call, so the two weaker claims read side by side and neither can
+# be mistaken for the one-hop column beside it. The unresolved bucket keeps
+# the depth-0 label for the reason HANDOFF_CLASSES gives: it is the same
+# verdict, reached further in.
+HANDOFF_DEPTH2_CLASSES = HANDOFF_CLASSES[:3] + (
+    ("handed to lcall/ljmp -> second callee reads", "handoff->callee->read"),
+    ("handed to lcall/ljmp -> second callee writes", "handoff->callee->write"),
+    ("handed to lcall/ljmp -> second callee reads+writes",
+     "handoff->callee->r+w"),
+    HANDOFF_CLASSES[3],
+)
+
+# What the `other->flow` column becomes at `--callee-depth 2 --follow-flow`,
+# and it is a set of its own rather than FLOW_CALLEE_CLASSES with two members
+# added, because the re-bucketing has to go flow-first at *every* depth: a
+# flow cell resolved through `depth2_bucket()` against the handoff pair would
+# be handed a `handoff->callee->` label, which drops the branch and files a
+# cell that took a branch and two calls beside a cell one call from the site.
+# The first three members are FLOW_CALLEE_CLASSES' own, and keep their cells
+# for the reason HANDOFF_DEPTH2_CLASSES' first three do -- the split keys on
+# the chain and not on the depth asked for. The naming is parallel again:
+# `other->flow->read` is branch-then-call and `other->flow->callee->read` is
+# branch-then-call-then-call, so all three weaker claims read side by side and
+# none of them shares a column with the one-hop `handoff->read`.
+FLOW_CALLEE_DEPTH2_CLASSES = FLOW_CALLEE_CLASSES[:3] + (
+    ("DPTR handed to a call reached only by following a branch -> second "
+     "callee reads", "other->flow->callee->read"),
+    ("DPTR handed to a call reached only by following a branch -> second "
+     "callee writes", "other->flow->callee->write"),
+    ("DPTR handed to a call reached only by following a branch -> second "
+     "callee reads+writes", "other->flow->callee->r+w"),
+    FLOW_CALLEE_CLASSES[3],
+    FLOW_CLASSES[3],
+)
+
 
 def classes_for(callee_depth: int, follow_flow: bool = False):
     """Column order for a mode. Each flag replaces one column in place by the
     set it resolves into, so the two modes never both describe the same site,
-    and depth 0 without --follow-flow stays byte-identical to before."""
+    and depth 0 without --follow-flow stays byte-identical to before.
+
+    The `other->flow` label is the one replacement that cannot be keyed here,
+    because it is not a member of CLASSES: it only exists once `--follow-flow`
+    has already replaced `NONE` with FLOW_CLASSES above. So the inner labels a
+    first pass produced are replaced by a second pass, and each pass replaces
+    one label by N in place -- the columns after the one it replaced do not
+    move, which is what keeps the depth-0 and depth-1 tables byte-identical
+    when the second pass does not fire.
+    """
+    # HANDOFF_DEPTH2_CLASSES *starts* with HANDOFF_CLASSES' own three labels,
+    # so replacing one with the other is one column in and N out like any
+    # other, and a cell the first hop settled keeps the column it had.
     replacements = {}
     if follow_flow:
         replacements[NONE] = FLOW_CLASSES
-    if callee_depth:
+    if callee_depth > 1:
+        replacements[HANDOFF] = HANDOFF_DEPTH2_CLASSES
+    elif callee_depth:
         replacements[HANDOFF] = HANDOFF_CLASSES
     if not replacements:
         return CLASSES
     out = []
     for label, short in CLASSES:
         out.extend(replacements.get(label, ((label, short),)))
-    return tuple(out)
+    out = tuple(out)
+    if not follow_flow or not callee_depth:
+        return out
+    # Second pass: the inner `other->flow` label, which only a run with both
+    # flags reaches. One column in, N out, at the same position -- and the set
+    # is the one *this* depth declares, so at depth 2 the flow cell the second
+    # hop settles gets the flow-aware weaker column rather than the handoff
+    # one. Declaring FLOW_CALLEE_CLASSES here unconditionally would be the
+    # other half of the same mistake in the other direction: four
+    # `other->flow->` columns a depth-2 row can never land in, and
+    # reconcile() green either way, because it checks that every row has a
+    # column rather than that every declared column has rows.
+    flow = FLOW_CALLEE_DEPTH2_CLASSES if callee_depth > 1 else FLOW_CALLEE_CLASSES
+    inner = []
+    for label, short in out:
+        inner.extend(flow if label == FLOW_CLASSES[3][0]
+                     else ((label, short),))
+    return tuple(inner)
 
 
 def bucket(access: str) -> str:
@@ -279,6 +405,33 @@ def resolve_handoff(d: bytes, off: int, insns, pd_verified: bool, depth: int = 1
     return HANDOFF, target, f"{access} | {window}", chain, stop
 
 
+def depth2_bucket(label: str, chain, resolved=HANDOFF_CLASSES,
+                  depth2=HANDOFF_DEPTH2_CLASSES) -> str:
+    """Move a cell only a *second* hop settled into the depth-2 column.
+
+    `resolve_handoff()` hands back the same three label strings at every
+    depth, so the depth-2 split cannot live there: a chain of one link and a
+    chain of two both come back `... -> callee reads`. The chain is what tells
+    them apart -- a resolved cell whose chain names two routines took two calls
+    to answer, which is the weaker claim and gets the `handoff->callee->` label
+    here. A one-link chain and the unresolved bucket are returned unchanged,
+    which is what keeps the depth-1 columns' own cells where they were.
+
+    The pair to work within is an argument because the labels are not the same
+    strings at both sites: a cell the *follow* reached hands back
+    HANDOFF_CLASSES' labels and has to be mapped into the flow pair first, so
+    calling this with the default pair on one of those would match nothing and
+    hand the label straight back -- the branch silently dropped, which is the
+    conflation the two sets exist to prevent.
+    """
+    if label == HANDOFF or len(chain or ()) < 2:
+        return label
+    for i, (depth1_label, _short) in enumerate(resolved[:3]):
+        if label == depth1_label:
+            return depth2[len(resolved[:3]) + i][0]
+    return label
+
+
 def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int,
               follow_flow: bool = False):
     """One (offset, region, runtime, bucket, callee, callee_window, window,
@@ -303,12 +456,45 @@ def site_rows(d: bytes, addr: int, pd_verified: bool, callee_depth: int,
             if label == NONE:
                 label, via = flow_bucket(f.followed), f.via_cell
         else:
+            f = None
             insns, label, via = walk(d, o), None, None
             label = bucket(classify(insns))
         callee = window = chain = stop = None
         if callee_depth and label == HANDOFF:
             label, callee, window, chain, stop = resolve_handoff(
                 d, o, insns, pd_verified, callee_depth)
+            if callee_depth > 1:
+                label = depth2_bucket(label, chain)
+        elif (follow_flow and callee_depth
+                and label == FLOW_CLASSES[3][0]
+                and f.followed.startswith("DPTR handed")):
+            # The cell the follow reached and found to be a handoff. Resolving
+            # it is one more hop than the depth-1 case, which is why the label
+            # it lands in names the branch as well as the call -- but the
+            # resolver is handed `f.final` rather than `insns`, because the
+            # call `classify()` reported is in the *followed* segment and
+            # `insns` is still the anchor. The `window` column below keeps
+            # reading `insns` for that reason: it is the committed cell, and
+            # swapping it for the final segment would move a column every
+            # --follow-flow table already carries.
+            label, callee, window, chain, stop = resolve_handoff(
+                d, f.final[0][0], f.final, pd_verified, callee_depth)
+            # Flow-first at every depth, and the order is load-bearing: the
+            # label comes back out of resolve_handoff() in HANDOFF_CLASSES'
+            # vocabulary, so it has to be mapped into the flow pair *before*
+            # depth2_bucket() splits it. Run the other way round, depth2_bucket
+            # matches nothing at this site, hands the label back untouched, and
+            # a branch-then-call cell prints in the one-hop `handoff->read`
+            # column -- the exact conflation these columns exist to prevent.
+            flow = FLOW_CALLEE_DEPTH2_CLASSES if callee_depth > 1 \
+                else FLOW_CALLEE_CLASSES
+            if label == HANDOFF:
+                label = flow[3][0]
+            else:
+                label = flow[[c for c, _ in HANDOFF_CLASSES].index(label)][0]
+                if callee_depth > 1:
+                    label = depth2_bucket(label, chain, FLOW_CALLEE_CLASSES,
+                                          FLOW_CALLEE_DEPTH2_CLASSES)
         yield (o, region_of(o, pd_verified)[0], runtime_addr(o, pd_verified),
                label, callee, window,
                " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:]), via,
@@ -403,6 +589,14 @@ def write_csv(d: bytes, regs, pd_verified: bool, callee_depth: int,
         head += ["callee", "callee_window"]
     if callee_depth > 1:
         head += ["chain", "stop"]
+        if follow_flow:
+            # The second hop's own address, beside the chain that already
+            # spells it out: `chain` is `0x35E2 -> 0x10C8`, and a reader
+            # checking one row against `r2` wants the answer the row is *about*
+            # in a column of its own rather than parsing a ` -> ` join. Only at
+            # depth 2 with --follow-flow, because only there can a chain be two
+            # links long *and* have been reached past a branch.
+            head += ["callee2"]
     if follow_flow:
         head += ["flow_via"]
     w.writerow(head)
@@ -420,6 +614,9 @@ def write_csv(d: bytes, regs, pd_verified: bool, callee_depth: int,
             if callee_depth > 1:
                 cells += [" -> ".join(f"0x{t:04X}" for t in chain or ()),
                           stop or ""]
+                if follow_flow:
+                    cells += [f"0x{chain[-1]:04X}"
+                              if chain and len(chain) > 1 else ""]
             if follow_flow:
                 cells += [via or ""]
             w.writerow(cells)
@@ -443,7 +640,17 @@ def main() -> int:
                          "site only). N=1 is what the committed transcripts "
                          "were taken at. At N>=2 --csv adds `chain` and `stop` "
                          "columns; a cycle and the cap each name themselves "
-                         "in `stop` rather than reading as a bare unresolved")
+                         "in `stop` rather than reading as a bare unresolved, "
+                         "and a cell only the second hop settled moves to the "
+                         "weaker `handoff->callee->` column rather than "
+                         "sharing the one-hop one. Given together with "
+                         "--follow-flow it also resolves a handoff the follow "
+                         "reached past a branch, into `other->flow->` -- and "
+                         "at N>=2 keeps the branch in the name, so a cell "
+                         "that took a branch and two calls reads "
+                         "`other->flow->callee->` rather than sharing the "
+                         "`handoff->callee->` column with a cell one call "
+                         "from the site")
     ap.add_argument("--follow-flow", action="store_true",
                     help="split the `none` bucket by what ec/tools/walk_flow_"
                          "follow.py finds on the one path past the branch the "

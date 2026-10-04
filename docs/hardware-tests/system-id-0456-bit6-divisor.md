@@ -174,7 +174,11 @@ With the probe running:
 4. watch ~60 s. mark `block end`.
 5. Ctrl-C. The probe prints its per-arm counts and the implied-divisor table,
    and lists its marks — the last label in that list is the last mark the
-   capture has.
+   capture has. **A blank press is not a mark**: the probe records nothing for
+   one, prints a line saying so, and asks again, so an accidental Enter cannot
+   put a label nobody typed into the capture. If a press is refused, the label
+   you meant is still the next thing to type and the mark it takes is the same
+   number.
 
 `--seconds 300` leaves room for what this section mandates (~30 s settle +
 ~120 s hold + ~60 s watch ≈ 210 s) plus four marks typed by hand. A block run
@@ -222,6 +226,21 @@ self-contained — type what you just did as the label rather than keeping the
 timing in separate notes. The per-sample rows carry all six bytes plus the
 branch the arithmetic placed them on, so the CSV is the raw record and the
 console lines are a convenience.
+
+**The labels in §3 and §3b are free-form prose by design, and this tool takes no
+`--label-vocab` to check them against.** `ec_watch.py` has one, and it refuses
+a label the 0751 grader cannot read — but every label this procedure mandates
+(`block start`, `control arm end`, `steady window end`, `block end`,
+`GPU mode -> discrete`, `suspend/resume`, `driver reload`, `power mode -> N`)
+is one that check would refuse, because none of them leads with a form in the
+grader's `MARK_FORMS`. Nor is there a grader waiting on the result: as the
+paragraph at the top says, neither this probe nor its output is graded by a
+script. So there is nothing to check a mistyped label against, and a check that
+could only refuse would cost you the labels this procedure tells you to type.
+Write the label you would want to read in §4. `ec_watch.py`'s prompt has the
+same rule for a blank press, and
+[system-id-probe-mark-labels.md](../findings/system-id-probe-mark-labels.md) is
+why.
 
 ### 3c. What neither block does
 
