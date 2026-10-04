@@ -6249,6 +6249,62 @@ registers:
       R7 argument of bank0 0xA73F, which is what makes it a payload rather
       than a command code. Three sites, all in the main EC. docs/findings/a73f-09f1-mailbox-payload.md.
 
+  - name: MAILBOX_RING_SLOT1 / SLOT2 / SLOT3 / SLOT4 / SLOT5 / SLOT6 / SLOT7
+    addr: [0x09F3, 0x09F4, 0x09F5, 0x09F6, 0x09F7, 0x09F8, 0x09F9]
+    sources: [xdata-refs, static-scan]
+    static_refs: [0, 0, 0, 1, 0, 0, 2]
+    static_refs_main_ec: [0, 0, 0, 1, 0, 0, 0]
+    static_refs_pd_image: [0, 0, 0, 0, 0, 0, 2]
+    status: unknown-not-absent
+    note: >
+      The seven bytes above the ring base, reached only as 0x09F2 plus an index
+      the producer masks to three bits -- bank1 0x89B5 does `ANL A,#0x07` on
+      the byte at 0x09F1 and hands the sum to write_xdata_at_dptr_plus_a
+      (0x89E7), whose first instruction is `ADD A,DPL`. bank1 0x8955 clears all
+      eight slots at init with an 8-iteration `DJNZ R0` from the base. That is
+      what fixes the ring at eight bytes; no listing spells these seven
+      addresses outright, because the export writes the arithmetic over
+      register names, so the counts above are zero for want of a method that
+      sees it rather than for want of a reference -- the same blind spot
+      registers.yaml records at 0x07B9. `unknown-not-absent` and not
+      `present-untested`: check_status_vocabulary.py rule 2 needs an EC-side
+      site to warrant that value, and five of the seven have none.
+      Two are the exceptions the counts show. 0x09F6 has one EC-side site and
+      0x09F9 has two, and both are unlike the five around them: the 0x09F6 site
+      is bank1 0x8C59, `MOV DPTR,#0x09F6` followed by `MOV R4,0x83` and
+      `MOV R3,0x82` and then `MOV DPTR,#0x0497` with no `MOVX` between, so it
+      names the address and never dereferences it; both 0x09F9 sites are in the
+      ITE8850-PD image at file 0x20000, which has its own XDATA map, so neither
+      is EC-side evidence. Neither resolves to a direction, so neither carries
+      `present-untested` either. What any slot holds is not decoded; this is a
+      reading of committed bytes and not a hardware claim. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: EVENT_RING_SLOT0 / SLOT1 / SLOT2 / SLOT3 / SLOT4 / SLOT5 / SLOT6 / SLOT7 / SLOT8 / SLOT9 / SLOT10 / SLOT11 / SLOT12 / SLOT13 / SLOT14 / SLOT15
+    addr: [0x0710, 0x0711, 0x0712, 0x0713, 0x0714, 0x0715, 0x0716, 0x0717,
+           0x0718, 0x0719, 0x071A, 0x071B, 0x071C, 0x071D, 0x071E, 0x071F]
+    sources: [xdata-refs, static-scan]
+    static_refs: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    static_refs_main_ec: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    static_refs_pd_image: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    status: unknown-not-absent
+    note: >
+      The sixteen-byte ring the byte at 0x070F indexes. bank1 0x88F0 increments
+      that byte, masks it with `ANL A,#0x0F`, writes it back, and then forms
+      DPTR as 0x0710 plus that nibble before `MOVX @DPTR,A`; the decompile
+      agrees, its `CONCAT11(7,...)` argument being the masked index plus 0x10.
+      0x0710 is the base those bytes name and the other fifteen are the same
+      arithmetic above it. Only 0x0710 has an EC-side site, and the census
+      resolves no direction for it: trace_xdata_refs.is_dptr_rebuild() ends the
+      access window at the `ADD A,DPL` two instructions after the seed rather
+      than following the rebuild, so the site reads `no movx in window`. That
+      is a gap in one instrument, not a limit of this table -- the committed
+      listing shows the store, and check_status_vocabulary.py rule 3 refuses
+      `present-untested` only because that instrument cannot follow it. So the
+      base and the fifteen bytes above it are filed together at
+      `unknown-not-absent`. What drains the ring is not decoded; the walk stops
+      at the `LCALL 0x19EA` after the store. Reading of committed bytes, not a
+      hardware claim. docs/findings/a73f-09f1-mailbox-payload.md.
+
   - name: MAILBOX_PUBLISH_GUARD
     addr: 0x09EF
     sources: [xdata-refs, static-scan]

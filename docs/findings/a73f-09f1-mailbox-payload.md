@@ -201,9 +201,15 @@ It stays empty: **"not found by this scan",** never "R7 was left alone".
 `0xC77F` is the one site no committed `.asm` listing covers, and it carries
 `0xB8` — a value the listing-derived list does not have.
 
-**Every one of the fourteen readings is a literal.** There is no site that
-passes a computed or register-derived value. The values run `0xA7` to `0xBC`
-with gaps, and `0x43` outside that range.
+**No site passes a computed or register-derived value.** What each of the
+fourteen readings rests on differs, and the tool's own docstring is the reason
+to say so: the `r7` column is a backward byte-pattern scan, and a byte pattern
+cannot always tell an opcode from an operand. Twelve are the `mov R7,#imm`
+pair immediately preceding the transfer, read directly off the listing. Two —
+`0xC5A5` and `0xC603` — are 44 bytes back and are settled by the listings plus
+the branch, as set out above. So the claim is about what the scan cannot
+produce, not a claim that one method produced all fourteen. The values run
+`0xA7` to `0xBC` with gaps, and `0x43` outside that range.
 
 ## What the values are not
 
@@ -240,7 +246,7 @@ So the enum's meaning is not in this firmware, by the method above. Whether the
 eight bytes are, say, event codes or a state machine's inputs is a question for
 a capture, not for another scan, and this file does not guess.
 
-## The register rows, and the ones that cannot have one
+## The register rows, and what it cost to file the rest
 
 `ec/annotations/registers.yaml` gained rows for `0x047C`, `0x070F`, `0x09EF`,
 `0x09F0`, `0x09F1`, `0x09F2` and `0x0A47`. Every `static_refs*` is reproduced by
@@ -248,18 +254,25 @@ a capture, not for another scan, and this file does not guess.
 All seven carry `present-untested`: each has a direct EC-side site, and each
 site resolves to a read, a write or both.
 
-**The rest of both rings cannot have a row at all, and that is a property of
-the table rather than a gap in the walk.** A `registers.yaml` address is turned
-into a Ghidra symbol by `gen_xdata_symbols.py`, the symbol file is named
-`xdata-symbols.csv`, and `xdata_register_map.py --self-test` requires every
-address that file names and its C-level census does not reach to be recorded in
-`NOT_IN_TREE` with a reason. So a byte the decompiled C never spells can be
-written down only by growing that dict — and `NOT_IN_TREE` lives in a tool
-whose line numbers are cited from `docs/findings.md`, which is frozen. Adding
-the entries shifts those pins by the length of the addition, and fixing them
-means editing a file this repository forbids editing.
+**The rest of both rings is filed too.** `0x09F3`-`0x09F9` and `0x0710`-`0x071F`
+are two more entries, at `unknown-not-absent`. What they cost is one
+`NOT_IN_TREE` entry apiece, and that dict has a window for it: a
+`NOT_IN_TREE.update({...})` block sits below every line any citation in the
+tree names and above the `__main__` guard, added for issue #575 for exactly
+this reason. Nothing above that line moves, so no citation shifts and
+`docs/findings.md` is not touched — `check_eq_guard_citations.py` reads the
+pins after the change and resolves every anchor.
 
-That is worth stating as a limitation rather than working around:
+**Correction, 2026-10-04 (fix round 2 of #1861).** An earlier version of this
+section said the rest of both rings *could not have a row at all*, and gave two
+reasons: that `NOT_IN_TREE` lives in a line-pinned tool whose pins are cited
+from a frozen file, and that the table cannot hold a row at a zero site count.
+Both were wrong, and the second is contradicted by the table itself, which
+already carries rows at `static_refs_main_ec: 0` at this same status. The first
+is contradicted by the block described above. What is left is the real
+constraint, and it is much weaker than either: **a byte the decompiled C never
+spells needs a `NOT_IN_TREE` reason recorded, and the reason has to be one of
+the three in the recorded vocabulary.** That is a sentence to write, not a wall.
 
 - **`0x09F3`-`0x09F9`** are written and read only through the indexed helpers
   at `0x89E7` and `0x89A9`, which the export spells over register arithmetic,
@@ -272,7 +285,9 @@ That is worth stating as a limitation rather than working around:
   Its single EC-side site, bank1 `0x8C59` (file `0x10C59`), is `MOV DPTR,#0x09F6`
   followed by `MOV R4,0x83` and `MOV R3,0x82` and then `MOV DPTR,#0x0497` —
   no `MOVX` in between, so the site names the address and never dereferences
-  it.
+  it. It is filed beside the other six rather than apart from them: it is the
+  same ring arithmetic, and one EC-side site that dereferences nothing is not a
+  reason to grade its neighbours differently.
 - **`0x0710`-`0x071F`** are the same shape in the other ring, and for the
   reason set out under "`0x0710` is a second thing the instrument decides"
   below: the store is `MOV DPTR,#0x0710` then `ADD A,DPL`, and
@@ -280,32 +295,36 @@ That is worth stating as a limitation rather than working around:
   rather than a longer window. The decompile spells the same arithmetic and
   reaches the same base.
 
-The knowledge those rows would have carried is in this file and in the
-annotation rows for `0x88F0`, `0x89B5`, `0x897B` and `0x8955`, which carry the
-bank and address citations the register table cannot hold. **A register table
-that is derived from what the decompiler could spell cannot describe a byte
-the decompiler could not spell** — which is the sharpest form of the §4c blind
-spot this repository keeps meeting, and it is a structural limit rather than a
-gap anyone can scan their way out of.
+So the two rings are now described in the register table rather than only here,
+and what this file and the annotation rows for `0x88F0`, `0x89B5`, `0x897B` and
+`0x8955` still carry is the bank and address citations behind them. What is
+*not* claimed is a direction or a payload meaning for any slot: `unknown-not-absent`
+says the census did not reach the byte, which is what these entries say and all
+they say.
 
 ### `0x0710` is a second thing the instrument decides, and it is recorded here
 
-Worth stating because it cost a row. `0x0710` *does* have an EC-side site and
-its listing shows it stored to, but the access walk ends at the `ADD A,DPL` two
-instructions later: `trace_xdata_refs.is_dptr_rebuild()` treats a DPTR reload
-as a different access and not a longer window, by design
+Worth stating because it decides the row's status. `0x0710` *does* have an
+EC-side site and its listing shows it stored to, but the access walk ends at
+the `ADD A,DPL` two instructions later: `trace_xdata_refs.is_dptr_rebuild()`
+treats a DPTR reload as a different access and not a longer window, by design
 (`docs/findings/walk-window-terminators.md`). The census records
-`no movx in window`, and rule 3 of `check_status_vocabulary.py` would refuse
-`present-untested` on that basis — correctly, on what it can see. The row was
-dropped rather than filed at a status weaker than its evidence.
+`no movx in window`, and rule 3 of `check_status_vocabulary.py` refuses
+`present-untested` on that basis — correctly, on what it can see. So the ring
+is filed at `unknown-not-absent`, which claims only that the census did not
+reach the byte. That is a gap in one instrument, not a fact about the byte:
+the committed listing shows the store.
 
-The open question both of these raise is the same one: **should a DPTR rebuild
-count as a resolved direction at `--callee-depth 1`, and can a
-`registers.yaml` row be filed for a byte the census cannot reach without
-growing a line-pinned tool?** The committed listing answers the first
-("write"). Neither is this change's to answer — the census feeds every row in
-the register table — but both are cheap to fix deliberately and expensive to
-rediscover.
+The open question this raises is the first of the pair below, and it is not
+this change's to answer — the census feeds every row in the register table:
+
+> **should a DPTR rebuild count as a resolved direction at `--callee-depth 1`?**
+
+The committed listing answers it ("write"). It is cheap to fix deliberately and
+expensive to rediscover. The second half of the old question — whether a row
+can be filed for a byte the census cannot reach — is answered above: it can,
+the table already holds zero-site rows at this status, and the `NOT_IN_TREE`
+reason is a sentence rather than a wall.
 
 ## The retraction
 
@@ -366,5 +385,7 @@ $ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x108F0 -n 16
 $ grep -c "not present in this decompiled tree" ec/annotations/ghidra-functions.csv
 ```
 
-All nine exit 0. `grep -c` returning 0 is the retraction check: no row is left
+The first eight exit 0. The ninth prints `0` and exits 1, which is the
+retraction check passing: `grep -c` exits non-zero when it selects no lines, so
+a zero count is the expected result here rather than a failure. No row is left
 asserting that `0x1114` or `0x1100` is missing from the tree.
