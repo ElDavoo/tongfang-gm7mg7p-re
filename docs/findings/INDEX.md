@@ -140,6 +140,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
+- [`fan-tachometer-addresses.md`](fan-tachometer-addresses.md) — The four §2 features resolve to five EC addresses, and one of them is not the byte the Windows service reads
 - [`ff-fill-census.md`](ff-fill-census.md) — Every all-`0xFF` listing in the export, and the byte scan that made seventeen of them (issue #561)
 - [`findings-index-staleness.md`](findings-index-staleness.md) — The index is hand-edited by merges and nothing runs the check that would catch it (issue #1137)
 - [`fixture-empty-pointer-cells.md`](fixture-empty-pointer-cells.md) — The fixture's six empty cells are not a count, and the set is derivable where the six is not (issue #1006)
