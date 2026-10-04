@@ -114,6 +114,14 @@ ACPI_TMP_IOCTLS = {
 # repository would have to edit the next time the DLL is re-shipped.
 TEMP_EXPORTS = ("TempWrite1", "TempWrite2", "TempWrite3")
 
+# The module that *defines* them, and the one whose export table every committed
+# PE is searched against. It has to be that module rather than each input's own:
+# a kernel driver exports nothing, the service exports nothing, and the two
+# installer wrappers are PE32 where `pe_triage` reads PE32+ only, so a per-input
+# target set is empty for four of the five inputs and the "no caller" row would
+# be a search with nothing in it rather than a negative.
+TEMP_EXPORT_MODULE = "vendor/control-center-3.9.18.0/ACPIDriverDll.dll"
+
 # The decompiled trees searched as text. The first is the whole service with
 # every method body decrypted, so a negative there is a *closed* result for that
 # binary rather than a search miss; the other two are partial and anti-tamper
@@ -170,6 +178,14 @@ UNSTAGED_INPUTS = [
     "    committed tree binds one: the only ACPIDriverDll.dll declaration in\n"
     "    windows/decompiled/ is SMAPCTable, which the export table maps to\n"
     "    SMRW rather than to T1WR.",
+    "an import-address-table call, on either the managed or the native side.\n"
+    "    The native layer matches a `call` whose operand is a bare address --\n"
+    "    `call 0x180003f80` -- so it sees an intra-module direct call and not\n"
+    "    `call *0x1c77f3(%rip)`, which is what a caller in *another* module\n"
+    "    disassembles to and where the loader puts every cross-module call.\n"
+    "    Following the IAT slot back to the import name is the shape that\n"
+    "    would cover it, and this layer does not do that: the 'no committed PE\n"
+    "    calls TempWrite*' row is a statement about direct calls only.",
 ]
 
 # ---------------------------------------------------------------- managed ---
@@ -548,14 +564,44 @@ def listing_for(path):
 STORE_MNEMONICS = ("mov", "movl", "movq")
 
 
-def native_sites(label, path, instructions, image_base, exports):
+def call_targets(export_base, exports):
+    """{va: name} of the `TempWrite*` exports, from the *defining* module.
+
+    Built once by `census()` and handed to every input's `native_sites()`, so
+    the set that is searched and the set the census records are the same object
+    -- a rule that resolved a target per input, from each PE's own export
+    table, would be empty for every PE that has no exports of its own and would
+    report that as a clean tree.
+    """
+    return {export_base + exports[name]: name
+            for name in TEMP_EXPORTS if name in exports}
+
+
+def _direct_call_target(operands):
+    """The address a `call` names outright, or None when it names none.
+
+    A **direct** call is the only shape that has one. An
+    import-address-table call spells its operand `*0x1c77f3(%rip)`, where the
+    `0x...` is a displacement and the `#` comment is the *slot* the loader
+    fills in -- neither is the callee, and the callee is only knowable by
+    reading the import directory and following the slot back to a name, which
+    this layer does not do. Returning None rather than the displacement is
+    what keeps a cross-module caller out of a row that claims to cover them;
+    `UNSTAGED_INPUTS` names that limit, and the negative in the write-up is
+    stated as being about direct calls.
+    """
+    m = re.fullmatch(r"0x([0-9a-fA-F]+)", operands.split("#")[0].strip())
+    return int(m.group(1), 16) if m else None
+
+
+def native_sites(label, path, instructions, call_targets_va):
     """[(va, kind, ioctl, arg0)] for the IOCTL sites in one native program.
 
     Two shapes are looked for, and they are different claims:
 
-    * `call` to a `TempWrite*` export RVA -- something that *calls* the wrapper.
-      Its `Arg0` is whatever that caller passes in `ecx`, which a linear
-      listing cannot follow, so it is reported as not resolved.
+    * `call` to a `TempWrite*` export address -- something that *calls* the
+      wrapper. Its `Arg0` is whatever that caller passes in `ecx`, which a
+      linear listing cannot follow, so it is reported as not resolved.
     * `mov $0x9c40a4dc,%edx` before the `DeviceIoControl` import thunk -- a site
       that issues the IOCTL itself. `lpInBuffer` is the third argument, so it
       arrives in `r8`; the `lea` naming the buffer address is followed back to
@@ -564,18 +610,23 @@ def native_sites(label, path, instructions, image_base, exports):
     A store of a *register* into word 0 means the value is whatever that
     register held -- which is the honest answer for a wrapper that forwards its
     own first parameter, and is reported as unresolved rather than guessed.
+
+    The first shape is a **direct** call only: the operand has to be a bare
+    address for it to match, so `call *0x1c77f3(%rip)` -- an
+    import-address-table call, and what every cross-module call disassembles to
+    -- is not one this function can see. `call_targets_va` is `call_targets()`'s
+    dict, i.e. the defining module's exports rather than the scanned one's; see
+    `TEMP_EXPORT_MODULE` and the last entry of `UNSTAGED_INPUTS`.
     """
     out = []
-    export_rvas = {image_base + exports[name]: name
-                   for name in TEMP_EXPORTS if name in exports}
     by_va = {va: (m, o) for va, m, o in instructions}
     vas = [va for va, _m, _o in instructions]
     for index, va in enumerate(vas):
         mnemonic, operands = by_va[va]
         if mnemonic == "call":
-            m = re.fullmatch(r"0x([0-9a-fA-F]+)", operands.split("#")[0].strip())
-            if m and int(m.group(1), 16) in export_rvas:
-                out.append((va, "calls " + export_rvas[int(m.group(1), 16)],
+            target = _direct_call_target(operands)
+            if target in call_targets_va:
+                out.append((va, "calls " + call_targets_va[target],
                             T1WR_IOCTL, None))
         if not (mnemonic == "mov" and
                 re.fullmatch(r"\$0x9c40a4dc,%edx", operands.split("#")[0].strip())):
@@ -1082,7 +1133,7 @@ def managed_texts():
 def census(native=True):
     """Everything the write-up quotes, computed from the committed tree."""
     result = {"sites": [], "unreadable": [], "probes": [], "native": [],
-              "unresolved": []}
+              "unresolved": [], "call_targets": {}}
     trees = managed_texts()
     flat = [(label, text) for label, sources in trees for label, text in sources]
     consts = const_table([t for _l, t in flat])
@@ -1113,6 +1164,20 @@ def census(native=True):
                          for func in dispatch.values()}
 
     if native:
+        # One target set for every input, read from the module that *defines*
+        # the exports rather than from each PE's own export table. Four of the
+        # five have none to read -- a driver and a service export nothing, and
+        # the two installer wrappers are PE32 where `pe_triage` reads PE32+ only
+        # -- so resolving a target per input left the search empty for each of
+        # them, and "no committed PE calls TempWrite*" was a row that could not
+        # have matched anything rather than a negative over the tree. Resolve
+        # it here, once, from `TEMP_EXPORT_MODULE`, and pass *this* dict down:
+        # `result["call_targets"]` is the record of what was searched, so the
+        # two cannot come to disagree.
+        temp_path = os.path.join(REPO, TEMP_EXPORT_MODULE)
+        targets = call_targets(_image_base(temp_path),
+                               _pe_exports(temp_path))
+        result["call_targets"] = targets
         for label, rel in NATIVE_INPUTS:
             path = os.path.join(REPO, rel)
             if not os.path.exists(path):
@@ -1123,9 +1188,7 @@ def census(native=True):
                 result["native"].append((label, rel, [], "no disassembler"))
                 continue
             instructions = parse_listing(listing)
-            exports = _pe_exports(path)
-            image_base = _image_base(path)
-            sites = native_sites(label, path, instructions, image_base, exports)
+            sites = native_sites(label, path, instructions, targets)
             result["native"].append((label, rel, sites, "read"))
 
     result["power"] = power_limit_route(
@@ -1221,6 +1284,22 @@ def self_check(c):
             drift.append(f"the readability probe {term!r} came back zero, so "
                          f"this run's zeros cannot be trusted ({why})")
 
+    # "No committed PE calls a TempWrite* export" is a negative, and a negative
+    # is only worth reading if the search had targets. If the defining module
+    # stops parsing, every target set is empty and the row would go on reporting
+    # a clean tree while matching nothing at all -- which is the blind spot
+    # that made the sentence vacuous in the first place. Only when the native
+    # layer ran: under `--no-native` nothing was claimed to have been searched.
+    if c.get("native"):
+        targets = c.get("call_targets") or {}
+        unsearched = [name for name in TEMP_EXPORTS
+                      if name not in targets.values()]
+        if unsearched:
+            drift.append(f"the native layer resolved no call target for "
+                         f"{', '.join(unsearched)} in {TEMP_EXPORT_MODULE}, so "
+                         "'no committed PE calls a TempWrite* export' was not "
+                         "searched against the full target set")
+
     for addr, info in sorted(c["power"].items()):
         if addr not in POWER_LIMIT_ADDRS:
             drift.append(f"power_limit_route returned 0x{addr:04X}, which is "
@@ -1304,6 +1383,22 @@ def render(c, verbose):
         out(f"  {site['file_line']}  {site['method']}\n")
 
     out("\n== native layer: disassembly of every committed PE ==\n")
+    targets = c.get("call_targets") or {}
+    if not c["native"]:
+        out("  (skipped: --no-native, so no negative here is a negative)\n")
+    else:
+        out("  Call targets, from the export table of the module that\n"
+            f"  defines them ({TEMP_EXPORT_MODULE}). Every PE below is\n"
+            "  searched against this one set, not against its own:\n")
+        if targets:
+            for va, name in sorted(targets.items()):
+                out(f"    0x{va:X}  {name}\n")
+        else:
+            out("    (none -- the export table did not parse, so no 'calls'\n"
+                "     row below is a negative over the tree)\n")
+        out("  A 'calls' row needs a `call` whose operand is that bare address.\n"
+            "  An import-address-table call, `call *0x1c77f3(%rip)`, is what a\n"
+            "  caller in another module disassembles to and is not matched.\n")
     for label, rel, sites, state in c["native"]:
         if state != "read":
             out(f"  {label}\n    NOT READ ({state}) -- its zero is not evidence\n")

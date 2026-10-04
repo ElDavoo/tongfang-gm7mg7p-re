@@ -483,6 +483,13 @@ class NativeLayerTests(unittest.TestCase):
         "mov    %ecx,0x278d02(%rip)        # 0x18027cca0",
         "movl   $0x84,0x278d02(%rip)       # 0x18027cca0")
 
+    # What `census()` builds once and hands to every input: the `TempWrite*`
+    # exports of the module that defines them. Spelled as the resolved
+    # {address: name} dict `native_sites` actually searches rather than as an
+    # image base plus an RVA map, so these cases exercise the shape the tool
+    # uses and not a second one.
+    TARGETS = S.call_targets(0x180000000, {"TempWrite1": 0x3F80})
+
     def test_the_listing_parses_to_instructions(self):
         instructions = S.parse_listing(self.LISTING)
         self.assertTrue(instructions)
@@ -503,8 +510,7 @@ class NativeLayerTests(unittest.TestCase):
 
     def test_the_ioctl_site_is_found(self):
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(self.LISTING), 0x180000000,
-                               {"TempWrite1": 0x3F80})
+                               S.parse_listing(self.LISTING), self.TARGETS)
         issuing = [s for s in sites if s[2] == S.T1WR_IOCTL]
         self.assertEqual(len(issuing), 1)
         self.assertEqual(issuing[0][0], 0x18000402C)
@@ -513,8 +519,7 @@ class NativeLayerTests(unittest.TestCase):
         # `mov %ecx, …` puts whatever the caller passed in `ecx` there. Naming
         # that a constant would be the tool inventing an answer.
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(self.LISTING), 0x180000000,
-                               {"TempWrite1": 0x3F80})
+                               S.parse_listing(self.LISTING), self.TARGETS)
         self.assertIsNone([s for s in sites if s[2] == S.T1WR_IOCTL][0][3])
 
     def test_an_immediate_store_into_the_buffer_is_the_arg0(self):
@@ -522,15 +527,13 @@ class NativeLayerTests(unittest.TestCase):
         # case the managed layer reads, and the native layer has to read it too
         # or a native-only caller would be invisible.
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(self.IMMEDIATE), 0x180000000,
-                               {"TempWrite1": 0x3F80})
+                               S.parse_listing(self.IMMEDIATE), self.TARGETS)
         found = [s for s in sites if s[2] == S.T1WR_IOCTL][0]
         self.assertEqual(found[3], 0x84)
 
     def test_that_native_arg0_reaches_the_arm(self):
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(self.IMMEDIATE), 0x180000000,
-                               {"TempWrite1": 0x3F80})
+                               S.parse_listing(self.IMMEDIATE), self.TARGETS)
         rows = S.reachability(
             [{"arg0": sites[0][3]}],
             arms=[(0x84, 50646, (("APL4", "APL4", "present-untested"),))],
@@ -545,8 +548,7 @@ class NativeLayerTests(unittest.TestCase):
         listing = "\n".join(line for line in self.IMMEDIATE.splitlines()
                             if "int3" not in line)
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(listing), 0x180000000,
-                               {"TempWrite1": 0x3F80},)
+                               S.parse_listing(listing), self.TARGETS)
         found = [s for s in sites if s[2] == S.T1WR_IOCTL]
         self.assertEqual([s[3] for s in found], [0x84],
                          "the window fallback still covers a short function")
@@ -558,15 +560,40 @@ class NativeLayerTests(unittest.TestCase):
             "   180005000:\t48 8b cb             \tmov    %rbx,%rcx\n"
             "   180005003:\te8 78 ef ff ff       \tcall   0x180003f80\n")
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(listing), 0x180000000,
-                               {"TempWrite1": 0x3F80})
+                               S.parse_listing(listing), self.TARGETS)
         self.assertTrue(any(s[1].startswith("calls TempWrite1") for s in sites))
+
+    def test_the_call_rule_reads_a_bare_address_and_nothing_else(self):
+        # The limit "What this does not establish" names, held in code as well
+        # as in prose. The first operand is what a direct call looks like; the
+        # other two are the import-address-table form, once as objdump spells
+        # it in this repository's own listings and once with the `#` comment
+        # naming the export itself. Neither names a callee the rule can read --
+        # the displacement is not the callee and the comment is the loader's
+        # slot, not the function -- so a cross-module caller is invisible here
+        # and the negative is about direct calls only. A layer that starts
+        # following the IAT slot has to update this and the write-up together.
+        self.assertEqual(S._direct_call_target("0x180003f80"), 0x180003F80)
+        for operands in ("*0x1c77f3(%rip)        # 0x1801cb838",
+                         "*0x180003f80(%rip)      # 0x180003f80"):
+            with self.subTest(operands=operands):
+                self.assertIsNone(S._direct_call_target(operands))
+
+    def test_an_import_table_call_yields_no_caller_row(self):
+        # The same limit end to end, over a listing rather than the rule alone:
+        # a call that does not name its callee cannot become a 'calls' row.
+        listing = self.LISTING + (
+            "   180005000:\t48 8b cb            \tmov    %rbx,%rcx\n"
+            "   180005003:\tff 15 f3 77 1c 00 \tcall   *0x1c77f3(%rip)        # 0x1801cb838\n")
+        sites = S.native_sites("fixture", "fixture.dll",
+                               S.parse_listing(listing), self.TARGETS)
+        self.assertEqual([s for s in sites if s[1].startswith("calls ")], [],
+                         "an import-table call was read as a direct one")
 
     def test_an_unrelated_code_is_not_a_T1WR_site(self):
         listing = self.LISTING.replace("0x9c40a4dc", "0x9c40a48c")
         sites = S.native_sites("fixture", "fixture.dll",
-                               S.parse_listing(listing), 0x180000000,
-                               {"TempWrite1": 0x3F80})
+                               S.parse_listing(listing), self.TARGETS)
         self.assertEqual([s for s in sites if s[2] == S.T1WR_IOCTL], [])
 
 
@@ -607,12 +634,29 @@ class CommittedNativeTests(unittest.TestCase):
         self.assertTrue([s for s in found[dll] if s[2] == S.T1WR_IOCTL],
                         "TempWrite1's own IOCTL setup was not found in the DLL")
 
+    def test_the_call_search_had_targets_to_look_for(self):
+        # The negative below is only a negative if the export table gave the
+        # search something to match. Asserting `callers == []` on its own passes
+        # just as happily when the target set is empty, which is what made it
+        # vacuous: `_pe_exports()` returns {} for a driver, for a service and
+        # for a PE32 the parser cannot read, so a per-input target set was empty
+        # for four of the five inputs and each reported a clean tree.
+        targets = self.census["call_targets"]
+        self.assertTrue(targets, "the native layer had no call target at all, "
+                                 "so its 'no caller' row cannot be evidence")
+        self.assertEqual(sorted(targets.values()), sorted(S.TEMP_EXPORTS),
+                         "not every TempWrite* export was searched for")
+
     def test_no_native_program_calls_a_TempWrite_export(self):
+        # A *direct* call, which is the only shape `native_sites` matches: an
+        # import-address-table `call *0x...(%rip)` is a caller this layer cannot
+        # see, and `UNSTAGED_INPUTS` says so rather than leaving the row to be
+        # read wider than the rule that produced it.
         callers = [(label, s) for label, _rel, sites, _state
                    in self.census["native"] for s in sites
                    if s[1].startswith("calls ")]
         self.assertEqual(callers, [],
-                         "a committed PE calls a TempWrite* export")
+                         "a committed PE calls a TempWrite* export directly")
 
     def test_the_sys_dispatch_comparison_is_not_a_caller(self):
         # `ACPIDriver.sys` compares against 0x9C40A4DC in its dispatch. That is

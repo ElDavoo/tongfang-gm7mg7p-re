@@ -169,15 +169,25 @@ passed in `ecx`, and it is not resolved. `ACPIDriver.sys` compares against
 comparing a code it received, not a site issuing one; the `mov $…, %edx` rule is
 what keeps the two apart.
 
-**No committed PE calls a `TempWrite*` export**, and no other committed PE
-carries a `mov $0x9c40a4dc,%edx` site. One reader-preemption, because the
-byte-level grep this invites does return a hit: `GCUService.exe` holds the
-`T1WR` code once, at raw offset `0x13db47`, but as a four-byte entry in a
-five-byte-stride table of the `0x9c40a4xx` codes — a dispatch table, not a
-`mov` immediate. It is a code the binary *lists*, not one it issues. The
-positive control rides along: the DLL is known to define `TempWrite1`, so a
-native layer that found nothing there would have read no listing rather than
-found nothing, and `--self-check` fails if that probe comes back zero.
+**No committed PE calls a `TempWrite*` export by a direct call to the export
+address**, and no other committed PE carries a `mov $0x9c40a4dc,%edx` site.
+Every input is searched against one target set — the three `TempWrite*`
+addresses from the export table of the module that defines them — rather than
+against its own, which is empty for four of the five (a driver and a service
+export nothing; the two installer wrappers are PE32, which `pe_triage` does not
+read). `t1wr_sites.py` prints that set with its output and `--self-check` fails
+if any of the three names fails to resolve, so the row cannot go on reporting a
+clean tree while matching nothing. "Direct call" is load-bearing and is the
+limit below.
+
+One reader-preemption, because the byte-level grep this invites does return a
+hit: `GCUService.exe` holds the `T1WR` code once, at raw offset `0x13db47`, but
+as a four-byte entry in a five-byte-stride table of the `0x9c40a4xx` codes — a
+dispatch table, not a `mov` immediate. It is a code the binary *lists*, not one
+it issues. The positive control rides along: the DLL is known to define
+`TempWrite1`, so a native layer that found nothing there would have read no
+listing rather than found nothing, and `--self-check` fails if that probe comes
+back zero.
 
 ## What this does not establish
 
@@ -205,6 +215,14 @@ good as the inputs it could reach. These are the ones it could not:
   tree binds one: `grep -rn 'DllImport("ACPIDriverDll' windows/decompiled/`
   returns a single hit, in `AcpiCtrl.cs`, and the export table maps that one
   (`SMAPCTable`) to `SMRW`, not `T1WR`.
+- **An import-address-table call, on either layer.** The native layer matches a
+  `call` whose operand is a bare address, so it sees `call 0x180003f80` and not
+  `call *0x1c77f3(%rip)` — which is what a caller in *another* module
+  disassembles to, and where the loader puts every cross-module call. Following
+  the slot back through the import directory to a name is the shape that would
+  cover it, and this layer does not do that, so a cross-module `TempWrite*`
+  caller would not be seen. That is why the native negative above is stated as
+  being about direct calls.
 
 The tool prints this list with its output rather than burying it, and the
 readability probes make a zero distinguishable from a scan that never opened the
@@ -228,9 +246,12 @@ the I/O manager does with the remainder is a runtime question and is not claimed
   `present-untested` to answer and needs the machine.
 - **The `ECRW` route is the one worth a driver.** `APL1`/`APL2`/`APL4` and
   `APTC`/`APTN` are written by the vendor stack through a plain byte write at
-  `0xFE410000 + addr`. That is the shape `uniwill-laptop` already has for the
-  rest of the EC, and this is the first measurement that the power-limit
-  registers are reachable that way rather than only through an ACPI method.
+  `0xFE410000 + addr`. That these registers are reachable by a direct byte write
+  was established before this: `linux/patches/gm7mg7p-power-profile/` writes
+  `0x0783`-`0x0785` from the EC default blocks on every profile switch, and
+  `registers.yaml` carries `live` among the `CPU_PL1 / PL2 / PL4` row's sources
+  on the strength of it. What this adds is which IOCTL the vendor's own Windows
+  stack sends them through, which is the part the profile cannot say.
 - **The dispatch side is a separate question** and is untouched: what
   `MMRW`/`MMWB`/`MMWD`'s handlers do with their buffer is issue #1338, and this
   is the caller side of one IOCTL.

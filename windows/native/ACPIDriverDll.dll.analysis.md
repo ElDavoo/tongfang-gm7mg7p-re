@@ -105,9 +105,11 @@ digits it had to reject as ambiguous against fan levels and ILSpy markers.
 builds from `SystemBuffer[0..3]`, which makes the `Arg0` a property of the
 call site, so no value is ambiguous. It also covers the native layer this
 paragraph cannot: a disassembly listing per committed PE, where the one
-`mov $0x9c40a4dc,%edx` is this file's own `TempWrite1` and no committed PE
-calls a `TempWrite*` export. Its reachability table finds no caller for any
-`T1WR` arm. See `../../docs/findings/t1wr-call-site-arms.md`.
+`mov $0x9c40a4dc,%edx` is this file's own `TempWrite1` and no committed PE calls
+a `TempWrite*` export by a direct call to its address. Its reachability table
+finds no caller for any `T1WR` arm. See
+`../../docs/findings/t1wr-call-site-arms.md`, which also names what the native
+layer cannot see.
 
 ## `ReadEC` / `WriteEC` in full
 
