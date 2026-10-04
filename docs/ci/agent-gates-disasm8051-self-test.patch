@@ -109,11 +109,12 @@
 # deliberate and none is where a reader would put them.
 # The second tool's own `case` arm runs `--check` as well as `--self-test`,
 # unlike the first's, because `data_regions.py --check` is the mode that
-# actually holds `annotations/data-regions.yaml` to the committed image: seven
-# spans, each re-derived for stride, entry count and first/last value, with a
-# refusal for an entry whose `evidence` is empty or whose `confidence` or
-# `shape` is outside its vocabulary. Its `--self-test` holds those refusals and
-# an oracle transcribed from `annotations/bank-call-audit.md` rather than from
+# actually holds `annotations/data-regions.yaml` to the committed image: every
+# span listed there, each re-derived for stride, entry count and first/last
+# value, with a refusal for an entry whose `evidence` is empty or whose
+# `confidence` or `shape` is outside its vocabulary. Its `--self-test` holds
+# those refusals and an oracle transcribed from
+# `annotations/bank-call-audit.md` rather than from
 # the YAML, so the tool cannot grade its own homework. It reads two committed
 # files: no Ghidra, no network, no assembler, no `r2`, no capture, no EC.
 # Nothing about it is a behavioural claim and no `status:` in
