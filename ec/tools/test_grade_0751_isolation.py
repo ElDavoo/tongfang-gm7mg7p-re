@@ -3109,6 +3109,17 @@ class MarkSetTests(unittest.TestCase):
     # windows/tools/system_id_probe.py still substitutes the same label, and
     # writes the same shape of row. The fixture and every assertion below
     # stand; see windows/tools/ec_watch-marks.md.
+    # CORRECTION (#1329, 2026-10-04): the "though ... still substitutes" is no
+    # longer true -- that prompt refuses a blank press and records nothing as
+    # well, on the same rule (#474, then #1329). The fixture and every
+    # assertion below stand, and this row stays fatal however it got there: a
+    # capture carrying one is still not placeable. Not every writer has
+    # stopped, though: ec/tools/ec_timer_capture.py's mark_loop still
+    # substitutes one and writes this same row shape, and its own grader
+    # (grade_timer_sweep.py) looks for a label containing "resumed" rather
+    # than for a placeable mark, so the cost there is a misleading row rather
+    # than a withheld run. Left open deliberately; see
+    # docs/findings/system-id-probe-mark-labels.md.
     def test_a_mark_that_is_not_one_of_the_forms_is_an_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / 'unread.csv'

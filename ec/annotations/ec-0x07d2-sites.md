@@ -609,7 +609,8 @@ this one share an address and a firmware; they do not share a program.
   about how many execute, how often, or in what order. The `0xA571`/`0xA5B3`
   export boundary in §1 is a direct instance of a linear walk's blind spot.
 - **The handoffs are resolved one level only.** All five read, and none hands
-  DPTR on again at depth 1, but depth 2 is not attempted.
+  DPTR on again at depth 1; `--callee-depth 2` moves none of them either, so
+  the one-level reading is the whole of what this table holds for them.
 - **What the windows mean is not identified.** §4.2 establishes that `0x07D2`
   participates in a 16-bit window with `0x07D3` and in 24-bit clears with
   `0x07D3`/`0x07D4`, and §4.3 declines to choose between the readings that is

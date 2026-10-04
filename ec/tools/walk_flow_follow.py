@@ -34,7 +34,12 @@ The re-decode starts at the address the walk stopped short of and continues:
 A window that ends in an `lcall`/`acall`/`ljmp`/`ajmp` is not really this
 tool's to continue, and in practice it never is: `classify()` already reports
 a DPTR handoff for those, so such a site is bucketed `handoff` and
-`register_ref_table.py --callee-depth 1` is what resolves it. `continuation()`
+`register_ref_table.py` is what resolves it -- at `--callee-depth 1` when the
+handoff is at the site, and at `--callee-depth 1 --follow-flow` when the
+follow is what reached it, which `Follow.final` carries the triples for. A
+handoff whose own callee forwards DPTR again is a further level down and
+wants `--callee-depth 2`; a cell still unsettled after both is a limit of that
+method and not a statement that the callee does nothing. `continuation()`
 carries the branches anyway, so that a `classify()` that stopped reporting the
 handoff would follow the jump rather than fall through to its last line --
 which is the direction that stays right.
@@ -160,7 +165,9 @@ END_RET = "ret"
 END_RETI = "reti"
 END_INDIRECT = "indirect jump -- target not resolvable from the bytes"
 END_HANDOFF = ("DPTR handed to a call -- classify() reports that as a handoff, "
-               "and register_ref_table.py --callee-depth 1 resolves those")
+               "and register_ref_table.py resolves one through the callee it "
+               "names at --callee-depth 1, or at --callee-depth 1 --follow-flow "
+               "when the handoff is this far down and only a branch reached it")
 END_UNFOLLOWED = "flow opcode this method does not know how to continue past"
 END_UNREACHABLE = "target 0x{target:04X} is not reachable from region {region}"
 END_LOOP = "loop back to 0x{pc:04X}"
@@ -257,6 +264,17 @@ class Follow:
         self.followed = ""          # the flow-followed verdict
         self.anchor = []            # the site's own triples, for a caller's
                                     # `window` cell in the committed spelling
+        self.final = []             # the *last* segment's triples, which is
+                                    # where `followed` was reached. resolve_
+                                    # handoff() needs a file offset to name the
+                                    # region from and res.blocks carries
+                                    # runtime addresses and rendered text
+                                    # rather than offsets, so this is the only
+                                    # way a caller can resolve a handoff the
+                                    # follow found without re-walking it. Equal
+                                    # to `anchor` for a site resolved at the
+                                    # site, since follow_site() returns on the
+                                    # first segment that classifies.
         self.via = []               # one entry per transfer followed
         self.ends = []              # why the follow stopped short
         self.insns = 0              # across every segment
@@ -333,6 +351,11 @@ def follow_site(d: bytes, addr: int, off: int, pd_verified: bool,
         # Whatever the last segment decoded is the row's verdict, so it is set
         # once here and every exit below keeps it -- including the ones that
         # stop, where it is the same `NO_MOVX` the linear column already says.
+        # `final` rides the same assignment: every exit below returns with
+        # `res.final` holding the segment the verdict came from, which is the
+        # one resolve_handoff() has to be handed to settle a handoff that only
+        # the follow reached.
+        res.final = insns
         res.followed = verdict
         if verdict != NO_MOVX:
             return res
