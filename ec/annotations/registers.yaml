@@ -2916,6 +2916,54 @@ registers:
       issue #45 follows from the PD image's 0x35DA callee. The one site
       per address in the EC firmware is the one to read for this meaning.
 
+  - name: XDATA_078E
+    addr: 0x078E
+    sources: [xdata-refs, uniwill-laptop(EC_ADDR_FAN_CTRL),
+              vendor-3.1.39.0(ADDR_SUPPORT_BYTE6), live]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      A capability byte the EC only ever sets bits in, not a value. Both of
+      its direct MOV DPTR sites OR bits into the byte and store the result
+      back, and no store this scan can see is produced by anything but an
+      `orl`: FUN_CODE_a7c8 (A7C8.asm, 0xA7DB-0xA7E9)
+      ors in 0x04, 0x40 and 0x20 in sequence off one DPTR, and
+      manual_ctrl_profile_gate (B12C.asm, 0xB12C-0xB132) ors in 0x08. The
+      two `mov DPTR,#0x78e` sites are the only ones scan_refs.py and a raw
+      `90 07 8e` scan of the image find, and at each the value written back
+      is the accumulator with bits added to it. That negative is "not found
+      by this method", not absence: a store through a DPTR built at run time
+      is invisible to both, so this is what the scan found and not a claim
+      that nothing else writes the byte. The blind spot is set out in full in
+      docs/findings/xdata-0786-078e-identity.md, section "What this does not
+      establish". This is also a claim about stores rather than about
+      instructions, because
+      FUN_CODE_a7c8 also does `xrl a,#0x5` at 0xA7F0 with DPTR still on this
+      byte -- that one decompiles to `return *pbVar3 ^ 5`, a read of the byte
+      into the return value that writes nothing back.
+      The masks are a byte's worth of independent capabilities rather than
+      one setting, which is why this is not named for any one of them:
+      upstream names bit 3 CHARGING_PROFILE and bit 6 UNIVERSAL_FAN_CTRL,
+      vendor-3.1.39.0 tests six different bits of 1934 across ten call sites
+      and ECSpec gives the address two names for it (ADDR_SINGLEKBL_SUPPORTPOWER
+      at ECSpec.cs:319 and ADDR_SUPPORT_BYTE6 at :351), which is a support
+      byte by the vendor's own naming.
+      The four masks this EC sets and the 2026-09-23 captured value agree
+      exactly: 0x04|0x40|0x20|0x08 is 0x6C, and 0x6C is what
+      evidence/ec-watch/2026-09-23-power-mode-snapshot-dc.txt records for
+      this address. Bits 0, 1, 4 and 7 are clear in both, and bit 4 is the
+      one MyRgbLightBarDefault.isSupportRGBLBFromEC tests for RGB lightbar
+      support -- so a set bit here is a capability the machine has, not a
+      mode it is in.
+      That agreement is a shape, not a live test: the capture is one window,
+      and a byte the EC writes and reads back identically settles no
+      behaviour, so the status stays present-untested. What would move it is
+      a live write of a single bit with the rest held, and reading back
+      whether the EC acts on it -- a human's step at the machine.
+      The write-up is docs/findings/xdata-0786-078e-identity.md.
+
   - name: CPU_TCC_OFFSET (APTC/APTN)
     addr: 0x0786
     bits: "0-6 offset magnitude; bit 7 is the enable, not data"
@@ -2969,6 +3017,37 @@ registers:
       answerable from the committed decompilations. This does not move the
       EC-side verdict above, which is about what the EC's instructions do
       with the byte, and it does not move the status.
+      *** CORRECTED 2026-10-04 (issue #1248), leaving the paragraph above as
+      it was written: the `MyFanManager*.` glob in it is wider than the
+      machine. GetFanTablePWMDefault is `private` and defined separately in
+      MyFanManager, MyFanManager_QC and MyFanManager_Intel. In the base
+      MyFanManager -- the class MyFanManager_RamFan1p5 derives from -- it is
+      reached only from the private LoadRegistry (MyFanManager.cs:731), and
+      LoadRegistry's only two call sites there are inside `public virtual void
+      EnableByService` (MyFanManager.cs:112) and `public virtual void Resume`
+      (MyFanManager.cs:335). MyFanManager_RamFan1p5 -- the class this board
+      selects, per windows/vendor-ec-map.md "Which classes run on this board"
+      -- overrides both (MyFanManager_RamFan1p5.cs:170 and :466) and contains
+      no `base.` call at all, so neither chains to the base and the base's
+      LoadRegistry never runs. The override is what settles it: a private
+      member is not inherited, so "the derived class could not call it" would
+      read the same for a class that did chain to the base, whose own copy
+      would still read the block -- and the derived class naming neither
+      method is consistent with that but does not decide it. So on this
+      machine 1926 is written by SetCpuTccOffset and read by nobody:
+      the five-element PWM-default reading is compiled into the shipped
+      service but unreachable on this platform, and ADDR_L1_PWM_DEFAULT_MYFAN3
+      describes code that does not run here. That narrows the open conflict
+      to the other platforms and settles it in the TCC direction *for this
+      board*; it does not retract the paragraph above, which is a claim about
+      what the service version contains.
+      The naming disagreement also runs the other way on this board:
+      RamFan1p5_ECSpec.cs names 1926 ADDR_TimAP_TccOffset_Setting, so the
+      spec class for the variant this machine runs calls the address a TCC
+      offset, while the generic ECSpec.cs calls the same 1926
+      ADDR_L1_PWM_DEFAULT_MYFAN3. Two names for one address in one version,
+      and the TCC one is the board's. Full walk in
+      docs/findings/xdata-0786-078e-identity.md.
 
   - name: AP_OEM_6 (whisper status / universal fan control)
     addr: 0x07C6
