@@ -60,6 +60,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a73f-09f1-mailbox-payload.md`](a73f-09f1-mailbox-payload.md) — `0xA73F` pushes a payload into an eight-slot ring, and there was never a command-code table to look it up in (issue #1444)
 - [`a73f-notify-path.md`](a73f-notify-path.md) — The `0xA73F` notify path, decoded end to end
 - [`a7c8-dispatch-slot-and-pl-race.md`](a7c8-dispatch-slot-and-pl-race.md) — What calls `0xA7C8`, and whether the host-writes-PLs / EC-zeroes-PLs race is real
+- [`acpi-eval-argument-datalength.md`](acpi-eval-argument-datalength.md) — The `0x00040000` in `ACPIDriver.sys`'s argument headers is `DataLength = 4`, and it survives
 - [`acpi-interpreter-region-access.md`](acpi-interpreter-region-access.md) — What the ACPI interpreter does with an unaligned `MMRD`, and what it still does not establish (issue #1337)
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
