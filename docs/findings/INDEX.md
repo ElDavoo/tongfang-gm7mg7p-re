@@ -164,6 +164,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`ifr-2718-reachability.md`](ifr-2718-reachability.md) — Question `0xE9F` is `DynamicPageCount`, and it is a sentinel no page count takes — so the two routes to Intel's Advanced page in the IFR are a self-reference and a TSE choice
 - [`ifr-charge-and-battery-options.md`](ifr-charge-and-battery-options.md) — The charge and battery questions in the Setup IFR, and what hides them
 - [`landed-gate-patch-state.md`](landed-gate-patch-state.md) — A landed gate patch is not a stale one: the four states, and the two-step landing (issue #772)
+- [`merged-capture-against-committed-pair.md`](merged-capture-against-committed-pair.md) — The two committed sweep captures are refused for one address, and that address is the free-running counter (issue #1452)
 - [`mmrd-unaligned-escape.md`](mmrd-unaligned-escape.md) — The unaligned `MMRD` escape, and the two sources that would have to say it is safe (issue #439)
 - [`mode-defaults-variant-selector.md`](mode-defaults-variant-selector.md) — Which writer seeds the per-mode PL defaults, and what the `0xABxx`/`0xC7xx` gate is (issue #111)
 - [`name-basis-and-groups.md`](name-basis-and-groups.md) — What grounds a name, and what a group is (issue #135)
@@ -296,6 +297,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-dispatch-tripwire-coverage.md`](xdata-dispatch-tripwire-coverage.md) — The dispatch reader reads statement position too, and one boundary it does not
 - [`xdata-export-ownership-page-census.md`](xdata-export-ownership-page-census.md) — Re-deriving the export-ownership page: every figure on `xdata-export-ownership.md`, from a fresh run (issue #654)
 - [`xdata-export-ownership-refusal-contract.md`](xdata-export-ownership-refusal-contract.md) — The `--export-ownership` refusal contract
+- [`xdata-export-ownership-refusal-denominators.md`](xdata-export-ownership-refusal-denominators.md) — The export-ownership refusal now quotes the census it protects
 - [`xdata-flip-cause-derivation.md`](xdata-flip-cause-derivation.md) — The 94 flipped clusters: both named mechanisms are refuted, and what the working page does show instead (issue #884)
 - [`xdata-green-set.md`](xdata-green-set.md) — The green set is empty, and the four sentences that said otherwise (issue #819)
 - [`xdata-guard-off-key-distinctness.md`](xdata-guard-off-key-distinctness.md) — The guard-off generation's `cluster_key` distinctness had no case behind it, and the coverage sentences named two of the four censuses (issue #962)
