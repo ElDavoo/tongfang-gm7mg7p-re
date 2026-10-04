@@ -30,19 +30,19 @@ void charge_target_update(char param_1)
   store_be16_a(BAT_CYCLE_COUNT_0,0xa4c,BAT_CYCLE_COUNT_1);
   cfg_cell_count_selector();
   if (param_1 == -0x40) {
-    DAT_EXTMEM_0a47 = 4;
+    MAILBOX_PUBLISH_VALUE = 4;
   }
   else {
     cfg_cell_count_selector();
     if (param_1 == -0x80) {
-      DAT_EXTMEM_0a47 = 3;
+      MAILBOX_PUBLISH_VALUE = 3;
     }
     else {
-      DAT_EXTMEM_0a47 = 2;
+      MAILBOX_PUBLISH_VALUE = 2;
     }
   }
   cVar3 = '\0';
-  bVar7 = DAT_EXTMEM_0a47;
+  bVar7 = MAILBOX_PUBLISH_VALUE;
   mul16(0x10,4);
   DAT_EXTMEM_0a4a = cVar3;
   DAT_EXTMEM_0a4b = bVar7;
@@ -164,9 +164,9 @@ LAB_CODE_b211:
           bVar2 = 0x32;
         }
         cVar3 = '\0';
-        bVar7 = DAT_EXTMEM_0a47;
+        bVar7 = MAILBOX_PUBLISH_VALUE;
         bVar6 = bVar2;
-        mul16(0,DAT_EXTMEM_0a47);
+        mul16(0,MAILBOX_PUBLISH_VALUE);
         CHARGE_TARGET_MV_1 = DAT_EXTMEM_0a50 - (cVar3 - (((DAT_EXTMEM_0a51 < bVar6) << 7) >> 7));
         CHARGE_TARGET_MV_0 = DAT_EXTMEM_0a51 - bVar2 * bVar7;
         return;

@@ -4,11 +4,22 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* A leading nop for alignment, then loads DPTR with 0xC48F and tail-jumps to 0x1100, passing the
-   address in DPTR rather than in a register. Ghidra's C names 0x1100 bl51_bank_select_0, and 0xC48F
-   lies in the 0x8000-0xFFFF banked CODE window. The body at 0x1100 is not present in this
-   decompiled tree, so the bank-switch reading is taken from the decompiler's symbol and is not
-   decoded here.
+/* Loads DPTR with 0xC48F and tail-jumps to 0x1100, passing the address in DPTR rather than in a
+   register. Ghidra's C names 0x1100 bl51_bank_select_0, and 0xC48F lies in the 0x8000-0xFFFF banked
+   CODE window. *** CORRECTION 2026-10-03 (issue #1444) *** An earlier version of this row said the
+   body at `0x1100` was absent from the decompiled tree, leaving the bank-switch reading resting on
+   the decompiler's symbol alone. It is in the tree: `ec/decompiled/index.csv` lists `common,1100`,
+   and `ec/decompiled/common/1100.asm` and `ec/decompiled/common/1100.c` are committed. The body is
+   the same stub as `0x1114` -- push `0x08`, `A=0x11`, the caller's DPH/DPL -- falling into its own
+   tail half at 0x110A (set_iram_08_0a_clear_p1_0_p1_2), which carries bank number `0x0A` with
+   `P1.0` left clear, where `0x1114` carries `0x1E` with `P1.0` set. (Correction, issue #248: the
+   same scope error, and the same answer. The pushed DPL/DPH are the return address, so the constant
+   above is the linker's cross-bank call target and the routine reached is the one at that address
+   in the bank the stub selects -- bank 0 here, where P1.0-2 are cleared against the set bit in
+   0x1114, 0x1128 and 0x113C. `common` is a scope of its own in ec/annotations/ghidra-functions.csv
+   and this row is bank0, so a bank-scoped listing cannot see a row filed under another scope.)
+   `docs/findings/a73f-09f1-mailbox-payload.md` is the walk that first turned this up;
+   `docs/findings/a73f-notify-path.md` decodes the sibling `0x1114` stub the same way.
    type: bank-switch
    evidence: ec/decompiled/bank0/1803.asm; ec/decompiled/bank0/1803.c
    basis: hand-decoded

@@ -70,20 +70,20 @@ WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
 # and a census re-derivation are then both visible: the first by
 # `TheMapAgrees`, the second by these.
 PER_PROGRAM_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 838, 7459),
+    ("main-ec", "DAT_EXTMEM", 830, 7292),
     ("main-ec", "DAT_EXTMEM+pair-literal", 44, 490),
     ("main-ec", "pair-literal", 156, 468),
-    ("main-ec", "symbol", 166, 6225),
+    ("main-ec", "symbol", 174, 6392),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("pd", "DAT_EXTMEM", 157, 858),
 ]
 PER_PROGRAM_TOTAL = (1375, 15696)
 
 UNION_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 808, 7229),
+    ("main-ec", "DAT_EXTMEM", 800, 7062),
     ("main-ec", "DAT_EXTMEM+pair-literal", 41, 385),
     ("main-ec", "pair-literal", 155, 461),
-    ("main-ec", "symbol", 151, 5620),
+    ("main-ec", "symbol", 159, 5787),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("both", "DAT_EXTMEM", 30, 312),
     ("both", "DAT_EXTMEM+pair-literal", 4, 139),
@@ -129,8 +129,8 @@ UNION_TOTAL = (1326, 15696)
 # re-export where that one landed too. The totals, the `pair-only` terms and the
 # PD rows do not move, which is again the check that the move is a spelling
 # change and not two new addresses.
-PER_PROGRAM_PARTITION = (180, 882, 156)
-UNION_PARTITION = (180, 883, 155)
+PER_PROGRAM_PARTITION = (188, 874, 156)
+UNION_PARTITION = (188, 875, 155)
 
 # The one address whose partition bucket moves, and the two directions.
 MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]

@@ -9,12 +9,12 @@
 undefined1 FUN_CODE_27e3(void)
 
 {
-  DAT_EXTMEM_0a47 = 0;
+  MAILBOX_PUBLISH_VALUE = 0;
   if (((-1 < DAT_INTMEM_b0) && ((DAT_INTMEM_b2 & 1) != 1)) && (DAT_EXTMEM_0bfd != DAT_EXTMEM_0bfe))
   {
-    DAT_EXTMEM_0a47 = 1;
+    MAILBOX_PUBLISH_VALUE = 1;
   }
-  return DAT_EXTMEM_0a47;
+  return MAILBOX_PUBLISH_VALUE;
 }
 
 

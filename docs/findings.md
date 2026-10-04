@@ -313,15 +313,21 @@ above are kept, which is §4a-4d.)*)*
 >   4-byte run moves the figure by four.
 > - **197** of the 204 are touched by the main EC, not 72, and **7** only by the
 >   PD image — that half is unchanged.
-> - `ORACLE["symbol_main_distinct"]` reads **180**, not 172: the main-EC
->   addresses the committed `.c` spells by symbol.
+> - `ORACLE["symbol_main_distinct"]` reads **188**, not 172: the main-EC
+>   addresses the committed `.c` spells by symbol. It read **180** when this
+>   block was written, and moved with a re-export that carried eight symbol
+>   renames the committed `.c` text had not caught up to — the same mechanism
+>   §3c's own correction is about, and named in
+>   [`findings/xdata-register-map-per-program-keying.md`](findings/xdata-register-map-per-program-keying.md).
 >
 > The census table above is **not** stale: 1,218 / 157 / 1,326 and
-> 14,838 / 858 / 15,696 all re-derive, and so do the `ORACLE` token pins held
-> beside them — `extmem_main_distinct` 882, `symbol_main_distinct` 180,
-> `extmem_commented` 9. That is what this block certifies and the whole of it:
-> each of those is a figure `xdata_register_map.py --self-test` re-checks, and
-> each was measured here rather than carried over.
+> 14,838 / 858 / 15,696 all re-derive, and so do the token-split figures held
+> beside them — `extmem_main_distinct` 874, `symbol_main_distinct` 188,
+> `extmem_commented` 9. `xdata_register_map.py` pins none of these; the key
+> names are the ones `check_census_figures.py --print` derives them under. That
+> is what this block certifies and the whole of it: each of those is a figure
+> `check_census_figures.py --print` re-derives, and each was measured here
+> rather than carried over.
 >
 > **The `CPU_TEMP` count quoted above is the one figure in this section that does
 > not re-derive**, and it is corrected here rather than left under a blanket
@@ -344,13 +350,17 @@ above are kept, which is §4a-4d.)*)*
 > column and §3c has none, so the tool built to hold this section reports
 > nothing for any of them.
 >
-> **197 and 180 are two questions and the 17 between them are the evidence.** An
+> **197 and 188 are two questions and the 9 between them are the evidence.** An
 > address can be named in `xdata-symbols.csv`, reached by the census, and still
 > be written something else in the committed `.c`; the two spellings fail
-> differently. Eight are written `DAT_EXTMEM_xxxx` by the main EC (`0x047C`,
-> `0x070F`, `0x078E`, `0x09EF`, `0x09F0`, `0x09F1`, `0x09F2`, `0x0A47`) — a name
-> the export predates, and **these are the ones a re-export moves**. Nine are
-> reached only through a pair-accessor argument (`0x0402`, `0x0404`, `0x0408`,
+> differently. This said **197 and 180, with 17 between them**, and the eight
+> that have since left the gap are the ones this passage named in advance as
+> "the ones a re-export moves" — `0x047C`, `0x070F`, `0x078E`, `0x09EF`,
+> `0x09F0`, `0x09F1`, `0x09F2` and `0x0A47`, written `DAT_EXTMEM_xxxx` by the main
+> EC under an export that predated their `registers.yaml` rows. The re-export
+> has now happened, they are written by symbol, and the eight are what the
+> figure moved by. The remaining nine are reached only through a pair-accessor
+> argument (`0x0402`, `0x0404`, `0x0408`,
 > `0x040A`/`0x040C`/`0x040E`/`0x0410`/`0x043A` and `0x04A3`; `bank1/B56C.c` reads
 > `read_xdata_pair_to_r1r2(0x43a)`, and Ghidra typed `0x0402` as `FUN_CODE_0402`),
 > which is neither spelling, and **whether a re-export would name those is not

@@ -20,7 +20,7 @@ void scale_r7_by_8_then_set_09c1_09c3(char param_1)
   
   cVar1 = '\0';
   FUN_CODE_e033(0xa47,param_1 * '\b');
-  DAT_EXTMEM_09c1 = DAT_EXTMEM_0a47 | 0x80;
+  DAT_EXTMEM_09c1 = MAILBOX_PUBLISH_VALUE | 0x80;
   DAT_EXTMEM_09c2 = 0;
   DAT_EXTMEM_09c3 = 0;
   stage_3000_block_then_probe_3000_3007(0,0,0x3c,0);

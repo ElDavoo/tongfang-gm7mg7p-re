@@ -13,7 +13,7 @@ void FUN_CODE_2f85(undefined1 param_1)
   char cVar2;
   undefined1 uVar3;
   
-  DAT_EXTMEM_0a47 = param_1;
+  MAILBOX_PUBLISH_VALUE = param_1;
   FUN_CODE_3d6c();
   set_iram_ad_88_clear_33();
   store_r7_to_upper_internal_ram_byte_3983(0);

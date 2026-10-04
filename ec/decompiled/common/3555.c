@@ -9,7 +9,7 @@
 void FUN_CODE_3555(void)
 
 {
-  DAT_EXTMEM_0a47 = DAT_EXTMEM_0a47 + '\x01';
+  MAILBOX_PUBLISH_VALUE = MAILBOX_PUBLISH_VALUE + '\x01';
   FUN_CODE_34c6();
   return;
 }

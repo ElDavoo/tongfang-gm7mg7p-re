@@ -5,9 +5,33 @@
 
 
 /* Copies R7 to internal RAM address 0x6A, reads that byte straight back into A and then into R7,
-   and tail-jumps to 0x1666. Nothing in this listing shows what 0x1666 does with the register value.
+   and tail-jumps to 0x1666. Four instructions, and the whole of the routine. *** CORRECTION
+   2026-10-03 (issue #1444) *** An earlier version of this row said nothing in this listing showed
+   what 0x1666 does with the register value. It is a two-instruction row: 0x1666 loads DPTR with
+   0x896A and tail-jumps 0x1114 (bl51_bank_select_1, ec/decompiled/common/1114.asm), which hands
+   DPTR to bank 1, where 0x896A (gate_06e6_0440_then_call_89b5) gates on XDATA 0x06E6 == 1 and XDATA
+   0x0440 non-zero and calls 0x89B5 to store the byte into the eight-slot ring at XDATA
+   0x09F2-0x09F9 indexed by bits 0-2 of XDATA 0x09F1. The R7 that arrives is unchanged by the round
+   trip through 0x6A and by 0x1666, and the stub does not touch R7 either. So the value is a
+   payload, not a command code: no comparison on the mailbox path tests it, and the only routines
+   that touch a ring slot are the initialiser at 0x8955, the two accessors at 0x89A9 and 0x89E7, and
+   the two that call them. What any individual code *means* is not decoded here, and nothing static
+   in this image reaches one. The internal RAM byte 0x6A is this routine's own scratch:
+   ec/tools/intmem_refs.py is the census for the direct address 0x6A, and it finds 11 sites rather
+   than the four an earlier version of this comment counted -- its own output is what the two-hit
+   claim was measured against, and it is corrected in docs/findings/a73f-notify-path.md, which
+   adjudicates each of the eleven. The only direct 0x6A accesses among them are two `mov 0x6a,r7` /
+   `mov a,0x6a` pairs, one of them the store-then-readback at 0xA73F/0xA741 here and the other at
+   0x85F5 in bytes with no exported listing; the seven bank1 hits are the `05 6a` inside a `mov
+   dptr,#0x056a`, a different address space, and the common `dec 0x6a` is an `ljmp 0x156a` read one
+   byte in. That `mov direct,Rn` (0x8F) has no row in that tool's opcode table is the tool's own
+   stated gap, so the two stores are counted here separately. No routine was found to read a 0x6A
+   another routine stored; indirect access is invisible to that scan and one bank1 site is left open
+   there. Every site that reaches this one is listed by ec/tools/a73f_notify_census.py; the mailbox
+   walk is `docs/findings/a73f-09f1-mailbox-payload.md`.
    type: forwarder
-   evidence: ec/decompiled/bank0/A73F.asm; ec/decompiled/bank0/A73F.c
+   evidence: ec/decompiled/bank0/A73F.asm; ec/decompiled/bank0/A73F.c;
+   ec/decompiled/common/1114.asm; ec/decompiled/bank1/896A.asm; ec/decompiled/bank1/89B5.asm
    basis: hand-decoded
    name_basis: code-shape */
 

@@ -10,9 +10,9 @@ undefined1 FUN_CODE_2802(char *param_1,char param_2)
 
 {
   if (*param_1 != param_2) {
-    DAT_EXTMEM_0a47 = 1;
+    MAILBOX_PUBLISH_VALUE = 1;
   }
-  return DAT_EXTMEM_0a47;
+  return MAILBOX_PUBLISH_VALUE;
 }
 
 

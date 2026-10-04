@@ -6,7 +6,15 @@
 
 /* Saves A, B, DPH, DPL and PSW, sets PSW=0x10 to select register bank 1, loads DPTR with the CODE
    address 0x015A, calls 0x0050, then restores and RETIs. It does not push R0-R7, matching 0x0094
-   rather than 0x0056. What the 0x015A table entry selects is not decoded here.
+   rather than 0x0056. What the 0x015A table entry selects is not decoded here. The 0x015A table
+   entry selects 0xF790, and that target is `lcall 0xEFEA` then `ret`; 0xEFEA is not decoded here
+   and no committed pd listing contains an `lcall` to it, which is not the same as there being none.
+   That previous wording said the selection was not decoded here; the correction is recorded beside
+   it rather than made silently, and ec/annotations/pd-image.md §2.1 and
+   docs/findings/pd-vector-handler-words.md carry the derivation. How a handler is *reached* is the
+   other half and is unchanged: 0x0050 tail-jumps to 0x1229, which builds DPTR and falls through
+   into 0x122D's `jmp @a+dptr`, so the `lcall 0x0050` return address is what a RET at the target
+   returns to.
    type: forwarder
    evidence: ec/decompiled/pd/00F0.asm; ec/decompiled/pd/00F0.c
    basis: hand-decoded

@@ -14,7 +14,7 @@
    type: math
    evidence: ec/decompiled/bank0/B35E.asm; ec/decompiled/bank0/B35E.c; ec/annotations/registers.yaml
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void charge_target_minus_r3_times_0a47(byte param_1)
 
@@ -24,9 +24,9 @@ void charge_target_minus_r3_times_0a47(byte param_1)
   byte bVar3;
   
   cVar2 = '\0';
-  cVar1 = DAT_EXTMEM_0a47;
+  cVar1 = MAILBOX_PUBLISH_VALUE;
   bVar3 = param_1;
-  mul16(0,DAT_EXTMEM_0a47);
+  mul16(0,MAILBOX_PUBLISH_VALUE);
   CHARGE_TARGET_MV_1 = DAT_EXTMEM_0a50 - (cVar2 - (((DAT_EXTMEM_0a51 < bVar3) << 7) >> 7));
   CHARGE_TARGET_MV_0 = DAT_EXTMEM_0a51 - param_1 * cVar1;
   return;
