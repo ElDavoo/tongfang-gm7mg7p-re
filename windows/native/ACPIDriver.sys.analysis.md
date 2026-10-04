@@ -208,7 +208,8 @@ routine one width up — a 32-bit read of a full physical address rather than an
 ```
 1400015ec:  ...                           ; DeviceExtension in rcx, Irp in rdx
 140001613:  mov    0x18(%rdx),%rbx        ; rbx = Irp->AssociatedIrp.SystemBuffer
-140001619:  movq   $0x40000,0x60(%rsp)    ; the argument's first dword
+140001619:  movq   $0x40000,0x60(%rsp)    ; the argument's first dword, and its
+                                        ; second -- an 8-byte store, see below
 14000162e:  movl   $0x44524d4d,0x54(%rsp) ; MethodName  = 'MMRD'
 140001636:  mov    $0x32c004,%edx         ; IOCTL_ACPI_EVAL_METHOD
 14000163b:  movl   $0x1,0x5c(%rsp)        ; ArgumentCount = 1
@@ -238,6 +239,21 @@ routine one width up — a 32-bit read of a full physical address rather than an
 1400016b7:  mov    0x43(%rsp),%al
 1400016bb:  mov    %al,0x3(%rbx)          ;   ... through SystemBuffer[3]
 ```
+
+**`0x60` and `0x64` are two adjacent dwords, and the constant survives.** The
+`movq` at `0x140001619` is an **eight-byte** store, so it writes `0x60`-`0x67`
+— `0x00040000` into `0x60`-`0x63` and zero into `0x64`-`0x67`. The four byte
+stores then fill `0x64`-`0x67`, which is the **upper half of that same store**,
+and nothing afterwards writes `0x60`-`0x63`. That was this file's reading from
+the start, and the single `CONCAT17` in the generated `ACPIDriver.c` for the
+same function — which coalesces the literal and the four address bytes into one
+value — is a rendering artifact rather than a competing layout: Ghidra declares
+`uStack_424`-`uStack_421` as separate storage for those four bytes and then
+writes the merged object as `_local_428` with the leading underscore it uses for
+a stack object it does not consider fully defined. Settled from
+`../decompiled/native/ACPIDriver.asm`; the reasoning, the field identification
+and the per-handler table are in
+[`docs/findings/acpi-eval-argument-datalength.md`](../../docs/findings/acpi-eval-argument-datalength.md).
 
 **The answer to issue #147's question is yes: the handler marshals a 32-bit
 argument and copies a 32-bit result back.** All four bytes of
@@ -270,16 +286,48 @@ ordering is a reading of the marshalling and not a measured one. The
 comparison that would measure it, and the reason `--block` is off by default,
 is written out in `../tools/manual_fan_ctrl_probe.py`'s docstring.
 
-**One observation, with its meaning left open.** The first dword of the
-argument is `0x00040000` at `0x140001619`, where `ECRR` writes zero
-(`0x14000128A`, the register the `xor %esi,%esi` at `0x140001288` just
-cleared). `MMRB` (`0x140001508`) writes the same `0x00040000` at
+**One observation, now identified: the constant is `Argument[i].DataLength = 4`.**
+The first dword of the argument is `0x00040000` at `0x140001619`, where `ECRR`
+writes zero (`0x14000128A`, the register the `xor %esi,%esi` at `0x140001288`
+just cleared). `MMRB` (`0x140001508`) writes the same `0x00040000` at
 `0x140001535` and is otherwise this routine with a different method name and a
-one-byte copy-back, so the constant is not specific to the 32-bit case. The
-disassembly shows the constant; what the Windows ACPI driver requires of that
-field, if anything, is not established here, and the block path does not turn
-on the answer — it sends the address `MMRD` takes and reads back the bytes
-`MMRD` returns.
+one-byte copy-back, so the constant is not specific to the 32-bit case.
+
+The field's name comes from the driver's own code, not from the ASL.
+`ACPI_METHOD_ARGUMENT`'s two header fields are 16-bit at `+0` and `+2` —
+`T1WR` writes three arguments at `0x60`/`0x68`/`0x70` with
+`ArgumentCount = 3`, an eight-byte stride, and `SMRW` corroborates the 16-bit
+split by reading the `+2` field back as `movzx R9D, word ptr [RSP + 0x62]`
+(`0x140001CB0`), after the `0x800002` store at `0x140001B41` and with nothing
+between them rewriting those bytes, then handing it to the eval call at
+`0x140001CDA`. `0x00040000` little-endian is `00 00 04 00`, so `+0` is
+`Type = 0` and `+2` is **`DataLength = 4`** — the length of the four payload
+bytes stored immediately above it at `+4`. The same reading already applied
+above to `SMRW`'s `0x800002` as *Type = 2, DataLength = 0x80*.
+
+It is not the width of the access: `MMWB`'s ASL is a byte write and it still
+states a length of 4, because the payload is four bytes wide either way. It
+appears once per argument whose length the driver hardcodes as 4, which is why
+`T1WR` and `T2WR` carry it three times each, why `MMWB` — arity 2 — carries it
+once (its second argument's header comes from a register), and why the buffer
+handlers `SMRW` and `T3WR` carry it not at all: they declare a `0x80`-byte
+buffer and have no four-byte scalar argument. The table is printed from the
+committed `.asm` by
+[`windows/tools/acpi_eval_arg_slots.py`](../tools/acpi_eval_arg_slots.py) and
+written out in
+[`docs/findings/acpi-eval-argument-datalength.md`](../../docs/findings/acpi-eval-argument-datalength.md).
+
+**The `MMRD`-vs-`ECRR` difference this field shows, which belongs with the
+table above.** `MMRD` declares a length of 4 and supplies four payload bytes;
+`ECRR` and `ECRW` declare zero and supply two and one. That is a real
+structural difference between the two families — the sixteen-bit EC-address
+pair against the thirty-two-bit accessor — and it is a reading of the driver's
+code, not a defect: **what the Windows ACPI driver requires of `DataLength = 0`
+is not established here**, since `ACPI_METHOD_ARGUMENT_V1` is Microsoft's and
+is not committed to this tree
+([`docs/findings/acpi-interpreter-region-access.md`](../../docs/findings/acpi-interpreter-region-access.md)).
+The block path does not turn on the answer either — it sends the address `MMRD`
+takes and reads back the bytes `MMRD` returns.
 
 `MMRB` being a *shipped* export of the vendor's own DLL (`ReadMEMB`, ordinal
 5, [`ACPIDriverDll.dll.analysis.md`](ACPIDriverDll.dll.analysis.md)) is weak
@@ -332,6 +380,13 @@ decoded from that binary's export directory and its own `mov $imm,%edx`.
 Nothing in this table is inferred from the mnemonics — and the next
 section checks every one of the 21 names against a DSDT that was dumped
 from this machine independently of any of this.
+
+The `Argument[i].DataLength` each handler states — 4 for the multi-byte
+accessors, 0 for `ECRR`/`ECRW`'s 16-bit address pair, `0x80` for the two buffer
+handlers — is tabulated per handler in
+[`docs/findings/acpi-eval-argument-datalength.md`](../../docs/findings/acpi-eval-argument-datalength.md),
+and the "One observation" paragraph above is where that difference between the
+families is discussed.
 
 ## The methods exist, in the DSDT already committed here
 
