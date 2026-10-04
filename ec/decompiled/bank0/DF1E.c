@@ -11,7 +11,7 @@
    type: forwarder
    evidence: ec/decompiled/bank0/DF1E.asm; ec/decompiled/bank0/DF1E.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void stage_0a47_then_call_de83_r5_1a(void)
 

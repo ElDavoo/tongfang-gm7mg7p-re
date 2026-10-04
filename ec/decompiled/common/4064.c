@@ -49,7 +49,7 @@ code_c0x4048:
       }
 LAB_CODE_4053:
       store_0a4c_triplet_then_countdown_and_dispatch(param_6,1);
-      bVar2 = DAT_EXTMEM_0a47;
+      bVar2 = MAILBOX_PUBLISH_VALUE;
       goto LAB_CODE_405d;
     }
     param_1 = &DAT_EXTMEM_0a48;
@@ -99,11 +99,11 @@ LAB_CODE_4053:
 code_c0x402e:
   bVar1 = *param_1;
 LAB_CODE_402f:
-  bVar2 = DAT_EXTMEM_0a47;
+  bVar2 = MAILBOX_PUBLISH_VALUE;
   if (bVar1 != 0) {
 LAB_CODE_4032:
     FUN_CODE_0a39();
-    bVar2 = DAT_EXTMEM_0a47;
+    bVar2 = MAILBOX_PUBLISH_VALUE;
   }
 LAB_CODE_405d:
   FUN_CODE_161e(bVar2);

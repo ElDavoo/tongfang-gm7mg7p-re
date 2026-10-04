@@ -56,7 +56,7 @@ void FUN_CODE_b5d3(undefined1 param_1,undefined1 param_2)
             write_64_d9_pair();
           }
           else {
-            DAT_EXTMEM_0a47 = 100;
+            MAILBOX_PUBLISH_VALUE = 100;
             DAT_EXTMEM_0a48 = 0xeb;
           }
           goto LAB_CODE_b65b;

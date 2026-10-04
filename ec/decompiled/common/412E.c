@@ -20,22 +20,22 @@ void FUN_CODE_412e(void)
     goto LAB_CODE_418f;
   }
   FUN_CODE_434c();
-  if (DAT_EXTMEM_0a47 == -1) {
+  if (MAILBOX_PUBLISH_VALUE == -1) {
 LAB_CODE_417b:
     uVar1 = 2;
   }
-  else if (DAT_EXTMEM_0a47 == -0xe) {
+  else if (MAILBOX_PUBLISH_VALUE == -0xe) {
     uVar1 = 3;
   }
   else {
-    if ((DAT_EXTMEM_0a47 == -0xd) || (DAT_EXTMEM_0a47 == -0x13)) goto LAB_CODE_417b;
+    if ((MAILBOX_PUBLISH_VALUE == -0xd) || (MAILBOX_PUBLISH_VALUE == -0x13)) goto LAB_CODE_417b;
     uVar1 = 1;
   }
   store_r7_to_upper_internal_ram_byte_3835(uVar1);
   uVar1 = FUN_CODE_4376(0x9c);
   store_0a4c_triplet_then_countdown_and_dispatch(1,uVar1);
 LAB_CODE_418f:
-  FUN_CODE_1624(DAT_EXTMEM_0a47);
+  FUN_CODE_1624(MAILBOX_PUBLISH_VALUE);
   return;
 }
 

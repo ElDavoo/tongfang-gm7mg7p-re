@@ -11,14 +11,14 @@
    type: writer
    evidence: ec/decompiled/bank0/BCCB.asm; ec/decompiled/bank0/BCCB.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void store_be16_of_08e6_and_arg_to_0a47(undefined1 param_1)
 
 {
   char in_PSW;
   
-  DAT_EXTMEM_0a47 = DAT_EXTMEM_08e6 - (in_PSW >> 7);
+  MAILBOX_PUBLISH_VALUE = DAT_EXTMEM_08e6 - (in_PSW >> 7);
   DAT_EXTMEM_0a48 = param_1;
   return;
 }

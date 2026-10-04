@@ -194,6 +194,22 @@ Two knock-on notes, since the same conflation reaches other entries:
   include features (`PRIMARY_FAN`/`SECONDARY_FAN`, `TOUCHPAD_TOGGLE`,
   `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
   could not be checked either way.
+
+  *(Corrected 2026-10-04, issue #29; the clause above is left as it was
+  written.) "Nowhere in this repo" was false before the issue was opened. The
+  driver defines are committed at the rev `linux/patches/BASE_COMMIT` pins, in
+  `linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt`: the first fan's RPM
+  pair at `0x0464`/`0x0465`, the second's at `0x046C`/`0x046D`, the
+  powershare bit as bit 4 of `0x0767` and the touchpad bit as bit 6 of
+  `0x07A6`, each with `feature-map.csv` mapping the §2 feature to its address
+  and `tools/check_dmi_descriptor.py` rule 7 holding the two together byte for
+  byte. The two fan pairs now carry `registers.yaml` entries and the two bit
+  features are aliases on entries that already existed; the write-up is
+  [`findings/fan-tachometer-addresses.md`](findings/fan-tachometer-addresses.md).
+  What is genuinely not re-derivable offline is narrower than the sentence
+  implied: the excerpt quotes no function body, so the driver's *use* of the
+  defines — the reads and the read-modify-write — is a claim from a clone and
+  is marked as one.)*
 - `0x07D8`-`0x07DA` (`MODE_TCC_OFFSET_DEFAULTS`) is 34/16/53 references, one
   EC-side each and 33/15/52 PD-side, and the one EC-side site is real — a
   straight-line block in `seed_tcc_defaults_from_ba36` writing all three from a
@@ -313,15 +329,14 @@ above are kept, which is §4a-4d.)*)*
 >   4-byte run moves the figure by four.
 > - **197** of the 204 are touched by the main EC, not 72, and **7** only by the
 >   PD image — that half is unchanged.
-> - `ORACLE["symbol_main_distinct"]` reads **180**, not 172: the main-EC
+> - `ORACLE["symbol_main_distinct"]` reads **188**, not 172: the main-EC
 >   addresses the committed `.c` spells by symbol.
 >
 > The census table above is **not** stale: 1,218 / 157 / 1,326 and
-> 14,838 / 858 / 15,696 all re-derive, and so do the `ORACLE` token pins held
-> beside them — `extmem_main_distinct` 882, `symbol_main_distinct` 180,
-> `extmem_commented` 9. That is what this block certifies and the whole of it:
-> each of those is a figure `xdata_register_map.py --self-test` re-checks, and
-> each was measured here rather than carried over.
+> 14,838 / 858 / 15,696 all re-derive, and so do the token-split figures held
+> beside them — `extmem_main_distinct` and `symbol_main_distinct`, which
+> `check_census_figures.py --print` derives from the committed CSVs rather than
+> this page carrying them.
 >
 > **The `CPU_TEMP` count quoted above is the one figure in this section that does
 > not re-derive**, and it is corrected here rather than left under a blanket
@@ -344,25 +359,22 @@ above are kept, which is §4a-4d.)*)*
 > column and §3c has none, so the tool built to hold this section reports
 > nothing for any of them.
 >
-> **197 and 180 are two questions and the 17 between them are the evidence.** An
+> **197 and 188 are two questions and the 9 between them are the evidence.** An
 > address can be named in `xdata-symbols.csv`, reached by the census, and still
 > be written something else in the committed `.c`; the two spellings fail
-> differently. Eight are written `DAT_EXTMEM_xxxx` by the main EC (`0x047C`,
-> `0x070F`, `0x078E`, `0x09EF`, `0x09F0`, `0x09F1`, `0x09F2`, `0x0A47`) — a name
-> the export predates, and **these are the ones a re-export moves**. Nine are
-> reached only through a pair-accessor argument (`0x0402`, `0x0404`, `0x0408`,
-> `0x040A`/`0x040C`/`0x040E`/`0x0410`/`0x043A` and `0x04A3`; `bank1/B56C.c` reads
-> `read_xdata_pair_to_r1r2(0x43a)`, and Ghidra typed `0x0402` as `FUN_CODE_0402`),
-> which is neither spelling, and **whether a re-export would name those is not
-> answered by any committed output**. The two groups are split by
-> `xdata-registers.csv`'s `spellings_by_program` column and not by `spelled_as`,
-> which on a `program=both` row is the union of both programs' spellings: the
-> single `DAT_EXTMEM_04a3` token in `ec/decompiled/` is `pd/F22E.c`, the PD
-> image's, and §39 below records that address's per-program split already. So
-> both figures above are readings of the tree as it stands, not properties of
-> `registers.yaml`. None of the 17 is absent or unnamed: each is reached and each
-> is named, and reading the gap as "unused" would invert this section's own
-> correction. Detail and the derivation are in
+> differently. All nine are reached only through a pair-accessor argument
+> (`0x0402`, `0x0404`, `0x0408`, `0x040A`/`0x040C`/`0x040E`/`0x0410`/`0x043A`
+> and `0x04A3`; `bank1/B56C.c` reads `read_xdata_pair_to_r1r2(0x43a)`, and Ghidra
+> typed `0x0402` as `FUN_CODE_0402`), which is neither spelling, and **whether a
+> re-export would name those is not answered by any committed output**. The two
+> spellings are split by `xdata-registers.csv`'s `spellings_by_program` column
+> and not by `spelled_as`, which on a `program=both` row is the union of both
+> programs' spellings: the single `DAT_EXTMEM_04a3` token in `ec/decompiled/` is
+> `pd/F22E.c`, the PD image's, and §39 below records that address's per-program
+> split already. So both figures above are readings of the tree as it stands,
+> not properties of `registers.yaml`. None of the 9 is absent or unnamed: each is
+> reached and each is named, and reading the gap as "unused" would invert this
+> section's own correction. Detail and the derivation are in
 > [`findings/3c-named-versus-spelled.md`](findings/3c-named-versus-spelled.md);
 > `ec/tools/test_findings_3c_census_figures.py` holds these counts against the
 > census that derives them, so a sentence that stops matching turns red and names
@@ -793,6 +805,20 @@ powershare) have no EC address anywhere in this repo, so they are named in the
 audit as unresolvable rather than guessed at. "The scan predicted all 20
 correctly" therefore still rests on the original testing notes; what is
 re-derivable from committed files is the 14.)*
+
+  *(Corrected 2026-10-04, issue #29; the sentences above are left as they were
+  written.) The clause "have no EC address anywhere in this repo" is false:
+  the addresses are in `linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt`
+  at the pinned rev and in that directory's `feature-map.csv`, and the two fan
+  pairs carry `registers.yaml` entries now. The `14` is not restated here as a
+  larger number, for the reason the paragraph itself gives: §4d's 20 were
+  never enumerated register by register, so growing the re-derivable subset
+  does not license "the scan predicted all 20 correctly" any further than it
+  already stood. The audit's §3 table stays the subset that audit resolved
+  rather than a census of the file: which live-graded entries it leaves without
+  a row is a question about `registers.yaml` and that table together, so it is
+  answered by reading both rather than by a list in one of them.
+  [`findings/fan-tachometer-addresses.md`](findings/fan-tachometer-addresses.md).)*
 
 *(One class of correction this section covers has a machine check behind it in
 one place, which is a stronger guarantee than the convention alone: §6a's
@@ -7858,7 +7884,7 @@ out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
 Re-running the block's recipe with the flag that now does what its workaround
-did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:4410`) gives
+did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:4481`) gives
 439 → 445, 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed
 rows reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5
 on nothing), nine names carried and 430 committed clusters with a key and none.
@@ -13251,9 +13277,9 @@ results are in
 `--no-eq-guard` block above cited `xdata_register_map.py:4568` for the flag, and
 on `d330478` that line is `--co-reading-group-table prints the other half: every
 group over two` — **a different flag's help**. `ap.add_argument("--no-eq-guard"`
-is at **`:4410`**. That is the shape issue #873 found at `:4457`, naming the tail
+is at **`:4481`**. That is the shape issue #873 found at `:4457`, naming the tail
 of `--reconcile`'s help (`"image and registers.yaml, unlike every other mode"`,
-now **`:4397`**): on this tree the same defect has moved on to a *third* flag's
+now **`:4468`**): on this tree the same defect has moved on to a *third* flag's
 help, which is the argument for anchoring the code rather than re-pointing the
 number. §17's #254 correction block cited `xdata_register_map.py:916` for
 `store_target()`, `:939` for its `==` rejection and `:243` for `ASSIGN`, and

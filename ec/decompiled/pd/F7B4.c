@@ -6,7 +6,11 @@
 
 /* The listing is one instruction, a RET, with no read, write, compare or call. Nothing is decoded
    beyond that; whether this is a deliberate empty stub, the default arm of a dispatch table, or an
-   artefact of the function split is not determinable from a single byte.
+   artefact of the function split is not determinable from a single byte. A caller now excludes two
+   of those three readings: ec/decompiled/pd/A8AE.asm carries `lcall 0xF7B4` at `0xA943` in
+   `event_dispatch_ff80_ffe0`, so this byte is a no-op stub that committed code calls and not
+   padding and not an artefact of the split -- and whether it is the default arm of a dispatch table
+   is still not determinable from a single byte.
    type: unresolved
    evidence: ec/decompiled/pd/F7B4.asm; ec/decompiled/pd/F7B4.c
    basis: hand-decoded

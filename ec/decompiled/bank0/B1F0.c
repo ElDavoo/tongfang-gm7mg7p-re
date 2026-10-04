@@ -113,9 +113,9 @@ void charge_stress_update(char param_1)
           bVar2 = 0x32;
         }
         cVar3 = '\0';
-        cVar7 = DAT_EXTMEM_0a47;
+        cVar7 = MAILBOX_PUBLISH_VALUE;
         bVar6 = bVar2;
-        mul16(0,DAT_EXTMEM_0a47);
+        mul16(0,MAILBOX_PUBLISH_VALUE);
         CHARGE_TARGET_MV_1 = DAT_EXTMEM_0a50 - (cVar3 - (((DAT_EXTMEM_0a51 < bVar6) << 7) >> 7));
         CHARGE_TARGET_MV_0 = DAT_EXTMEM_0a51 - bVar2 * cVar7;
         return;

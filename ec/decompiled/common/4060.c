@@ -17,8 +17,8 @@ void FUN_CODE_4060(byte param_1,byte *param_2,byte *param_3,byte param_4,byte pa
   byte in_PSW;
   byte *pbVar3;
   
-  pbVar3 = &DAT_EXTMEM_0a47;
-  bVar2 = switch_case_dispatch(DAT_EXTMEM_0a47);
+  pbVar3 = &MAILBOX_PUBLISH_VALUE;
+  bVar2 = switch_case_dispatch(MAILBOX_PUBLISH_VALUE);
   if ((char)in_PSW < '\0') {
     param_4 = bVar2 | (byte)param_2;
 LAB_CODE_4004:
@@ -50,7 +50,7 @@ code_c0x4048:
       }
 LAB_CODE_4053:
       store_0a4c_triplet_then_countdown_and_dispatch(param_5,1);
-      bVar2 = DAT_EXTMEM_0a47;
+      bVar2 = MAILBOX_PUBLISH_VALUE;
       goto LAB_CODE_405d;
     }
     pbVar3 = &DAT_EXTMEM_0a48;
@@ -100,11 +100,11 @@ LAB_CODE_4053:
 code_c0x402e:
   bVar1 = *pbVar3;
 LAB_CODE_402f:
-  bVar2 = DAT_EXTMEM_0a47;
+  bVar2 = MAILBOX_PUBLISH_VALUE;
   if (bVar1 != 0) {
 LAB_CODE_4032:
     FUN_CODE_0a39();
-    bVar2 = DAT_EXTMEM_0a47;
+    bVar2 = MAILBOX_PUBLISH_VALUE;
   }
 LAB_CODE_405d:
   FUN_CODE_161e(bVar2);
