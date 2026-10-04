@@ -26,7 +26,7 @@ something writes DPTR, and report where the value came from:
 |---|---|
 | `literal` | a `mov DPTR,#imm16` earlier in the same listing |
 | `callee` | a call or tail-call whose routine's own run ends on a `mov DPTR,#imm16` |
-| `predecessor` | nothing in this listing, and the listing ending immediately below its entry does |
+| `predecessor` | nothing in this listing, and the listing ending immediately below its entry loads DPTR *and falls into this one* |
 | `unresolved` | anything else, with the reason in `note` -- never a guess |
 
 `predecessor` exists because `set_0860_ff_then_d284` at `0xD281` is three bytes
@@ -35,6 +35,14 @@ store of `0xFF` sits in the second listing and DPTR comes from the first. That
 is the same blind spot as `callee` -- a transfer with no literal in the listing
 holding the access -- and reporting it as `unresolved` would file a known
 writer of `0x0860` in the not-found column.
+
+**Abutting is not falling in.** The listing above has to reach this one by
+falling through it; one ending in `ret`, `reti`, `ljmp`, `ajmp`, `sjmp` or
+`jmp` leaves somewhere else, and its `mov DPTR` says nothing about DPTR here.
+Both committed candidates for that shape -- `BD34` above `BD3D` and `58AB`
+above `58B9` -- end in a transfer out, and both are reached by an `lcall` whose
+caller loads DPTR itself, so naming an address from the abutting listing would
+credit bytes that do not set it. Neither is a predecessor; both are unresolved.
 
 **A backward walk through branches is a linear reading, and `note` is where
 that shows.** A `ret` between the `movx` and the write it walked back to ends
@@ -50,10 +58,13 @@ what finds the store. The chase into a callee stops at `MAX_CHASE` and says so
 rather than resolving one level deeper quietly.
 
 **The population is the page, not the tree.** A `movx` row is emitted when the
-resolved address is in `0x0860`-`0x086E`; a `movx` this tool resolved to no
-address is counted on the summary line instead, because a row whose address is
-unknown cannot be said to be on the page or off it, and a count of nothing
-would read as a census. A second row kind comes from
+resolved address is in `0x0860`-`0x086E`. The rest are counted on the summary
+line, and counted as **two figures rather than one**, because they are two
+different results: a `movx` this tool resolved to no address is a limit of the
+method, and one it resolved to an address off the page is the method working.
+Adding them together and calling the sum "resolved to no address" would
+overstate what the method failed to do by however many of the second kind there
+are, which is most of the tree. A second row kind comes from
 `../annotations/bank-call-targets.csv`: a committed call site of a helper this
 tool chased that **no committed listing covers**, whose `movx` and `listing`
 cells are therefore empty. That is how `0x0D1E3` appears. The call-site table
@@ -138,6 +149,14 @@ BOUNDARY = ("ret",)
 # The two of `CALLS` that can be either a tail call or a jump. `abs_target()`
 # spells the target for both, so the difference is made here.
 TAILCALLS = ("ljmp", "ajmp")
+
+# The transfers that end a listing rather than falling into whatever the
+# exporter placed next. This is the set `preceding()` refuses on, and it is
+# wider than `BOUNDARY`: `BOUNDARY` stops a backward *walk* because control
+# does not come back, while these stop a *fall-in* because control does not
+# arrive. `jmp` is here for `@A+DPTR`, the one computed jump the listings carry.
+# A listing ending in one of these says nothing about DPTR on entry to the next.
+NO_FALLTHROUGH = ("ret", "reti", "ljmp", "ajmp", "sjmp", "jmp")
 
 
 def _inside(rows: list, target):
@@ -246,7 +265,7 @@ class Tree:
         return (program, addr) in self.covers_any
 
     def preceding(self, program: str, stem: str):
-        """The listing whose last byte is the byte below `stem`'s entry.
+        """The listing that falls into `stem`'s entry, if one does.
 
         Tested against the exporter's own function extent -- `index.csv`'s
         `size` column -- rather than against the listing's last row, because
@@ -255,12 +274,27 @@ class Tree:
         listing with no `index.csv` row, or one whose size will not parse, is
         not a candidate; the test fails closed rather than guessing an extent
         and calling a fall-in that the bytes do not show.
+
+        Abutting extents are necessary and not sufficient: the listing above
+        has to *fall into* this one. A last instruction in `NO_FALLTHROUGH`
+        means control leaves somewhere else, so whatever DPTR that listing
+        loaded is never live here. Both committed cases are `0x0BD3D` below
+        `BD34`, whose `ret` ends the routine, and `0x58B9` below `58AB`, whose
+        `ljmp 0x10e8` is a tail jump out -- and in both the site is reached by
+        an `lcall` whose caller loaded DPTR itself, so naming an address from
+        the abutting listing would attribute a value to bytes that do not set
+        it. Such a listing is not a predecessor and the row stays unresolved.
         """
         rows = self.programs.get(program, {}).get(stem)
         if not rows:
             return None
         previous = self.extent.get((program, int(rows[0][0], 16)))
-        return None if previous == stem else previous
+        if previous is None or previous == stem:
+            return None
+        above = self.programs.get(program, {}).get(previous)
+        if above and above[-1][1] in NO_FALLTHROUGH:
+            return None
+        return previous
 
 
 def dptr_at_return(tree: Tree, program: str, stem: str, index: int,
@@ -337,7 +371,10 @@ def resolve(tree: Tree, program: str, stem: str, index: int) -> dict:
         got.update(dptr_source="predecessor", helper=int(previous, 16))
         addr, why = dptr_at_return(tree, *tree.at(program, int(previous, 16)))
         got["xdata_addr"] = addr
-        got["note"] = (f"{previous} falls into this listing with DPTR loaded"
+        # `preceding()` has already established that the last row of `previous`
+        # falls into this listing, so the fall-through is stated here rather than
+        # assumed -- it is the condition that makes the load live on entry.
+        got["note"] = (f"{previous} ends falling into this listing with DPTR loaded"
                        if why == "literal" else f"{previous} {why}")
     return got
 
@@ -358,23 +395,32 @@ def site_rows(tree: Tree) -> list:
     return out
 
 
-def unplaced(tree: Tree) -> int:
-    """`movx` in the listings that resolved to no address at all.
+def placement(tree: Tree):
+    """`(unresolved, off_page, on_page)` over every `movx` in the listings.
 
-    Reported rather than dropped, for the reason the module docstring gives:
-    a number here is what keeps the emitted set from reading as a census of
-    the page.
+    Three outcomes, kept apart because they answer three different questions.
+    `unresolved` is what this method failed to place: the backward walk reached
+    no write of DPTR, or reached one it will not turn into an address. `off_page`
+    is a successful resolution to an address outside `0x0860`-`0x086E` -- the
+    walk worked, and the answer is simply not on this page. `on_page` is the
+    emitted set. Collapsing the first two into one figure overstates the failure
+    by however many `off_page` there are, which is most of the tree.
     """
-    n = 0
+    counts = {"unresolved": 0, "off_page": 0, "on_page": 0}
     for program in sorted(tree.programs):
         for stem in sorted(tree.programs[program]):
             seq = tree.programs[program][stem]
             for index, (at, mnem, oper) in enumerate(seq):
                 if mnem != "movx" or "@DPTR" not in oper:
                     continue
-                if not in_page(resolve(tree, program, stem, index)["xdata_addr"]):
-                    n += 1
-    return n
+                addr = resolve(tree, program, stem, index)["xdata_addr"]
+                if in_page(addr):
+                    counts["on_page"] += 1
+                elif addr is None:
+                    counts["unresolved"] += 1
+                else:
+                    counts["off_page"] += 1
+    return counts["unresolved"], counts["off_page"], counts["on_page"]
 
 
 def call_site_rows(tree: Tree, helpers) -> list:
@@ -410,7 +456,7 @@ def call_site_rows(tree: Tree, helpers) -> list:
 
 
 def rows(tree: Tree):
-    """`(emitted, unplaced)` -- the table and the count it is not a census of.
+    """`(emitted, unresolved, off_page)` -- the table, and what it is not.
 
     Sorted by file offset so the `0x0D1E3` call-site row lands between its two
     neighbours in the run rather than at the end of the file, which is where a
@@ -420,7 +466,8 @@ def rows(tree: Tree):
     helpers = {r["helper"] for r in emitted if r["helper"] is not None}
     emitted += call_site_rows(tree, helpers)
     emitted.sort(key=lambda r: (r["region"], int(r["file_offset"], 16)))
-    return emitted, unplaced(tree)
+    unresolved, off_page, _on_page = placement(tree)
+    return emitted, unresolved, off_page
 
 
 def _movx_row(program: str, stem: str, at: str, oper: str, got: dict) -> dict:
@@ -454,7 +501,7 @@ def csv_table(tree: Tree) -> str:
 
 
 def summary(tree: Tree) -> str:
-    emitted, unplaced_count = rows(tree)
+    emitted, unresolved, off_page = rows(tree)
     by_source = collections.Counter(r["dptr_source"] for r in emitted)
     movers = sum(1 for r in emitted if r["movx"])
     chased = sorted({r["helper"] for r in emitted if r["helper"]})
@@ -462,8 +509,9 @@ def summary(tree: Tree) -> str:
             f"the page in the committed listings -- "
             + " ".join(f"{s} {by_source[s]}" for s in sorted(by_source))
             + f" -- plus {len(emitted) - movers} committed call site(s) of a "
-              f"chased helper in bytes no listing covers; {unplaced_count} movx "
-              f"elsewhere in the tree resolved to no address by this method"
+              f"chased helper in bytes no listing covers; elsewhere in the tree "
+              f"{unresolved} movx resolved to no address by this method and a "
+              f"further {off_page} resolved to an address off the page"
             + (f". Helpers chased: {', '.join(chased)}" if chased else ""))
 
 
@@ -528,6 +576,13 @@ def self_test() -> int:
     want("a fall-in from the listing above is `predecessor`",
          (got["dptr_source"], got["xdata_addr"], got["helper"]),
          ("predecessor", 0x0860, 0xD281))
+
+    # The two abutting listings on this tree that are *not* fall-ins, so the
+    # rule is held against the bytes rather than only against a fixture.
+    for program, stem, entry in (("bank0", "BD3D", "BD3D"),
+                                 ("pd", "58B9", "58B9")):
+        want(f"{stem} is not a predecessor -- the listing above ends in a transfer",
+             tree.preceding(program, entry), None)
 
     got = resolve(tree, "bank0", "D091", at("D091", "D094"))
     want("a literal in the same listing is `literal`",

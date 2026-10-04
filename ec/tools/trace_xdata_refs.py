@@ -885,9 +885,21 @@ def main() -> int:
                 print(f"note: {e}", file=sys.stderr)
                 return 1
         callee = {}
-        # Off by default and never inferred from the committed header: a table
-        # that gained the column without the flag reaching it is a red --check
-        # the reader can see, and this is the flag they add.
+        # Off by default. A `--check` infers it from the committed header, so
+        # that checking a table cut with `--callee-column` reproduces that
+        # table rather than the shorter one -- and the inference reads the
+        # artifact under test, which is what bounds it: it catches a table that
+        # *gained* the column without the flag reaching it, because the header
+        # says `DPTR from` and the shorter generation does not. It does not
+        # catch the reverse, a `--check` with the flag omitted against a table
+        # whose `DPTR from` rows are gone, where the sniff turns itself off and
+        # the run reports the shorter table reproduced byte for byte. Two
+        # committed guards cover that direction -- `check_site_census.py` names
+        # the callee-set sites the sweep has lost, and
+        # `test_sites_csv_regeneration.py` declares the flag per table in
+        # Python rather than going through this path -- so the gap is bounded
+        # rather than open, and the fix for it is to pass `--callee-column`
+        # explicitly rather than to trust the header.
         if args.callee_column or (args.check is not None
                                   and "DPTR from" in committed_text(args.check)):
             callee = load_callee_map()

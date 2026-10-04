@@ -25,7 +25,7 @@ sys.path.insert(0, HERE)
 import callee_dptr_sites as cds  # noqa: E402
 
 TREE = cds.Tree()
-ROWS, UNPLACED = cds.rows(TREE)
+ROWS, UNPLACED, OFF_PAGE = cds.rows(TREE)
 
 
 def where(offset):
@@ -173,6 +173,29 @@ class WhatIsNotACensus(unittest.TestCase):
     def test_the_summary_names_the_chased_helpers(self):
         self.assertIn("0xD319", cds.summary(TREE))
 
+    def test_the_two_off_page_outcomes_are_counted_apart(self):
+        # The two are different results -- one is the method failing, one is
+        # the method working on a byte that is not on this page -- and summing
+        # them would report the method's limit as most of the tree.
+        unresolved, off_page, on_page = cds.placement(TREE)
+        self.assertEqual((unresolved, off_page), (UNPLACED, OFF_PAGE))
+        self.assertEqual(on_page, sum(1 for r in emitted() if r["xdata_addr"]))
+        self.assertGreater(off_page, unresolved)
+
+    def test_a_movx_resolved_off_the_page_is_not_counted_as_unplaced(self):
+        # The shape the split exists for: `0x9000` is not on the page, and the
+        # walk resolved it, so it belongs to neither figure `UNPLACED` counts.
+        tree = cds._fixture({"T": [("8000", "mov", "DPTR, #0x9000"),
+                                   ("8003", "movx", "A, @DPTR")]})
+        unresolved, off_page, on_page = cds.placement(tree)
+        self.assertEqual((unresolved, off_page, on_page), (0, 1, 0))
+
+    def test_a_movx_the_walk_cannot_resolve_is_counted_as_unplaced(self):
+        tree = cds._fixture({"T": [("8000", "mov", "A, #0x01"),
+                                   ("8002", "movx", "A, @DPTR")]})
+        unresolved, off_page, on_page = cds.placement(tree)
+        self.assertEqual((unresolved, off_page, on_page), (1, 0, 0))
+
     def test_an_empty_page_emits_no_rows_rather_than_a_guess(self):
         tree = cds._fixture({"T": [("8000", "mov", "DPTR, #0x9000"),
                                    ("8003", "movx", "A, @DPTR")]})
@@ -184,6 +207,58 @@ class WhatIsNotACensus(unittest.TestCase):
         for row in emitted():
             self.assertIn(row["region"], cds.PROGRAMS, row)
             self.assertTrue(row["file_offset"], row)
+
+
+class AbuttingIsNotFallingIn(unittest.TestCase):
+    """`predecessor` needs the listing above to fall *into* this one.
+
+    The exporter splits one routine into consecutive listings, so a listing
+    often begins exactly where the one above it stops. Whether the first
+    *falls into* the second is a separate question the extent cannot answer,
+    and answering it wrongly attributes a value to bytes that do not set it:
+    `BD34` ends `ret` and `58AB` ends `ljmp`, and both `movx` are reached by
+    an `lcall` whose caller loaded DPTR itself.
+    """
+
+    @staticmethod
+    def tree_above(mnem, oper=""):
+        """Two abutting listings, the upper one ending in `mnem`."""
+        tree = cds._fixture({"8000": [("8000", "mov", "DPTR, #0x860"),
+                                      ("8003", mnem, oper)],
+                             "8004": [("8004", "movx", "A, @DPTR")]})
+        tree.extent = {("bank0", 0x8004): "8000"}
+        return tree
+
+    def test_a_listing_that_falls_in_is_a_predecessor(self):
+        # `0xD281` is a bare `mov DPTR,#0x0860` with nothing after it, so this
+        # is the shape the committed `0x0D286` row is.
+        got = cds.resolve(self.tree_above("nop"), "bank0", "8004", 0)
+        self.assertEqual((got["dptr_source"], got["xdata_addr"]),
+                         ("predecessor", 0x0860))
+
+    def test_a_predecessor_ending_in_a_transfer_is_refused(self):
+        for mnem, oper in (("ret", ""), ("reti", ""), ("sjmp", "0x8010"),
+                          ("ljmp", "0x8100"), ("ajmp", "0x8100"),
+                          ("jmp", "@A+DPTR")):
+            got = cds.resolve(self.tree_above(mnem, oper), "bank0", "8004", 0)
+            self.assertEqual(got["dptr_source"], "unresolved", mnem)
+            self.assertIsNone(got["xdata_addr"], mnem)
+            self.assertIsNone(got["helper"], mnem)
+
+    def test_preceding_is_none_for_a_listing_whose_above_ends_out(self):
+        self.assertIsNone(TREE.preceding("bank0", "BD3D"))
+        self.assertIsNone(TREE.preceding("pd", "58B9"))
+
+    def test_no_committed_predecessor_row_ends_in_a_transfer(self):
+        # Over the table rather than a fixture: if an extent ever starts
+        # abutting a listing that leaves, that row's address is a guess and
+        # this is what notices.
+        tree = TREE
+        for row in ROWS:
+            if row["dptr_source"] != "predecessor":
+                continue
+            above = tree.programs[row["region"]][row["helper"][2:]]
+            self.assertNotIn(above[-1][1], cds.NO_FALLTHROUGH, row)
 
 
 class Refusals(unittest.TestCase):

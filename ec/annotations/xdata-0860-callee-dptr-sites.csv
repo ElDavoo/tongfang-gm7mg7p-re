@@ -72,7 +72,6 @@ file_offset,region,runtime,listing,movx,dptr_source,xdata_addr,helper,note
 0x0BBFA,bank0,0xBBFA,BBF2,read,literal,0x0865,,"mov DPTR at 0xBBF7, same listing"
 0x0BC82,bank0,0xBC82,BC7E,read,literal,0x086C,,"mov DPTR at 0xBC7F, same listing"
 0x0BD39,bank0,0xBD39,BD34,read,literal,0x0867,,"mov DPTR at 0xBD36, same listing"
-0x0BD3D,bank0,0xBD3D,BD3D,read,predecessor,0x0867,0xBD34,BD34 falls into this listing with DPTR loaded
 0x0BD42,bank0,0xBD42,BD3D,read,literal,0x0868,,"mov DPTR at 0xBD3F, same listing"
 0x0D094,bank0,0xD094,D091,read,literal,0x0860,,"mov DPTR at 0xD091, same listing"
 0x0D0C6,bank0,0xD0C6,D091,write,literal,0x0866,,"mov DPTR at 0xD0C3, same listing"
@@ -103,7 +102,7 @@ file_offset,region,runtime,listing,movx,dptr_source,xdata_addr,helper,note
 0x0D1E3,bank0,0xD1E3,,,unresolved,,0xD319,"lcall booked at this file offset; no listing covers it, so no movx here is decoded"
 0x0D249,bank0,0xD249,D236,write,callee,0x0860,0xD319,0xD319 loads DPTR before returning
 0x0D27E,bank0,0xD27E,D27A,write,literal,0x0864,,"mov DPTR at 0xD27B, same listing"
-0x0D286,bank0,0xD286,D284,write,predecessor,0x0860,0xD281,D281 falls into this listing with DPTR loaded
+0x0D286,bank0,0xD286,D284,write,predecessor,0x0860,0xD281,D281 ends falling into this listing with DPTR loaded
 0x0D28D,bank0,0xD28D,D289,write,literal,0x0860,,"mov DPTR at 0xD28A, same listing"
 0x0D291,bank0,0xD291,D28E,read,literal,0x0866,,"mov DPTR at 0xD28E, same listing"
 0x0D299,bank0,0xD299,D28E,read,literal,0x0867,,"mov DPTR at 0xD296, same listing"
@@ -120,4 +119,3 @@ file_offset,region,runtime,listing,movx,dptr_source,xdata_addr,helper,note
 0x0D2FE,bank0,0xD2FE,D2EF,read,literal,0x0865,,"mov DPTR at 0xD2FB, same listing"
 0x0D30B,bank0,0xD30B,D304,read,literal,0x0862,,"mov DPTR at 0xD308, same listing"
 0x0D313,bank0,0xD313,D304,read,literal,0x0865,,"mov DPTR at 0xD310, same listing"
-0x258B9,pd,0x58B9,58B9,read,predecessor,0x0864,0x58AB,58AB falls into this listing with DPTR loaded

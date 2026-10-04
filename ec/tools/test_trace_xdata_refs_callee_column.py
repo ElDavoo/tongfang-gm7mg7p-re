@@ -50,6 +50,19 @@ def table(*extra):
     return list(csv.DictReader(out.splitlines()))
 
 
+def resolver_rows():
+    """The resolver's committed per-site table, read off disk.
+
+    Read rather than generated so the rule below is held against the rows a
+    reader of the table would see, not against whatever this run happens to
+    resolve.
+    """
+    path = os.path.join(HERE, os.pardir, "annotations",
+                        "xdata-0860-callee-dptr-sites.csv")
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
 class ThePopulation(unittest.TestCase):
     """Which rows the flag adds, and which rows it must not."""
 
@@ -68,12 +81,24 @@ class ThePopulation(unittest.TestCase):
             self.assertNotIn(offset, got, offset)
 
     def test_a_predecessor_row_is_not_promoted_to_a_site(self):
-        # `0x0BD3D` is a `movx` whose DPTR the listing above left loaded. The
-        # load is a site in its own right at `0x0BD36`, which the sweep already
-        # books, so a second row would book the same routine twice.
+        # A `predecessor` row is a `movx` whose DPTR the listing above left
+        # loaded, and that load is a site in its own right -- `0x0D281`, which
+        # the sweep already books -- so promoting the row would book the same
+        # routine twice. Asserted over whichever rows the resolver's committed
+        # table currently carries rather than against a fixed offset, and with
+        # the non-empty precondition checked first: a test naming an offset
+        # the table no longer holds passes because the row is gone, which is a
+        # dead guard rather than a held one.
+        rows = [r for r in resolver_rows() if r["dptr_source"] == "predecessor"]
+        self.assertTrue(rows, "no predecessor row left to check the rule against")
         got = {r["file_offset"] for r in table("--callee-column")}
-        self.assertNotIn("0x0BD3D", got)
-        self.assertIn("0x0BD36", got)
+        for row in rows:
+            self.assertNotIn(row["file_offset"], got, row)
+            # ... and the load it depends on is a site in its own right.
+            helper = int(row["helper"], 16)
+            offset = T.offset_for_runtime(helper, row["region"])
+            self.assertIsNotNone(offset, row)
+            self.assertIn(f"0x{offset:05X}", got, row)
 
     def test_the_flag_adds_no_column(self):
         # The other committed tables reproduce byte for byte because the

@@ -261,25 +261,17 @@ therefore **not written as a `DAT_EXTMEM_` token anywhere in the export**:
 `ec/decompiled/bank0/8749.c` line 97 reads
 `if ((CPU_TEMP < 0x51) && (GPU_TEMP < 0x51))`, and there are 54 mentions of
 `CPU_TEMP` across the EC programs and none of them under a `DAT_EXTMEM_043e`.
-Reading both spellings — `../ec/tools/xdata_register_map.py` — gives
+Reading both spellings — `../ec/tools/xdata_register_map.py` — gives the
+census in `ec/annotations/xdata-registers.csv`, main EC and PD image separately.
+`python3 ec/tools/check_census_figures.py --print` prints its distinct-address
+and reference figures; they are not written here, because every routine seeded
+and every `registers.yaml` row added moves them.
 
-| | main EC | PD image | total |
-|---|---:|---:|---:|
-| distinct addresses | 1,218 | 157 | 1,326 |
-| references | 14,838 | 858 | 15,696 |
-| of which named from `registers.yaml` | a minority | a few | see below |
+*(Corrected 2026-10-02, issue #342. A table here read `1,063 | 157 | 1,172`
+distinct addresses, `13,937 | 864 | 14,801` references and `41 | 0 | 41` named,
+kept here as the wrong version.)*
 
-*(Corrected 2026-10-02, issue #342. The three rows above read `1,063 | 157 |
-1,172`, `13,937 | 864 | 14,801` and `41 | 0 | 41`, kept here as the wrong
-version. `python3 ec/tools/check_census_figures.py --print` derives the current
-three from `ec/annotations/xdata-registers.csv` and holds this table's first two
-rows to them.)*
-
-The third row's counts, and the named and unnamed counts below, are not written
-here because they move with every `registers.yaml` row added;
-`python3 ec/tools/check_census_figures.py --print` prints them.
-
-So the corrected claim is that **only a minority of the 1,218 XDATA addresses
+So the corrected claim is that **only a minority of the XDATA addresses
 the main EC touches carry a name, and the rest do not** — read as
 `DAT_EXTMEM_xxxx` or as a bare literal argument rather than as a name. The blocking problem the issue
 described is real; what was wrong was the size of the named minority, and with
@@ -7866,7 +7858,7 @@ out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
 Re-running the block's recipe with the flag that now does what its workaround
-did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:5581`) gives
+did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:4410`) gives
 439 → 445, 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed
 rows reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5
 on nothing), nine names carried and 430 committed clusters with a key and none.
@@ -7885,7 +7877,7 @@ figures are what the block now carries and the disagreement is written down
 rather than pasted. Two things this pass found that are not figures:
 `ec/tools/test_xdata_cluster_names.py` is **red on `main`**, because its
 `GUARD` literal predates the parameterised guard, `eq_guard and`, at
-`xdata_register_map.py:2060` and its two-largest case pairs ids with names a
+`xdata_register_map.py:1128` and its two-largest case pairs ids with names a
 generation behind — reported, not edited around, and a follow-up rather than a
 line to move here; and `test_xdata_cluster_names.py:286` carries a
 third-generation figure in its docstring, recorded rather than fixed.
@@ -13259,16 +13251,16 @@ results are in
 `--no-eq-guard` block above cited `xdata_register_map.py:4568` for the flag, and
 on `d330478` that line is `--co-reading-group-table prints the other half: every
 group over two` — **a different flag's help**. `ap.add_argument("--no-eq-guard"`
-is at **`:5581`**. That is the shape issue #873 found at `:4457`, naming the tail
+is at **`:4410`**. That is the shape issue #873 found at `:4457`, naming the tail
 of `--reconcile`'s help (`"image and registers.yaml, unlike every other mode"`,
-now **`:5568`**): on this tree the same defect has moved on to a *third* flag's
+now **`:4397`**): on this tree the same defect has moved on to a *third* flag's
 help, which is the argument for anchoring the code rather than re-pointing the
 number. §17's #254 correction block cited `xdata_register_map.py:916` for
 `store_target()`, `:939` for its `==` rejection and `:243` for `ASSIGN`, and
 those three land on a comment about callers, a `("write_r3r4_to_xdata_pair",
 "write")` tuple and prose about `cluster_key`. Re-measured, `def
-store_target()` is at **`:2037`**, its `==` rejection at **`:2060`** and `ASSIGN`
-at **`:398`**, the first two named as content in the block now. The block's own
+store_target()` is at **`:1105`**, its `==` rejection at **`:1128`** and `ASSIGN`
+at **`:394`**, the first two named as content in the block now. The block's own
 reason for being a block — that a first attempt at those pins "ran exactly four
 lines low" because nothing said which tree it was measured against — is the whole
 of this section: those pins have since moved 814 lines, and the sentence is
@@ -13279,7 +13271,7 @@ quoted above because it is right. `:1582` for the parameterised guard, in the
 `d330478`, and is a property of that tree rather than a constant.** Nothing here
 is a claim about the EC, the firmware, or any register's behaviour: the guard is
 still a conditional in front of the rejection is a statement about
-`xdata_register_map.py:2060` and nothing else, and it is the claim every one of
+`xdata_register_map.py:1128` and nothing else, and it is the claim every one of
 these corrections depends on. The same pins were re-anchored in
 `ec/annotations/xdata-register-map.md`, in
 `xdata-no-eq-guard-refusal-contract.md`, in

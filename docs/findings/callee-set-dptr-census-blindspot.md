@@ -82,11 +82,12 @@ writes DPTR. Every outcome is a named token — `literal`, `callee`,
 guess. The whole population, from `python3 ec/tools/callee_dptr_sites.py`:
 
 ```
-0x0860-0x086E: 121 movx resolved onto the page in the committed listings --
-callee 9 literal 109 predecessor 3 unresolved 1 -- plus 1 committed call
-site(s) of a chased helper in bytes no listing covers; 7757 movx elsewhere in
-the tree resolved to no address by this method. Helpers chased: 0x58AB,
-0xBC7E, 0xBD34, 0xBD3D, 0xD281, 0xD319
+0x0860-0x086E: 119 movx resolved onto the page in the committed listings
+-- callee 9 literal 109 predecessor 1 unresolved 1 -- plus 1 committed
+call site(s) of a chased helper in bytes no listing covers; elsewhere in
+the tree 814 movx resolved to no address by this method and a further
+6945 resolved to an address off the page. Helpers chased: 0xBC7E,
+0xBD34, 0xBD3D, 0xD281, 0xD319
 ```
 
 Nine callee-set `movx` on the page, and **not one of the sites the sweep
@@ -98,17 +99,35 @@ page repeats, and it reaches `0x0860` because `0xD319` is on the page.**
 
 `predecessor` is a second shape the sweep's rule also cannot see and this
 resolver can: a listing that begins where the listing holding the `MOV DPTR`
-ends. `set_0860_ff_then_d284` at `0xD281` is three bytes long and
+ends **and falls into it**. `set_0860_ff_then_d284` at `0xD281` is three bytes
+long — a bare `mov DPTR,#0x860` with nothing after it — and
 `write_ff_to_dptr_then_d28e` at `0xD284` starts where it stops, so the store of
 `0xFF` sits in the second listing with DPTR loaded in the first. That is why
 §4's `0xD281` row is a site whose store is three bytes away from its `movx` —
 a third failure of the same kind, and one only `0x0860` shows.
 
-**The `unresolved` row and the `7757` are the point of printing them.** A row
-whose address could not be established cannot be said to be on the page or off
-it, so the emitted set is not a census and the tool says how much of the tree
-it could not place rather than letting a smaller number stand in for a
-complete one.
+**The fall-through is load-bearing, and abutting alone is not enough.** The
+exporter splits one routine into consecutive listings, so a listing often
+begins exactly where the one above it stops, and whether the first one *falls
+into* the second is a separate question the extent cannot answer. Two committed
+candidates are not fall-ins. `sub_dptr_byte_from_0867` at `0xBD34` ends
+`ret`, and `0xBD3D` is reached only by `lcall 0xbd3d` whose callers each load
+DPTR themselves (`0x86b`, `0x86c`, `0x86e` at `9D9B`) — the `0x0867` the
+listing above holds is the constant its own `subb` uses. `0x58AB` ends
+`ljmp 0x10e8`, a tail jump out, and `pd-index-accesses.csv` already books that
+site's DPTR as handed in by its callers at `0x07D7` and `0x0852`. Neither is a
+predecessor; both are `unresolved`, and the `predecessor` shape has one
+committed site rather than three.
+
+**The `unresolved` row and the off-page count beside it are the point of
+printing them.** A row whose address could not be established cannot be said to
+be on the page or off it, so the emitted set is not a census, and the tool says
+how much of the tree it could not place rather than letting a smaller number
+stand in for a complete one. What it could not place is the **814**; the count
+resolved to an address *off* the page is reported beside it rather than folded
+in, because a `movx` the walk resolved and then found to be elsewhere is the
+method working, not the method failing, and summing the two would overstate the
+failure several times over.
 
 ## Two numbers for `0x0860`, and why the census count does not move
 
@@ -217,7 +236,7 @@ stays a follow-up, as `xdata-086x-dispatch.md` §9 already says.
 | `ec/annotations/xdata-0860-census-sites.csv` | two `dptr-from-callee` rows |
 | `ec/annotations/xdata-086x-dispatch-sites.csv` | regenerated under `--callee-column`: the two `0x0860` stores and the callee-set sites of the other page addresses §1 sweeps, nothing removed, same columns |
 | `ec/annotations/ghidra-functions.csv` | `0xD091`, `0xD236`, `0xD319` comments corrected in place |
-| `ec/annotations/registers.yaml`, `ec/tools/xdata_register_map.py` | dated corrections; **no value changes** |
+| `ec/annotations/registers.yaml` | `XDATA_0860`'s dated correction; **no value moves** |
 | `ec/annotations/xdata-086x-dispatch.md` | §1, §3, §4, §8, §9, §11 corrected in place |
 
 `python3 ec/tools/check_site_census.py`, over the widened set:
@@ -230,11 +249,16 @@ callee's DPTR and counted in no bucket, 2 unchecked (other program),
 passed-to-call 1 address-taken 0, refs 17
 ```
 
-The agreed count rises by two over the table before it, and two more sites are
-in the denominator than were before — the six callee-set sites the other page
-addresses gained are counted the same way. The bucket totals and `refs 17` do
-not move. That is the shape of the fix: **the two sites are now named, and
-neither method is credited with having seen them.**
+**The agreed count does not move.** On `origin/main` the same command prints
+`0x0860: 7 of 9 site(s) agree`; here it prints `7 of 11`. Seven is seven on both
+trees — what rises is the site count and the reported (callee-set) count, by
+the two `0x0860` stores, and the denominator rises with them because they are
+in no bucket. The six callee-set sites the other page addresses gained are
+counted in *their own* address's line, not this one. The bucket totals and
+`refs 17` do not move either. That is the shape of the fix: **the two sites are
+now named, and neither method is credited with having seen them.** `agree` was
+the wrong word for them before this change and is still the right word for the
+seven that were always there.
 
 ## What this does not establish
 
@@ -246,8 +270,9 @@ neither method is credited with having seen them.**
   records what it establishes *for `0x0860`*; the census correspondence for the
   others stays `not recorded` — "not done by this method", never an absence.
 - **That a `movx` the resolver could not resolve is off the page.** The
-  unplaced count is printed for that reason, and an `unresolved` row in the
-  table is a named token with the method named beside it.
+  unresolved count is printed for that reason, kept apart from the count
+  resolved off the page, and an `unresolved` row in the table is a named token
+  with the method named beside it.
 - **Anything about the six case handlers.** They have no function entry and no
   listing, so the bytes `0x0D173`-`0x0D24E` were not read by any method here.
   `0x0D1E3` is the one address in that range this issue touched, and only
@@ -262,14 +287,18 @@ neither method is credited with having seen them.**
 2. **The census still reads the C.** A `dptr-from-callee` class now exists in
    one table for one address; the same join for the other fourteen page
    addresses, and the tree-wide version of it, are separate work.
-3. **`0xBD3D`'s entry `movx`** reads `0x0867` through the listing above it
-   (`predecessor`), and the sweep's 8-instruction window does not reach across
-   the listing boundary. Whether that is a site the sweep should book is a
-   window question, and `--callee-column` deliberately does not decide it.
+3. **`0xBD3D`'s entry `movx`** reads `0x0867` from the caller's own DPTR, which
+   each of its three callers loads before the `lcall`, and the sweep's
+   8-instruction window does not reach across the listing boundary. Whether
+   that is a site the sweep should book is a window question, and
+   `--callee-column` deliberately does not decide it.
 4. **The six case handlers still have no function entry**, and `0x0D1E3` is
    now the third `lcall 0xD319` in bytes no listing covers — which is a
    coverage statement, not a finding about the bytes.
-5. **`0x0864` is on the page and in no committed table.** The resolver places
-   a read of it at bank0 `0x58B9`, through the `0x58AB` listing above; §1's
-   fifteen-address sweep does not include it, and it has no `registers.yaml`
-   entry. That is its own issue.
+5. **`0x0864` has no row in `xdata-086x-dispatch-sites.csv` and no
+   `registers.yaml` entry.** It is not absent from the committed data:
+   `xdata-registers.csv` books it with two references (one write, one
+   passed-to-call), and this resolver's table places a bank0 read at `0x0D17E`
+   and a bank0 write at `0x0D27E`, both `literal` — each listing loads DPTR
+   itself. §1's fifteen-address sweep does not sweep it. What is missing is a
+   `registers.yaml` entry, and that is its own issue.

@@ -64,12 +64,9 @@ REGISTERS = EC / "annotations" / "xdata-registers.csv"
 NAMES = EC / "annotations" / "xdata-cluster-names.csv"
 OWNERSHIP_PAGE = EC / "annotations" / "xdata-export-ownership.md"
 
-# `OWNERSHIP` is imported rather than re-derived, for the reason the join tool
-# imports it too: the refusal comment's whole claim is that it quotes the
-# oracle's numbers, so holding that claim means comparing against the oracle's
-# own dict rather than against a second copy of the arithmetic. Importing the
-# module costs a dict of constants, not a census, and the spec is by path
-# because `ec/tools/` is not on `sys.path` when the runner invokes this file.
+# The census tool is imported by path because `ec/tools/` is not on `sys.path`
+# when the runner invokes this file. Importing it costs a dict of constants, not
+# a census.
 _spec = importlib.util.spec_from_file_location(
     "xdata_register_map", TOOL)
 xrm = importlib.util.module_from_spec(_spec)
@@ -266,10 +263,9 @@ class Report:
         are two different questions and the difference is the whole of what the
         hand-name figure is about: a name can *resolve* under the flip onto a
         different cluster and still have had to be re-keyed, which is the thing
-        a `cluster_key` citation does not survive. So the count that matches
-        `OWNERSHIP["hand_names_kept"]` is the names the report prints `key same`
-        for, and the one that does not is every name whose key changed or that
-        failed to resolve at all.
+        a `cluster_key` citation does not survive. So the kept count is the
+        names the report prints `key same` for, and the rest is every name whose
+        key changed or that failed to resolve at all.
         """
         return {name: "key same" in value for name, value in self.names().items()}
 
@@ -685,285 +681,14 @@ class TheRefusalArguesFromAFigure(unittest.TestCase):
         self.assertIn("--no-eq-guard would overwrite the committed census, so "
                       "it must be given scratch outputs", flat)
 
-    def test_the_two_refusals_now_argue_from_the_same_kind_of_number(self):
-        # The asymmetry itself, held to the sibling's *figures* rather than to
-        # its shape. This used to assert only that the sibling's comment quoted
-        # a figure of some kind, which passed on 1,171 / 430 / 10 -- three wrong
-        # denominators for a census this tree no longer has. The figure a
-        # refusal quotes has to be the one the page it cites measures; which
-        # figures that is, and whether they still describe the census, is
-        # `TheRefusalQuotesThePageItCites` below.
+    def test_the_sibling_refusal_cites_the_page_that_measured_its_cost(self):
+        # The cost of flipping --export-ownership is measured in a write-up,
+        # and the refusal names it rather than quoting its figures: they moved
+        # with every seeded routine, and a refusal carrying them was a line
+        # every such branch had to edit (2026-10-04).
         comment, _lines, _at = self.comment_above(self.SIBLING)
-        self.assertRegex("\n".join(comment), FIGURE_IN_PROSE)
-
-
-class TheRefusalQuotesThePageItCites(unittest.TestCase):
-    """What the `--export-ownership` refusal argues from, held against §4/§5.
-
-    A refusal that stops a user overwriting the committed census is the one
-    place where a stale number does damage rather than sitting quietly in a
-    page: the user reads it and learns the cost of ignoring it. So the sites
-    that state this cost -- the refusal comment, the `--help` string, the
-    module docstring, the `OWNERSHIP` comment and `scan()`'s own docstring --
-    are held to the page the refusal cites and to the census that page
-    measures. Only the `--help` string and the module docstring are
-    user-visible, but `scan()`'s is the one in the routine that implements the
-    pass, so a correction that skipped it would leave the stale figure in the
-    code a reader opens to find out what the flag does.
-
-    **The chain, and the reason it has no hand-typed numeral in it.** The
-    figures are read off `annotations/xdata-export-ownership.md` §4/§5, the
-    denominators are read off the committed CSVs, the numerators come from a
-    fresh `--export-ownership` run joined back over the committed one, and the
-    oracle they must equal is `xrm.OWNERSHIP`. Nothing here types a size of the
-    tree, so editing the page and the comment together to a new wrong number
-    still goes red at the census end -- which is the failure the case exists to
-    catch, and the reason it is worth a subprocess.
-
-    The `--help` string is read out of the source rather than by running
-    `--help`, deliberately: `RawDescriptionHelpFormatter` applies to
-    `description`, while argparse re-wraps an argument's own `help=`. The
-    figures are comma-grouped integers with no internal space, so they survive
-    either way, and the source is the level the claim is made at.
-    """
-
-    SIBLING = "if args.export_ownership and (args.check or args.self_test):"
-    FLAG = 'ap.add_argument("--export-ownership", action="store_true",'
-    # §5's two bullets and §4's table row, each with the shape that carries it.
-    PAGE_KEY_MOVES = re.compile(r"moves `cluster_key` on \*\*(\d+) of the "
-                                r"([\d,]+)\*\* clusters")
-    PAGE_NAMES_BROKEN = re.compile(r"breaks \*\*(\d+) of the ([\d,])\*\* hand")
-    PAGE_CLUSTER_COUNT = re.compile(r"adds \*\*(\d+)\*\* cluster "
-                                    r"\(([\d,]+) → ([\d,]+)\)")
-    PAGE_ROWS_MOVED = re.compile(r"addresses whose `refs` move \| .*?\| ([\d,]+)")
-
-    @classmethod
-    def setUpClass(cls):
-        cls.page = OWNERSHIP_PAGE.read_text(encoding="utf-8")
-        cls.source = TOOL.read_text(encoding="utf-8")
-        cls.lines = cls.source.splitlines()
-
-    @staticmethod
-    def _flat(text):
-        """`text` with its line wrapping collapsed.
-
-        The figures are comma-grouped integers with no internal space, so what
-        a prose site has to carry is the whole `N of the M` phrase and not two
-        loose numbers: `assertIn("5", text)` would pass on a site that had lost
-        its denominator entirely, which is the defect this class exists for.
-        Collapsing the whitespace is what lets the phrase be matched across the
-        line break a hand-wrapped comment puts in the middle of it. Backticks go
-        and apostrophes stay -- a figure is never inside either, but `census's`
-        is, and stripping it would turn the phrase being looked for into one
-        that is not in the text.
-        """
-        return re.sub(r"\s+", " ", text.replace("`", ""))
-
-    def comment_above(self, anchor):
-        """The `# ` block immediately above `anchor`, flattened."""
-        above, _lines, _at = _comment_above(self.lines, anchor)
-        return self._flat("\n".join(above))
-
-    def help_block(self):
-        """The `--export-ownership` `add_argument` call, as a list of lines."""
-        at = next(i for i, line in enumerate(self.lines)
-                  if line.strip() == self.FLAG)
-        block = []
-        for line in self.lines[at:]:
-            block.append(line)
-            if line.rstrip().endswith('")'):
-                break
-        return block
-
-    def help_string(self):
-        """The `--help` block's text, its source quoting and wrapping collapsed.
-
-        The quote characters go here and only here: this block is Python
-        source, so the text a user reads is what is inside the literals. A
-        comment is already text, so the prose sites keep their apostrophes.
-        """
-        return self._flat("\n".join(self.help_block()).replace('"', " "))
-
-    def page_figures(self):
-        """[(label, regex)] for each figure §5 prints.
-
-        Each regex is the figure as the page spells it *followed by the noun
-        that comes after it there*, so the denominator's end is anchored rather
-        than stopping part-way into a longer one. The noun is named in the
-        `PAGE_*` patterns above rather than sliced out of them, because a
-        pattern that changes shape silently is a pattern nobody can check.
-        """
-        out = []
-        for label, pattern, noun in (("clusters", self.PAGE_KEY_MOVES,
-                                      "clusters"),
-                                     ("hand names", self.PAGE_NAMES_BROKEN,
-                                      "hand")):
-            match = pattern.search(self.page)
-            self.assertIsNotNone(match, f"§5 no longer prints the {label}")
-            out.append((label, re.compile(
-                rf"{match.group(1)} of the {match.group(2)} {noun}\b")))
-        count = self.PAGE_CLUSTER_COUNT.search(self.page)
-        self.assertIsNotNone(count, "§5 no longer prints the cluster count")
-        out.append(("cluster count",
-                    re.compile(rf"{count.group(2)} clusters\b")))
-        return out
-
-    def assert_quotes(self, text, what):
-        """Every §5 figure appears in `text` as a whole `N of the M` phrase.
-
-        Matched as a regular expression with the denominator's end anchored on
-        the noun that follows it, not as a substring: `"5 of the 9"` is a
-        substring of `"5 of the 10"`, so a site that had drifted back to the
-        old denominator would still pass a plain `assertIn` -- and the drift
-        this class exists to catch went in exactly that direction.
-        """
-        for label, pattern in self.page_figures():
-            self.assertRegex(text, pattern.pattern,
-                             f"the {what} does not quote the {label} figure "
-                             f"'{pattern.pattern}' that §5 prints")
-
-    def test_the_refusal_comment_quotes_the_page_s_figures(self):
-        # Every one of the three, so a page that moved one of them and not the
-        # others is caught here rather than by a reader counting clusters.
-        self.assert_quotes(self.comment_above(self.SIBLING), "refusal comment")
-
-    def test_the_help_string_quotes_the_same_figures_as_the_comment(self):
-        # The one every user of `xdata_register_map.py --help` reads, so it is
-        # held to the same page figures as the comment beside it rather than to
-        # the page twice over: one spelling of the claim, checked once.
-        self.assert_quotes(self.help_string(), "--help string")
-
-    def test_the_denominators_the_comment_quotes_are_the_committed_census(self):
-        # The half of the issue that costs no subprocess, and the half that is
-        # actually a census: `296 of the 1,326` is only true while
-        # `xdata-registers.csv` has 1,326 rows. Held against the row counts the
-        # CSVs have rather than against figures, because a count is what the
-        # file carries and a figure is what a reader is told.
-        comment = self.comment_above(self.SIBLING)
-        moved = self.PAGE_ROWS_MOVED.search(self.page)
-        self.assertIsNotNone(moved, "§4 no longer prints the moved-row count")
-        self.assertIn(f"{moved.group(1)} of the {len(rows_of(REGISTERS)):,}",
-                      comment)
-        self.assertIn(f"of the {len(rows_of(CLUSTERS)):,} clusters", comment)
-        self.assertIn(f"of the {len(rows_of(NAMES))} hand", comment)
-
-    def test_the_docstrings_and_the_ownership_comment_quote_the_same_figures(self):
-        # Three more sites carrying the identical claim. The module docstring
-        # is not decoration: `argparse` passes it as `description=`, so it is
-        # printed on the same `--help` screen as the argument help above.
-        self.assert_quotes(self._flat(xrm.__doc__), "module docstring")
-        self.assert_quotes(self.comment_above("OWNERSHIP = {"),
-                           "OWNERSHIP comment")
-        # And `scan()`'s own, which is the one in the routine that implements
-        # the pass: the docstring a reader opens to find out what the flag does
-        # states the same cost, so it drifted with the rest and is held with it.
-        # Read off the imported function rather than the source text, so this
-        # is the docstring the module actually carries.
-        self.assert_quotes(self._flat(xrm.scan.__doc__), "scan() docstring")
-
-    def test_the_numerators_are_re_derived_not_copied(self):
-        # The census end of the chain, and the one case here that runs the tool.
-        # Each numerator is compared against `OWNERSHIP` rather than against the
-        # page, so a page and a comment edited together to a wrong pair still
-        # has to survive a regeneration to agree.
-        report = Report(ownership_join())
-        moved, rows = report.figure("rows whose refs differs")
-        self.assertEqual(rows, len(rows_of(REGISTERS)))
-        self.assertEqual(moved, xrm.OWNERSHIP["moved"])
-
-        moved_keys, keys = _figure("cluster_key that moves",
-                                   report.value("cluster_key that moves"))
-        self.assertEqual(keys, len(rows_of(CLUSTERS)))
-        # The keys the flip does not keep are the complement of the kept count,
-        # so §5's figure is held as an identity rather than as a number.
-        self.assertEqual(moved_keys,
-                         keys - xrm.OWNERSHIP["cluster_keys_kept"])
-        # And §5's own cluster figure is held to that, rather than only to the
-        # prose quoting it. Without this a page edited to 45 of 439 beside a
-        # comment edited to match passes every check above -- page and prose
-        # agreeing with each other is not the same claim as either being right,
-        # and the census is the only thing in the tree that settles it.
-        self.assertEqual(int(self.PAGE_KEY_MOVES.search(self.page).group(1)),
-                         moved_keys,
-                         "§5's cluster figure is not the one a fresh "
-                         "--export-ownership run produces, so the page and the "
-                         "prose agree with each other and both disagree with "
-                         "the census")
-
-        by_key = report.names_by_key()
-        self.assertEqual(len(by_key), len(rows_of(NAMES)))
-        self.assertEqual(sum(by_key.values()),
-                         xrm.OWNERSHIP["hand_names_kept"])
-        # The remainder is what "breaks 5 of the 9" counts: the names the flip
-        # does not carry the same key, whether or not they resolve elsewhere.
-        broken = len(by_key) - sum(by_key.values())
-        self.assertEqual(int(self.PAGE_NAMES_BROKEN.search(self.page).group(1)),
-                         broken,
-                         "§5's hand-name figure is not the one a fresh run "
-                         "produces, so the page and the prose agree with each "
-                         "other and both disagree with the census")
-
-    def test_the_moved_row_figure_is_the_page_s_and_the_census_s_own(self):
-        # The register-row figure is the one §5 does not restate, which is why
-        # it went the other way -- 228 of 1,171 against 296 of 1,326 -- with no
-        # page anywhere contradicting it. So it is tied to §4's own table row
-        # here: the page publishes one number, a regeneration produces another,
-        # and the two have to be the same number.
-        report = Report(ownership_join())
-        moved, rows = report.figure("rows whose refs differs")
-        self.assertEqual(rows, len(rows_of(REGISTERS)))
-        self.assertEqual(int(self.PAGE_ROWS_MOVED.search(self.page).group(1)),
-                         moved,
-                         "§4's moved-row figure is not the one a fresh run "
-                         "produces, so the comment and the page would agree "
-                         "with each other and both disagree with the census")
-
-    def test_the_direction_paragraph_quotes_the_oracle_rather_than_the_tree(self):
-        # The `:95` settle, held. This paragraph is a *live* denominator rather
-        # than a kept-wrong-version record: it is the module docstring, so
-        # argparse prints it on every `--help`, and both of its figures are the
-        # ones `DIRECTION_INVARIANT` pins and `--self-test` asserts. Asserted
-        # against the constants and not against `ORACLE["distinct"]`, because
-        # the constant is what the tool would silently stop holding.
-        flat = self._flat(xrm.__doc__)
-        invariant = xrm.DIRECTION_INVARIANT
-        self.assertIn(f"{invariant['write_like']:,} occurrences across "
-                      f"{invariant['write_like_addrs']:,} distinct addresses",
-                      flat)
-        self.assertIn(f"the census's {xrm.ORACLE['distinct']:,}", flat)
-
-    def test_the_flip_adds_the_cluster_the_page_says_it_adds(self):
-        # `OWNERSHIP["clusters"]` against the committed row count, which is the
-        # "+1 cluster (439 -> 440)" the refusal comment and both comment
-        # blocks now state. Asserted as the difference, so it is the *add* that
-        # is held and not a second copy of the total.
-        report = Report(ownership_join())
-        self.assertEqual(report.value("clusters"),
-                         f"committed {len(rows_of(CLUSTERS))}, "
-                         f"guard-off {xrm.OWNERSHIP['clusters']}")
-        self.assertEqual(xrm.OWNERSHIP["clusters"] - len(rows_of(CLUSTERS)),
-                         int(self.PAGE_CLUSTER_COUNT.search(self.page).group(1)))
-
-    def test_both_blocks_keep_their_line_counts(self):
-        # An innocuous reflow of the `--help` block moves `check_refusal` and
-        # `committed_output_refusal`, which `check_eq_guard_citations.py`
-        # resolves by grepping this file and which
-        # docs/findings/xdata-no-eq-guard-citation-anchors.md records the
-        # resolved lines of -- so that one would turn the gate red for a reason
-        # unrelated to any finding. The sibling comment sits *below* both
-        # anchors, so its length is held for the same reason as the two blocks
-        # above rather than because something resolves off it: it is the block a
-        # correction to the figures reflows, and its length is what keeps that
-        # correction a same-length edit.
-        self.assertEqual(len(self.help_block()), 10,
-                         "the --export-ownership --help block changed length; "
-                         "the two refusal anchors below it move with it")
-        comment, _lines, _at = _comment_above(
-            TOOL.read_text(encoding="utf-8").splitlines(), self.SIBLING)
-        self.assertEqual(len(comment), 11,
-                         "the --export-ownership refusal comment changed "
-                         "length; the anchors below it are unaffected, so this "
-                         "is here to keep the next correction same-length")
+        self.assertIn("annotations/xdata-export-ownership.md",
+                      "\n".join(comment))
 
 
 class TheToolWritesNothing(unittest.TestCase):

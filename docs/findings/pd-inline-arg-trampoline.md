@@ -353,10 +353,11 @@ The distribution is small and page-shaped, which is what the §3 mechanism
 predicts: `0x0A82` (174), `0x0782` (107), `0x0882` (92), `0x0482` (7),
 `0xFF82` (7), `0x0082` (3). Every one of them is `??82` with the high byte
 taken from the caller's `DPH` — so the destination is one scratch cell per XDATA
-page the callers' DPTRs fall in. **What reads those cells was not traced**, and
-this file does not claim the `0x82` offset is a per-page scratch cell rather
-than part of a wider structure; it is a fixed literal in the instruction, and
-that is as far as the decode goes.
+page the callers' DPTRs fall in. **What reads those cells is
+[traced in `pd-inline-arg-readers.md`](pd-inline-arg-readers.md), and no sweep
+found one**, and this file does not claim the `0x82` offset is a per-page
+scratch cell rather than part of a wider structure; it is a fixed literal in the
+instruction, and that is as far as the decode goes.
 
 ## 6. What changed in the tools, and the counts
 
@@ -435,8 +436,10 @@ reason.
   value is not a named unit, and this file does not supply one.
 - **Not why the two `pop`s deliver high byte first.** §3 measures the order and
   leaves the cause open.
-- **Not who reads the deposited cells.** §5 has the destinations and the
-  strength of each reading, and no consumer.
+- **Not who reads the deposited cells — answered elsewhere, and negatively.**
+  [`pd-inline-arg-readers.md`](pd-inline-arg-readers.md) is the sweep; it finds
+  no consumer by the methods it states, and §5's destinations and the strength
+  of each reading stay here.
 - **No control-flow recovery.** `disasm8051.py` decodes linearly and stops at
   the first branch; the census counts *static* sites and says nothing about
   which execute, how often, or in what order. Whether some of the 458 sit in
@@ -467,6 +470,10 @@ reason.
 3. **Why the two `pop`s deliver high byte first** (§3).
 4. **The consumer of the `??82` cells** (§5), and whether the 32-byte
    `dptr_load` scan can be replaced by a real backward decode for the 64 sites
-   it misses.
+   it misses. Both halves are done in
+   [`pd-inline-arg-readers.md`](pd-inline-arg-readers.md): the consumer is a
+   written negative, and `pd_inline_arg_dest.py` replaces the scan with a
+   decode. What is left open is the part that negative opens — what would
+   consume the cell if anything did.
 5. **The three remaining `0x07D0` sites** (`0x3A81`, `0x4869`, `0x83E2`) — the
    address-table idiom, named and not fixed.

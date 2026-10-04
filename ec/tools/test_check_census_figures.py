@@ -498,50 +498,21 @@ class SectionBody(unittest.TestCase):
             ccf.section_body(["## 1a", "x", "## 2", "## 3a"], "a"))
 
 
-class Constants(unittest.TestCase):
-    """`int_dict`, which reads one *named* dict out of the census tool."""
-
-    def test_reads_oracle_by_name(self):
-        read = ccf.int_dict(ccf.CENSUS_TOOL, "ORACLE")
-        self.assertTrue(read)
-        self.assertNotEqual(read["distinct"], read["refs"])
-
-    def test_a_name_the_module_does_not_define_reads_as_empty(self):
-        self.assertEqual(ccf.int_dict(ccf.CENSUS_TOOL, "NO_SUCH_TABLE"), {})
-
-
 class TheCommittedTree(unittest.TestCase):
     """The cases that measure the real tree, and they measure a relation."""
 
     def setUp(self):
         self.figures = ccf.derive(ccf.read_csv(ccf.REGISTERS_CSV),
                                   ccf.read_csv(ccf.CLUSTERS_CSV))
-        self.oracle = ccf.int_dict(ccf.CENSUS_TOOL, "ORACLE")
-        self.buckets = ccf.int_dict(ccf.CENSUS_TOOL, "BUCKET_TOTALS")
 
-    def test_every_oracle_key_is_derived_or_declined_with_a_reason(self):
+    def test_every_declined_figure_has_a_reason(self):
         for key, reason in ccf.DECLINED.items():
             self.assertTrue(reason.strip(),
                             f"{key} is declined with no reason to read")
-        self.assertEqual(
-            set(self.oracle) - set(ccf.DECLINED) - set(self.figures), set())
-
-    def test_every_derived_figure_that_oracle_pins_agrees_with_it(self):
-        stale = {k: (self.oracle[k], self.figures[k])
-                 for k in set(self.oracle) & set(self.figures)
-                 if self.oracle[k] != self.figures[k]}
-        self.assertEqual(stale, {})
-
-    def test_every_bucket_total_agrees_with_its_column(self):
-        self.assertEqual(set(self.buckets) - set(ccf.BUCKETS), set())
-        for key, value in self.buckets.items():
-            self.assertIn(key, self.figures)
-            self.assertEqual(self.figures[key], value, key)
 
     def test_the_declined_keys_really_are_not_derivable(self):
-        # Asserted from both sides: a key this tool lists as unreadable that it
-        # turns out to derive is a decline a reader would have to discover by
-        # hand, and the partition above would then be two overlapping halves.
+        # A key this tool lists as unreadable that it turns out to derive is a
+        # decline a reader would have to discover by hand.
         self.assertEqual(set(ccf.DECLINED) & set(self.figures), set())
 
     def test_every_declared_site_agrees_with_the_committed_census(self):
@@ -549,7 +520,7 @@ class TheCommittedTree(unittest.TestCase):
         self.assertTrue(rows, "an empty site list would report a clean run "
                               "having measured nothing")
         results, _declined, problems = ccf.check_sites(
-            rows, self.figures, self.oracle,
+            rows, self.figures, self.figures,
             ccf.clusters_by_id(ccf.read_csv(ccf.CLUSTERS_CSV)))
         self.assertEqual(problems, [])
         self.assertEqual([r[3] for r in results if r[3] != r[4]], [])
@@ -576,23 +547,19 @@ class Fragment(unittest.TestCase):
         self.assertEqual(text.count("not read by this method"),
                          len(ccf.DECLINED))
 
-    def test_it_marks_which_figures_oracle_pins_and_which_it_does_not(self):
+    def test_it_names_no_pin_because_the_census_holds_none(self):
         text = ccf.fragment(FIGURES, ORACLE)
-        self.assertIn('`ORACLE["distinct"]`', text)
-        self.assertIn('`BUCKET_TOTALS["read"]`', text)
-        # `pd_distinct` is derived without a pin of its own name -- `OWNERSHIP`
-        # has one, and it is a different census -- so the fragment has to say
-        # so rather than leaving a reader to assume a pin exists.
-        self.assertIn("| `pd_distinct` | 4 | -- |", text)
+        self.assertNotIn("ORACLE", text)
+        self.assertNotIn("BUCKET_TOTALS", text)
+        self.assertIn("| `pd_distinct` | 4 |", text)
 
     def test_it_publishes_the_naming_halves_as_well_as_their_total(self):
         # `--print` is what a page cites instead of transcribing, so a figure a
         # declared site is held to and the fragment does not print is one a
-        # reader cannot check without re-reading the CSVs. Both halves carry no
-        # pin of their own name, which the `--` column has to say.
+        # reader cannot check without re-reading the CSVs.
         text = ccf.fragment(FIGURES, ORACLE)
-        self.assertIn("| `named_main` | 3 | -- |", text)
-        self.assertIn("| `named_pd_only` | 0 | -- |", text)
+        self.assertIn("| `named_main` | 3 |", text)
+        self.assertIn("| `named_pd_only` | 0 |", text)
 
 
 if __name__ == "__main__":

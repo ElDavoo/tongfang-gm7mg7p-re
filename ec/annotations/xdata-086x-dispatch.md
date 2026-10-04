@@ -401,9 +401,10 @@ number that drifts fails instead of reading as agreement.
 > `check_site_census.py` now reports that state **on its own** rather than
 > folding it into the agree count. **No bucket total moves**: the census sees
 > no occurrence at either site, so the totals above are unchanged and still
-> close. `xdata_register_map.py`'s `HAND_CHECKED["0x0860"]` keeps `write: 2`
-> and its `--self-test` still passes; that is the evidence the counts are
-> unmoved, and the correction says why in place.
+> close, and `xdata-registers.csv`'s generated row for `0x0860` still reads
+> `write: 2`. `xdata_register_map.py --self-test` still passes and `--check`
+> still reproduces the CSV byte for byte; that is the evidence the counts are
+> unmoved, and `registers.yaml`'s `XDATA_0860` note says why in place.
 > `docs/findings/callee-set-dptr-census-blindspot.md` has the measurement.
 
 **Three residues, named rather than left for a reader to infer.** The
@@ -746,7 +747,7 @@ block and `docs/findings/xdata-086x-site-census-join.md`.)*
 rows below are re-cut, and the other twelve are not.** `--callee-column`
 (§1) adds one row per `movx` whose DPTR a callee left behind, which is a site
 the `MOV DPTR,#imm16` rule these cells count cannot reach. `0x0860` gains two
-and `0x0867`/`0x0868` gain one apiece; the `EC` and `b0` columns move with
+and `0x0867`/`0x0868` gain three apiece; the `EC` and `b0` columns move with
 them, and the `read`/`write`/`no-movx` columns classify the added rows the same
 way as any other. **The PD column does not move** — no PD byte is reached
 through a main-EC routine — and `0x0864`, which the resolver places on the page
