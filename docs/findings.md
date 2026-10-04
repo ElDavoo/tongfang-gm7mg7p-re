@@ -324,10 +324,16 @@ above are kept, which is §4a-4d.)*)*
 > 14,838 / 858 / 15,696 all re-derive, and so do the token-split figures held
 > beside them — `extmem_main_distinct` 874, `symbol_main_distinct` 188,
 > `extmem_commented` 9. `xdata_register_map.py` pins none of these; the key
-> names are the ones `check_census_figures.py --print` derives them under. That
-> is what this block certifies and the whole of it: each of those is a figure
-> `check_census_figures.py --print` re-derives, and each was measured here
-> rather than carried over.
+> names are the ones `check_census_figures.py --print` derives them under.
+> That is what this block certifies and the whole of it: each of those was
+> measured here rather than carried over, and each re-derives —
+> `extmem_main_distinct` and `symbol_main_distinct` through
+> `check_census_figures.py --print`, `extmem_commented` through the raw token
+> count less the same count through `xdata_register_map.py`'s
+> `strip_comments()`. It is the one key of the three that tool declines: it
+> prints `not read by this method` for it, and its `DECLINED` dict says why —
+> the figure is the difference between a raw token count and a comment-stripped
+> one, and that tool strips nothing.
 >
 > **The `CPU_TEMP` count quoted above is the one figure in this section that does
 > not re-derive**, and it is corrected here rather than left under a blanket
