@@ -254,6 +254,45 @@ boot chain, a dispatch table or a polled task is an open question, and
 "boot-time" above is the shape of the `0x0782` bit-5 one-shot, not a
 scheduling claim.
 
+> **Corrected 2026-10-03 (issue #109); the paragraph above is left as it was
+> written.** It is a polled dispatch slot, and the "boot-time" reading it
+> flagged as possible is the wrong one.
+>
+> Two of its premises are now settled and one was never right.
+> **The framing:** `0x851B` is reached from `common 0x0E49 ljmp 0x1564`,
+> where `0x1564` is the far-call stub whose immediate is `0x851B`
+> (`task-call-table.csv`), and `0x0E49` is the dispatch slot the
+> divide-down scheduler's inline case table at `common 0x0DD6` reaches on
+> **case `0x02` and case `0x0C`**. So it is a recurring turn of a polled
+> scheduler. The run itself was decoded before this by
+> [`scheduler-run-8518-entries.md`](../../docs/findings/scheduler-run-8518-entries.md)
+> (issue #1185) — `0x851B` is the head of segment 1 — and what no file had
+> joined is the *stub* to the *scheduler*. **The attribution is wrong:**
+> `bank-call-audit.md` never claimed this run's framing; it is about
+> `lcall`/`ljmp` framing and the BL51 trampolines, and it does not mention
+> `0x8518` or `0x851B`. The debt was real and the pointer was not.
+>
+> **The one-shot:** "boot-time above is the shape of the `0x0782` bit-5
+> one-shot, not a scheduling claim" was right to doubt and the doubt resolves
+> the other way. `0xA80A`'s `anl a,#0xdf` guards *only* the `0x0751` mode
+> write between `0xA809` and `0xA823`. The PL clear is at `0xA82B`, and that
+> is the branch target of **both** `jnb`s — `0xA802` on bit 0 and `0xA806` on
+> bit 5 — as well as the fall-through past `lcall 0x8653` at `0xA828`. All
+> three paths converge on it. A routine that recurs with a one-shot inside it
+> is a periodic init pass, and that is what this is.
+>
+> **The driver's exposure:** "`a profile driver would inherit it`" assumes the
+> bit stays set once the driver has set it. It need not. bank0 `0xBD03` clears
+> bit 0 and, by the method that scan can reach, nothing sets it — see the
+> `0x0741` row in `registers.yaml`. The race is **possible**, not settled:
+> `0x0741` bit 0 has to be clear at the moment the routine runs, and the
+> routine's two entry gates (`0x0780 != 0xA2` and `0x06E6 == 0x01`) have never
+> been evaluated against a run time. Nothing in this correction is behavioural;
+> no register was read back and no hardware was reached. The write-up is
+> [`a7c8-dispatch-slot-and-pl-race.md`](../../docs/findings/a7c8-dispatch-slot-and-pl-race.md)
+> and the unrun procedure is
+> [`pl-clear-0741-gate.md`](../../docs/hardware-tests/pl-clear-0741-gate.md).
+
 ## 5. The per-mode default blocks are written by the EC and read by nobody
 
 The issue's hypothesis — the EC copies `0x0730-0x0737` / `0x07A7-0x07AA`
@@ -492,6 +531,22 @@ than only the listings quoted here.
 - **When `0xA7C8`'s routine runs**, and therefore whether the `AP_OEM`-gated
   PL clear in §4 can fire after a host has written the PLs, or only before.
   Resolving `0x851B`'s framing (`bank-call-audit.md`) is the way in.
+
+  > **Closed for `0xA7C8` 2026-10-03 (issue #109); the bullet above is left
+  > as it was written.** It runs on the divide-down scheduler's cases `0x02`
+  > and `0x0C`, via `common 0x0E49 ljmp 0x1564` and the `0x851B` stub — a
+  > polled task, not a boot chain, and `bank-call-audit.md` was never the file
+  > that said otherwise. The clear can therefore fire after a host has written
+  > the PLs, **whether** it does is still open: that needs `0x0741` bit 0 to
+  > be clear when the routine runs, and the two entry gates have never been
+  > evaluated. [`a7c8-dispatch-slot-and-pl-race.md`](../../docs/findings/a7c8-dispatch-slot-and-pl-race.md),
+  > and [`pl-clear-0741-gate.md`](../../docs/hardware-tests/pl-clear-0741-gate.md)
+  > for the run that has not happened.
+  >
+  > **The debt is closed for `0xA7C8` only.** `0x83FF` at `0x8551`, whose own
+  > open items live in `ec-07c4-07d5-sites.md` §2/§9 and
+  > `docs/hardware-tests/ctgp-dben-07c4-bit3.md`, is a different slot in the
+  > same run and is untouched here.
 - **The duplicated `0xABxx` / `0xC7xx` mode routines** — two copies, same
   masks. Which one is live, and on what condition. Partly answered by
   `docs/findings/mode-defaults-variant-selector.md` §7 (issue #111): the
@@ -590,6 +645,26 @@ store in the `0xB716` row and that is the whole of the mystery: it is the
 in the machine code and on nothing in the tool. `0x089E` and `0x089F` are
 written as one 16-bit store, and the `static_refs` count of 1 for `0x089F` in
 `registers.yaml` is a count of direct `mov dptr` sites, not of writers.
+
+> **Corrected 2026-10-03 (issue #242).** The paragraph above is right about
+> the tool and wrong about the firmware, and both halves are kept visible here
+> because the error was instructive. `descend()` now follows `inc dptr` as the
+> increment it is, so the `0xB716` row records **no** `unattributed` store,
+> its `status` is `resolved`, and its `xdata` cell names `0x089F write`
+> beside `0x089E r+w`. The diagnosis was correct throughout: the store really
+> did reach `0x089F` in the machine code and to nothing in the tool. What
+> could not be right is the standing of that fact — a tool's refusal is not a
+> property of the firmware, and reading it as one cost the arms tables the high
+> byte of every two-byte store on them. See
+> `../../docs/findings/walk-inc-dptr-attribution.md`.
+>
+> Two things above survive and are worth keeping. `0x089E` reading as `r+w` is
+> the tool's modelling choice — the pointer does walk over the byte — and is
+> unchanged. And the `static_refs: 1` for `0x089F` is still a count of direct
+> `mov dptr` sites rather than of writers, which is exactly why it did not
+> show the `0xB735` store and still does not; the byte is now named in the
+> arms table's `xdata` cell, which is a different fact from the one that
+> column counts.
 
 **The USER bit is one gate among several, and it is not the only one that
 reaches either routine.** This is where the issue's framing has to be weakened:
@@ -774,7 +849,7 @@ tail-jump descent: the `jnc 0xb736` at `0xB714` **falls through** into
 `0xB716 … 0xB736 ret` body — including the `mov dptr,#0x08a2` at `0xB72C`,
 the `mov dptr,#0x09e7` at `0xB724`, and the `mov dptr,#0x089e` at `0xB730`
 that puts `0x089E` in the arm's `writes`. `walk_branch_arms.py` does *not*
-follow a tail jump inline: at `walk_branch_arms.py:404-412` it appends the
+follow a tail jump inline: `descend()`'s tail-jump handling appends the
 target to `arm.callees` and ends the arm, so the callee's own instructions are
 never decoded into it. `0xB716` is in this arm's `callees` too, but for an
 unrelated path — the `ljmp 0xb716` at `0xB5F8` — which is not what puts those
@@ -832,13 +907,24 @@ Two things the descent refuses to guess, because guessing them is how a
 bounded scan produces a confident wrong answer:
 
 - **DPTR is tracked, not assumed.** A `movx` is charged to whatever
-  `mov dptr,#imm16` last set, and to nothing before that. Any store to DPL
-  (`0x82`) or DPH (`0x83`) — from the accumulator *or from a register* — makes
-  the pointer unknown from there on, and every later `movx` is counted
-  `unattributed` rather than charged to whatever address happened to be loaded
-  earlier. That is §6's shape, and here it is load-bearing: the bank1 arms
-  hand `0x93B6`/`0x93E6` to `r2`/`r1` and rebuild DPTR from them, so a tool
-  watching only `mov 0x82,a` would report `0x93E6` as an XDATA register.
+  `mov dptr,#imm16` last set, to nothing before that, and — since issue
+  #242 — to whatever an `inc dptr` stepped that to, which is what makes a
+  two-byte store name both its bytes. The pointer stops being knowable four
+  ways rather than one, and every later `movx` is counted `unattributed`
+  rather than charged to whatever address happened to be loaded earlier. The
+  CSV's `dp_causes` column names which way, per row:
+  a store to DPL (`0x82`) or DPH (`0x83`) — from the accumulator *or from a
+  register* — **builds** the pointer at run time, which is §6's shape and is
+  load-bearing here because the bank1 arms hand `0x93B6`/`0x93E6` to `r2`/`r1`
+  and rebuild DPTR from them, so a tool watching only `mov 0x82,a` would
+  report `0x93E6` as an XDATA register; `dec dptr` and the `inc`/`dec`/`xch`/
+  `anl`/`orl`/`xrl` forms on either byte **change it in place**; an increment
+  that crosses `0x8000` **steps onto a CODE address**; and a `callee` row
+  **inherits** the caller's pointer without carrying it, which is the larger
+  half of what the `unattributed` column holds on this table. A fifth case is
+  not a loss of the pointer at all: a store charged a DPTR that crossed an
+  `lcall` is charged anyway and marked, because that is issue #197 and it
+  stays open.
 - **`>= 0x8000` is CODE.** In the main EC's map the common area ends at
   `0x7FFF` and the bank windows start at `0x8000`, so an immediate at or above
   that cannot be an XDATA address — it is the `movc`/CODE-pointer blind spot
@@ -1093,10 +1179,12 @@ zero direct sites and the EC provably writes it, because eight sites build
 DPH at run time. So:
 
 - The negatives above are **"no arm found by this method reaches X"**, and the
-  method's blind spots are named in §9's own `unattributed` column: indirect
-  `movx @Ri`, a DPTR built at run time, and a callee not followed. An arm with
-  any of those is not a clean negative, and the CSV's `status` column says so
-  per row.
+  method's blind spots are named per row: in §9's own `unattributed` column,
+  with the `dp_causes` column beside it saying which shape of unknown DPTR
+  produced each of those stores — built at run time, changed in place,
+  inherited from a caller — and, separately, `movx @Ri` and a callee not
+  followed. An arm with any of those is not a clean negative, and the CSV's
+  `status` column says so per row.
 - `0x075B` and `0x075C` being written is an **instruction-level** fact. It is
   not evidence the EC *acts* on `0x0751`, and per `CLAUDE.md` a write being
   stored is not evidence of anything behavioural.

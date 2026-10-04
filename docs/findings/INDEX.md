@@ -14,6 +14,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-census-capture-identity.md`](0751-census-capture-identity.md) — The census counted a capture one way and its per-action line counted it another, and a list holding one file twice withheld a block on a clean run (issue #492)
 - [`0751-census-one-moment.md`](0751-census-one-moment.md) — One `open()` of a capture in `main`, and a truncated early-exit row (issue #767)
 - [`0751-dump-pair-battery-names.md`](0751-dump-pair-battery-names.md) — The 0x0400 pair's "other" bucket, on a mover the capture recorded (issue #219)
+- [`0751-dump-value-vs-block-value.md`](0751-dump-value-vs-block-value.md) — A block's `<value>` came off a file name and nothing checked it against the day's own write (issue #1400)
 - [`0751-early-exit-row.md`](0751-early-exit-row.md) — The grader dropped the probe's "the run ended early" row, and a 5-second arm graded as a 30-second one (issue #664)
 - [`0751-file-refusal-order.md`](0751-file-refusal-order.md) — Which of the two refusals names a file that is both (issue #784)
 - [`0751-grader-block-scope-claims.md`](0751-grader-block-scope-claims.md) — A `--block` run said "consistent with the static prediction" for the whole capture (issue #497)
@@ -33,6 +34,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0751-mark-provenance-shapes.md`](0751-mark-provenance-shapes.md) — Which process wrote this mark: a fifth column measured against a `# provenance` row (issue #719)
 - [`0751-mark-split-boundary-gap.md`](0751-mark-split-boundary-gap.md) — A day whose three consoles marked one action 7 s apart was reported as two captures that never recorded it (issue #1372)
 - [`0751-notice-two-moments.md`](0751-notice-two-moments.md) — The 0751 startup notice described two moments as one (issue #749)
+- [`0751-pair-hint-block-scope.md`](0751-pair-hint-block-scope.md) — §4.6's `--dump-pair` hint named another block's bracket, and pointed at a file the same run refuses to read (issue #1394)
 - [`0751-path-taking-reader-fates.md`](0751-path-taking-reader-fates.md) — The two path-taking readers are kept, and their docstrings name their callers (issue #771)
 - [`0751-readback-before-dump-holds-written-value.md`](0751-readback-before-dump-holds-written-value.md) — §4.6 said "still" without reading the dump that would support it (issue #1401)
 - [`0751-readback-writer-names.md`](0751-readback-writer-names.md) — §4.6's readback names the writer the two bytes rule out, and what is left
@@ -53,10 +55,12 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
 - [`a5e6-r1-is-the-low-byte.md`](a5e6-r1-is-the-low-byte.md) — `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
+- [`a7c8-dispatch-slot-and-pl-race.md`](a7c8-dispatch-slot-and-pl-race.md) — What calls `0xA7C8`, and whether the host-writes-PLs / EC-zeroes-PLs race is real
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
+- [`bank0-c118-3202-bit0-thunk.md`](bank0-c118-3202-bit0-thunk.md) — bank0 `0xC118` is a thunk on `test_3202_bit0`, and it is one of four in an unexported run
 - [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
@@ -202,6 +206,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`prepared-gate-patches.md`](prepared-gate-patches.md) — The prepared gate patches: the set composes, and a test says so
 - [`presence-check-container-shape.md`](presence-check-container-shape.md) — Two of the three presence checks key their per-file container and pin that shape; the third has nothing to scan (issue #371)
 - [`probe-0700-whole-page-arm.md`](probe-0700-whole-page-arm.md) — The probe's watch set can be §3's first watcher, whole (issue #666)
+- [`probe-csv-encoding.md`](probe-csv-encoding.md) — The three probe appenders declare `utf-8`, and `evidence/battery-traces/` is now measured rather than excused (issue #1277)
 - [`probe-hold-mark-merge.md`](probe-hold-mark-merge.md) — A `--csv` probe run's `hold` is held to the grader's mark-merge window (issue #665)
 - [`probe-log-capture-conversion.md`](probe-log-capture-conversion.md) — The one real 0751 capture converts to a capture the grader reads (issue #124)
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
@@ -227,6 +232,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`test-name-grader-coupling.md`](test-name-grader-coupling.md) — A test name that claims a coupling the test does not make
 - [`test-site-fits-guard.md`](test-site-fits-guard.md) — `test_site()` bounds the index at `:217` and reads three bytes underneath it, and the second bound is now there
 - [`testdata-addr-column-claim.md`](testdata-addr-column-claim.md) — A claim about a capture is columnar, and a claim about a fixture is not (issue #975)
+- [`testdata-grader-claims.md`](testdata-grader-claims.md) — What the testdata index's claims about the grader's own output grade to (issue #1007)
 - [`testdata-index-check.md`](testdata-index-check.md) — `ec/tools/testdata/README.md` is now held to the tree under it (issue #727)
 - [`testdata-index-evidence-column.md`](testdata-index-evidence-column.md) — The fixture CSVs' `evidence` column is resolved against the real tree, and eight cells that named nothing there are empty (issue #780)
 - [`testdata-index-feeds-and-call-graph.md`](testdata-index-feeds-and-call-graph.md) — The testdata index's `Feeds` column and its self-indexed nested tables are read too (issue #746)
@@ -252,6 +258,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`verify-provenance-failure-answers.md`](verify-provenance-failure-answers.md) — `--verify-provenance` had ten ways to fail and one committed answer to none of them
 - [`walk-bounds-guard-pinned.md`](walk-bounds-guard-pinned.md) — The bounds disjunct is pinned, by two cases — and the sweep that could have noticed it cannot see it
 - [`walk-flow-follow.md`](walk-flow-follow.md) — The `none` column re-decoded on one path past the branch, and the 7 cells of 11 that stay `none` with a reason
+- [`walk-inc-dptr-attribution.md`](walk-inc-dptr-attribution.md) — `inc dptr` was not tracked, so every store behind one lost its address, and the arms tables attributed a two-byte store to one byte of it
 - [`walk-window-terminators.md`](walk-window-terminators.md) — `walk()`'s stop reason is a column now, and the 45 rows its budget truncates are named
 - [`xdata-0390-0391-filter-pair.md`](xdata-0390-0391-filter-pair.md) — The 0x0390/0x0391 pair: what the 0x9EA1 filter reads, what the `E100` branch selects, and where `0x0391`'s value comes from (issue #295)
 - [`xdata-044b-selector-value-set.md`](xdata-044b-selector-value-set.md) — `0x044B`'s writable set and its reader set are the same values, and `0x9A0E` spends the byte on one threshold of three

@@ -85,7 +85,7 @@ FIRMWARE_BYTES = FIRMWARE.read_bytes()
 ORACLE = {
     0xC1E7: {'bank0': ('entry', 'C1E7', 0xC1E7),
              'bank1': ('entry', 'C1E7', 0xC1E7)},      # `bank1,198A`
-    0xC118: {'bank0': ('no-listing', None, None),
+    0xC118: {'bank0': ('entry', 'C118', 0xC118),
              'bank1': ('operand', 'C0A8', 0xC117)},    # `bank1,19A8`
     0xC10C: {'bank0': ('no-listing', None, None),
              'bank1': ('operand', 'C0A8', 0xC10B)},    # `bank1,1984`

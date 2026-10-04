@@ -58,12 +58,15 @@ left out, because a bucket quietly missing and a bucket nobody looked for are
 the same file.
 
 **And the count is not closed, and the tool says why on every run.**
-`walk_branch_arms.descend()` charges a `movx` to no address once DPTR has been
-rebuilt at run time, and across the `0x0751` arm table that is 100 stores over
-its 171 rows. Any of them could be a `0x0751` writer that no site scan can
-name. That is issue #34, and it stays open; `--self-test` holds the figure
+`walk_branch_arms.descend()` charges a `movx` to no address when it cannot
+name the pointer the store rides -- DPTR rebuilt at run time, changed in place,
+or inherited from a caller and not carried. Across the `0x0751` arm table that
+is the `unattributed` column's sum, read out of the committed table on every
+run and printed here. Any of them could be a `0x0751` writer that no site scan
+can name. That is issue #34, and it stays open; `--self-test` holds the figure
 against the committed table so the gap is a number that moves rather than a
-caveat that gets copied forward.
+caveat that gets copied forward, and `walk_branch_arms.py --census` splits it by
+cause.
 
 **Nothing here is measured on hardware.** A store is an instruction, not an
 event: whether the EC acts on the value, and whether the condition under which
@@ -635,8 +638,12 @@ SELF_TEST_STORES = (
 )
 
 # The `0x0751` figure the write-up quotes, held against the committed arms
-# table. A census whose blind spot has moved must be able to say so.
-SELF_TEST_ARMS = (171, 100)
+# table. A census whose blind spot has moved must be able to say so, and it has
+# moved: `walk_branch_arms.descend()` now follows `inc dptr`, so stores that
+# were charged to no address because the pointer went unknown at an increment
+# are charged to their address. `walk_branch_arms.py --census` prints the
+# split by cause.
+SELF_TEST_ARMS = (171, 79)
 
 
 def decode_fixture(raw: bytes):
