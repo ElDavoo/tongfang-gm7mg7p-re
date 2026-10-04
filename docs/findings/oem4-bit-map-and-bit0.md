@@ -334,7 +334,7 @@ addresses like `000007A6 … mov RSI, RDX`, a Setup variable pointer
 IFR byte-offset markers, and SHA-256 substrings. **Zero hits for `0xFE4107A6`
 anywhere in the component, as text or as bytes.**
 
-**Two qualifications, both of which change what the negative is about.**
+**Three qualifications, all of which change what the negative is about.**
 
 *The BIOS contains no EC-window access at all — which is a stronger statement
 than the one the plan made.* The only `0xFE41xxxx` appearance in the whole
@@ -355,6 +355,29 @@ sites §3 is built from are that same firmware. So the negative above is
 precisely *no reference in host x86 code*, and a reader who byte-scans the ROM
 will get 35 hits that are the EC talking to itself. The BIOS's own firmware
 copy is not evidence about the BIOS's behaviour; the EC image is.
+
+*Both of the above are about one channel, and the EC has another.*
+`docs/findings/bios-ec-io-census.md` is the correction to the wording above,
+and it is a correction of scope rather than a retraction of the search: every
+pattern named here is a **literal address**, and the EC's index/data channel
+never spells one. It is reached over the ACPI EC port pair with four command
+bytes — `0xA3` carrying the high byte of an EC RAM address, `0xA2` the low
+byte, `0xA4` to read the byte there and `0xA5 <val>` to write it — so a write
+to `0x07A6` on that channel carries `0xA6` against a `0x07` base and `0x7A6`
+never appears at all. The searches above could not have found such a write
+whatever it was, and "the BIOS contains no EC-window access at all" overstates
+a negative that was only ever about the `0xFE41xxxx` window.
+
+What that channel does contain is tabulated in
+[`bios/annotations/ec-io-writes.csv`](../../bios/annotations/ec-io-writes.csv),
+regenerable with `python3 bios/tools/ec_io_census.py --check`. **No row carries
+`(0x07, 0xA6)`** — the pair §1 asks about — and that is the whole of what the
+census says about it: not found by this census over these listings and these
+call sites, with the rows whose base or index the tool could not read named in
+the write-up rather than left out of the table. One of those rows selects base
+`0x04` (`Setup` `0x1B9A0`, no call site for it in the committed listings), so
+`0x04A6` is not excluded by the same census; "indexed by `0xA6`" means nothing
+without the base, and neither does the negative.
 
 ## 7. What this leaves open
 

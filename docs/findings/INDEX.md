@@ -71,6 +71,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
 - [`bank1-e582-entry-framing.md`](bank1-e582-entry-framing.md) — Which entry the `bank1,0xE582` routine is actually reached through (issue #680)
 - [`battery-trace-column-drift.md`](battery-trace-column-drift.md) — The battery trace's column set moved to a shell script, and the append guard never checked what it was appending to (issue #363)
+- [`bios-ec-io-census.md`](bios-ec-io-census.md) — The BIOS's EC index/data writes, and what `0x07A6` is not among them
 - [`bucket-c-codemap.md`](bucket-c-codemap.md) — Bucket C against a recovered code map: 16 of the 140 sites are on an instruction boundary, and 14 of those 16 sit inside spans already listed as data tables
 - [`bucket-c-unplaced.md`](bucket-c-unplaced.md) — The unplaced bucket-C census: what the sites no data region covers say
 - [`call-graph-agreement-set-identity.md`](call-graph-agreement-set-identity.md) — Do the agreements agree as sets, and not only in number? 61 of 74, and the thirteen that do not (issue #704)
