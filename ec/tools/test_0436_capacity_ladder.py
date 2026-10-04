@@ -5,13 +5,15 @@ XDATA 0x0436 against three of them.
 `docs/findings/0436-capacity-ladder.md` is the write-up. The two things worth
 knowing before reading the cases below:
 
-  - **The derivation is re-derived here, not transcribed.** The rotate
+  - **The derivation is re-derived here, not transcribed.** The shift
     counts, the `+0x28` and the two differences are recovered by interpreting
-    the committed `B50E.asm` -- `ror16_r1r2_by_r7` is executed as a rotate,
-    not read as a name, and on a value whose low bits are set it does not
-    agree with a shift -- and the resulting expressions are what the note
-    text is matched against. A firmware change moves the answer and the
-    assertion fails, rather than a table in this file agreeing with itself.
+    the committed `B50E.asm` -- `ror16_r1r2_by_r7` is executed instruction by
+    instruction, not read as a name, and it is a logical shift rather than
+    the rotate its name claims, because the `clr CY` at the top of its loop
+    discards the bit leaving the low byte -- and the resulting expressions
+    are what the note text is matched against. A firmware change moves the
+    answer and the assertion fails, rather than a table in this file
+    agreeing with itself.
   - **The six banding routines are selected by a jump table, not called.**
     Nothing `lcall`s or `ljmp`s to any of them; `bank1 0xADFD` reads XDATA
     0x056A and indexes a table of eight three-byte `ljmp`s at 0xADE2. The
@@ -199,6 +201,30 @@ class Listings:
         return self.at(addr)
 
 
+def _branch(insn):
+    """The absolute destination of a branch, as the export prints it.
+
+    `Insn.target` recognises the `j*` and call forms; `djnz` and `cjne` are
+    conditional branches whose names do not start with `j`, so the operand's
+    last field is read directly rather than widening `Insn.target` for a
+    caller that does not want it.
+    """
+    return int(insn.operand.split(',')[-1].strip(), 16)
+
+
+def _rotate16(value, count):
+    """The 16-bit rotate `0x8844`'s *name* claims, for the suite to disagree with.
+
+    This is the reading the routine is not: the bit leaving the bottom of
+    the low byte re-entering at the top of the high byte. It is written out
+    here so the case that tells a shift from a rotate can be stated as a
+    disagreement between the executed instruction stream and this, rather
+    than as a property of the stream alone.
+    """
+    count &= 0x0F
+    return ((value >> count) | (value << (16 - count))) & 0xFFFF if count else value
+
+
 class CapacityLadder(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -208,23 +234,79 @@ class CapacityLadder(unittest.TestCase):
     # -- the helpers, recognised by their bodies ---------------------------
 
     def _shift(self, value, count):
-        """`ror16_r1r2_by_r7` executed, not trusted.
+        """`ror16_r1r2_by_r7` executed instruction by instruction, not trusted.
 
-        The routine is `cjne R7,#0` / `ret` and then a `rrc` of the high byte
-        through a cleared carry, a `rrc` of the low byte, and `djnz R7` back.
-        Simulating that loop is what makes the shift an operation the suite
-        derives rather than a name it believes. A count of zero returns
-        without touching the pair, which is the `cjne`'s early exit.
+        The routine's *name* says rotate; this walks the committed
+        `ec/decompiled/bank1/8844.asm` and takes the instructions as they
+        are, which is the only way the difference is settled rather than
+        assumed. Two details decide it and both are in the stream rather
+        than in the name:
+
+          - `R1` is the LOW byte. `0x8886`, the read helper every pair helper
+            shares, does `movx A,@DPTR` / `mov R1,A` / `inc DPTR` /
+            `movx A,@DPTR` / `mov R2,A`, so `R1` holds the byte at the lower
+            address. That is asserted separately, by
+            `test_the_pair_helper_puts_the_lower_address_in_r1`.
+          - the `clr CY` is the SECOND instruction of the body, so it runs at
+            the top of every iteration rather than once before the loop. The
+            bit leaving the bottom of `R1` is therefore in `CY` when `djnz`
+            jumps back, and is cleared before the high byte's `rrc` instead
+            of re-entering at the top of `R2`.
+
+        So the routine is a logical right shift. A rotate would have to move
+        `R1` first; this one moves `R2` first because a right shift consumes
+        the high byte first. `R1:R2` is little-endian, matching `0x8886`.
         """
         insns = self.bank.at(SHIFTER)
         self.assertIn('rrc', [i.mnemonic for i in insns.values()],
-                      '0x%04X is the ror16 helper' % SHIFTER)
-        for _ in range(count):
-            carry = value & 1
-            value >>= 1
-            if carry:
-                value |= 0x8000
-        return value
+                      '0x%04X is the shift helper' % SHIFTER)
+
+        # The state the routine actually keeps: A, the carry, R1 (low), R2
+        # (high) and the R7 countdown. `pc` starts at the routine's own entry
+        # so the `cjne`'s early exit on a zero count is executed too.
+        acc = {'A': 0, 'CY': 0, 'R1': value & 0xFF, 'R2': value >> 8,
+               'R7': count & 0xFF}
+        pc = min(insns)
+        # Generous but finite: the loop body is eight instructions, the
+        # count is `count` iterations, and `djnz` falls through to a `ret`
+        # rather than branching to it on the last pass.
+        for _ in range(16 * (count + 2)):
+            insn = insns.get(pc)
+            if insn is None:
+                self.fail('0x%04X ran off the end of 0x%04X' % (pc, SHIFTER))
+            operand = insn.operand
+            if insn.mnemonic == 'ret':
+                break
+            elif insn.mnemonic == 'mov':
+                dest, src = [t.strip() for t in operand.split(',')]
+                acc[dest] = acc[src]
+                pc = insn.next_addr
+            elif insn.mnemonic == 'clr':
+                acc[operand.strip()] = 0
+                pc = insn.next_addr
+            elif insn.mnemonic == 'rrc':
+                # Rotate right *through carry*: bit 0 moves out to CY and
+                # CY moves in at bit 7. Whether the old bit 0 ever comes
+                # back is decided by the `clr CY`, not here.
+                acc['A'], acc['CY'] = ((acc['A'] >> 1) | (acc['CY'] << 7),
+                                       acc['A'] & 1)
+                pc = insn.next_addr
+            elif insn.mnemonic == 'djnz':
+                acc['R7'] = (acc['R7'] - 1) & 0xFF
+                pc = _branch(insn) if acc['R7'] else insn.next_addr
+            elif insn.mnemonic == 'cjne':
+                # `cjne R7,#0x0,addr` jumps when R7 is *not* zero, so a
+                # zero count falls through to the `ret` above the loop.
+                pc = _branch(insn) if acc['R7'] else insn.next_addr
+            elif insn.mnemonic == 'sjmp':
+                pc = _branch(insn)
+            else:
+                self.fail('0x%04X is a %s this model does not execute'
+                          % (insn.addr, insn.mnemonic))
+        else:
+            self.fail('0x%04X did not return within its own instruction count'
+                      % SHIFTER)
+        return (acc['R2'] << 8) | acc['R1']
 
     def _difference(self, minuend, subtrahend):
         """`sub_r1r2_from_r3r4` executed: an explicit `clr CY` then two `subb`."""
@@ -241,7 +323,7 @@ class CapacityLadder(unittest.TestCase):
         The routine's two `subb` are the high and low halves, and its
         opening `clr CY` is what makes the result a plain difference rather
         than one that inherits whatever the caller left behind. That matters
-        for the two destinations that hold `V - ror16(V, n)`: a suite that
+        for the two destinations that hold `V - (V >> n)`: a suite that
         read the helper as a byte subtraction would agree with it on every
         value whose low half does not borrow and disagree on the rest.
         """
@@ -263,7 +345,7 @@ class CapacityLadder(unittest.TestCase):
     def test_the_two_destinations_that_hold_a_difference_really_do_subtract(self):
         """`0x0546` and `0x0410` are the two calls to the subtract helper.
 
-        `0x0546` is `V - ror16(V, 4)` and `0x0410` is `V - ror16(V, 5)`, and
+        `0x0546` is `V - (V >> 4)` and `0x0410` is `V - (V >> 5)`, and
         each reads back the address it needs from XDATA rather than reusing
         the register pair it just stored -- so the value subtracted is the
         stored one, not an assumption.
@@ -315,20 +397,51 @@ class CapacityLadder(unittest.TestCase):
         source = 0x12345678
         self.assertEqual(self._shift(source, 0), source,
                          'a count of zero is the early return')
-        # It is a *rotate*, not a shift: the bit leaving the low byte comes
-        # back in at the top of the high byte. That is what the routine's own
-        # name says, and it is why the write-up states the derivation as a
-        # rotate with the shift as a special case rather than the other way
-        # round. A source whose low bits are clear cannot tell them apart,
-        # so the distinction is asserted on a value that has some.
-        self.assertEqual(self._shift(source, 4), 0x0123C567)
-        self.assertNotEqual(self._shift(source, 4), source >> 4,
-                            'a rotate differs from a shift when bits wrap')
-        aligned = 0x12340000
-        self.assertEqual(self._shift(aligned, 4), aligned >> 4,
-                         'and agrees with one when the low bits are clear')
+        # It is a *shift*, not the rotate its name says. The `clr CY` at the
+        # top of every iteration discards the bit leaving the low byte, so
+        # the result is `V >> n` exactly. A source whose low bits are clear
+        # cannot tell the two apart, so the distinction is asserted on a
+        # value that has some -- and on one where the rotate would be visible
+        # as the low bits reappearing at the top of the high byte.
+        self.assertEqual(self._shift(source, 4), source >> 4)
+        self.assertEqual(self._shift(source, 5), source >> 5)
+        self.assertNotEqual(self._shift(source, 4), _rotate16(source, 4),
+                            'a rotate would bring the low bits back to the top')
+        # The two cases the write-up leans on: an all-ones pair, where a
+        # rotate is the identity and a shift is not, and one where the two
+        # differ in the high byte rather than only in the low one.
+        self.assertEqual(self._shift(0xFFFF, 4), 0x0FFF)
+        self.assertEqual(self._shift(0x4004, 4), 0x0400)
         self.assertNotEqual(self._shift(source, 4), self._shift(source, 5),
-                            'the two counts differ, so the two rotations differ')
+                            'the two counts differ, so the two shifts differ')
+
+    def test_the_pair_helper_puts_the_lower_address_in_r1(self):
+        """`R1` is the low byte, which is what makes `0x8844` a shift.
+
+        The shift's reading depends on the byte order, and the order is not
+        the routine's own claim: `0x8844` is named `ror16_r1r2_by_r7` and
+        touches `R2` first, which is the order of a *rotate*. The order is
+        settled by the helper that fills the pair, `0x8886`, and by the one
+        that empties it, `0x888C` -- the two must agree or a round trip would
+        not return the value it read.
+        """
+        read = [self.bank.insn(a) for a in sorted(self.bank.at(READ_R1R2))]
+        write = [self.bank.insn(a) for a in sorted(self.bank.at(WRITE_R1R2))]
+
+        # The read helper takes the byte at DPTR into R1, advances DPTR, and
+        # only then takes the byte one address higher into R2. So R1 is the
+        # low byte of the pair.
+        self.assertEqual([i.operand for i in read[:5]],
+                         ['A, @DPTR', 'R1, A', 'DPTR', 'A, @DPTR', 'R2, A'],
+                         'R1 is the byte at the lower address')
+
+        # The write helper is the same order seen from the other side: R1 to
+        # DPTR, `inc DPTR`, then R2 to the address above. The two agreeing is
+        # what makes a read/modify/write round trip through XDATA return the
+        # value it read, which is the property the byte order rests on.
+        self.assertEqual([i.operand for i in write[:5]],
+                         ['A, R1', '@DPTR, A', 'DPTR', 'A, R2', '@DPTR, A'],
+                         'and R1 is the byte stored at the lower address')
 
     # -- the derivation -----------------------------------------------------
 
@@ -371,10 +484,10 @@ class CapacityLadder(unittest.TestCase):
         dropped its own address's expression goes red on that address alone.
         """
         expected = {
-            'XDATA_040A': ('ror16(value,4)',),
-            'XDATA_040C': ('ror16(value,5)',),
-            'XDATA_040E': ('ror16(value,5)',),
-            'XDATA_0410': ('value-ror16(value,5)',),
+            'XDATA_040A': ('value>>4',),
+            'XDATA_040C': ('value>>5',),
+            'XDATA_040E': ('value>>5',),
+            'XDATA_0410': ('value-(value>>5)',),
         }
         for name, fragments in expected.items():
             note = self._register_row(name)['note']
@@ -901,12 +1014,14 @@ class CapacityLadder(unittest.TestCase):
     def test_the_touched_rows_keep_their_status_and_their_static_counts(self):
         """A derivation is a static instruction, so nothing here moves a count.
 
-        The claim is relational: these five rows still say what they said
-        before this change, and `check_register_counts.py` re-derives every
-        count from the committed firmware anyway. Hard-coding the numbers
-        here would be a census every merge has to edit, which is the thing
-        CLAUDE.md's third bullet is about; asserting the relationship is the
-        part that stays true.
+        What is asserted is what each of these five rows *is*: a
+        `present-untested` status, no source beyond the census the rows were
+        entered with, and the three `static_refs*` fields still present. The
+        counts themselves are not asserted here, and deliberately so --
+        hard-coding them would be a census every merge has to edit, which is
+        the thing CLAUDE.md's third bullet is about.
+        `check_register_counts.py` re-derives every count from the committed
+        firmware, and that is what holds the numbers.
         """
         for name in ('XDATA_040A', 'XDATA_040C', 'XDATA_040E',
                      'XDATA_0410', 'XDATA_0436_PAIR'):
@@ -977,10 +1092,10 @@ class CapacityLadder(unittest.TestCase):
         that row.
         """
         page = WRITEOUT.read_text(encoding='utf-8')
-        for destination, expression in ((r'`0x040A`/`0x040B`', 'ror16(V, 4)'),
-                                        (r'`0x040C`/`0x040D`', 'ror16(V, 5)'),
-                                        (r'`0x040E`/`0x040F`', 'ror16(V, 5)'),
-                                        (r'`0x0410`/`0x0411`', 'V - ror16(V, 5)')):
+        for destination, expression in ((r'`0x040A`/`0x040B`', 'V >> 4'),
+                                        (r'`0x040C`/`0x040D`', 'V >> 5'),
+                                        (r'`0x040E`/`0x040F`', 'V >> 5'),
+                                        (r'`0x0410`/`0x0411`', 'V - (V >> 5)')):
             row = [line for line in page.splitlines()
                    if destination in line and expression in line]
             self.assertEqual(len(row), 1,

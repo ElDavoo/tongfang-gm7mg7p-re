@@ -29,7 +29,7 @@ file's own header says. Reading the `.asm`:
 |---|---|
 | `mov DPTR,#0x404` / `lcall 0x8886` | `R1:R2` = `0x0404`/`0x0405`, low byte first |
 | `mov 0x06,R2` / `mov 0x05,R1` | stash the pair in direct bytes |
-| `mov R7,#0x4` / `lcall 0x8844` | `ror16_r1r2_by_r7`, four iterations of `rrc` — a 16-bit rotate right by 4 |
+| `mov R7,#0x4` / `lcall 0x8844` | `ror16_r1r2_by_r7`, four iterations of `rrc` — a 16-bit logical shift right by 4 |
 | `mov DPTR,#0x40a` / `lcall 0x888c` | store `R1:R2` to `0x040A`/`0x040B` |
 | `mov R2,0x06` / `mov R1,0x05` | restore the stashed pair |
 | `mov R7,#0x5` / `lcall 0x8844` | shift right by 5 |
@@ -39,58 +39,64 @@ file's own header says. Reading the `.asm`:
 | `mov DPTR,#0x544` / `lcall 0x888c` | store that to `0x0544`/`0x0545` |
 | `mov R4,0x06` / `mov R3,0x05` | `R3:R4` = the stashed pair again |
 | `mov DPTR,#0x40a` / `lcall 0x8886` | `R1:R2` = what was just stored at `0x040A`/`0x040B` |
-| `lcall 0x885b` | `sub_r1r2_from_r3r4` — `R3:R4` = `0x0404` − `ror16(0x0404, 4)` |
+| `lcall 0x885b` | `sub_r1r2_from_r3r4` — `R3:R4` = `0x0404` − `(0x0404 >> 4)` |
 | `mov DPTR,#0x546` / `lcall 0x889e` | store to `0x0546`/`0x0547` |
 | `mov R4,0x06` / `mov R3,0x05` | `R3:R4` = the stashed pair again |
 | `mov DPTR,#0x40e` / `lcall 0x8886` | `R1:R2` = what was stored at `0x040E`/`0x040F` |
-| `lcall 0x885b` | `R3:R4` = `0x0404` − `ror16(0x0404, 5)` |
+| `lcall 0x885b` | `R3:R4` = `0x0404` − `(0x0404 >> 5)` |
 | `mov DPTR,#0x410` / `lcall 0x889e` | store to `0x0410`/`0x0411` |
 
-So, writing `V` for the 16-bit little-endian value at `0x0404`/`0x0405`, and
-`ror16(V, n)` for the helper's 16-bit rotate:
+So, writing `V` for the 16-bit little-endian value at `0x0404`/`0x0405`:
 
 | destination | value |
 |---|---|
-| `0x040A`/`0x040B` | `ror16(V, 4)` |
-| `0x040C`/`0x040D` | `ror16(V, 5)` |
-| `0x040E`/`0x040F` | `ror16(V, 5)` |
-| `0x0544`/`0x0545` | `ror16(V, 5) + 0x28` |
-| `0x0546`/`0x0547` | `V - ror16(V, 4)` |
-| `0x0410`/`0x0411` | `V - ror16(V, 5)` |
+| `0x040A`/`0x040B` | `V >> 4` |
+| `0x040C`/`0x040D` | `V >> 5` |
+| `0x040E`/`0x040F` | `V >> 5` |
+| `0x0544`/`0x0545` | `(V >> 5) + 0x28` |
+| `0x0546`/`0x0547` | `V - (V >> 4)` |
+| `0x0410`/`0x0411` | `V - (V >> 5)` |
 
-**The rotate is a shift only when the bits shifted out are zero.** This is
-the one place where reading the routine as a shift would be wrong, and it
-is worth being explicit because `0x8844`'s own name already says *rotate*.
-Its body is `rrc` of the high byte through a carry cleared beforehand, then
-`rrc` of the low byte, `djnz R7` and back — so the bit leaving the bottom of
-`R1` re-enters at the top of `R2` rather than being discarded. Whenever `V`'s
-low five bits are zero, `ror16(V, 4)` and `V >> 4` agree and so do the two
-at count 5; otherwise they differ. **Which case holds on this board is not
-established here**, because nothing in this repository records a live reading
-of `0x0404`/`0x0405` — so the table above states the rotate, which is what
-the bytes do, and treats the shift reading as the special case it is. A
-reader who wants the shift form needs a capture of the source pair.
+**`0x8844` is a logical shift, not a rotate.** Its own name says otherwise,
+so this is worth being explicit about. The body is `mov A,R2` / `clr CY` /
+`rrc A` / `mov R2,A` / `mov A,R1` / `rrc A` / `mov R1,A` / `djnz R7`, and
+that `clr CY` is the second instruction of the body — it runs at the top of
+*every* iteration, so the bit leaving the bottom of `R1` is in `CY` when the
+loop jumps back to `0x8848` and is cleared before the high byte's `rrc`
+rather than re-entering at the top of `R2`. A right shift moves the high
+byte's LSB down through the carry into the low byte's bit 7 and discards
+everything below; that is what this does, and the committed
+`bank1,B50E` row in `ec/annotations/ghidra-functions.csv`, which reads the
+destinations as `value>>4` and `value>>5`, already said so.
 
-Everything else about the pair holds either way: the two scalings differ
-from each other, they are the same two values the ladder bands against, and
-the two differences are differences from `V` either way.
+The byte order is what makes the loop read as a shift rather than as its
+name. `0x8886`, the read helper every pair helper shares, does `movx A,@DPTR`
+/ `mov R1,A` / `inc DPTR` / `movx A,@DPTR` / `mov R2,A`, so `R1` holds the
+byte at the *lower* address and is the low byte. `0x8844` touches `R2` first
+only because a right shift must consume the high byte first. A true rotate
+would have to move `R1` first.
+
+`ec/tools/test_0436_capacity_ladder.py` settles this by executing the
+committed `8844.asm` instruction stream rather than reading its name, and
+holds the shift against a rotate on a value whose low bits are set, where
+the two disagree.
 
 Three more details are worth stating because the `.c` loses them.
 
-**`R7` is the rotate count.** `ror16_r1r2_by_r7` returns immediately on
+**`R7` is the shift count.** `ror16_r1r2_by_r7` returns immediately on
 `R7 == 0`, so the count is a loop bound and not a mask, and the two counts
 in the routine are 4 and 5. `sub_r1r2_from_r3r4` at `0x885B` opens with an
 explicit `clr CY`, so neither difference borrows in.
 
 **`0x040C` and `0x040E` receive the same value.** The `R1:R2` pair is not
 reloaded between the two stores — the only reload is the `mov R2,0x06` /
-`mov R1,0x05` pair before the `R7 = 5` rotate. So `0x040C` and `0x040E` are
+`mov R1,0x05` pair before the `R7 = 5` shift. So `0x040C` and `0x040E` are
 two copies of one value, which is what makes the two of them a comparison in
 the next section rather than two scalings.
 
-**The `+0x28` is added to the rotated value, not to `V`.** The `add A,#0x28`
+**The `+0x28` is added to the shifted value, not to `V`.** The `add A,#0x28`
 at `0xB539` reads `A` from `mov A,R1` at `0xB538`, and `R1` at that point
-holds the low byte of the count-5 rotate. The carry path `jnc` / `inc R2` is
+holds the low byte of the count-5 shift. The carry path `jnc` / `inc R2` is
 a 16-bit add of `0x28` onto that.
 
 The `.c` renders `0x8886` and `0x889E` as writes. They are reads and
@@ -263,20 +269,20 @@ Read down the `R6` column and it is a thermometer: `0x00`, `0x01`, `0x03`,
 and `0xAE6F` masking `0x0496` with `0xE0` keeps them in the low five bits
 where they cannot collide with whatever else lives in the top three. Read
 down the comparator column and each routine starts one rung lower than the
-one above it: `0x040A` (= `ror16(V,4)`), then `0x0544` (=
-`ror16(V,5)+0x28`), then `0x040C` (= `ror16(V,5)`), then the literal `1`.
+one above it: `0x040A` (= `V>>4`), then `0x0544` (=
+`(V>>5)+0x28`), then `0x040C` (= `V>>5`), then the literal `1`.
 **The bands are denominated in the `0x0404` unit, and three of the four
 bounds are the scalings `0xB50E` computes in §1.**
 
 Two things about that ladder are worth being precise about, because neither
 is what the shape suggests.
 
-**The bounds descend, but not by a constant step.** `ror16(V,4)` and
-`ror16(V,5)+0x28` are not adjacent for any `V` that is a plausible capacity:
-the gap between them is roughly `ror16(V,5) - 0x28`, which is most of
-`ror16(V,5)`. The ladder is therefore coarse at the top and fine at the
+**The bounds descend, but not by a constant step.** `(V>>4)` and
+`(V>>5)+0x28` are not adjacent for any `V` that is a plausible capacity:
+the gap between them is roughly `(V>>5) - 0x28`, which is most of
+`(V>>5)`. The ladder is therefore coarse at the top and fine at the
 bottom — two bounds within a factor of two of each other, then
-`ror16(V,5)`, then `1` — and it is that shape, not an even subdivision, that
+`(V>>5)`, then `1` — and it is that shape, not an even subdivision, that
 the `0x056A` cursor walks.
 
 **`0x056A` is a band index, and the routine for a band both reads and
@@ -382,7 +388,7 @@ The issue asks for a grade rather than a pick. Mine, from the bytes above.
 compare exists.** A writer and its consumers agreeing on a unit is a
 different kind of evidence from either alone: `0xB2A0` stores `V` into
 `0x0436` when `V` is below `0x0518`, and six routines band `0x0436` against
-`ror16(V,4)`, `ror16(V,5)+0x28`, `ror16(V,5)` and `1`. `0x0544` is the
+`(V>>4)`, `(V>>5)+0x28`, `(V>>5)` and `1`. `0x0544` is the
 sharpest case, because it is written and read inside the same comparison
 chain — the ladder's second bound is a value `0xB50E` derives, and the only
 committed listing that reads `0x0544` back is the comparator holding it.
@@ -443,7 +449,7 @@ one side of them, and the note says which side. A live run of
 `docs/hardware-tests/remain-capacity-0436.md` can now be read against a
 prediction rather than against nothing: the value should move in `0x0404`
 units if it is a capacity, and the mask in `0x0496` should step as it crosses
-`ror16(V,4)`, `ror16(V,5)+0x28` and `ror16(V,5)`. A run that shows a `+0x14`
+`(V>>4)`, `(V>>5)+0x28` and `(V>>5)`. A run that shows a `+0x14`
 sweep which does *not* step the mask at those crossings would count against
 the capacity reading, which is a test neither reading currently offers.
 
