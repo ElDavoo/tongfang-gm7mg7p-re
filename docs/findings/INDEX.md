@@ -55,6 +55,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a-store-predicate-batch.md`](a-store-predicate-batch.md) — The `movx @DPTR,A` batch: 88 functions, and only 37 of them take a value from a caller (issue #263)
 - [`a4f967ed-commit-identity.md`](a4f967ed-commit-identity.md) — The cited sha is a superseded branch commit, and the sentence it carried was true when written
 - [`a5e6-r1-is-the-low-byte.md`](a5e6-r1-is-the-low-byte.md) — `0xA5E6` returns the quotient's low byte in R1, and a probe built on the opposite reading could not have agreed with a capture (issue #358)
+- [`a73f-09f1-mailbox-payload.md`](a73f-09f1-mailbox-payload.md) — `0xA73F` pushes a payload into an eight-slot ring, and there was never a command-code table to look it up in (issue #1444)
 - [`a7c8-dispatch-slot-and-pl-race.md`](a7c8-dispatch-slot-and-pl-race.md) — What calls `0xA7C8`, and whether the host-writes-PLs / EC-zeroes-PLs race is real
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
@@ -182,6 +183,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
 - [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
+- [`pd-code-table-inline-width.md`](pd-code-table-inline-width.md) — Per-dispatcher inline width, and the PD image's third CODE-table dispatcher
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
 - [`pd-common-address-spaces.md`](pd-common-address-spaces.md) — The lone `pd` proxy edge was a missing annotation, not a cross-program call (issue #470)
 - [`pd-direct-offset-pointer-add.md`](pd-direct-offset-pointer-add.md) — The PD image keeps a 16-bit base in direct `0x0D`/`0x0E`: a literal at init, rewritten by an 81-caller add-and-store-back (issue #69)

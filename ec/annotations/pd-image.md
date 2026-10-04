@@ -307,13 +307,19 @@ this image:
   `pd-index-geometry.md` is about, which this image uses heavily (the `0x5E`-
   and `0x67`-strided rows of `pd-base-strides.csv`).
 - **a `jmp @a+dptr` through a table whose address is a caller's return
-  address.** `0x119C dispatch_code_table` and `0x11C2
-  dispatch_code_table_2byte_key` both pop the return address into DPTR and read
-  the caller's inline argument bytes with `movc`, so **every table in the
-  program is a literal in the image** — which makes this the most plausible
-  remaining route from a literal to a string, and it is measured rather than
-  only listed: **9 `lcall 0x119C` sites and 16 `lcall 0x11C2` sites, and 0 of
-  their 4-byte inline tables opens a pool entry.**
+  address.** `0x119C dispatch_code_table`, `0x11C2
+  dispatch_code_table_2byte_key` and the unnamed `0x11EF` all pop the return
+  address into DPTR and read the caller's inline argument bytes with `movc`, so
+  **every table in the program is a literal in the image** — which makes this
+  the most plausible remaining route from a literal to a string, and it is
+  measured rather than only listed: **9 `lcall 0x119C` sites, 16 `lcall 0x11C2`
+  sites and 3 `lcall 0x11EF` sites, and none of those 28 inline tables opens a
+  pool entry**, read at each dispatcher's own entry width (3, 4 and 6 bytes
+  respectively — why the width is per dispatcher rather than one constant is
+  [`pd-code-table-inline-width.md`](../../docs/findings/pd-code-table-inline-width.md)).
+  `0x11EF` is named here by address only: it has no row in
+  `ghidra-functions.csv`, and §6's sixth item already carries the argument for
+  that.
 
 So the honest reading is: **the pool is reached by an address this method
 cannot compute**, and the way to find it is to watch DPTR rather than to grep
@@ -532,7 +538,7 @@ vector_gap = 0x26-0x3F erased (0xFF)
 vector_code = 0x0151=1site@vector_wrapper_dp_0151 0x0154=1site@vector_wrapper_dp_0154 0x0157=1site@vector_wrapper_dp_0157 0x015A=1site@vector_wrapper_dp_015a 0x015D=1site@vector_wrapper_dp_015d
 pool_candidates = 43
 pool_referrers = 0
-code_table_inline = 0x119C=9site/0open_a_string 0x11C2=16site/0open_a_string
+code_table_inline = 0x119C=9site/0open_a_string 0x11C2=16site/0open_a_string 0x11EF=3site/0open_a_string
 identity_strings = ITE8850-PD@0x0040 ProtoVer:01.00@0x0160 DriverVer:01.00@0x0170 UsbPdVer:01.00@0xE1C0
 pd_listings = 541
 pd_listing_overlaps = 0
