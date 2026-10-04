@@ -1358,6 +1358,25 @@ registers:
       (0x888C). Two independent methods agreeing on a direction is worth
       saying, and is still a static claim. Per-site table:
       ec/annotations/site-resolution.csv. status stays present-untested.
+      *** 2026-10-04 (issue #1332) ***: what is written IS now established,
+      which retires the "what is written, and by whom, is not established"
+      half of the lead sentence above -- as a derivation, still not as
+      behaviour. bank1 0xB50E derive_scaled_values_from_0404 reads the
+      16-bit little-endian pair at 0x0404/0x0405 with 0x8886, stashes it in
+      direct bytes 0x06/0x05, rotates it right by 4 with 0x8844
+      (ror16_r1r2_by_r7, an R7-counted pair of rrc), and stores the result
+      here with 0x888C. So 0x040A/0x040B = ror16(value,4), value being
+      that pair and ror16 the 16-bit rotate 0x8844 performs -- equal to
+      value>>4 exactly when the bits it rotates out are zero, which nothing
+      here establishes. The high half 0x040B has no MOV DPTR,#imm16 site
+      because the 0x888C writer reaches
+      it with its own inc DPTR, which is the reason every entered pair on
+      this page declines its high half. scan_refs.py's zero for 0x040B is
+      "not found by this method". static_refs and static_refs_main_ec
+      unchanged, and check_register_counts.py still reproduces both.
+      status stays present-untested -- a derivation is a static
+      instruction, not a behaviour. Write-up:
+      docs/findings/0436-capacity-ladder.md.
 
   - name: XDATA_040C
     addr: 0x040C
@@ -1381,6 +1400,19 @@ registers:
       The 2 PD-image sites a depth-0 census counts for this address are not
       EC references and are not classified here. Per-site table:
       ec/annotations/site-resolution.csv. status stays present-untested.
+      *** 2026-10-04 (issue #1332) ***: the derivation the same bank1 0xB50E
+      routine performs, established as it is for XDATA_040A's:
+      0x040C/0x040D = ror16(value,5), value being the 16-bit
+      little-endian pair at 0x0404/0x0405 and ror16 the rotate 0x8844
+      performs (value>>5 when the rotated-out bits are zero). The high half 0x040D is reached by the 0x888C
+      writer's own inc DPTR and not by a MOV DPTR,#imm16, the same
+      convention every entered pair here follows, so its scan_refs.py zero
+      is "not found by this method" and not absence. The address is also
+      the third bound the bank1 0x0436 band ladder compares against, which
+      is why the derivation matters beyond the store: see
+      XDATA_0436_PAIR's note and docs/findings/0436-capacity-ladder.md.
+      static_refs and static_refs_main_ec unchanged. status stays
+      present-untested.
 
   - name: XDATA_040E
     addr: 0x040E
@@ -1403,6 +1435,18 @@ registers:
       established -- a store of a computed 16-bit pair says where, not what.
       Per-site table: ec/annotations/site-resolution.csv. status stays
       present-untested.
+      *** 2026-10-04 (issue #1332) ***: the "still is not established" above
+      is corrected, and the original sentence is left standing because it was
+      right about what a store site alone can tell you. bank1 0xB50E
+      derive_scaled_values_from_0404 stores 0x040E/0x040F with 0x888C from
+      the same R1:R2 it stored to 0x040C/0x040D a few instructions earlier,
+      with no reload between the two stores: 0x040E/0x040F = ror16(value,5),
+      value being the 16-bit little-endian pair at 0x0404/0x0405. So
+      0x040C/0x040D and 0x040E/0x040F hold the SAME value, and the only
+      reload in the routine is the mov R2,0x06 / mov R1,0x05 pair before the
+      R7=5 rotate. That is a byte fact and not a behaviour: status stays
+      present-untested, static_refs and static_refs_main_ec unchanged.
+      Write-up: docs/findings/0436-capacity-ladder.md.
 
   - name: XDATA_0410
     addr: 0x0410
@@ -1431,6 +1475,19 @@ registers:
       references; the `none` cell among them is PD-image too, so this
       address has no EC-side `none` cell at all. Per-site table:
       ec/annotations/site-resolution.csv. status stays present-untested.
+      *** 2026-10-04 (issue #1332) ***: the "single EC-side site" is still
+      the only one, and what it stores is now derivable rather than merely
+      directional. In bank1 0xB50E derive_scaled_values_from_0404, 0xB565
+      hands DPTR to write_r3r4_to_xdata_pair (0x889E) with R3:R4 holding
+      R4=direct 0x06 and R3=direct 0x05 restored from the stash -- the
+      16-bit pair at 0x0404/0x0405 -- minus the value just read back from
+      0x040E/0x040F, the subtraction being 0x885B sub_r1r2_from_r3r4. So
+      0x0410/0x0411 = value-ror16(value,5). The high half 0x0411 is reached by
+      0x889E's own inc DPTR, the reason #279's note gives for not entering
+      it, and its scan_refs.py zero is "not found by this method".
+      status stays present-untested and both static_refs values are
+      unchanged; the derivation is a static instruction, not a behaviour.
+      Write-up: docs/findings/0436-capacity-ladder.md.
 
   - name: XDATA_0420
     addr: 0x0420
@@ -1594,6 +1651,67 @@ registers:
       the two-address split to ec/ghidra/xdata-overrides.csv; neither belongs
       in a change that has no run behind it. Per-address table:
       ec/annotations/xdata-0400-045f.md.
+      *** 2026-10-04 (issue #1332) *** WHAT THE VALUE IS MEASURED AGAINST,
+      which is a constraint and not a name. Six routines compare this pair
+      against descending bounds and the bounds are scalings of XDATA
+      0x0404/0x0405 -- the full-capacity pair -- so the pair is read in that
+      unit. Three comparators do it, five instructions and a `ret` each,
+      all ending in 0x8863 cmp_r3r4_against_r1r2_16bit, whose carry is a borrow and so
+      means the pair is BELOW the bound: bank1 0xAE2B
+      cmp_0436_0437_against_040a_040b against 0x040A/0x040B, 0xAE5F
+      cmp_0436_0437_against_0544_0545 against 0x0544/0x0545, 0xAE92
+      cmp_0436_0437_against_040c_040d against 0x040C/0x040D, and 0xAEBC
+      cmp_0436_0437_against_1_or_test_0514 against the literal 1. Those four
+      bounds are, per
+      docs/findings/0436-capacity-ladder.md, ror16(value,4),
+      ror16(value,5)+0x28, ror16(value,5) and 1 -- the first three written by
+      bank1 0xB50E
+      derive_scaled_values_from_0404, which is what ties the unit to the
+      writer rather than leaving it a resemblance. A fifth writer, bank1
+      0xB2A0 cmp_0404_vs_0518_then_store_0436, stores 0x0404's OWN value
+      here on the borrow arm of its compare against 0x0518/0x0519 and the
+      constant 0x0201 on the other; a writer and its consumers agreeing on a
+      unit is the reason this is graded as the better-supported of the two
+      readings on the table, and it is still not a name.
+      THE SIX ARE NOT A CHAIN, they are a jump table. bank1 0xADFD
+      dispatch_on_056a_low3 reads XDATA 0x056A, masks it with 7, multiplies
+      by three and does jmp @A+DPTR over a table at 0xADE2 whose eight
+      three-byte ljmp entries select 0xAE16, 0xAE42, 0xAE78, 0xAEA2, 0xAEE2,
+      0xAEF3, 0xAE16, 0xAE16. 0x056A is therefore a BAND CURSOR that the
+      ladder both reads and rewrites -- each routine writes the next cursor
+      value or falls into bank1 0xAE6F or_r6_into_0496_low5, which masks
+      XDATA 0x0496 with 0xE0 and ORs in R6. The six R6 immediates
+      0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F are a thermometer in the low five
+      bits of 0x0496, each the previous with one more bit set; and 0xAEF3
+      loads its R6 only on the borrow path, so the top bit is set on a
+      different condition from the other five. XDATA 0x0490 bit 7 is a gate
+      rather than a band: it sends 0xAE42, 0xAE78, 0xAEA2, 0xAEE2 and 0xAEF3
+      to bank1 0xAED9 store_0_to_056a, forcing the cursor to the bottom.
+      0x0490 bit 7 is written by bank1 0xC11C
+      latch_0490_bit3_or_bit7, which sets bit 3 or bit 7 and clears the
+      other. 0x056A and 0x0496 have no row in this file and none is added
+      here; boot-xdata-sites.csv records 0x056A cleared to 0x00, which is
+      the 0xAE16 entry.
+      WHAT THIS DOES NOT SETTLE. The name stays declined and status stays
+      present-untested. The ~35 s +0x14 sweep in the profile-switch capture
+      is not refuted by any of this and stays unexplained -- the writer
+      census above found no incrementing writer, and a monotonic sweep is
+      also what a banding ladder's input looks like walking through its
+      bands, so the ramp and the unit above are compatible rather than
+      competing. What a band IS (a state of charge, a mode, a timer phase)
+      is not decoded; 0x0496 bit 4 is tested at bank1 0x8E71 inside
+      dispatch_on_0490_0495_0496_0498 and nothing here says what that
+      decides. The table's own bytes at 0xADE2-0xADF9 are in no committed
+      listing and were read out of ec/firmware/GMxMGxx_11.800 and
+      cross-checked against ec/annotations/bank-call-targets.csv; how 0xADFD
+      itself is reached is not established, its one forwarder bank1 0xAD7A
+      having no committed caller, which is "not found by this method" and
+      not "unreachable". No hardware and no Windows machine was involved,
+      no register was read back, and every claim here is a claim about
+      committed bytes. This is the static half of #1310, which stays open:
+      the run of docs/hardware-tests/remain-capacity-0436.md is still what
+      would settle the name. static_refs, status and sources all unchanged.
+      Write-up: docs/findings/0436-capacity-ladder.md.
 
   - name: BAT_VOLTAGE_MV
     addr: [0x0438, 0x0439]
