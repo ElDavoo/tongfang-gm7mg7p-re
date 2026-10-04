@@ -153,6 +153,17 @@ HELD = {
             "*-snapshot.txt": ("## 2.", "in the snapshot style of"),
         },
     },
+    "pl-clear-0741-gate.md": {
+        # Four arms, four `ec_timer_capture.py --csv` captures, and nothing
+        # else: the `ecmem.py read`/`write` calls in the arms print to stdout
+        # and the restore in section 5 writes registers rather than files. No
+        # allowance, because the operator's own notes -- the starting mode, the
+        # PL values from before the arms, which service log line proves Arm D's
+        # trigger fired -- belong in the report's prose rather than in a fifth
+        # capture the commands do not produce.
+        "command_producers": True,
+        "hand_saved": {},
+    },
     "remain-capacity-0436.md": {
         "command_producers": True,
         "hand_saved": {},

@@ -229,6 +229,37 @@ registers:
       docs/findings/0741-bit7-oc-recovery.md; the status above is for
       bit 0 only.
 
+      2026-10-03 (issue #109): bit 0 is revocable by the EC, so setting it
+      once at init does not make it sticky. bank0 0xBD03, the committed
+      clear_0741_bit0_and_08e2_bit4, is anl a,#0xfe on this byte and has
+      exactly two callers in the image: 0xACFC, inside
+      reset_xdata_flags_and_07d5_to_ff at 0xACB4, the whole-machine reset --
+      an expected place to lose it -- and 0xAB75, inside
+      set_06e2_bit0_from_c412, which reaches it only when XDATA 0x06E6 is
+      0x05. What reaches 0xAB75 is not established here and is the live
+      question the write-up below opens. Enumerating every MOV DPTR,#0x0741
+      site with trace_xdata_refs.py and its eight-instruction window gives ten
+      read-modify-writes -- orl #0x20 twice, anl #0xdf, anl #0xfb twice,
+      orl #0x04, anl #0x7f twice, the anl #0xfe at 0xBD03, and orl #0x80 --
+      and none of them sets bit 0. That is "not found by this method": the
+      scan is blind to a blind whole-byte store, to any store through a
+      DPTR built at run time, and to a masked writer on a branch's
+      fall-through. Two of the last kind exist here and the window drops both:
+      0xA9A5 (anl a,#0xfb at 0xA9AD) and 0xCAEB (anl a,#0xef at 0xCAF3) are
+      real 0x0741 writers, so the ten above are ten plus these two. Neither
+      touches bit 0 -- 0xfb clears bit 2, 0xef clears bit 4 -- so the negative
+      stands once they are counted. Bit 0
+      is not established absent. What it does
+      license is narrower and is the driver-relevant half: the EC can take the
+      bit away, and this method finds nothing that gives it back. Consequence
+      for a driver -- one that sets bit 0 once should re-assert it rather than
+      treat uniwill_ec_init() as having granted it. This matters because
+      0xA82B is the gate on the only main-EC writer of 0x0783-0x0785 (see the
+      CPU_PL1/PL2/PL4 row); docs/findings/a7c8-dispatch-slot-and-pl-race.md is
+      the write-up and docs/hardware-tests/pl-clear-0741-gate.md is the unrun
+      procedure. Nothing here is behavioural: no register was read back. The
+      status above is unchanged.
+
   - name: CTGP_DB_CTRL / OFFSET
     addr: [0x0743, 0x0744, 0x0745, 0x0746]
     sources: [uniwill-laptop, dsdt(GNEN/ECDC/CTVA/DBCT/MXDB),
@@ -2329,6 +2360,28 @@ registers:
       routine runs is not established (its one caller, 0x851B, sits in the
       unresolved three-byte-stub run of bank-call-audit.md), so whether the
       clear can fire after a host has set the PLs is open.
+
+      2026-10-03 (issue #109), and the paragraph's last two sentences are
+      superseded, not deleted. The routine is entered at bank0 0xA7C8 through
+      common 0x0E49 ljmp 0x1564 -> the far-call stub for 0x851B, and 0x0E49 is
+      the dispatch slot that the divide-down scheduler's inline case table at
+      common 0x0DD6 reaches on case 0x02 and case 0x0C. So it is a recurring
+      polled task, not a boot event: the 0x0782 bit-5 one-shot at 0xA80A guards
+      only the 0x0751 mode write, because the PL clear at 0xA82B is the branch
+      target of both jnbs at 0xA802 and 0xA806 as well as their fall-through.
+      Whether the clear can therefore fire after a host has set the PLs:
+      POSSIBLE, and not settled, because it needs 0x0741 bit 0 to be clear at
+      the same moment. Two ways that can be so, both real: the vendor service
+      parks the bit clear for the duration of RefreshDefaultFanTableAll (its
+      own Thread.Sleep(500) loop bounds put that at 1.5 s or more), and bank0
+      0xBD03 clears the bit and no direct-MOV-DPTR site found by that method
+      sets it -- see the 0x0741 row. What is not established is whether the
+      routine's two entry gates (0x0780 != 0xA2 and 0x06E6 == 0x01) and such a
+      window ever coincide at run time. No register was read back and no
+      hardware was reached; docs/findings/a7c8-dispatch-slot-and-pl-race.md is
+      the write-up and docs/hardware-tests/pl-clear-0741-gate.md is the
+      unrun procedure that would settle it. status: unchanged, because none of
+      this is behavioural evidence.
 
   - name: MANUAL_FAN_CTRL (power mode / fan mode)
     addr: 0x0751
