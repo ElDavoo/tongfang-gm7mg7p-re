@@ -213,11 +213,17 @@ from the two fixture bytes in the suite rather than by calling the tool's own
   does not assert that the directory should hold them, and it does not
   re-derive any of them. `2026-09-09-profiles.csv`'s absent writer is recorded
   above, not resolved.
-- **The `encoding=` question.** `battery_trace.py:81` opens a CSV with no
-  `encoding=`, named as a deliberate deferral with its own follow-up at
+- **The `encoding=` question.** ~~`battery_trace.py:81` opens a CSV with no
+  `encoding=`~~, named as a deliberate deferral with its own follow-up at
   [`0751-capture-encoding.md`](0751-capture-encoding.md) §2 and repeated in its
   §9. This page does not re-open it and does not duplicate that page's
   reasoning; the overlap is this one line and nothing else.
+  **Corrected 2026-10-03 at issue #1277:** the first sentence is no longer
+  true — `battery_trace.py` declares `encoding="utf-8"` at its `open()`, as do
+  `charge_target_test.py` and `ctgp_dben_probe.py` and every reader of all
+  three formats. See [`probe-csv-encoding.md`](probe-csv-encoding.md). The
+  rest of the bullet stands: this page still does not re-open that page's
+  reasoning, and the two still overlap by that one line.
 - **The duplicated `wmi()`.** `battery_trace.py:59-63` and
   `charge_target_test.py:89-93` are byte-identical, as are `PS`, `WMI_QUERY` and
   `u16`. The house position, at the same page's §2, is that `windows/tools/` is

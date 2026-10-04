@@ -228,7 +228,7 @@ def main(argv=None):
               "record of a run that acts", file=sys.stderr)
         return 2
 
-    fh = open(args.csv, "a", newline="")
+    fh = open(args.csv, "a", newline="", encoding="utf-8")
     try:
         w = csv.writer(fh)
         # Append, and a header only on an empty file: the procedure's §3 is

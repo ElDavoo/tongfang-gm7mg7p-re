@@ -577,6 +577,13 @@ BOUNDARY_ROLES = tuple(role for role, _, takes_value in MARK_FORMS
 DUMP_VALUE = re.compile(r"-0751-isolation-([0-9a-f]{1,2})-(?:before|after)-",
                         re.I)
 
+# Which of §3's two dumps a file name is claiming to be -- step 0's or step
+# 6's. `DUMP_VALUE` matches the same text and discards this half, and the
+# alternation is what makes it a question: the two halves carry different
+# claims about when the read was taken, and only `before`'s is checkable
+# against the day's own marks (`misfiled_before`).
+DUMP_SIDE = re.compile(r"-0751-isolation-[0-9a-f]{1,2}-(before|after)-", re.I)
+
 # The value inside a mark label, `0x0751=0xA0`. The address is spelled as §3
 # and the probe spell it; `0x0*751` also takes `0x751`, which is the same
 # address to the operator and would otherwise read as an unplaceable mark.
@@ -3525,6 +3532,42 @@ def verdicts_for(blocks, selected):
     return {value: verdict_marker(here) for value, here in index.items()}
 
 
+def control_arms_for(blocks, selected):
+    """What each block's own control arm recorded, as `{value: byte or None}`.
+
+    Built from the same block set `verdicts_for` reads and scoped the same
+    way, for the same reason: a `--block` run has looked at one block, and an
+    index over the others would answer about blocks this run knows nothing
+    of. Two readers indexing one set rather than one reader indexing it twice
+    is what keeps them from disagreeing about which blocks were checked.
+
+    §3's step 2 is a no-op write of "the value already there", marked
+    `no-op wrote 0x0751=<current>`, so the value on that mark is what the
+    byte held when the block began. It is the one record in a run that says
+    so, and `misfiled_before` needs it before it can say a `-before-` dump
+    contradicts its own name: step order alone rules out the block's *write*
+    having put the value there, and says nothing about the byte having been
+    there already.
+
+    **Absent rather than zero, and None rather than either.** `None` means
+    the day does not record what this block started from -- no control arm of
+    its own, a mark carrying no value, or two blocks under one value whose
+    control arms disagree -- and the caller reads it as grounds *not* to
+    withhold. That is the conservative direction for a claim this makes about
+    the capture rather than about the machine: a block with no control arm of
+    its own is one the mark census already reports as an incomplete mark set,
+    and this says nothing on top of that. A value of 0x00 is a real answer
+    and is carried as 0x00, which is why this is not `or 0`.
+    """
+    index = {}
+    for block in blocks if selected is None else [selected]:
+        arms = {parse_mark(w.label)[1] for w in block.windows
+                if parse_mark(w.label)[0] == "control"}
+        index.setdefault(block.value, set()).update(arms)
+    return {value: next(iter(arms)) if len(arms) == 1 else None
+            for value, arms in index.items()}
+
+
 def verdict_note(value, verdicts):
     """(marker, section-level note lines) for one read.
 
@@ -3692,6 +3735,130 @@ def dump_block(path, fallback):
     return None, "none"
 
 
+def dump_side(path):
+    """`"before"`, `"after"`, or `None` -- which of §3's two dumps a name says.
+
+    The half `DUMP_VALUE` throws away, and a separate question from which
+    block a dump belongs to: the same `<value>` names the block in both halves
+    of the pair, so `dump_block` cannot tell them apart and nothing else can
+    either. `None` for a name that carries no `<value>` at all, which is the
+    same answer `dump_block` gives with a `how` of `"none"` -- a name that says
+    nothing here says nothing there, and there is no third shape.
+    """
+    m = DUMP_SIDE.search(os.path.basename(path))
+    return m.group(1).lower() if m else None
+
+
+def readback_blames_a_writer(value, here):
+    """True when §4.6's arm below would put a writer on the EC for this group.
+
+    **The one thing the new withhold is gated on**, and it is a gate on the
+    *claim* rather than on the files. §4.6 has two arms, and they are not the
+    same kind of sentence:
+
+    - `last == written` prints "the last dump holds the written 0xNN. Per
+      CLAUDE.md that is a readback, not evidence the EC acted on it." That is
+      true of the last file on disk whatever else is true, and it carries its
+      own calibration. Above it, `report_readback`'s before-side line already
+      names both readings a group whose first dump holds the written value
+      leaves open -- the write did not take, or the dump named `before` was
+      taken after it -- and says that nothing separates them. So a group in
+      this shape is disclosed, and a withhold here would take a true sentence
+      and a hedge that is doing its job and give back nothing.
+    - `last != written` prints "the byte moved back", names the EC's other
+      `0x0751` write paths or the vendor service, and points at §3a's
+      service-stopped run. **That is a claim about the machine**, and the
+      before-side line above it hedges the before-dump rather than this one.
+      It is the arm this change exists to stop, and the one the files'
+      disagreement makes unsupportable.
+
+    `last` covering no `0x0751` is False, and not as a special case: that is a
+    group whose readback was not taken, so there is no sentence above to
+    withhold.
+    """
+    last = here[-1][1]
+    return (value is not None and last is not None
+            and last.get(MANUAL_FAN_CTRL) not in (None, value))
+
+
+def misfiled_before(value, candidates, how, verdicts, arms=None):
+    """The before-dump among `candidates` already holding `value`, else None.
+
+    **§3 takes the before-dump at step 0, before the control arm and before
+    the write** (the procedure's own step order), and the write under test is
+    what puts `V` there. So a file named `-before-` for block `V` cannot
+    already hold `V`.
+
+    **...and the byte may have been at `V` before the block began, which is
+    the half of that the step order does not reach.** Step order rules out
+    the block's *own* write having put `V` there; it says nothing about the
+    byte having held `V` already, and §3 nowhere requires the value under
+    test to differ from what is there -- step 2 is literally "write the value
+    already there back to itself", which presupposes a value and names none.
+    A day that writes 0xA0 onto a byte already at 0xA0 is a day the
+    procedure produces, and on it a `-before-` dump holding 0xA0 is that
+    block's before-dump, exactly as filed.
+
+    So the withhold is gated on the day's own answer to that, not on the step
+    order alone: `arms[value]` is what this block's control arm recorded,
+    and `None` when the day does not say. **Fires only where the control arm
+    named some other value.** Two artefacts of the same run, arithmetic, and
+    no claim about the EC -- and where the day does not record a control-arm
+    value at all the answer is `None` and nothing fires, because "not
+    recorded" is not "recorded as something else" and this withholds on
+    disagreement rather than on silence.
+
+    The shape it catches is two blocks' `<value>` stamps transposed. §6 asks
+    for six file names per block, typed by hand, and swapping two of them
+    files each block's bytes under the other's name with a clean face. After a
+    swap every value is still a block of the day, so `verdict_note`'s
+    membership test passes and nothing else on the page catches it: the bytes
+    are the only thing left to check the names against.
+
+    Each exclusion is a reason rather than a shrug:
+
+    - `how == "name"` only. A group filed from `--block`/`--wrote` carries no
+      name-derived claim, and §6 has the operator name the block themselves.
+    - **`verdicts` has to hold the value.** The note this gates names the
+      day's own `wrote 0x0751=0xNN` mark as one of the records that disagree
+      with the file name, and a value the day never wrote has no such mark --
+      so firing there would print a line whose own sentence is false. A
+      single-block day whose dump is stamped for a value the day never wrote
+      is a different case and `verdict_note` already discloses it, by name and
+      without any speculation about which file is wrong; this is the case that
+      disclosure cannot see.
+    - **`-before-` names only**, which is what leaves an after-dump alone: an
+      after-dump *is* expected to hold the written value, so there is nothing
+      to check it against.
+
+    `candidates` is `(path, values)` pairs and the caller decides which dumps
+    are in scope, because the two sections scope differently and neither
+    choice belongs in here: `report_dumps` leaves out the group's last dump,
+    which is the readback's source and the one file whose holding the written
+    value is the ordinary case rather than a contradiction, and
+    `report_dump_pairs` passes every pair's before side, which is not a
+    readback's source by anything.
+
+    `arms` defaults to `None` so a caller that has not built the index is a
+    caller that withholds nothing, which is the direction that takes claims
+    back rather than adding them.
+
+    A before-dump that does not reach `0x0751` has no byte to read, and one
+    that would not open has none either; both are the coverage notice's shape
+    rather than this one's.
+    """
+    if value is None or how != "name" or not verdicts or value not in verdicts:
+        return None
+    if not arms or arms.get(value) in (None, value):
+        return None
+    for path, values in candidates:
+        if values is None or dump_side(path) != "before":
+            continue
+        if values.get(MANUAL_FAN_CTRL) == value:
+            return path
+    return None
+
+
 def dump_pair_block(before, after, fallback):
     """(value, how) for a --dump-pair: which block it is, and what says so.
 
@@ -3776,6 +3943,67 @@ SAME_FILE_PAIR = (
     "compared with itself proves nothing. Pass the before and after dumps "
     "of one range as two different files.")
 
+# Why a group whose before-dump already holds its own block's value is not
+# read, as one string both sections print. Kept as the line they already
+# printed for `SAME_FILE_PAIR` above, for the same reason: two readers
+# deciding the same thing must not be able to disagree about what they said.
+#
+# **Withheld rather than refused, and rather than printed beside a verdict.**
+# Nothing in the capture is broken -- the mark set grades clean, both blocks
+# print `intact`, the windows are right -- so the exit code is unchanged in
+# both sections and the rest of the run still reads. But a warning *under* the
+# false verdict leaves the false verdict standing, and the false verdict is
+# what a fold-in quotes: on a two-block day whose `<value>` stamps are
+# transposed, the section prints "the last dump holds <other block's value>,
+# not the written <this block's> -- the byte moved back", with nothing beside
+# it, and the other block's section above says that block is `intact`. Two
+# sections describing different files as the same block's, and nothing in the
+# run contradicting either.
+#
+# The line names where the value came from -- a file name -- because that is
+# where the competing claim is, and it names the day's own control-arm mark
+# as the record that says the byte was somewhere else before the write. It
+# names **no cause** for the EC and sends the operator to no next step: which
+# of the two file names is the wrong one is a question about files, and
+# nothing here answers it. It also claims no uniqueness for any mark it
+# names: a day that wrote the value twice, restored it and then wrote it
+# again carries several records of it, and this says "the day's own `wrote`
+# mark" without saying it is the only one -- which is not a claim the day's
+# own rows would support on the run this fires on.
+MISFILED_BEFORE_NOTE = (
+    "{what} is withheld for these files, and no result is printed in its "
+    "place. {path} is a before-dump -- §3 takes that at step 0, before the "
+    "block's control arm and before the write -- and it already holds "
+    "{value}. This block's own `{control}` mark recorded {held} at that "
+    "control arm, so the day's marks say the byte was somewhere else before "
+    "the write, and a dump taken before the write cannot hold what it has "
+    "not put there yet. The day's `{mark}` mark is the record that puts "
+    "{value} there, afterwards. So the `<value>` in these files' names and "
+    "the day's own marks disagree about which block these bytes are, and a "
+    "comparison across that would answer for the other block's write. Which "
+    "name is the wrong one, and whether the write landed at all, are not "
+    "settled by two records that contradict each other this way, so nothing "
+    "here names a cause.")
+
+
+def misfiled_note(what, path, value, arms):
+    """`MISFILED_BEFORE_NOTE` filled in for one group.
+
+    The mark spellings live here rather than in the two call sites so the two
+    readers cannot disagree about how a day spells `wrote 0x0751=0xNN` -- the
+    same reason `MISFILED_BEFORE_NOTE` is one string. `arms[value]` is the
+    control-arm byte, which is the precondition the notice states and the
+    predicate that gated on: it is a real value by the time anything gets
+    here, because `misfiled_before` returns None for a block whose control arm
+    did not name one, and a `held` of "0x{value:02X}" here would make the note
+    deny its own sentence.
+    """
+    return MISFILED_BEFORE_NOTE.format(
+        what=what, path=path, value=f"0x{value:02X}",
+        held=f"0x{arms[value]:02X}",
+        control=f"no-op wrote 0x{MANUAL_FAN_CTRL:04X}=0x{arms[value]:02X}",
+        mark=f"wrote 0x{MANUAL_FAN_CTRL:04X}=0x{value:02X}")
+
 
 def pair_refusal(before, after):
     """Why a --dump-pair cannot be read at all, or `None` if it can.
@@ -3810,7 +4038,7 @@ def pair_refusal(before, after):
 
 
 def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
-                 unread=()):
+                 unread=(), arms=None):
     """0x0751 in each --dump, and what the last of them says about §4.6.
 
     Coverage is stated before anything is compared. A run may hand in dumps
@@ -3837,6 +4065,32 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
     `verdicts=None` degrades to the pre-marker output rather than to an
     error. A group for a block this run did not check is given no verdict at
     all, for the reason `verdicts_for` gives.
+
+    **One group is not read at all, and the grouping above is what makes it
+    visible.** The group's value is a `<value>` off a file name and nothing
+    checks it against the artefacts in the run that record what the byte held
+    -- the block's own `no-op wrote 0x0751=0xNN` control arm and its `wrote
+    0x0751=0xNN` write -- on either of the two invocations §6 sanctions, the
+    plain unscoped one and the `--block` one a fold-in attaches. So a group's
+    before-dump that already holds its own block's value, on a block whose own
+    control arm recorded something else, is read past: `misfiled_before`
+    explains it, and the notice it gates replaces the readback in the same
+    place rather than sitting under it. The membership half is
+    `verdict_note`'s existing "no block under test 0xNN is in this run" line
+    and is kept; it is blind to a swap, because after a swap every value is
+    still a block of the day. A value that came from `--block`/`--wrote`
+    rather than from a name is the only kind this cannot apply to, and that
+    path reads exactly as it did.
+
+    `arms` is `control_arms_for`'s index, the same value-keyed shape
+    `verdicts` is and scoped the same way, and it is the precondition rather
+    than a detail: §3's step order rules out the block's *write* having put
+    `V` there, and says nothing about the byte having held `V` already --
+    step 2 writes "the value already there" back to itself and names no
+    value, so a day that writes 0xA0 onto a byte already at 0xA0 is one §3
+    produces and its before-dump holding 0xA0 is that block's before-dump.
+    `misfiled_before` fires only where the control arm says the byte was
+    somewhere else.
 
     The heading line is unchanged whatever the grouping does. It is what both
     §4.6 readers in the test suite cut the section on, and a heading that
@@ -3913,6 +4167,26 @@ def report_dumps(dumps, wrote, pairs, block_value=None, verdicts=None,
                       "dump")
             else:
                 print(f"  {path}: 0x{MANUAL_FAN_CTRL:04X} = 0x{v:02X}")
+        # `here[:-1]`, and `misfiled_before` gives the reason: the last dump is
+        # the readback's source, and a before-dump among the rest of the group
+        # holding the block's own written value is what a transposed name looks
+        # like from the inside. `readback_blames_a_writer` is the other gate
+        # and it is a gate on the sentence rather than on the files -- only the
+        # `last != written` arm is a claim about the machine, and the other arm
+        # is already disclosed and already calibrated.
+        misfiled = None
+        if readback_blames_a_writer(value, here):
+            misfiled = misfiled_before(value, here[:-1], how, verdicts, arms)
+        if misfiled is not None:
+            # The byte lines above still print. What each file holds is a fact
+            # about files on disk and is true whatever the block's dumps add up
+            # to; only the comparison is withheld. The notice takes the place
+            # of the verdict rather than sitting under it, because a warning
+            # beneath a §4.6 result leaves that result standing, and the result
+            # is the line a fold-in quotes.
+            print(wrap_note(misfiled_note("the §4.6 readback", misfiled,
+                                          value, arms)))
+            continue
         report_readback(here, wrote, pairs, value, marker,
                         pair_fallback=fallback)
     if block_value is not None and not any(v == block_value
@@ -4263,7 +4537,7 @@ def report_readback(here, wrote, pairs, value, marker="", pair_fallback=None):
 
 
 def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None,
-                      failed=()):
+                      failed=(), arms=None):
     """The same watched bytes, read across a whole block instead of a window.
 
     A pair is §3's own bracket for one range -- step 0 and step 6, ~100 s
@@ -4350,6 +4624,17 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None,
     §4.3, which is the one thing this run cannot give. The marker goes on
     the group line and nowhere else, so the bracket body and
     `group_body()`'s cut are untouched.
+
+    **A pair whose before side already holds its own block's value is not
+    compared at all**, for the reason `misfiled_before` gives and from the same
+    predicate `report_dumps` uses, `arms` included, so the two readers cannot
+    disagree about a group both of them are looking at. `dump_pair_block`
+    refuses a pair whose two names disagree *with each other*; a swap makes
+    them agree with each other and be wrong together, so the whole-block
+    bracket files under the wrong block with the same clean face the §4.6
+    group does. It is withheld in place of the bracket rather than printed
+    beside it, and ahead of `graded += 1` so the closing paragraph never
+    qualifies a bracket that is not there.
 
     Returns how many pairs were actually compared, so the closing summary
     cannot report a whole-block read for a run that took none -- a `--block`
@@ -4455,6 +4740,31 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None,
                 # because `report_readback` has to refuse the same pair.
                 print(f"\n  {before_path} -> {after_path}")
                 print(f"    {reason}")
+                continue
+            # Ahead of `graded += 1`, so a pair that is not compared is not
+            # counted as one: the closing paragraph qualifies the brackets
+            # above it, and a bracket that was withheld is not among them. The
+            # candidates are this pair's before side alone -- a pair's after
+            # side is not a before-dump by anything, and unlike §4.6 there is
+            # no `last == written` arm here whose comparison is worth
+            # keeping: the bracket either prints or it does not.
+            #
+            # `readback_blames_a_writer` is deliberately not applied. It gates
+            # on which of §4.6's two *sentences* would be printed, and this
+            # section has no such pair of sentences -- what is withheld is the
+            # bracket, and the bracket is wrong under the block it is filed
+            # against either way.
+            misfiled = misfiled_before(value, [(before_path, before)], how,
+                                       verdicts, arms)
+            if misfiled is not None:
+                # In place of the bracket, at the position the pair was handed
+                # in, for the reason `report_dumps` gives: nothing inside a
+                # mis-filed bracket looks wrong, so the refusal has to be
+                # where the bracket would have been rather than beside it.
+                print(f"\n  {before_path} -> {after_path}")
+                print(wrap_note(misfiled_note("this whole-block bracket",
+                                              misfiled, value, arms),
+                                indent=4))
                 continue
             graded += 1
             common = sorted(set(before) & set(after))
@@ -4590,9 +4900,14 @@ def report_dump_pairs(pairs, block_value=None, wrote=None, verdicts=None,
         # on are the ones where it was describing lines that do not exist.
         # Said rather than dropped, for the reason §4.6's refusal is: a
         # silent ending after a refusal is the same defect one step down.
+        # "Not compared" rather than "refused", because not every pair that
+        # reaches here was refused by `pair_refusal`: the `disagree` branch
+        # skips one it cannot file under a block at all, and a pair whose
+        # before side is mis-filed is withheld above. Each of the three says
+        # why, which is what this sentence is here to point at.
         print("\n  no dump pair here was compared, so there is no whole-block "
-              "read to qualify: the pairs above were refused, and each says "
-              "why")
+              "read to qualify: the pairs above were not compared, and each "
+              "says why")
     return graded
 
 
@@ -5042,6 +5357,13 @@ def main(argv=None):
     # section cannot work out for itself.
     verdicts = verdicts_for(blocks, selected)
 
+    # The same index shape over the same block set, holding what each block's
+    # own control arm recorded instead of what the block section said about
+    # it. `verdicts` answers "is this value a block of the day"; this answers
+    # "what did the byte hold before this block's write", which is what the
+    # §4.6 withhold's precondition needs and what no existing index carried.
+    arms = control_arms_for(blocks, selected)
+
     # Both file lists are read before either is printed, so §4.6 can name a
     # --dump-pair that covers 0x0751 while it is saying the readback was not
     # taken. The print order is unchanged and is the one §6 documents: the
@@ -5060,10 +5382,10 @@ def main(argv=None):
     pairs, failed_pairs = read_dump_pairs(args.dump_pair)
     report_dumps(dumps, wrote, pairs,
                  selected.value if selected is not None else None, verdicts,
-                 unread)
+                 unread, arms)
     graded_pairs = report_dump_pairs(
         pairs, selected.value if selected is not None else None, wrote,
-        verdicts, failed_pairs)
+        verdicts, failed_pairs, arms)
 
     print("\n=== what this does and does not settle ===")
     if withheld:
