@@ -487,10 +487,21 @@ a whole line. Nothing here needs Ghidra, the Windows stack, or anything
   *does* read `# interval` or `# baseline`, `merged_capture_refusal` is the
   thing to share, and a small shared module rather than either grader is the
   shape `grader-repeated-capture.md` already argued for.
-- **Nothing here has been run against a committed capture.** The two-file
+- ~~**Nothing here has been run against a committed capture.** The two-file
   case is for an operator who took two captures of the *same* sweep either side
   of a suspend — not for the sweep procedure's §4a and §4b arms, which are two
   different runs and would be a merge of the wrong thing. Whether
   `evidence/ec-watch/2026-09-24-06c2-06db-suspend-linux.csv` and a second
   capture merge cleanly is one command a person at the machine can run, and no
-  result of it is claimed here.
+  result of it is claimed here.~~ **Corrected by
+  [`merged-capture-against-committed-pair.md`](merged-capture-against-committed-pair.md)
+  (issue #1452):** that run has now been done, and two of the three claims
+  above are wrong. It is **not** a command for a person at the machine — the
+  grader is offline and both captures are committed, so it runs anywhere.
+  And the two-file case is still not §4a and §4b: those remain two different
+  runs and this pair is still a merge of the wrong thing, which is why the
+  refusal is correct rather than a defect. What is measured is exit 1 with an
+  empty stdout and one disagreement, `0x06D6`'s `# baseline` level at `0x04` in
+  the suspend capture and `0x03` in the perturb capture; the interval clause
+  does not fire, because both state `0.01s`; and a control in which that one
+  token is made equal grades and exits 0.
