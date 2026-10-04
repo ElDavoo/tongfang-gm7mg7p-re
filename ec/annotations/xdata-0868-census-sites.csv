@@ -1,10 +1,13 @@
 region,file_offset,census_state,census_bucket,census_count,census_refs
 bank0,0x09DBC,mapped,write,1,bank0/9D9B.c:44
 bank0,0x09DE5,mapped,write,1,bank0/9D9B.c:53
+bank0,0x09E18,dptr-from-callee,none,0,none
 bank0,0x09EA5,mapped,write,1,bank0/9D9B.c:94
 bank0,0x09ECE,mapped,write,1,bank0/9D9B.c:103
 bank0,0x09FBF,mapped,write,1,bank0/9D9B.c:166
 bank0,0x09FE0,mapped,write,1,bank0/9D9B.c:176
+bank0,0x09F01,dptr-from-callee,none,0,none
+bank0,0x0A008,dptr-from-callee,none,0,none
 bank0,0x0BD3F,mapped,read,1,bank0/BD3D.c:19
 bank0,0x0D0D3,mapped,write,1,bank0/D091.c:67
 bank0,0x0D29E,mapped,read,2,bank0/D289.c:21;bank0/D28E.c:21
