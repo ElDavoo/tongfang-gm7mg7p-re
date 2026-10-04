@@ -407,7 +407,7 @@ red before this file landed.** `bash tools/run-tests.sh` read
 failure was `ec/tools/test_check_cluster_citations.py`'s
 `test_committed_prose_matches_committed_census`, on
 [`xdata-cluster-names-guard-off-recipe.md:220`](xdata-cluster-names-guard-off-recipe.md)
-— `0x0464` and `0x0465` against `main-ec-145`, which is #822's file and the red
+— `0x0464` and `0x0465` against `main-ec-0464`, which is #822's file and the red
 set [`runner-red-suite-set.md`](runner-red-suite-set.md) has carried since #816.
 **On the merged tree the runner reads `40 suite(s) run, 1243 tests; one or more
 FAILED`, and the red set is back to the single suite the paragraph above names

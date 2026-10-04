@@ -245,7 +245,7 @@ to — 93%**.
 >   **16** one-instruction listings. §2's three checkable facts and the census
 >   now agree by construction rather than by two people counting.
 > - **4,642 of the cluster's 4,966 is a published column.**
->   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-003` row
+>   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-0460` row
 >   and `co_reading_dominant` is `yes`, so "93% of the references are the 42
 >   exports" is a cell a reader can check rather than a sentence they have to
 >   trust. (`co_reading_refs` is measured against the cluster row's own 4,966;

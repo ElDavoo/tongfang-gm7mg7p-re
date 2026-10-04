@@ -233,7 +233,7 @@ and the single failing suite
 is `ec/tools/test_check_cluster_citations.py`'s
 `test_committed_prose_matches_committed_census`:
 [`xdata-cluster-names-guard-off-recipe.md`](xdata-cluster-names-guard-off-recipe.md):220
-cites `0x0464` and `0x0465`, which are members of `main-ec-145` and of none of
+cites `0x0464` and `0x0465`, which are members of `main-ec-0464` and of none of
 the clusters that line names. It reproduces identically in a clean worktree at
 `origin/main`, and this branch touches neither that recipe nor
 `ec/annotations/xdata-clusters.csv`, so it is pre-existing and has nothing to do

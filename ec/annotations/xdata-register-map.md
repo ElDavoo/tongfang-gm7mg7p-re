@@ -1496,7 +1496,7 @@ the best match scores 0.64 to 1.00 … any value between 0.01 and 0.64 gives the
 ten the same ten answers … 417 clusters have a key and no name". The names file
 holds nine rows and the committed census nine `cluster_name` cells: the tenth
 name was `page-0300`, whose row issue #279's pair-accessor pass dropped when the
-nine-address `0x0300` cluster it named was absorbed into `main-ec-001` (§5's
+nine-address `0x0300` cluster it named was absorbed into `main-ec-0300` (§5's
 re-derivation records that merge, and this change re-keys nothing). So the four
 overlap carries collapse to one, and 417 is the `with no name` line of a census
 that has since been regenerated. The superseded text is kept here rather than
@@ -2325,7 +2325,7 @@ symbol table.
 > `check_cluster_citations.py`'s count rule, and the suite carrying it was red
 > on this tree for an unrelated reason and so had not been run to green.
 > **The 27 stays in the record above rather than being deleted**: `git log -L`
-> over this file's `main-ec-002` row is what
+> over this file's `main-ec-0456` row is what
 > carries the sequence otherwise (19, then 43, then 27, and now 32 — the 31 is
 > the census's reading and no commit ever put it in this row), and a drift
 > record that deletes the drift records nothing.
@@ -2333,7 +2333,7 @@ symbol table.
 > **A second move, landed on main rather than here, is why the row reads 32 and
 > not the 31 this correction was written against.** #1438 (`7245cc0f`) added
 > `XDATA_086C` at `0x086C` to `registers.yaml` for issue #333; that address is a
-> member of `main-ec-002`, so the name took the census's `named_addrs` from 31
+> member of `main-ec-0456`, so the name took the census's `named_addrs` from 31
 > to 32, and #1438 corrected the row to 32 in the same commit. **The 31 this
 > paragraph was written against is kept here rather than silently dropped**,
 > because it is a real reading of the census — the one that held from
@@ -2348,18 +2348,18 @@ symbol table.
 
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
-| `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 11 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
-| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 35 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
-| `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **63/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
-| `main-ec-004` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 16 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
-| `main-ec-005` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | 6/22 fns, 34 (36%) | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_3000_block_then_probe_3000_3007` |
-| `main-ec-006` | `k49c52e2b2052` | — | 15 | 68 | `0x0388`-`0x03C9` | none | 0/5 fns, 0 (0%) | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `add_03a6_plus_0388_into_039e` |
-| `main-ec-007` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | 10/31 fns, 209 (75%) | three `ff_filler_not_a_function_*`, the fill stub block |
-| `main-ec-008` | `ke96d2e265d5d` | — | 12 | 107 | `0x0A43`-`0x0FC3` | none | 4/8 fns, 85 (79%) | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
-| `main-ec-009` | `ka9cca0a3e2d8` | — | 12 | 37 | `0x049A`-`0x05C3` | none | 0/9 fns, 0 (0%) | `clear_049a_049e_0579_057a_05c2`, `FUN_CODE_c0a8`, `latch_0490_bit3_or_bit7` |
-| `main-ec-010` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | 0/10 fns, 0 (0%) | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
-| `main-ec-011` | `k57522564ddd8` | — | 12 | 26 | `0x040A`-`0x0547` | 4 | 2/6 fns, 4 (15%) | `derive_scaled_values_from_0404`, `forwarder_to_ad8b`, `update_0492_from_0490_0524` — §4.7's `write_r1r2_to_xdata_pair(0x40a…)` block |
-| `main-ec-012` | `k2a30862cf8eb` | — | 11 | 43 | `0x045E`-`0x1F07` | 4 | 8/21 fns, 3 (7%) | `magic_55aa_and_0704_countdown`, `init_1f01_1f06_1f07`, `count_down_06e4_and_toggle_06e3` |
+| `main-ec-0300` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 11 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
+| `main-ec-0456` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 35 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-0460` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **63/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
+| `main-ec-045C` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 16 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
+| `main-ec-043E` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | 6/22 fns, 34 (36%) | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_3000_block_then_probe_3000_3007` |
+| `main-ec-0388` | `k49c52e2b2052` | — | 15 | 68 | `0x0388`-`0x03C9` | none | 0/5 fns, 0 (0%) | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `add_03a6_plus_0388_into_039e` |
+| `main-ec-0045` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | 10/31 fns, 209 (75%) | three `ff_filler_not_a_function_*`, the fill stub block |
+| `main-ec-0A43` | `ke96d2e265d5d` | — | 12 | 107 | `0x0A43`-`0x0FC3` | none | 4/8 fns, 85 (79%) | `call_ef17_then_copy_0f80_to_0fb1`, `store_dptr_byte_to_0fb2_copy_0f82`, `FUN_CODE_f002` |
+| `main-ec-049A` | `ka9cca0a3e2d8` | — | 12 | 37 | `0x049A`-`0x05C3` | none | 0/9 fns, 0 (0%) | `clear_049a_049e_0579_057a_05c2`, `FUN_CODE_c0a8`, `latch_0490_bit3_or_bit7` |
+| `main-ec-00C0` | `k733571bb7f66` | — | 12 | 35 | `0x00C0`-`0x2275` | none | 0/10 fns, 0 (0%) | `copy_direct_65_66_to_x00c0`, `copy_x00c0_pair_to_iram_67_68` |
+| `main-ec-040A` | `k57522564ddd8` | — | 12 | 26 | `0x040A`-`0x0547` | 4 | 2/6 fns, 4 (15%) | `derive_scaled_values_from_0404`, `forwarder_to_ad8b`, `update_0492_from_0490_0524` — §4.7's `write_r1r2_to_xdata_pair(0x40a…)` block |
+| `main-ec-045E` | `k2a30862cf8eb` | — | 11 | 43 | `0x045E`-`0x1F07` | 4 | 8/21 fns, 3 (7%) | `magic_55aa_and_0704_countdown`, `init_1f01_1f06_1f07`, `count_down_06e4_and_toggle_06e3` |
 
 **The `refs` column is the census's per-program figure** — each member's
 `refs_main_ec` or `refs_pd`, whichever this cluster's own `program` is, and
@@ -2418,7 +2418,7 @@ block by rank is reading a table that no longer exists; the cluster that
 sentence is about is `ka39cda99615f`.)*
 
 *(Re-derived again, 2026-09-25, on the tree that also carries issue #267. Only
-`main-ec-002` moved, and only because `0x1666` and `0x166A` became named: #267
+`main-ec-0456` moved, and only because `0x1666` and `0x166A` became named: #267
 added `registers.yaml` rows for the three GFID-select bytes, and two of them
 sit in this cluster, so 35 → 37 named addresses. The reference count follows the
 new `0x1665` test routines (1,149 → 1,150) and the co-reading denominator is

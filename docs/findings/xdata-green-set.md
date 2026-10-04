@@ -258,7 +258,7 @@ is the blockquote under **The measurement** rather than a rewrite of the title.*
 
 **What the new member is, and is not.** It is a bookkeeping disagreement about a
 transcribed cluster id: a printed console block in a **closed** issue's write-up
-names eleven `main-ec-*` clusters, and `0x0464`/`0x0465` are in `main-ec-145`,
+names eleven `main-ec-*` clusters, and `0x0464`/`0x0465` are in `main-ec-0464`,
 which that line does not name. Whether the transcript moves or the CSV does is a
 judgement about a closed record, not a mechanical edit, and it is not this
 branch's — the branch does not touch that line. The green set going from empty
