@@ -311,15 +311,15 @@ above are kept, which is §4a-4d.)*)*
 > and `python3 ec/tools/check_census_figures.py --print`, which prints each
 > figure beside the `ORACLE` key it corresponds to:
 >
-> - **203** named addresses appear in the decompiled tree at all, not 79 — of
->   the **257** addresses `xdata-symbols.csv` names, the other **54** being
+> - **204** named addresses appear in the decompiled tree at all, not 79 — of
+>   the **258** addresses `xdata-symbols.csv` names, the other **54** being
 >   `NOT_IN_TREE`, which carries a stated reason per address. **Both the 101 §3c
->   reads and this 257 are that same address union** — §3c never read a row count
+>   reads and this 258 are that same address union** — §3c never read a row count
 >   — and what moved between them is that `registers.yaml` grew. The union exceeds
->   the 203 rows behind it because 17 rows hold an `addr` **list** covering a run
+>   the 204 rows behind it because 17 rows hold an `addr` **list** covering a run
 >   of bytes and contribute one address per element, so a register added as a
 >   4-byte run moves the figure by four.
-> - **196** of the 203 are touched by the main EC, not 72, and **7** only by the
+> - **197** of the 204 are touched by the main EC, not 72, and **7** only by the
 >   PD image — that half is unchanged.
 > - `ORACLE["symbol_main_distinct"]` reads **180**, not 172: the main-EC
 >   addresses the committed `.c` spells by symbol.
@@ -351,13 +351,13 @@ above are kept, which is §4a-4d.)*)*
 > `verdict` column and §3c has none, so the tool built to hold this section
 > reports nothing for it.
 >
-> **196 and 180 are two questions and the 16 between them are the evidence.** An
+> **197 and 180 are two questions and the 17 between them are the evidence.** An
 > address can be named in `xdata-symbols.csv`, reached by the census, and still
 > be written something else in the committed `.c`; the two spellings fail
-> differently. Seven are written `DAT_EXTMEM_xxxx` by the main EC (`0x047C`,
-> `0x070F`, `0x09EF`, `0x09F0`, `0x09F1`, `0x09F2`, `0x0A47`) — a name the export
-> predates, and **these are the ones a re-export moves**. Nine are reached only
-> through a pair-accessor argument (`0x0402`, `0x0404`, `0x0408`,
+> differently. Eight are written `DAT_EXTMEM_xxxx` by the main EC (`0x047C`,
+> `0x070F`, `0x078E`, `0x09EF`, `0x09F0`, `0x09F1`, `0x09F2`, `0x0A47`) — a name
+> the export predates, and **these are the ones a re-export moves**. Nine are
+> reached only through a pair-accessor argument (`0x0402`, `0x0404`, `0x0408`,
 > `0x040A`/`0x040C`/`0x040E`/`0x0410`/`0x043A` and `0x04A3`; `bank1/B56C.c` reads
 > `read_xdata_pair_to_r1r2(0x43a)`, and Ghidra typed `0x0402` as `FUN_CODE_0402`),
 > which is neither spelling, and **whether a re-export would name those is not
@@ -367,7 +367,7 @@ above are kept, which is §4a-4d.)*)*
 > single `DAT_EXTMEM_04a3` token in `ec/decompiled/` is `pd/F22E.c`, the PD
 > image's, and §39 below records that address's per-program split already. So
 > both figures above are readings of the tree as it stands, not properties of
-> `registers.yaml`. None of the 16 is absent or unnamed: each is reached and each
+> `registers.yaml`. None of the 17 is absent or unnamed: each is reached and each
 > is named, and reading the gap as "unused" would invert this section's own
 > correction. Detail and the derivation are in
 > [`findings/3c-named-versus-spelled.md`](findings/3c-named-versus-spelled.md);

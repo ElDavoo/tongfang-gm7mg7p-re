@@ -1,4 +1,4 @@
-# §3c's named-versus-spelled counts, re-derived, and the 16 addresses that sit between them (issue #1162)
+# §3c's named-versus-spelled counts, re-derived, and the 17 addresses that sit between them (issue #1162)
 
 The write-up for [issue
 #1162](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/1162), which is
@@ -68,23 +68,23 @@ behind, and again since. The stale figures are the ones §3c's own prose carries
 
 | figure | §3c reads | this tree | what counts it |
 |---|---:|---:|---|
-| addresses `xdata-symbols.csv` names | 101 | **257** | rows of the generated symbol table |
-| named addresses the census reaches | 79 | **203** | of those, the ones the census reaches at all |
-| ... touched by the main EC | 72 | **196** | of the 203, the ones the main EC's programs touch |
-| ... touched only by the PD image | 7 | **7** | of the 203, the rest — unmoved |
+| addresses `xdata-symbols.csv` names | 101 | **258** | rows of the generated symbol table |
+| named addresses the census reaches | 79 | **204** | of those, the ones the census reaches at all |
+| ... touched by the main EC | 72 | **197** | of the 204, the ones the main EC's programs touch |
+| ... touched only by the PD image | 7 | **7** | of the 204, the rest — unmoved |
 | main-EC addresses the `.c` spells by symbol | 172 | **180** | `ORACLE["symbol_main_distinct"]` |
 
 §3c states 101 and 79 as "79 of `registers.yaml`'s 101 addresses", 72 and 7 as
 the split of those 79, and — in #342's nested parenthetical — 172 as the
 symbol-spelled figure, having itself corrected an earlier 41. **Both the 101 and
-the 257 are `registers.yaml`'s address union**, so the two are the same kind of
+the 258 are `registers.yaml`'s address union**, so the two are the same kind of
 number and the distance between them is that the register file grew. At
 `cda28a25` (2026-09-24) — the tree where `xdata-symbols.csv` held exactly 101
 rows and where §3c's figure was written — `registers.yaml` held 69 rows covering
 101 addresses, so the old figure was already an address count and not a row
 count. §3c has never read 101 rows.
 
-The union exceeds the **203 rows** that produce it because 17 of those rows hold
+The union exceeds the **204 rows** that produce it because 17 of those rows hold
 an `addr` **list** — one register covering a run of bytes contributes one address
 per element: `CTGP_DB_CTRL` is `addr: [0x0743, 0x0744, 0x0745, 0x0746]` and so
 names four. The generated table carries one row per address, so a register added
@@ -93,15 +93,15 @@ as a 4-byte run moves the union by four. Any prose counting
 address union or the rows — because they differ by exactly that list run, and a
 figure that moves when the file grows is a reading of this tree either way.
 
-`NOT_IN_TREE` is what makes 203 the reached figure rather than the named one: 54
-of the 257 are named and not reached, and that set carries a stated reason per
+`NOT_IN_TREE` is what makes 204 the reached figure rather than the named one: 54
+of the 258 are named and not reached, and that set carries a stated reason per
 address rather than being a bare gap.
 
 ## The distinction §3c exists to keep, named as a set
 
 §3c's correction insists that two facts are separate: an address being *in*
 `xdata-symbols.csv`, and an address being **spelled** by that symbol in the
-committed `.c`. Both are true of 196 addresses; only 180 are spelled. The 16 in
+committed `.c`. Both are true of 197 addresses; only 180 are spelled. The 17 in
 between are named, reached, and written something else — and they are what makes
 the distinction a fact about this tree rather than a caveat.
 
@@ -111,15 +111,16 @@ column tells them apart. That column and not `spelled_as`, because on a
 so cannot separate the two halves — which is what §39 of `docs/findings.md`
 records, and why the same file names `0x04A3` there as the worked case.
 
-**Seven are written `DAT_EXTMEM_xxxx` by the main EC in the committed C.**
-`0x047C` `MAILBOX_PAYLOAD_LATCH`, `0x070F` `EVENT_RING_INDEX`, `0x09EF`
-`MAILBOX_PUBLISH_GUARD`, `0x09F0` `MAILBOX_DRAIN_COUNT`, `0x09F1` `MAILBOX_INDEX`,
-`0x09F2` `MAILBOX_RING_SLOT0`, and `0x0A47` `MAILBOX_PUBLISH_VALUE`. A name
-exists in the symbol table and the export predates it: `build_ec_decompile.py`
-applies the table to the project *copy* the export makes, so a name added
-afterwards does not reach the text until the next export. **These seven are the
-ones a re-export moves**, and they are why §3c's figure has to be read as a
-reading of the committed `.c` rather than of the register file.
+**Eight are written `DAT_EXTMEM_xxxx` by the main EC in the committed C.**
+`0x047C` `MAILBOX_PAYLOAD_LATCH`, `0x070F` `EVENT_RING_INDEX`, `0x078E`
+`XDATA_078E`, `0x09EF` `MAILBOX_PUBLISH_GUARD`, `0x09F0` `MAILBOX_DRAIN_COUNT`,
+`0x09F1` `MAILBOX_INDEX`, `0x09F2` `MAILBOX_RING_SLOT0`, and `0x0A47`
+`MAILBOX_PUBLISH_VALUE`. A name exists in the symbol table and the export
+predates it: `build_ec_decompile.py` applies the table to the project *copy* the
+export makes, so a name added afterwards does not reach the text until the next
+export. **These eight are the ones a re-export moves**, and they are why §3c's
+figure has to be read as a reading of the committed `.c` rather than of the
+register file.
 
 **Nine are reached only through a pair-accessor argument**, which is neither
 spelling: `0x0402` `BAT_DESIGN_CAPACITY_0`, `0x0404` `BAT_FULL_CAPACITY_1`,
@@ -159,7 +160,7 @@ figures readings of the tree rather than properties of `registers.yaml`.
 
 ## What this does not say
 
-Nothing here claims the 16 are absent, unused, or wrongly named. Each is
+Nothing here claims the 17 are absent, unused, or wrongly named. Each is
 reached by the census and named by the symbol table; the gap is only about which
 of the two spellings the committed `.c` happens to use. Reading any of them as
 "the firmware does not use this" would invert the section's own correction.
