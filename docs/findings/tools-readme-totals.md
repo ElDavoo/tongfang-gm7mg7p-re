@@ -74,7 +74,7 @@ red on the tree this merged into.** #822 (`2ed6f030`) added
 `test_check_cluster_citations.py` case now fails on `:220` of that file — a
 fenced block that prints a guard-off regeneration beside the committed census,
 so it names clusters from two rankings at once while its `joined ['0x0464',
-'0x0465']` line cites two bytes the committed census puts in `main-ec-145`,
+'0x0465']` line cites two bytes the committed census puts in `main-ec-0464`,
 which is not one of the eleven ids the block names. The two figures this file
 is about do not move: still thirty suites, still 882 tests. The *verdict* does
 — the merged tree's last line reads `30 suite(s) run, 882 tests; one or more

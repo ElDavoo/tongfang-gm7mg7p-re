@@ -94,7 +94,7 @@ sys.path.insert(0, HERE)
 # defect this module exists to avoid.
 from check_cluster_citations import (  # noqa: E402
     ADDRESS, CLAUSE_BREAK, CLUSTER_KEY, ROOTS, SPAN, census, cited_clusters,
-    RANK_ONLY, CLUSTER_ID, clean, name_re, pairings, skip_reason,
+    RANK_ONLY, RANK, clean, name_re, pairings, skip_reason,
     transcript_lines, units)
 
 # The role lexicon the issue names: an address introduced as a bound, an
@@ -336,7 +336,7 @@ def census_of(repo=None, clusters_csv=None, registers_csv=None, ranks=True):
                 continue
             reason = skip_reason(lineno, unit, transcripts)
             if not reason and not ranks:
-                if CLUSTER_ID.search(unit):
+                if RANK.search(unit):
                     reason = RANK_ONLY
             if reason:
                 skipped[reason] += 1

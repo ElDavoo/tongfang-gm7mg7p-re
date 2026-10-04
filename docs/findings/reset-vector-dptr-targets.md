@@ -132,7 +132,7 @@ takes the `0xD980` store arm, `0x07FD`–`0x07FF` fall through to the skip, and
 carry into the first `subb` — the two ways this number has been got wrong.
 
 **The skip window is exactly the cluster, and that is all that is claimed.**
-`ec/annotations/xdata-clusters.csv:87` carries `main-ec-086` over
+`ec/annotations/xdata-clusters.csv:87` carries `main-ec-07FD` over
 `0x07FD`–`0x07FF` — three bytes, 6 direct citing functions, 21 total, with
 named writers among them (`bank0:0xD5D4`
 `write_33_to_1501_join_loop_d5db`, `bank0:0xD74F`
@@ -438,7 +438,7 @@ started at `docs/findings.md:5636`, carried two attributions:
 
 | attribution | addresses | cluster named |
 |---|---|---|
-| the membership claim, "those three are the whole of the … cluster" | `0x07FD` `0x07FE` `0x07FF` | `main-ec-086` |
+| the membership claim, "those three are the whole of the … cluster" | `0x07FD` `0x07FE` `0x07FF` | `main-ec-07FD` |
 | the bound operand, the `setb c` at `0xD982` making the second bound | `0x0800` | none |
 
 `0x0800` is in `ec/annotations/xdata-registers.csv:738`, so it is a known XDATA
@@ -515,12 +515,12 @@ admitted real drift would show the same way.
 
 ### The hand re-check
 
-`main-ec-086` is `0x07FD 0x07FE 0x07FF` and nothing else
+`main-ec-07FD` is `0x07FD 0x07FE 0x07FF` and nothing else
 (`ec/annotations/xdata-clusters.csv:87`), which is what the reworded first
 sentence still says, and the new bound sentence makes no membership claim at
 all. The `0xD96C` loop's own execution trace (recipe 4 under "Reproducing
 this") puts `0x0800` on the store arm, so **the boot-path clear stores `0x00`
-at `0x0800`, a byte the `main-ec-104` cluster names** — 3 addresses, 4
+at `0x0800`, a byte the `main-ec-0630` cluster names** — 3 addresses, 4
 references, `functions_touched` 2, one of them
 `bank1:0x8DBC=write_05_to_06c4_after_1984_check [gate]`, `co_reading` 0 and
 `co_reading_dominant` `no`.

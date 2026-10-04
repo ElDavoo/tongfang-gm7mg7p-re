@@ -79,7 +79,7 @@ own output line rather than leaving two disagreeing numbers for a reader to
 reconcile, and `--self-test` holds a fixture where the two differ.
 
 Membership is counted over the `addrs` column and never over `addr_range`. The
-`addr_range` column is a min-max span — `main-ec-005`'s is `0x043E-0x300E` — so
+`addr_range` column is a min-max span — `main-ec-043E`'s is `0x043E-0x300E` — so
 counting over it would invent every address in between as a member.
 
 ## 3. Where the added addresses went, and the four that are not on the page

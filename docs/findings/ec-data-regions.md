@@ -31,7 +31,7 @@ re-exported, and nothing was observed on hardware.
 |---|---|---|
 | `0x0035C`-`0x003B4`, 3-byte `ljmp` step 6 | **`0x032F`-`0x0496`, 120 entries**, targets `0x11F2`-`0x14BC` step 6 | `read-by-hand` |
 | `0x0055D0`+, descending BE words | **`0x55A8`-`0x5671`, 101 words**, `0x03E8`..`0x0071` | `read-by-hand` |
-| `0x0066C`+, common-area addresses | **`0x0656`-`0x07B5`, 176 words** — stride **not** uniform | `inferred` |
+| `0x0066C`+, common-area addresses | **`0x0656`-`0x07B5`, 176 words** — stride uniform; the *content* is mixed (a directory) | `inferred` |
 | `0x006940`+, `FF <addr>` triples | **`0x690B`-`0x695B`, 27 entries**, `0x1678`..`0x1714` step 6 | `read-by-hand` |
 | `0x0219C`+, `FF <addr>` triples | **`0x219C`-`0x21B3`, 8 entries** — start exactly right | `read-by-hand` |
 | `0x006E78`+, BE word table | **not a word table.** `0x6E65`-`0x6E7C` is `10 42 10 41 10 40` × 4 | `read-by-hand` |
@@ -62,10 +62,13 @@ audit had placed inside one**:
 
 **The `yes` on the two `common-0656-address-table` rows is superseded, not
 reversed.** `bank-call-regions.csv` leaves both `0x00686` and `0x0067E` with an
-**empty** `entry_aligned`, because that region's stride is not uniform — its
-`note` in `data-regions.yaml` records that only 121 of its 176 words are
-`0x032F + 3k` — so the modulo this table's `yes` answers is a grid the file
-does not claim. The cell declines the question rather than saying `no`; see
+**empty** `entry_aligned`, because that region is `inferred` — its extent was
+extended by pattern rather than read to its edge, so the modulo this table's
+`yes` answers is a grid the file does not claim. (This paragraph used to give a
+different reason, that the region's stride is not uniform; that was wrong, and
+§2.3 corrects it. The empty cell is unchanged either way, because the rule keys
+on `confidence` and not on the region's `note`.) The cell declines the question
+rather than saying `no`; see
 [`bank-call-regions-csv.md`](bank-call-regions-csv.md) §"`entry_aligned`: three
 values, keyed on `confidence`" for the rule.
 
@@ -139,18 +142,38 @@ print(hex(o-2),(o-0x656)//2)"
 0x7b4 176
 ```
 
-This is the weakest of the six and the only entry whose confidence is
-`inferred`, for a reason worth stating plainly: **the stride is not uniform.**
-Every one of the 176 words is a common-area address (`< 0x8000`), and 121 of
-them are exactly `0x032F + 3k` for `k = 0..120` — the *entry offsets of the
-`0x032F` ljmp table in §2.1*, so this region indexes that table. The remaining
-words are not on that progression (`0x0006`, `0x0007`, `0x0114`, `0x018C`,
-`0x029B`, `0x04A5`, `0x04B4` and others), so the extent was extended by pattern
-to the run's end rather than read edge by edge. `--check` verifies the run and
-its bounds; it does not claim every word lies on one stride, and it could not.
+This is the only entry whose confidence is `inferred`. **An earlier version of
+this section said the stride is not uniform; that was wrong, and it is the
+correction issue #1144 produced.** The stride *is* uniform — all 176 words
+decode at stride 2 across the whole span, which is why `--check` is green on it
+and why its one-byte-shift and cut-one-entry-short mutations still reject a
+mis-cut span. What is mixed is the *content*, not the grid; the section
+conflated the two.
 
-The issue's `0x0066C` is 0x16 bytes in. The word at `file_hi` is `0xE490`,
-outside the common area, which is what stops the run.
+Reading the words one at a time — the full classification, with the command
+behind each block, is in
+[`0656-directory-words.md`](0656-directory-words.md) — the span is a
+**directory**. 140 of the 176 words are the entry-or-end offsets of the
+`common-032f-ljmp-table` in §2.1 plus four shorter `ljmp` tables that were not
+in the map before #1144 (`0x0035`, `0x0060`, `0x0126`, `0x01E3`, each
+re-derived by the same `while d[o]==2: o+=3` walk and each now its own entry);
+the remaining words are ordinary common-area code addresses, some of them
+instruction starts in the low common area at `0x0000` (four of those lie past
+the `0x002E` end `discover_vector_table()` defines, so they are code addresses
+rather than vector entries). So this
+region *indexes* those tables rather than holding a uniform run of one kind of
+value, and it is the one entry whose content no single shape describes.
+
+The `inferred` tier stays, and the reason is about **how the extent was chosen**,
+not about whether the bytes agree: the right edge was picked by "walk while the
+word is below `0x8000`", which is a pattern. That the edge coincides with
+`zero_seven_xdata_bytes_from_200b`'s first byte is corroboration, not the
+choice.
+
+The issue's `0x0066C` is 0x16 bytes in. The word at `file_hi` is `0xE490`
+(`clr A`), outside the common area, which is what stops the run — and it is
+also the first byte of that named routine, which is a better edge than the
+issue credited.
 
 ### §2.4 `common-219c-ff-triples` — 8 entries, and the start that was right
 
@@ -203,7 +226,7 @@ checks; they are adjacent, not overlapping, and the suite holds them to that.
 ## §3. The corrections, in place
 
 `CLAUDE.md` asks that a retraction leave the wrong version visible with a
-correction beside it rather than silently edit history. Three claims are
+correction beside it rather than silently edit history. Several claims are
 corrected this way; the two that live in another file are corrected *in that
 file*, per the same rule.
 
@@ -215,6 +238,12 @@ file*, per the same rule.
 - **This issue's own six ranges** — the four that moved are corrected in each
   YAML entry's `supersedes` field, with the wrong value kept in the text, and
   in the table at the top of this file.
+- **§2.3's "the stride is not uniform"** — corrected in place, and in the YAML
+  `note` and the two files that quote it. Issue #1144 read the 176 words edge by
+  edge and found the stride uniform and the *content* mixed; the section had
+  conflated the grid with the value pattern. Its own transcription also had six
+  arithmetic errors, all re-derived before anything was edited and listed with
+  their corrections in `0656-directory-words.md`.
 
 The audit's §2 reading of `0x055DC` and §5 reading of `0x00378`-`0x003B4` are
 **not** retracted: both are right about the phenomenon, and only the extent is
@@ -306,7 +335,14 @@ population where a real call and a phantom look identical.
   disagree. `--check` verifies stride and shape for both tiers identically; the
   third tier, `inferred-unchecked`, exists so a span `--check` cannot reach can
   say so and be reported as unchecked rather than as a pass. No entry carries
-  it today.
+  it today. `common-0656-address-table` is the one entry on this tier and §2.3
+  says why: its right edge was chosen by "walk while the word is below
+  `0x8000`". Reading the words changed what the region *is* — it is a
+  directory, not a uniform run — and did not change how its extent was chosen,
+  so the tier stayed. What a mixed-content span means for this shape is settled
+  in `0656-directory-words.md`: the `addresses` shape claims only "a word below
+  `0x8000`" and has no terminator by design, so a green run on mixed content is
+  the shape working as documented rather than a defect.
 - **Entry-aligned is a stronger statement than in-a-region**, and the tools
   print the first while the map holds the second. See the table in §"The
   payoff".

@@ -258,7 +258,7 @@ address is wrong in a sentence a reader would otherwise use to find the byte.
 
 ### 3. `main-ec-086` attributes the cluster to two addresses that write neither byte
 
-`ec/annotations/xdata-clusters.csv:87` (`main-ec-086`, over exactly
+`ec/annotations/xdata-clusters.csv:87` (`main-ec-07FD`, over exactly
 `0x07FD 0x07FE 0x07FF`) and `ec/annotations/xdata-registers.csv:735-737` tag
 `bank0:0xD5D4` and `bank0:0xD74F` as `[writer]`. **Neither writes the triple.**
 `0xD5D4` writes `0x33` to `0x1501` and `0xD74F` writes `0x33` to `0x1511`; they
@@ -369,7 +369,7 @@ carries the three new `registers.yaml` names into `ec/ghidra/xdata-symbols.csv`
 as `XDATA_07FD`/`XDATA_07FE`/`XDATA_07FF`, and `xdata_register_map.py`, which
 reads that table for its `name` column, then puts them in the `0x07FD`/
 `0x07FE`/`0x07FF` rows of `xdata-registers.csv` and the three addresses in the
-`main-ec-086` and `pd-002` rows' `named_addrs` of `xdata-clusters.csv`. The
+`main-ec-07FD` and `pd-002` rows' `named_addrs` of `xdata-clusters.csv`. The
 two mis-attributed `[writer]` tags are deliberately left as they are, for the
 reason given in correction 3 above. The two sites with no containing function
 have no exported function to annotate, and seeding one is the export above.
