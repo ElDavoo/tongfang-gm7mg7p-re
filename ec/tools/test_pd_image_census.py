@@ -3,8 +3,8 @@
 
 No firmware upload, no hardware, no Windows, no network. Every input is a file
 this repository already ships -- `ec/firmware/GMxMGxx_11.800`,
-`vendor/bios-1.09/BIOS_1.09.zip`, `ec/annotations/ghidra-functions.csv` and the
-535 `ec/decompiled/pd/*.asm` listings -- so the whole suite runs in a cloud
+`vendor/bios-1.09/BIOS_1.09.zip`, `ec/annotations/ghidra-functions.csv` and
+every `ec/decompiled/pd/*.asm` listing -- so the whole suite runs in a cloud
 agent's turn.
 
 **The measurement is not stubbed where it can be.** The vector table, the
