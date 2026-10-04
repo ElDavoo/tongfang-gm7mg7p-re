@@ -1,0 +1,10 @@
+dest,deposits,mov_dptr_sites,mov_dptr_reads,mov_dptr_writes,mov_dptr_by_region,dptr_halves,dptr_from_accumulator,pd_side_reads,reason
+0x0A82,174,1,0,2,pd-image=1,0,0,0,"1 pd-image MOV DPTR site(s), none of them a read"
+0x0782,107,11,11,3,bank0=11,0,0,0,no pd-image site by any of the three cell sweeps
+0x0882,92,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
+0x0482,7,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
+0xFF82,7,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
+0x0082,3,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
+0x0382,2,8,2,0,bank1=8,0,0,0,no pd-image site by any of the three cell sweeps
+0x1282,1,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
+0x0982,1,2,2,0,bank1=2,0,0,0,no pd-image site by any of the three cell sweeps
