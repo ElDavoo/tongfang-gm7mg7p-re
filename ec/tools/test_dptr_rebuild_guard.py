@@ -78,6 +78,8 @@ DPTRH_FROM_R4 = bytes([0x8C, 0x83])   # mov 0x83,r4
 DPH_IMM = bytes([0x75, 0x83, 0x03])   # mov 0x83,#0x03
 DPTRH_POPPED = bytes([0xD0, 0x83])    # pop 0x83
 DPH_FROM_P1 = bytes([0x85, 0x90, 0x83])  # mov 0x83,0x90 -- dst is d[i+2]
+DPL_FROM_R0 = bytes([0x86, 0x82])     # mov 0x82,@r0
+DPH_FROM_R1 = bytes([0x87, 0x83])     # mov 0x83,@r1
 
 # What replaces nothing, and must not end a window.
 SWAP_A = bytes([0xC4])                # swap a
@@ -203,6 +205,21 @@ class ConstructionTests(unittest.TestCase):
         # bounds case below exists for. `mov 0x83,0x90` is a write to DPH
         # taken from P1.
         self._assert_rebuild_ends_the_walk(DPH_FROM_P1)
+
+    def test_mov_dpl_at_r0_ends_the_walk(self):
+        # `mov direct,@Ri` names its destination at `d[i+1]`, the index every
+        # other two-byte store form in the table uses, so the guard's existing
+        # branch answers for it once the opcode is in the table. It does not
+        # fire over the mapped sites of the committed image -- a fact about
+        # that image, not evidence the case is unreachable, which is why the
+        # fixture is here rather than the measurement.
+        self._assert_rebuild_ends_the_walk(DPL_FROM_R0)
+
+    def test_mov_dph_at_r1_ends_the_walk(self):
+        # The other half of the pair, on DPH rather than DPL. The two differ
+        # only in the opcode's low bit and in which byte the operand names, so
+        # a case carrying one of them says nothing about the other.
+        self._assert_rebuild_ends_the_walk(DPH_FROM_R1)
 
     def test_the_rebuild_is_recognised_at_any_depth(self):
         # Every case above puts the construction third, where `i` is well
