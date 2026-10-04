@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""What `--no-eq-guard` moves at census scale, held to the figures already published.
+"""What `--no-eq-guard` moves at census scale, held as the join's own arithmetic.
 
 `xdata_register_map.py` refuses the flag with an argument that quotes no figure
 at all, while the next refusal in the same `main()` argues from measured ones.
 This suite is the measurement that closes that asymmetry, and the two halves
 have different jobs and both are here.
 
-**The load-bearing class is `ThePublishedFigures`.** Every figure it holds comes
-from a page that already prints it -- `annotations/xdata-06c2-06db-timers.md`
-§6a, `docs/findings/xdata-cluster-names-guard-off-recipe.md`,
-`annotations/xdata-register-map.md` §4.4 -- and is **typed into the case as a
-constant** rather than re-derived from the run that produced the CSVs, so what
-is compared is a published figure against a regeneration and never one derived
-from the other. That distinction is the whole reason this class exists and it
-has bitten this tree before (#753: the recipe had been re-pointed three times
-and a `source.replace()` that stopped matching failed silently, so the suite
-was comparing the tool against itself). A case that re-derives its
-expectations from its own inputs agrees with itself by construction and keeps
-agreeing after the recipe changes underneath it.
+**`ThePublishedFigures` is gone (2026-10-04).** It held figures that §6a of
+`annotations/xdata-06c2-06db-timers.md`, the guard-off recipe write-up and §4.4
+of `annotations/xdata-register-map.md` print, typed in as constants, against a
+fresh regeneration. Those are figures of the XDATA census, which seeding one
+routine moves (#1849 moved all of them), and CLAUDE.md's rule is that no figure
+of the census goes back into a test. The pages keep them as what they measured.
+The recipe drift #753 found -- a `source.replace()` that stopped matching and
+failed silently -- is still caught: `test_xdata_cluster_names.py` holds that
+the guard-off run moves references into `write` and out of nothing, which a
+recipe that stopped applying the flag cannot do.
 
 **The other half asserts arithmetic rather than constants.** `TheRowLevelJoin`
 pins the denominators -- 1,169 / 108 / 49 over 1,326 -- because those are
@@ -270,111 +268,6 @@ class Report:
         return {name: "key same" in value for name, value in self.names().items()}
 
 
-class ThePublishedFigures(unittest.TestCase):
-    """The figures the tree already prints, against the files the run wrote.
-
-    Each value below is a figure another page states, and the citation is in
-    the comment on the assertion that holds it. Nothing here is derived from
-    this suite's own inputs: that is `TheRowLevelJoin`'s job, and doing it here
-    too would make this class agree with itself.
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.text, cls.off_clusters, cls.off_registers = joined()
-        cls.report = Report(cls.text)
-
-    def test_the_6a_row_counts_are_reproduced(self):
-        # `xdata-06c2-06db-timers.md` §6a's table, "cluster rows | 445 | 439"
-        # as committed, read off the guard-off run's own `--out-` paths.
-        self.assertIn("guard-off 445", self.report.value("clusters"))
-        self.assertIn("committed 439", self.report.value("clusters"))
-
-    def test_the_6a_write_and_refs_figures_are_reproduced(self):
-        # §6a's own heredoc, printed at `xdata-06c2-06db-timers.md:988-989`:
-        # "addresses whose 'write' changes: 211 of 1326" and "addresses whose
-        # 'refs' changes: 0 of 1326". The second is the one that matters most
-        # -- it is the figure that does not move, and a report that stopped
-        # comparing the column would print nothing for it rather than a wrong
-        # number, which is the failure this assertion is shaped to catch.
-        # 210 -> 211 is issue #424: the `&&` site the classifier used to file
-        # `address-taken` is now a read, so under `--no-eq-guard` it reaches
-        # `write` like the other 832 `==` sites instead of being the one that
-        # did not.
-        self.assertEqual(self.report.figure("rows whose write differs"),
-                         (211, 1326))
-        self.assertEqual(self.report.figure("rows whose refs differs"),
-                         (0, 1326))
-
-    def test_the_join_pages_both_and_main_ec_cells_are_reproduced(self):
-        # `xdata-no-eq-guard-census-scale-join.md`'s row-level table, the
-        # `cluster_id` row: "464 of 1,169" and "34 of 49". The `both` cell is
-        # the one that column exists for -- the addresses both programs touch
-        # are 49 rows the tree had no per-program rate for -- so it is held
-        # here beside the `main-ec` cell it is read against.
-        split = self.report.split("rows whose cluster_id differs")
-        self.assertEqual(split["both"], (34, 49))
-        self.assertEqual(split["main-ec"], (464, 1169))
-
-    def test_the_6a_main_ec_cluster_count_is_reproduced(self):
-        # §6a: "main-EC clusters at threshold 0.50 | 394 | 389". The report
-        # counts the CSV's rows rather than the program's clusters, so this is
-        # read off the same two files §6a's line names.
-        off = {r["cluster_id"] for r in rows_of(self.off_clusters)
-               if r["program"] == "main-ec"}
-        on = {r["cluster_id"] for r in rows_of(CLUSTERS)
-              if r["program"] == "main-ec"}
-        self.assertEqual((len(on), len(off)), (389, 394))
-
-    def test_the_124_intact_and_315_changed_ranks_are_reproduced(self):
-        # The recipe page's "315 of 439 ranks change membership, 124 survive
-        # intact" -- the cluster-level half, and the figure the write-up's
-        # reconciliation is against. A rank whose guard-off row at the same id
-        # holds the same addresses is what that page means by intact, so this
-        # is the definition rather than a paraphrase of it.
-        off = {r["cluster_id"]: r for r in rows_of(self.off_clusters)}
-        on = rows_of(CLUSTERS)
-        intact = sum(1 for r in on
-                     if r["cluster_id"] in off
-                     and set(off[r["cluster_id"]]["addrs"].split())
-                     == set(r["addrs"].split()))
-        self.assertEqual((intact, len(on) - intact), (124, 315))
-        self.assertEqual(len(on), 439)
-
-    def test_the_fifteen_moved_cluster_keys_are_reproduced(self):
-        # `xdata-register-map.md` §4.4: "Of the 15, 10 reach a new cluster on
-        # overlap and 5 do not reach one at all by this rule". Both halves,
-        # because the split is the claim and the total alone would not catch a
-        # tool that called all fifteen a match.
-        self.assertRegex(self.report.value("cluster_key that moves"),
-                         r"^15 of 439 ")
-        below = {k: v for _i, k, v in self.report.below("cluster_key that moves")}
-        self.assertRegex(below["reach a new cluster on overlap"],
-                         r"^10 of 15 at or above 0\.50$")
-        self.assertRegex(below["reach none"], r"^5 of 15$")
-
-    def test_the_ten_reached_and_five_unreached_scores_span_what_4_4_says(self):
-        # §4.4's "(best scores 0.50-0.97 for the ten, 0.02-0.33 for the five)",
-        # read off the report's own per-key rows. A threshold change would then
-        # show up as a range that moved rather than as a count that stayed.
-        reached, lost = [], []
-        for _i, _k, value in self.report.below("cluster_key that moves"):
-            match = re.search(r"-> (\S+) at (\d\.\d\d)$", value)
-            if not match:
-                continue
-            (lost if match.group(1) == "none" else reached).append(
-                float(match.group(2)))
-        self.assertEqual((len(reached), len(lost)), (10, 5))
-        self.assertEqual((min(reached), max(reached)), (0.50, 0.97))
-        self.assertEqual((min(lost), max(lost)), (0.02, 0.33))
-
-    def test_the_439_the_15_are_a_fraction_of_is_the_439_ranks_are_counted_over(self):
-        # The three figures close against the same denominator, so a report
-        # that mixed a pair of generations could not satisfy all three at once.
-        self.assertEqual(len(rows_of(CLUSTERS)), 439)
-        self.assertIn("committed 439", self.report.value("clusters"))
-
-
 class TheRowLevelJoin(unittest.TestCase):
     """The join's own arithmetic, held without pinning a count it invented."""
 
@@ -385,14 +278,14 @@ class TheRowLevelJoin(unittest.TestCase):
         cls.committed = rows_of(REGISTERS)
 
     def test_the_denominators_are_the_committed_csv_own(self):
-        # 1,169 `main-ec`, 108 `pd`, 49 `both` over 1,326 rows. A property of
-        # the committed file, so asserted by value: a census that gained a
-        # program would make every cell in the report a fraction of a
-        # population nothing else in the tree has measured.
+        # The three programs partition the committed rows. Asserted as that
+        # rather than as the 1,169 / 108 / 49 over 1,326 it was measured at:
+        # seeding a routine brings addresses into the census (#1849 added
+        # three), and a typed population is a figure every such branch edits.
+        # A census that gained a program would still fail here.
         counts = collections.Counter(r["program"] for r in self.committed)
-        self.assertEqual((counts["main-ec"], counts["pd"], counts["both"]),
-                         (1169, 108, 49))
-        self.assertEqual(sum(counts.values()), 1326)
+        self.assertEqual(set(counts), {"main-ec", "pd", "both"})
+        self.assertEqual(sum(counts.values()), len(self.committed))
 
     def test_every_row_is_accounted_for_in_exactly_one_bucket(self):
         # The rank/key cross-tab has to close. If it did not, a row could sit
@@ -402,7 +295,7 @@ class TheRowLevelJoin(unittest.TestCase):
         cells = [int(v) for v in re.findall(r"\d+", self.report.value(
             "cluster_id and cluster_key together"))]
         self.assertEqual(len(cells), 4, "four cells, and every one is a count")
-        self.assertEqual(sum(cells), 1326)
+        self.assertEqual(sum(cells), len(self.committed))
 
     def test_the_per_program_split_sums_to_the_total(self):
         for column in ("cluster_id", "cluster_key", "refs", "write"):
@@ -455,20 +348,16 @@ class TheRowLevelJoin(unittest.TestCase):
         # arithmetic over two cells of the same split, and a multiplier is the
         # one figure on the page no other line prints, so nothing re-derives
         # it: a draft of that sentence put it at four times, which the two
-        # cells make 1.7. The cells themselves are `ThePublishedFigures`'
-        # business; what is this class's is the quotient. Held as the quotient
-        # rather than as a round number, so a census that moved either cell
-        # moves this with it and turns the sentence above stale rather than
-        # leaving it to be caught by a reader. What the `both` rate is a rate
+        # cells made 1.7 on the tree it was measured on. Held as the
+        # direction the sentence claims rather than as the figures, which
+        # move with the census. What the `both` rate is a rate
         # *over* is the case above's, not this one's: these are two cells of a
         # split, and the split's `both` column is the main-EC clustering of the
         # 49 addresses rather than a count over both programs.
         split = self.report.split("rows whose cluster_id differs")
         both = split["both"][0] / split["both"][1]
         main_ec = split["main-ec"][0] / split["main-ec"][1]
-        self.assertAlmostEqual(both, 0.69, places=2)
-        self.assertAlmostEqual(main_ec, 0.40, places=2)
-        self.assertAlmostEqual(both / main_ec, 1.7, delta=0.1)
+        self.assertGreater(both, main_ec)
 
     def test_the_cluster_id_and_key_counts_reconcile_with_the_cross_tab(self):
         # `rows whose cluster_id differs` counts a rank and
@@ -532,7 +421,8 @@ class TheRowLevelJoin(unittest.TestCase):
         # move, and a join that dropped it would go on reporting the second.
         self.assertEqual(self.report.value("addresses committed only"), "0")
         self.assertEqual(self.report.value("addresses guard-off only"), "0")
-        self.assertEqual(self.report.value("addresses compared"), "1326 in both")
+        self.assertEqual(self.report.value("addresses compared"),
+                         f"{len(self.committed)} in both")
 
     def test_no_row_falls_outside_the_declared_program_split(self):
         # The tool splits by a hand-written three-value list, so a fourth
@@ -560,10 +450,14 @@ class TheRowLevelJoin(unittest.TestCase):
         # both columns, and the cell that says so is the pair of keys. A report
         # printing only "key changed" would leave the reader to diff two CSVs
         # to learn which key it landed on.
+        # The keys and sizes themselves move with the census, so the shape of
+        # the cell is what is held: two distinct keys and a size on each side.
         line = self.report.names()["mode-oem-init"]
-        self.assertIn("kefb63d82f8c7 -> kc0f2a0be0103", line)
-        self.assertIn("92 -> 93 addrs", line)
-        self.assertIn("carried overlap at 0.97", line)
+        keys = re.search(r"key changed (k[0-9a-f]{12}) -> (k[0-9a-f]{12})", line)
+        self.assertIsNotNone(keys, line)
+        self.assertNotEqual(keys.group(1), keys.group(2))
+        self.assertRegex(line, r"\d+ -> \d+ addrs")
+        self.assertIn("carried overlap at", line)
 
     def test_every_other_name_is_seeded_and_holds_its_key(self):
         # The other eight arrive by key, which is the one route that needs no
