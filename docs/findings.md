@@ -346,10 +346,11 @@ above are kept, which is §4a-4d.)*)*
 > disjoint exactly as the sentence says. §4a-4d keeps "54 mentions" above
 > visible.
 >
-> Only the named-and-spelled paragraph had drifted, which is why it drifted
-> twice: `check_doc_figure_pins.py` reads figures out of tables carrying a
-> `verdict` column and §3c has none, so the tool built to hold this section
-> reports nothing for it.
+> The named-and-spelled paragraph is the one that drifted twice, once for #342 and
+> again in this block; the `CPU_TEMP` count above is the second, single drift.
+> `check_doc_figure_pins.py` reads figures out of tables carrying a `verdict`
+> column and §3c has none, so the tool built to hold this section reports
+> nothing for any of them.
 >
 > **197 and 180 are two questions and the 17 between them are the evidence.** An
 > address can be named in `xdata-symbols.csv`, reached by the census, and still

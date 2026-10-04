@@ -79,10 +79,9 @@ the split of those 79, and — in #342's nested parenthetical — 172 as the
 symbol-spelled figure, having itself corrected an earlier 41. **Both the 101 and
 the 258 are `registers.yaml`'s address union**, so the two are the same kind of
 number and the distance between them is that the register file grew. At
-`cda28a25` (2026-09-24) — the tree where `xdata-symbols.csv` held exactly 101
-rows and where §3c's figure was written — `registers.yaml` held 69 rows covering
-101 addresses, so the old figure was already an address count and not a row
-count. §3c has never read 101 rows.
+`cda28a25` (2026-09-24), a tree whose `xdata-symbols.csv` held exactly 101 rows,
+`registers.yaml` held 69 rows covering 101 addresses, so the old figure was
+already an address count and not a row count. §3c has never read 101 rows.
 
 The union exceeds the **204 rows** that produce it because 17 of those rows hold
 an `addr` **list** — one register covering a run of bytes contributes one address
@@ -177,6 +176,14 @@ the tree and not a census of it. No expected figure is written into the suite, s
 a branch that legitimately moves the census updates the prose and the suite
 follows; what turns red is a *sentence* that no longer matches the census, and
 the failure names the sentence rather than a number.
+
+The `CPU_TEMP` correction above is held too, by the same rule and as the same
+kind of relation: the count of `CPU_TEMP` left after `strip_comments()` equals
+the `refs` cell `xdata-registers.csv` carries for `0x043E`. A figure the block
+itself flags as the one that does not re-derive is the one most likely to drift
+again, and a freshly corrected number with nothing watching it would repeat this
+issue in miniature. The raw 56 is deliberately not compared to anything — it is
+the outlier, and it moves whenever an annotation is reworded.
 
 It also pins the §4a-4d invariant the correction depends on: the superseded
 figures stay in §3c, visible, beside the correction. That is the first thing a

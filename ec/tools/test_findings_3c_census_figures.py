@@ -22,8 +22,15 @@ The second class is the other half. It holds §4a-4d: the superseded figures sta
 visible in §3c beside the correction, the correction stays a blockquote rather
 than an edit, and the frozen section count is unmoved. A tidy-up that deletes a
 retracted number would leave every case in the first class green.
+
+Between them, one case holds the `CPU_TEMP` count the correction introduces --
+the one figure in §3c that does *not* re-derive. It is held as the relation the
+correction argues for (the comment-stripped token count equals the census's
+`refs` cell for `0x043E`) rather than as a number, for the same reason as
+everything else here.
 """
 import argparse
+import csv
 import importlib.util
 import re
 import unittest
@@ -236,6 +243,63 @@ class ThreeCountsAgainstTheCensus(unittest.TestCase):
         self.assertLess(self.spelled, self.main,
                         "the named and the symbol-spelled counts have collapsed "
                         "into one number; §3c's correction is about the gap")
+
+
+class TheCorrectedCpuTempCountIsHeldToo(unittest.TestCase):
+    """The `CPU_TEMP` correction, held against the census the same way.
+
+    The block's own concession is that this is the one figure in §3c that does
+    not re-derive, which makes it the one most likely to drift again unnoticed:
+    a corrected figure with nothing watching it repeats the gap this issue
+    exists to stop, in miniature. So the relation the correction rests on is
+    asserted here rather than left as prose.
+
+    The relation, not a constant: the count of `CPU_TEMP` tokens left after
+    `xdata_register_map.py`'s own `strip_comments()` removes this repository's
+    annotation prose equals the `refs` cell `xdata-registers.csv` carries for
+    `0x043E`. The raw, unstripped count is deliberately *not* compared to
+    anything -- it is the outlier the correction names, and it moves whenever an
+    annotation is reworded, which is not a drift worth a red test.
+    """
+
+    ADDRESS = "0x043E"
+
+    def census_refs(self):
+        """The `refs` cell the census carries for `CPU_TEMP`'s address."""
+        path = ROOT / "ec" / "annotations" / "xdata-registers.csv"
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = [r for r in csv.DictReader(handle)
+                    if r["addr"].upper() == self.ADDRESS.upper()]
+        self.assertEqual(len(rows), 1,
+                         f"{self.ADDRESS} is not carried exactly once by "
+                         f"xdata-registers.csv, so this relation has no meaning")
+        return int(rows[0]["refs"])
+
+    def stripped_token_count(self, token):
+        """Occurrences of `token` in the decompiled C, comments blanked out.
+
+        `strip_comments()` is the tool's own, so the count here is the same one
+        the correction quotes rather than a re-implementation of it that could
+        disagree with the prose.
+        """
+        count = 0
+        for path in sorted((ROOT / "ec" / "decompiled").rglob("*.c")):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            count += len(re.findall(token, X.strip_comments(text)))
+        return count
+
+    def test_the_stripped_token_count_is_the_census_refs_cell(self):
+        """Comments out, the token count and the census agree.
+
+        This is the claim the correction makes and the reason it calls the raw
+        count the outlier: the annotations quoting the decompile back at itself
+        are the whole of the difference between the two numbers.
+        """
+        stripped = self.stripped_token_count(r"CPU_TEMP")
+        self.assertEqual(
+            stripped, self.census_refs(),
+            "the comment-stripped CPU_TEMP count no longer matches the census's "
+            "refs cell for 0x043E, so §3c's corrected count no longer re-derives")
 
 
 class TheSupersededFiguresStayVisible(unittest.TestCase):
