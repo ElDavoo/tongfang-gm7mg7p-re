@@ -83,6 +83,22 @@ subcommand, no `--i-mean-it` gate, because there is no write to gate. The
 address guard below is the only thing that can refuse a run, and it refuses
 before the EC is opened.
 
+**There is no `--label-vocab`, and that is the design rather than a gap.**
+`ec_watch.py` takes one and refuses a label the 0751 grader's `parse_mark`
+cannot read. This probe's mark labels are free-form prose and are read by a
+person against the `0x0456` bit-7 trajectory: §3 and §3b of the procedure
+mandate `block start`, `control arm end`, `steady window end`, `block end`,
+`GPU mode -> discrete`, `suspend/resume`, `driver reload` and `power mode ->
+N`, and none of them leads with a form in `MARK_FORMS`. A vocabulary check here
+would refuse every label the procedure tells the operator to type, at the first
+mark. Nor is there a grader waiting on the result: the procedure says outright
+that neither the probe nor its output is graded by a script, so
+`--label-vocab`'s job -- catching a mistyped `=` or a dropped `0x` before a
+day of hardware time is spent against a grader that will read the file -- has
+nothing to spend it on. A blank press is not a mark either: it records nothing,
+says so, and asks again, so the capture holds no mark the operator did not
+describe. `docs/findings/system-id-probe-mark-labels.md` is why.
+
 **No interval here is validated.** 0.5 s is the procedure's starting point and
 nothing more -- issue #94 is the open work to make these tools safe by default,
 and nothing in this repository measures an ECRR's cost. Six reads a sweep
@@ -254,7 +270,23 @@ class CsvSink:
 
 
 class Marker:
-    """Lets the operator stamp 'I switched the GPU mode now' into the log."""
+    """Lets the operator stamp 'I switched the GPU mode now' into the log.
+
+    A blank press is not a mark: nothing is recorded, the console says so, and
+    the prompt asks again -- so no capture holds a mark the operator did not
+    describe, which is the one kind the 0751 grader cannot recover. `_n`
+    counts marks *recorded* rather than lines read, which is what lets the
+    notice name the number the press did not take.
+
+    There is no `--label-vocab` here and there is not going to be one: the
+    labels §3 and §3b of the procedure mandate are free-form prose
+    (`block start`, `GPU mode -> discrete`), none of which leads with a form in
+    the grader's `MARK_FORMS`, and this procedure's capture is not graded by a
+    script at all. A vocabulary check here would refuse every label the
+    procedure asks for, at the first mark, against a grader that will never
+    read the file. `ec_watch.py` takes the flag because §3 of *its* procedure
+    mandates graded forms; the difference is the labels, not the prompt.
+    """
 
     def __init__(self, sink=None):
         self.marks = []
@@ -272,8 +304,20 @@ class Marker:
                 return
             if not label:
                 return
+            label = label.strip()
+            if not label:
+                # A blank press is not a mark, and this used to make it one:
+                # `strip() or f"mark {self._n}"` wrote a `mark N` row in the
+                # 0751 capture shape, describing nothing, and read at the
+                # console as a mark somebody meant to place. Same notice and
+                # same counting rule as `ec_watch.py`'s, which stopped on
+                # 2026-09-25 (#474); see windows/tools/ec_watch-marks.md and
+                # docs/findings/system-id-probe-mark-labels.md.
+                print("--- blank line: nothing recorded, no mark "
+                      f"{self._n + 1} taken; type a label + Enter ---",
+                      flush=True)
+                continue
             self._n += 1
-            label = label.strip() or f"mark {self._n}"
             ts = now()
             self.marks.append((ts, label))
             if self._sink:
@@ -288,7 +332,19 @@ class Marker:
             print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 
-def main(argv=None):
+def build_parser():
+    """`main`'s parser, on its own.
+
+    Split out so a test can ask it a question without `main`'s side effects.
+    That matters for exactly one question -- whether `--label-vocab` is
+    accepted -- because asking `main` is only bounded while the answer is no:
+    with the flag present, `main(['--label-vocab', '0751'])` parses it, opens
+    the EC and sweeps the six addresses until it is killed, so the case
+    written to catch that would hang rather than fail. Parsing here has no
+    side effect at all, so the same question costs nothing either way. See
+    `test_system_id_probe.py`'s `FreeFormLabelTests` and
+    docs/findings/system-id-probe-mark-labels.md.
+    """
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--seconds", type=float, default=0,
@@ -300,7 +356,11 @@ def main(argv=None):
                                   "--mark is given, to this CSV")
     ap.add_argument("--mark", action="store_true",
                     help="read stdin; each line stamps a labelled mark, into "
-                         "the CSV too if --csv is given")
+                         "the CSV too if --csv is given. A blank line records "
+                         "nothing and the prompt asks again. Labels are "
+                         "free-form here by design -- the ones the procedure "
+                         "mandates are prose a 0751 --label-vocab would "
+                         "refuse -- and there is no such flag to pass")
     ap.add_argument("--start", type=lambda s: int(s, 0),
                     help="also read a context range starting here; it is "
                          "guarded like everything else, so 0x0460 and up is "
@@ -308,6 +368,11 @@ def main(argv=None):
     ap.add_argument("--len", dest="length", type=lambda s: int(s, 0),
                     help=f"length of the --start context range (default: "
                          f"0x{CONTEXT_LEN:02X})")
+    return ap
+
+
+def main(argv=None):
+    ap = build_parser()
     args = ap.parse_args(argv)
 
     if args.length is not None and args.start is None:
