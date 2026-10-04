@@ -343,6 +343,17 @@ def block_span(addrs):
     not a narrower one. 224 against the default set's 206, 244 with
     `--level-block`, and 448 for the page arm against its 448: `0x0700` and
     `0x0800` are both 4-aligned, so that one has no padding to measure.
+
+    Corrected, by `docs/findings/acpi-interpreter-region-access.md`: the
+    "four-byte access" above is superseded for the two public interpreters read
+    there at pinned revisions. `MMRD`'s fields are `ByteAcc`, so the interpreter
+    splits the read into four byte-wide region accesses -- and an aligned
+    `--block` sweep is itself an `MMRD` (`read_dword` issues `IOCTL_MMRD`), so it
+    is no four-byte access either, on those two. What this function measures is
+    untouched: the padded *byte* coverage of a sweep is four bytes per IOCTL
+    whatever the interpreter does with each one, so the figures above stand.
+    Whether the interpreter on this machine splits the access is not established
+    here.
     """
     return {a for start, length in block_runs(addrs)
             for a in range(start & ~3, ((start + length - 1) & ~3) + 4)}
