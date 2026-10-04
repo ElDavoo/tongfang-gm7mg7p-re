@@ -660,10 +660,11 @@ into `r2 -a 8051` with no stitching needed.
   the 403 BL51 trampolines, whose stub identity names the bank, so those entry
   points are linker-attributed rather than assumed. Reuses
   `walk_branch_arms.descend()` for the block walk unchanged and adds only the
-  entry-point worklist above it. Of the 1288 both-banks-live bucket-B pairs
+  entry-point worklist above it, seeded from `tools/dispatch_edges.py` below.
+  Of the 1288 both-banks-live bucket-B pairs
   `annotations/bank-call-audit.md` §4 leaves to the same-bank assumption, it
-  attributes 775 to a bank (568 agreeing, 207 contradicting), leaves 115
-  attributed to both, and does not reach 398. `--pairs-csv` and `--regions-csv`
+  attributes 689 to a bank (614 agreeing, 75 contradicting), leaves 510
+  attributed to both, and does not reach 89. `--pairs-csv` and `--regions-csv`
   regenerate the two committed tables and `--self-test` pins the stub decoding,
   the seed census, two hand-decoded attributions, those four counts and the
   per-run `bounds` column the region map reads.
@@ -671,6 +672,18 @@ into `r2 -a 8051` with no stitching needed.
   every attribution is "attributed by this closure": the walk has no
   function-boundary recovery, and its own failure mode — one byte of the `0x8038`
   dispatch table — is pinned rather than dropped.
+- **`tools/dispatch_edges.py`** — reads the two computed-dispatch tables the
+  closure used to stop at and hands them over as entry points: the `?C?CCASE`
+  index tables, from the table→target mapping
+  `annotations/index-table-entries.csv` already carries, and the `jmp @a+dptr`
+  jump tables, enumerated from the bytes. A table edge seeds the row address
+  rather than the target, so `descend()` derives where a row goes and the edge
+  is a control-flow edge rather than an asserted one; a table's rows are only
+  seeded once its dispatch site is already inside the walk, and the row count
+  comes from the `anl` mask the shape carries. `--self-test` settles the
+  `0xEFE7` determination as bytes rather than as a conclusion.
+  [dispatch-table-closure-edges.md](../docs/findings/dispatch-table-closure-edges.md)
+  is the reading, including why the verdicts moved in two directions at once.
 - **`tools/pd_index_geometry.py`** — the `ITE8850-PD` image's DPTR index
   helpers, the bases they are called against, and who calls the routines that
   do it. `--helpers` decodes each helper to its `ret` into a symbolic "what
@@ -883,18 +896,20 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   a sample. It is why the answer is a sibling file and not a column on one of
   the others; see `tools/bank_call_regions.py` above.
 - **`annotations/bank-attribution.md`** — what the 403-trampoline closure does
-  with the 1288 pairs §4 of that file leaves to the same-bank assumption: 775
-  evidence-decided (568 agreeing, 207 contradicting), 115 attributed to both
-  banks, and **398 the closure never reaches**, printed as the residue. It
-  reports the `0x04A6` handoff's two halves separately — bank 1's closure does
-  reach `0x888C` from a linker-named seed, and does not reach the `0xDFD0` call
-  site that names it — and it names the blind spots with numbers, including the
-  15 index-table handlers that sit behind a common-area dispatch no closure
-  follows.
+  with the 1288 pairs §4 of that file leaves to the same-bank assumption: 689
+  evidence-decided (614 agreeing, 75 contradicting), 510 attributed to both
+  banks, and **89 the closure never reaches**, printed as the residue. It
+  reports the `0x04A6` handoff's two halves separately — bank 1's closure
+  reaches both `0x888C` from a linker-named seed and the `0xDFD0` call site that
+  names it — and it names the blind spots with numbers, including the four
+  common-area index tables that dispatch below the bank floor and so cannot be
+  attributed to any bank.
   `annotations/bank-attribution-pairs.csv` and
   `annotations/bank-attribution-regions.csv` are the per-pair and per-run
   tables, produced by `tools/bank_attribution.py --pairs-csv` /
-  `--regions-csv`.
+  `--regions-csv`; the regions table's `sources` column names which kinds of
+  edge seeded each run, so a table-derived run is distinguishable from a
+  call-derived one.
 - **`annotations/bank0-8038-dispatch-table.csv`** — the per-entry table behind
   `annotations/bank-call-audit.md` §9: the eight entries of the `bank0`
   `0x8038` inline `switch` table, each with the XDATA addresses its handler's
