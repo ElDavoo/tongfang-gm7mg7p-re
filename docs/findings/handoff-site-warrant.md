@@ -268,9 +268,13 @@ The wrong sentence stays in the note with a dated correction beside it.
   the convention is in
   [prepared-gate-patches.md](prepared-gate-patches.md).
 * **#1100** (32 unmeasured `none` cells) and **#1103** (the `--callee-depth`
-  tool gap) are inputs, not part of this. #1103 in particular *owns* `0x0420`'s
-  actual direction, because the R1:R2 handoff is the propagation rule 3's
-  exemption exists to name. Neither is folded in.
+  tool gap) are inputs, not part of this. #1103 has since landed the two hops
+  it named — a handoff reached past a branch, and a callee that forwards DPTR
+  on again — in columns of their own, and `0x0420`'s R1:R2 handoff is
+  deliberately not among them: it is a `ret`-cell question one call past an
+  accessor stub, which is `walk_branch_arms.py`'s shape. What remains open for
+  `0x0420` is the caller-of-the-stub direction, and nothing above depends on
+  it.
 * **`absent` on a zero-in-both-images count** (`0x0726`/`0x0765`) is a second
   decision about a second value, left open per the precedent in
   [pd-only-status-vocabulary.md](pd-only-status-vocabulary.md) §1.

@@ -748,11 +748,13 @@ still not established, and that is a human's live test either way.
   bits — but this walk cannot say what fills it, and the PD program filling
   its *own* `0x07D6` is not an answer.
 - **The handoffs' second levels are covered only where §4 and §4.4 say so.**
-  `--callee-depth 2` does not exist as a tool mode, so the other 44 handoffs'
-  own callees are not systematically read. The two the walk does need
-  (`0x0FAF`/`0x1041` at `0xBB50`, `0x10C8` at `0x951B`) were answerable from
-  committed exports; `0xB293`, which runs before the push at `0xBB50` and
-  does not receive `DPTR`, is the one left unread.
+  `--callee-depth 2` is a tool mode, so the other 44 handoffs' own callees
+  are read to the depth it walks and no further; a cell whose second callee
+  hands DPTR on again stays `handoff->unresolved` with the cap named in
+  `stop`. The two the walk does need (`0x0FAF`/`0x1041` at `0xBB50`, `0x10C8`
+  at `0x951B`) were answerable from committed exports; `0xB293`, which runs
+  before the push at `0xBB50` and does not receive `DPTR`, is the one left
+  unread.
 - **The stub at `0x3474` has no function entry.** Nothing in
   `ghidra-functions.csv` covers it, and the `0x34D6` annotation already
   records the tail-sharing that explains the unaligned entries. Seeding it

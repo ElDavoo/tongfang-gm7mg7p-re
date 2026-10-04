@@ -388,8 +388,9 @@ $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-dep
 (columns after `jmp` are `handoff->read`, `handoff->write`, `handoff->r+w`,
 `handoff->unresolved`, `none`.) Nine of the eleven `LIGHTBAR_BAT_*` handoffs
 resolve — 3 to a callee that loads, 6 to one that stores — and the remaining
-two hand DPTR on a second time, which stays `handoff->unresolved` because
-depth 2 is not attempted. `lightbar-bat-flow.md` §3.4 carries the per-site
+two hand DPTR on a second time, which is why they stay `handoff->unresolved`
+**at depth 1**: the second hop is a further level down, and the table above is
+the depth-1 reading. `lightbar-bat-flow.md` §3.4 carries the per-site
 rows and §3.5 decodes each of the eight callees against `r2 -a 8051`. It is
 still a PD-image question, not an EC-side one, and not a `status:` question
 either way.
@@ -403,12 +404,19 @@ resolve to reads, through `0xB1F2 -> 0x10C8` and `0x383A -> 0x0FCB`:
 ```console
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2 \
   | grep -E '0x04A6|0x07D0|0x07E2|0x07E3|0x07E5'
-| `0x07D0` | `BATTERY_CHARGE_LIMIT_DOWN` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 72 | 7 | 0 | 0 | 8 |
-| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 |
-| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
-| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
-| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 4 | 0 |
+| `0x07D0` | `DBD1` | 254 | 0 | 254 | 157 | 8 | 2 | 0 | 0 | 72 | 7 | 0 | 0 | 0 | 0 | 0 | 8 |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+| `0x04A6` | `BAT_CYCLE_COUNT` | 7 | 3 | 4 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 4 | 0 |
 ```
+
+(columns after `jmp` are `handoff->read`, `handoff->write`, `handoff->r+w`,
+`handoff->callee->read`, `handoff->callee->write`, `handoff->callee->r+w`,
+`handoff->unresolved`, `none`. The three `handoff->callee->` columns are the
+weaker ones issue #1103 added: a cell there took **two** calls to settle where
+the plain `handoff->` columns took one, so the two never share a column. See
+`../../docs/findings/two-hop-dptr-handoff.md`.)
 
 `0x07D0` and `0x04A6` are the cross-check and both hold: the 72/7 split is
 unchanged, and the four `0x04A6` PD handoffs stay `handoff->unresolved` at
