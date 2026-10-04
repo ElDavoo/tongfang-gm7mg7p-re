@@ -104,6 +104,13 @@ C_DIGESTS = os.path.join(WINDOWS_DIR, "ghidra", "c-digests.csv")
 # diff. census_native_c.py derives this; --check below re-derives it too.
 C_CENSUS = os.path.join(WINDOWS_DIR, "ghidra", "c-census.csv")
 
+# The `generator=` this driver writes into the context it exports from, and so
+# the half of every committed .c's second header line that is not the Ghidra
+# version. A constant rather than a literal at the write and another at the
+# check, so renaming the driver cannot leave the header check holding the old
+# name against a tree the exporter wrote correctly.
+GENERATOR = "windows/tools/decompile_native.py"
+
 # A disassembly line: an address, then the byte column, then the mnemonic. The
 # byte column ends at the first `-` and is padded to the program's widest
 # instruction (15 on x86-64), which is what keeps a hex-looking mnemonic out of
@@ -510,6 +517,29 @@ def census_problems(path=C_CENSUS, decompiled_dir=DECOMPILED_DIR):
     return census_native_c.census_problems(path, decompiled_dir)
 
 
+def header_problems(decompiled_dir=DECOMPILED_DIR):
+    """`([problems], [unattributable])` for every committed .c under this
+    tree's `decompiled/native/`.
+
+    A delegating wrapper for the same reason census_problems() is one, and it
+    carries the same direction of import: the logic lives in
+    `c_header_provenance.py`, which reaches this module by path.
+
+    The list it returns second is the exports no committed file can confirm --
+    a binary with no digest in native-binaries.csv and no manifest row carrying
+    one -- and the caller prints it on every run rather than passing over it.
+    """
+    if HERE not in sys.path:
+        sys.path.insert(0, HERE)
+    import c_header_provenance
+    manifest = {}
+    if os.path.isfile(MANIFEST_CSV):
+        with open(MANIFEST_CSV, newline="") as f:
+            manifest = {r.get("program"): r for r in csv.DictReader(f)}
+    return c_header_provenance.header_problems(decompiled_dir, load_targets(),
+                                               manifest, GENERATOR)
+
+
 def find_ghidra():
     """Locate analyzeHeadless and a JDK. Returns (analyze_headless, java_home)."""
     root = os.environ.get("GHIDRA_INSTALL_DIR")
@@ -730,7 +760,7 @@ def write_context(path, batch, version, sha_by_binary):
             f.write("label.%s=%s\n" % (name, export_label(name)))
         f.write("sha256=%s\n" % ",".join(sha_by_binary[t["binary"]] for t, _ in batch))
         f.write("ghidra_version=%s\n" % version)
-        f.write("generator=windows/tools/decompile_native.py\n")
+        f.write("generator=%s\n" % GENERATOR)
     return path
 
 
@@ -1252,6 +1282,34 @@ def do_check():
     _cen = census_problems()
     check("every committed .c's census row re-derives from the .c itself",
           not _cen, "; ".join(_cen[:3]))
+
+    # The question the digest cannot answer: which bytes each .c was produced
+    # from. The header is the only place that is written down, and --write-digests
+    # would bless a .c exported from a different build of a vendor binary
+    # without complaint. Reaching this by path rather than by a module-level
+    # import is the same arrangement census_problems() above uses, and for the
+    # same reason: census_native_c imports this module, so a module-level
+    # import back would be a cycle.
+    _hdr, _unattributable = header_problems()
+    check("every committed .c carries the exporter's header, and every digest "
+          "in it matches the committed record of that binary", not _hdr,
+          "; ".join(_hdr[:3]))
+    # Named on every run rather than folded into a pass. GamingCenter3_Cross.dll
+    # is in PROJECT_EXCLUDED, so neither native-binaries.csv nor manifest.csv
+    # records a digest for it and the retained export's own header is the only
+    # committed record of what it was made from. This is the same carve-out the
+    # listing check above prints, and a carve-out that prints nothing is how a
+    # check stops meaning anything.
+    for _u in _unattributable:
+        print(f"  --    {_u}")
+    # Printed on a clean run whatever the carve-outs above said: the count is
+    # what a reader compares against the two lines, and gating it on the
+    # carve-outs being empty would mean it never prints at all, since one of
+    # them is reported on every run.
+    if not _hdr:
+        print(f"  header: {len(_cdfiles)} committed .c carry the exporter's "
+              "header, and every source and digest in it that a committed file "
+              "records matches that record")
     if os.path.isfile(C_CENSUS):
         _cenrows = list(csv.DictReader(open(C_CENSUS, newline="")))
         _retained_row = [r for r in _cenrows
@@ -1681,6 +1739,31 @@ def do_self_test():
               "the one substitution a hash cannot see", _refused)
     finally:
         shutil.rmtree(_d, ignore_errors=True)
+
+    # The provenance header, on its own fixtures. The known-good case runs
+    # first and every mutation names its file, for the reason the digest cases
+    # above give: a check that has quietly started accepting everything looks
+    # exactly like a check that is working.
+    if HERE not in sys.path:
+        sys.path.insert(0, HERE)
+    import c_header_provenance
+    c_header_provenance.self_test(check)
+    # And against the committed tree, so --check is not the only place the
+    # property is exercised. The property, not a count: every .c carries the
+    # header the exporter writes, and every digest in it that a committed file
+    # records matches. The retained export has no such record and is reported
+    # rather than counted as one.
+    _hp, _hu = header_problems()
+    check("every committed .c carries the exporter's header, and every digest "
+          "in it a committed file records matches that record", not _hp,
+          "; ".join(_hp[:3]))
+    _retained = next(iter(PROJECT_EXCLUDED))
+    check("the retained export is reported as unattributable rather than "
+          "folded into a pass, because neither native-binaries.csv nor "
+          "manifest.csv records a digest for it",
+          any(_retained in u for u in _hu),
+          "the largest artefact in the Windows stack would be checked against "
+          "nothing and reported as clean")
 
     print("  all assertions passed" if ok else "  FAILURES ABOVE")
     return 0 if ok else 1
