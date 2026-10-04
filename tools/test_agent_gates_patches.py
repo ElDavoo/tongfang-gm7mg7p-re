@@ -698,24 +698,25 @@ class ArmRetentionTests(unittest.TestCase):
     script is missing, and a case that stops reading it at the landing has
     stopped watching the one thing it was written to watch.
 
-    **Three tools since issue #50**, folded into this one file rather than
+    **Several tools since issue #50**, folded into this one file rather than
     shipped as a seventh and an eighth, because the free hunks in
     `agent-gates.sh` are already spent
     (`docs/findings/prepared-gate-patches.md`). A fold is
     exactly what can go half-right without anyone noticing: a re-cut that
     lands `data_regions.py`'s two halves and drops `disasm8051.py`'s, or the
-    reverse, or lands the third tool's and drops both of the others', still
+    reverse, or lands one tool's and drops both of the others', still
     applies, still composes in every ordered pair, and still
     passes `bash -n` and `shellcheck` -- because the dropped arm is precisely
     what keeps its tool off the `*)` default. So both halves of every tool are
     here, and dropping any one of them is a failure.
 
-    **This is not a count of the tree and must not become one.** A fourth fold
-    adds a seventh and eighth string; it does not edit the sentence above to
-    say four, and no case here should ever assert how many tools the patch
-    carries. What is asserted is the shape -- a list entry and a whole arm per
-    tool -- which is a claim the patch can keep making as it grows, where
-    "this patch carries three tools" is a value every later fold has to edit.
+    **This is not a count of the tree and must not become one.** Each further
+    fold adds a list-entry edit and an arm string; it does not edit the
+    sentence above to name a number, and no case here should ever assert how
+    many tools the patch carries. What is asserted is the shape -- a list entry
+    and a whole arm per tool -- which is a claim the patch can keep making as it
+    grows, where "this patch carries N tools" is a value every later fold has to
+    edit.
     """
 
     PATCH = 'docs/ci/agent-gates-disasm8051-self-test.patch'
@@ -724,27 +725,38 @@ class ArmRetentionTests(unittest.TestCase):
     # merge_annotation_shards and grade_0751 arms -- checking it on its own
     # would pass with this patch's arm dropped, which is the exact case this
     # class exists to catch. The list entry is the whole ` \`-continued run
-    # because none of the three is the last line in the `for tool in` list:
-    # each fold moved the `; do` to the line after, so a re-cut that un-folds
-    # them would put `; do` back on a line checked here.
+    # because none of the folded tools is the last line in the `for tool in`
+    # list: each fold moved the `; do` to the line after, so a re-cut that
+    # un-folds them would put `; do` back on a line checked here.
     REQUIRED = [
         'ec/tools/disasm8051.py \\\n'
         '              ec/tools/data_regions.py \\\n'
-        '              ec/tools/dsdt_ec_fields.py; do',
+        '              ec/tools/dsdt_ec_fields.py \\\n'
+        '              ec/tools/bank_call_regions.py; do',
         '      *disasm8051.py)\n'
         '        python3 "$tool" --self-test || rc=1\n'
         '        ;;',
         '      *data_regions.py)\n'
         '        python3 "$tool" --check && python3 "$tool" --self-test || rc=1\n'
         '        ;;',
-        # The only arm of the three that passes an argument, because
+        # The only arm here that passes an argument, because
         # `--check` reads the committed image for its `static_refs*` columns.
-        # That makes the two halves inseparable in a way the other two are not:
-        # dropping this arm does not just lose the mode, it hands the tool to
-        # the `*)` default, which passes `--work` and a flag the tool refuses.
+        # That makes the two halves inseparable in a way the others are
+        # not: dropping this arm does not just lose the mode, it hands the tool
+        # to the `*)` default, which passes `--work` and a flag the tool refuses.
         '      *dsdt_ec_fields.py)\n'
         '        python3 "$tool" ec/firmware/GMxMGxx_11.800 --csv --check && \\\n'
         '        python3 "$tool" --self-test || rc=1\n'
+        '        ;;',
+        # Its body line is the `data_regions.py` arm's, character for character;
+        # only the `case` line differs, because each names its own tool. That is
+        # why it is spelled out rather than derived from the one above: a single
+        # shared string would be satisfied by either arm landing, so a fold that
+        # dropped this one would still pass here -- and would hand
+        # `bank_call_regions.py` to the `*)` default, which passes
+        # `--work "$scratch"` and a flag the tool does not take.
+        '      *bank_call_regions.py)\n'
+        '        python3 "$tool" --check && python3 "$tool" --self-test || rc=1\n'
         '        ;;',
     ]
 
