@@ -22,12 +22,14 @@ that decides it:
 |---|---|---|
 | what the tool knows | nothing about what a wider access does to that page | the marks are its own, one per arm, one `hold` apart |
 | what the reader would do | unknown — the driver has never been asked | refuse the block: one window, no block |
-| so | **warns** (`ec_watch.py`, the `--block` paragraph) | **refuses** |
+| so | **excludes** the page, and warns about the block shape only under `--include-fan-tach` (`ec_watch.py`) | **refuses** |
 
-`ec_watch.py` warns there because it cannot tell which captures its reader
-cannot read. This tool can, and the failure is total and late: the operator
-spends a hardware run and finds out at the grading. The house idiom for exactly
-this shape is the whitelist two lines away — `sys.exit(msg)` **before** `Ec()`,
+`ec_watch.py` declines to make the access rather than announcing one it cannot
+rule out, and what it will not do is refuse the run: it cannot tell which
+captures its reader cannot read. This tool can, and the failure is total and
+late: the operator spends a hardware run and finds out at the grading. The
+house idiom for exactly this shape is the whitelist two lines away —
+`sys.exit(msg)` **before** `Ec()`,
 pinned by `test_target_outside_the_vendor_set_is_refused_before_opening_the_ec`
 — and a short hold is the same class of thing: a value the tool will not
 honour, not a typo. That is also why it is `sys.exit(msg)` and not
