@@ -174,15 +174,21 @@ on the page.
 
 **The third of those is measured rather than only listed, because it is the
 most plausible route from a literal in the image to a string.**
-`0x119C dispatch_code_table` and `0x11C2 dispatch_code_table_2byte_key` pop the
-return address into DPTR and read the caller's inline argument bytes with
-`movc`, so **every table in the program is a literal in the image** — a string
-pointer would be too. All 25 `lcall` sites were checked, and **0 of their
-4-byte inline tables opens a pool entry**. That is a statement about these 25
-sites and these 4 bytes, which is why the page quotes it that way; the suite
-also pins that widening the window to 8 bytes does not change the answer on
-this image, and plants a synthetic string immediately after an `lcall 0x11C2`
-to show the same code path reports a hit when there is one.
+`0x119C dispatch_code_table`, `0x11C2 dispatch_code_table_2byte_key` and the
+unnamed `0x11EF` pop the return address into DPTR and read the caller's inline
+argument bytes with `movc`, so **every table in the program is a literal in the
+image** — a string pointer would be too. All 28 `lcall` sites were checked, and
+**none of their inline tables opens a pool entry**, each read at its own
+dispatcher's entry width rather than at one window; that the width is
+per-dispatcher, and why the 4 the census used to apply to all of them was wrong
+for two of the three, is
+[`pd-code-table-inline-width.md`](pd-code-table-inline-width.md). That is a
+statement about these 28 sites and those three widths, which is why the page
+quotes it that way; the suite also pins that forcing one width on every
+dispatcher — 4 and 8, one of which over-reads `0x119C` and truncates `0x11EF`
+— does not change the answer on this image, and plants a synthetic
+string immediately after an `lcall` for each of the three to show the same code
+path reports a hit when there is one.
 
 **The census is not vacuously green, and that took a case rather than a claim.**
 A suite that only measured the committed image would pin a null and prove

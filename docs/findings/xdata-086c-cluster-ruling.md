@@ -216,6 +216,18 @@ It belongs to the `0xA73F` record, and it is written here so the follow-up pass
 files it once against the command-code issue rather than opening a second issue
 for the same question. This change opens and edits no tracker item.
 
+> **Correction (2026-10-03, issue #1444), leaving the paragraph above as it was
+> written.** The command-code table does not exist, so the question above has
+> nothing to be filed against and the deferral it asked for was never needed.
+> `0xA73F` does not select on the byte it is given: it pushes it as a payload
+> into an eight-slot producer/consumer ring at XDATA `0x09F2`-`0x09F9`, indexed
+> by a pair of cursors packed into `0x09F1`, and `0xBC` is one literal among
+> the values published there. Nothing in the image branches on it, and
+> `ec/annotations/task-call-table.csv` records no R7 value for any site. The
+> paragraph above is right that the question is about `0xA73F` rather than about
+> `0x086C`, and wrong to have called the byte a command code. The walk, with a
+> citation per step, is `docs/findings/a73f-09f1-mailbox-payload.md`.
+
 ## 5. Coordination
 
 - `bank0:0x8931` is a `0x086C` reader *and* one of the four functions issue #246
@@ -252,7 +264,7 @@ for the same question. This change opens and edits no tracker item.
   `check_status_vocabulary.py` reads `site-resolution.csv`, which is derived
   from `registers.yaml` and not from the doc-scoped sweep. **The new entry's
   note points at this file and not at that table**, for the same reason.
-- **The `0xA73F` `R7=0xBC` command code is unresolved** (§4).
+- **The `0xA73F` `R7=0xBC` command code is unresolved** (§4). Answered 2026-10-03 (issue #1444): `0xA73F` takes a payload, not a command code, so there is no table to resolve it against and no value in the `0xA7`-`0xBC` range is interpreted anywhere in the image. What the payload *means* still is not in the firmware, and that part is a live read's to make rather than a scan's -- `docs/findings/a73f-09f1-mailbox-payload.md`.
 
 The commands that reproduce every figure here, all offline from committed
 inputs. The first two are the machine-code cross-tabulation §2 rests on, and

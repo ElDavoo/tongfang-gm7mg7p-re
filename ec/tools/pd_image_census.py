@@ -46,13 +46,14 @@ unreachable. `MOV DPTR,#imm16` is a literal load, and this firmware computes
 pointers into its own CODE in at least three other ways that this scan cannot
 see -- a `DPTR` carried in from a caller, a `DPTR` built arithmetically, and a
 `jmp @a+dptr` through a table whose address is a caller's return address
-(`0x119C dispatch_code_table` and `0x11C2 dispatch_code_table_2byte_key`).
+(`0x119C dispatch_code_table`, `0x11C2 dispatch_code_table_2byte_key`, and a
+third nothing in the tree names, `0x11EF`).
 `pd-0x38-consumers.md` already records the second for this program. The third
 is the most plausible route from a literal in the image to a string, so it is
-**measured** rather than only listed: all 25 `lcall` sites of the two
-dispatchers, and 0 of their inline tables opens a pool entry
-(`code_table_inline_tables()`). The count is an upper bound on the literal
-form, not a bound on the references.
+**measured** rather than only listed: all 28 `lcall` sites of the three
+dispatchers, each read at its own entry width, and 0 of their inline tables
+opens a pool entry (`code_table_inline_tables()`). The count is an upper bound
+on the literal form, not a bound on the references.
 
 **The provenance half is a positive result and is stated as one.** A grep over
 `vendor/bios-1.09/` returns nothing, and *that* is an artefact: every member
@@ -658,44 +659,69 @@ def vector_pointer_table(region: bytes, owners, names):
     return out
 
 
-# The two CODE-table dispatchers, and why this file searches for their call
-# sites. Both take DPTR from the *popped return address*, so the table they
-# walk is the caller's inline argument bytes -- which means every table in the
+# The CODE-table dispatchers, and why this file searches for their call sites.
+# All three take DPTR from the *popped return address*, so the table they walk
+# is the caller's inline argument bytes -- which means every table in the
 # program is a literal in the image, and a string pointer would be a literal
 # too. That makes these the most plausible remaining route from a call site to
-# a string, and a route worth *measuring* rather than only listing: 25 sites,
-# and the count of how many of their inline bytes are printable.
-CODE_TABLE_DISPATCHERS = (0x119C, 0x11C2)
-INLINE_TABLE_BYTES = 4
+# a string, and a route worth *measuring* rather than only listing.
+#
+# The entry width is per dispatcher, and that is the whole point of the second
+# constant: each reader advances DPTR by its own stride between entries, so one
+# width is right for at most one of these three. 4 was wrong for two of them --
+# `0x119C` walks 3-byte entries and `0x11EF` walks 6 -- and it is wrong the
+# same way `decode_index_table.py`'s `ENTRY_LEN` would be if applied to a reader
+# of another stride: it is one reader's width, not a property of the shape.
+# `pd_index_tables.py --self-test` reads each stride off the reader's own
+# `inc dptr` loop and checks it against this table, so a width that stopped
+# matching its dispatcher takes the run red.
+CODE_TABLE_DISPATCHERS = (0x119C, 0x11C2, 0x11EF)
+CODE_TABLE_ENTRY_WIDTHS = {0x119C: 3, 0x11C2: 4, 0x11EF: 6}
 
 
-def code_table_inline_tables(region: bytes, width: int = INLINE_TABLE_BYTES):
-    """[(dispatcher, site, inline bytes, opens_a_pool_entry)] for both.
+def code_table_inline_tables(region: bytes, width: int = None):
+    """[(dispatcher, site, inline bytes, opens_a_pool_entry)] for each.
 
     The bytes immediately after a `lcall` are what the dispatcher reads — it
     pops the return address into DPTR and starts `movc a,@a+dptr` at
     `site + 3` — so those bytes are the table, and a table that began with a
     NUL-terminated printable run would be a string.
 
-    That last column is the measurement, and it is **0 for all 25 sites**.
-    Counting *printable bytes* instead would be the wrong test and reads 8 of
-    9 and 11 of 16 on this image, because a structured record
-    (`01 20 4c 1f`, `02 07 54 17`) is mostly bytes that happen to be printable.
-    The question is not "are these bytes printable" but "does the dispatcher's
-    first `movc` read text", and the way to answer that is to ask
-    `string_candidates()` whether `site + 3` opens a pool entry.
+    `width=None` -- the default -- reads each dispatcher at **its own** entry
+    width from `CODE_TABLE_ENTRY_WIDTHS`, and a row's `tail` is then the width
+    of the dispatcher that row names. An explicit `width` forces one width on
+    every dispatcher, which is a different measurement from this one rather than
+    a slower way to take it: it over-reads a dispatcher narrower than it and
+    truncates one wider. The caller says what question it is asking.
 
-    **A statement about these 25 sites and these 4 bytes.** A wider window, or
-    a table reached by a `jmp @a+dptr` from somewhere else, is a different
-    measurement, and the page quotes this one rather than the generalisation.
+    That last column is the measurement, and it is **0 for all 28 sites**. It
+    is also width-independent, which is worth knowing rather than assuming: the
+    test asks whether `site + 3` opens a pool entry, and `site + 3` is where
+    the first `movc` reads whatever the stride is — the stride governs the
+    distance DPTR travels *between* entries, never where the first one starts.
+    So the width decides what a row quotes and nothing else.
+
+    Counting *printable bytes* instead would be the wrong test and reads 8 of
+    9, 11 of 16 and 2 of 3 on this image at the dispatchers' own widths,
+    because a structured record (`01 20 4c 1f`, `02 07 54 17`) is mostly bytes
+    that happen to be printable. The question is not "are these bytes
+    printable" but "does the dispatcher's first `movc` read text", and the way
+    to answer that is to ask `string_candidates()` whether `site + 3` opens a
+    pool entry.
+
+    **A statement about these 28 sites and each dispatcher's own entry width.**
+    A wider window, or a table reached by a `jmp @a+dptr` from somewhere else,
+    is a different measurement, and the page quotes this one rather than the
+    generalisation.
     """
     pool_starts = {start for start, _, _, _ in string_candidates(region)}
     out = []
     for target in CODE_TABLE_DISPATCHERS:
+        n = CODE_TABLE_ENTRY_WIDTHS[target] if width is None else width
         pat = bytes([LCALL, target >> 8, target & 0xFF])
         i = region.find(pat)
         while i != -1:
-            tail = region[i + 3:i + 3 + width]
+            tail = region[i + 3:i + 3 + n]
             out.append((target, i, tail, (i + 3) in pool_starts))
             i = region.find(pat, i + 1)
     return out
@@ -1113,15 +1139,16 @@ def report(region: bytes, how: str, owners, names, prov) -> str:
                   f"  (mov dptr x{r['dptr_sites']}, {r['verdict']})")
     w("  not an absence: the scan sees a literal DPTR load only, and this "
       "program also reaches CODE by table and by arithmetic")
-    w("  the two CODE-table dispatchers take their table from the caller's "
+    w("  the three CODE-table dispatchers take their table from the caller's "
       "inline bytes, so a string pointer would be a literal at a call site; "
-      "measured over the sites:")
+      "measured over the sites, each at its own entry width:")
     for target in CODE_TABLE_DISPATCHERS:
         rows = [r for r in code_table_inline_tables(region) if r[0] == target]
         hits = [r for r in rows if r[3]]
         w(f"    0x{target:04X}  {len(rows)} call site(s), "
           f"{len(hits)} whose table opens a string"
-          + ("" if hits else f"  ({NOT_FOUND})"))
+          + ("" if hits else f"  ({NOT_FOUND})")
+          + f"  [{CODE_TABLE_ENTRY_WIDTHS[target]}-byte entries]")
     w("")
     w("4. Host-facing command surface")
     total, by_type, dispatch = command_surface(names)
