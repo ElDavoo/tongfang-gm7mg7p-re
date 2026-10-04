@@ -12,7 +12,6 @@
 set -euo pipefail
 
 declare -A REGEN=(
-  [docs/findings/INDEX.md]='python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
   [ec/ghidra/xdata-symbols.csv]='python3 ec/tools/gen_xdata_symbols.py'
   [ec/annotations/xdata-export-ownership.csv]='python3 ec/tools/export_ownership.py'
   [ec/annotations/xdata-registers.csv]='python3 ec/tools/xdata_register_map.py'
@@ -26,7 +25,6 @@ ORDER=(
   'python3 ec/tools/export_ownership.py'
   'python3 ec/tools/xdata_register_map.py'
   'python3 ec/tools/c_asm_counterpart.py --report'
-  'python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md'
 )
 
 mapfile -t conflicted < <(git diff --name-only --diff-filter=U)

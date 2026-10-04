@@ -137,13 +137,13 @@ half of the exemption either. The run names them; they fall into three shapes:
 
 - **A cluster's `addr_range`, or that column reproduced.** `docs/findings.md`
   and `xdata-086x-dispatch.md` name `0x0460`-`0x09CE` as the counter block,
-  which is `main-ec-003`'s `addr_range`.
+  which is `main-ec-0460`'s `addr_range`.
   `xdata-register-map.md`'s rows carry the range as the census's own column,
   `main-ec-001`'s `0x0300`-`0x097B` and `main-ec-013`'s `0x0875`-`0x09E7`
   among them.
 - **A span group of named members, which is not the extent.**
   `call-graph-unresolved.md` names `0x3000-0x3008` as members of
-  `main-ec-005`; that cluster's `addr_range` is the wider `0x043E`-`0x300E`,
+  `main-ec-043E`; that cluster's `addr_range` is the wider `0x043E`-`0x300E`,
   so the range is a claim about which addresses the cluster holds, not about
   where it begins and ends.
 - **A page in a console transcript.** `xdata-moved-ranks-collision-scope.md`
@@ -151,7 +151,7 @@ half of the exemption either. The run names them; they fall into three shapes:
   cluster has that `addr_range` — `main-ec-001`'s is the wider `0x0300`-`0x097B`
   — so this is a claim about the page the re-keying counted over.
 
-`xdata-page-cluster-count.md` sits with the first: it quotes `main-ec-005`'s
+`xdata-page-cluster-count.md` sits with the first: it quotes `main-ec-043E`'s
 `0x043E`-`0x300E` to argue that `addr_range` is a min-max span, so counting
 over it *would invent every address in between as a member*.
 

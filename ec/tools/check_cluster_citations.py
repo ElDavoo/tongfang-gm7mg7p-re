@@ -20,11 +20,11 @@ to 0.45 gives 425 clusters, where 59 of the 427 ids are intact, 366 name a
 different membership, 2 have no cluster at that number, and 413 of the 427
 keys still name a cluster.
 
-Because that is the weak handle, three citation forms are accepted, in this
-order of durability:
+Because that is the weak handle, the id stopped being a rank (2026-10-04,
+below), and three citation forms are accepted:
 
-  * `main-ec-NNN` — the rank, exactly as before. Still resolved, still
-    checked, still the form every existing sentence uses.
+  * `main-ec-0300` / `pd-FF10` — the id, `<program>-<lowest address>`. An
+    identity for as long as the cluster's lowest member is that address.
   * `k<12 hex>` — the `cluster_key` column, a content hash over the program
     and the sorted membership. An identity for as long as the membership is
     that membership.
@@ -34,7 +34,20 @@ order of durability:
     rather than hard-coded here, so a name is added by editing one CSV.
 
 All three resolve to a cluster id before anything is checked, so a sentence
-citing one is held to exactly what a `main-ec-NNN` sentence was. `--clusters`
+citing one is held to exactly what a `main-ec-NNN` sentence was.
+
+**Ids are not ranks any more** (2026-10-04). They were numbered by size, then
+references, then lowest address, so one seeded routine renumbered clusters it
+never touched: #1849's regeneration rewrote 461 rows of `xdata-registers.csv`
+for their `cluster_id` alone, every seeding branch conflicted with every other
+on both census CSVs, and this rule went red across write-ups nobody had edited.
+`xdata_register_map.cluster_id_of` now names a cluster by its program and lowest
+address, and the clusters CSV is sorted by it. Prose that cited a rank the
+committed census validated was rewritten to the new id in the same change; a
+legacy `main-ec-NNN` left anywhere else is what the prose measured on an older
+census, resolves to nothing in this one, and a unit citing one is passed over
+under its own counted reason. `check()` still reads ranks by default, for the
+fixture censuses that number their clusters that way. `--clusters`
 and `--registers` take an alternate census, which is what lets the same
 sentences be run against a regeneration (`xdata_register_map.py --map` is what
 says which clusters moved, and this is what says whether a sentence still
@@ -198,7 +211,13 @@ ROOTS = ("ec", "docs", "evidence")
 CLUSTERS = os.path.join(EC, "annotations", "xdata-clusters.csv")
 REGISTERS = os.path.join(EC, "annotations", "xdata-registers.csv")
 
-CLUSTER_ID = re.compile(r"main-ec-\d{3}")
+# A cluster id: `<program>-<lowest address>` since 2026-10-04, which is an
+# identity (`xdata_register_map.cluster_id_of`), or the legacy `main-ec-NNN`
+# rank every id was before then. `RANK` is the legacy form alone: the committed
+# census carries none, so on the committed tree a rank resolves to nothing and
+# a unit citing one is passed over rather than read.
+CLUSTER_ID = re.compile(r"\b(?:main-ec|pd)-[0-9A-F]{4}\b|main-ec-\d{3}\b")
+RANK = re.compile(r"\bmain-ec-\d{3}\b")
 CLUSTER_KEY = re.compile(r"\bk[0-9a-f]{12}\b")
 ADDRESS = re.compile(r"0x([0-9A-Fa-f]{4})\b")
 
@@ -258,7 +277,8 @@ REGENERATES = re.compile(
 # directions, so a reason added to `skip_reason()` without being added here is
 # named by name rather than arriving as a figure that moved.
 SKIPS = ("census-regeneration transcript", "disclaims membership",
-         "no membership claim")
+         "no membership claim", "cites a rank")
+RANK_ONLY = SKIPS[-1]
 
 # The preposition that turns two tokens into one claim. Both orders occur in
 # the corpus -- "`0x06C6` in `main-ec-121`", and "`main-ec-011` is the
@@ -551,9 +571,8 @@ def census_row(path, lineno, unit, counts):
 
     Only the range is held (2026-10-04). The size, the reference count and the
     named count beside it are figures of the census, and seeding one routine
-    moves them: #1849 seeded 23 and went red on five §5 rows of
-    `xdata-register-map.md`, a shared file every such branch would then have
-    to edit. CLAUDE.md's rule for a census figure in prose is to stop holding
+    moves them: #1849 went red on §5 rows of `xdata-register-map.md`, a
+    shared file every such branch would then have to edit. CLAUDE.md's rule for a census figure in prose is to stop holding
     it; `xdata-clusters.csv`, which `--check` regenerates, is where they are
     current. The range is the cell that says which cluster the row is about.
 
@@ -673,8 +692,14 @@ def skip_reason(lineno, unit, transcripts):
     return None
 
 
-def check(path, members, counts, known, by_key=None, by_name=None, verbose=False):
+def check(path, members, counts, known, by_key=None, by_name=None, verbose=False,
+          ranks=True):
     """(problems, lines read, skip reasons) for one file.
+
+    `ranks=False` is the committed-tree run: a unit naming a legacy
+    `main-ec-NNN` rank is skipped as `RANK_ONLY`, since the committed census
+    has no ranks to resolve it against. The default reads ranks, for a fixture
+    census that still numbers its clusters that way.
 
     The skip reasons come back rather than being counted here, so `main()` can
     print one figure for the whole corpus instead of one per file. They are the
@@ -710,6 +735,9 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         # committed CSV. The two rules stay apart the way the docstring's
         # second one is.
         reason = skip_reason(lineno, unit, transcripts)
+        if not reason and not ranks:
+            if RANK.search(unit):
+                reason = RANK_ONLY
         if reason:
             skipped.append(reason)
             if verbose:
@@ -757,7 +785,7 @@ def main() -> int:
     skipped = []
     for path in paths:
         found, lines, reasons = check(path, members, counts, known, by_key,
-                                      by_name, args.verbose)
+                                      by_name, args.verbose, ranks=False)
         problems += found
         read += lines
         skipped += reasons
@@ -788,9 +816,9 @@ def main() -> int:
               f"{os.path.relpath(args.clusters, REPO)}", file=sys.stderr)
         return 1
     print(f"{len(paths)} files / {read} lines: every checked cluster citation "
-          f"(`main-ec-NNN`, `cluster_key` or `cluster_name`) resolves to the "
-          f"membership it names, and every census row's range agrees "
-          f"with {os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
+          f"(id, `cluster_key` or `cluster_name`) resolves to the membership it "
+          f"names, and every census row's range agrees with "
+          f"{os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
           f"passed over under the {len(SKIPS)} reasons above, each of them: "
           f"not checked, not absent")
     return 0

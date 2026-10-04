@@ -6,9 +6,10 @@ The page states a split -- 107 / 73 / 34 / 27, the 73's own 71 + 2, and the
 ten addresses §4.7 names as the head of the 73 -- and every one of those is
 arithmetic over two committed corpora that can both move. `--check` holds the
 committed table against a fresh generation, which is the reproducibility claim;
-it is not the claim that the numbers the page prints are *these* numbers. So
-they are pinned here, and a re-derivation that moved one fails this suite
-rather than leaving the page quietly wrong.
+it is not the claim that the numbers the page prints are *these* numbers. They
+used to be pinned here for that reason; since 2026-10-04 they are not, because
+they are counts over the XDATA census and seeding a routine moves them. The page
+keeps them as what it measured, and the cases hold the partitions between them.
 
 **The ten, and why not eleven.** §4.7 of `ec/annotations/xdata-register-map.md`
 writes "`0x0309 0x0311 0x0313 0x0317 0x031B 0x0333 0x0337 0x0341 0x0346
@@ -90,17 +91,13 @@ import xdata_register_map as xrm  # noqa: E402
 
 FIRMWARE = str(EC / "firmware" / "GMxMGxx_11.800")
 
-# The four figures `xdata-inc-dptr-only.md` §1 and §2 are written on.
-ONLY_INC = 107          # reached only as the `inc DPTR` half
-DECLINED = 73           # of those, no main-EC `MOV DPTR` site
-WITH_SITE = 34          # of those, at least one
-ENTERED = 8             # of the 34, in registers.yaml
-UNENTERED = 26          # of the 34, not in registers.yaml
-# The 73's own two-way cut, which is a different question from the 73 and is
-# kept apart: "found in no image" and "found in another program" are different
-# reasons to decline and the page says so.
-NOWHERE = 71
-PD_IMAGE_ONLY = 2
+# The figures `xdata-inc-dptr-only.md` §1 and §2 are written on -- 107 / 73 /
+# 34, the 34's 8 + 26 and the 73's 71 + 2 -- are not typed here any more
+# (2026-10-04). They are counts over the XDATA census, which seeding a routine
+# moves (#1849 took the 107 to 108 and the 71 to 72), and CLAUDE.md's rule is
+# that no figure of the census goes back into a test. The page keeps them as
+# what it measured; the cases hold the partitions between them. The two
+# pd-image-only addresses are held by address, since that is the claim.
 PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
 # 7 -> 8 with issue #1425, which is the eighth and the only one of the eight
 # that is a *high* half: `0x04A3` is `PACK_TEMP_DK_1`, the byte above
@@ -117,7 +114,6 @@ ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
 # docstring for why this is ten and not the issue's eleven.
 NAMED_HEAD = ("0x0309", "0x0311", "0x0313", "0x0317", "0x031B", "0x0333",
               "0x0337", "0x0341", "0x0346", "0x034F")
-NAMED_ELSEWHERE = 63
 LAST_OF_THE_73 = "0x0647"
 
 # The three files a run of this tool must leave byte-identical, plus the
@@ -305,7 +301,6 @@ class TheSplit(unittest.TestCase):
         self.assertEqual(both, census,
                          f"the both-halves map holds {both} addresses and the "
                          f"census has {census} `pair-literal` rows")
-        self.assertEqual(only, ONLY_INC)
         # The whole of the 214 accounted for: the 107 pure seeds and the 107
         # `inc DPTR` halves, disjoint, with nothing in `resolved` outside the
         # two. Asserted as the union rather than as `both == 2 * only`, so a
@@ -317,14 +312,16 @@ class TheSplit(unittest.TestCase):
                          sorted(self.resolved))
 
     def test_the_73_split_from_the_34(self):
+        # The four populations partition the rows: every row is in exactly
+        # one, so the declined half and the with-a-site half sum to the whole.
         counts = {name: sum(1 for r in self.rows if ids.population_of(r) == name)
                   for name in ids.POPULATIONS}
-        self.assertEqual(counts[ids.NO_SITE_ANY_IMAGE]
-                         + counts[ids.PD_IMAGE_ONLY], DECLINED)
-        self.assertEqual(counts[ids.MOV_DPTR_ENTERED], ENTERED)
-        self.assertEqual(counts[ids.MOV_DPTR_NOT_ENTERED], UNENTERED)
-        self.assertEqual(counts[ids.MOV_DPTR_ENTERED]
-                         + counts[ids.MOV_DPTR_NOT_ENTERED], WITH_SITE)
+        self.assertEqual(sum(counts.values()), len(self.rows))
+        self.assertEqual(len(declined(self.rows)),
+                         counts[ids.NO_SITE_ANY_IMAGE] + counts[ids.PD_IMAGE_ONLY])
+        for name in ids.POPULATIONS:
+            with self.subTest(population=name):
+                self.assertGreater(counts[name], 0)
 
     def test_the_73_split_71_and_2_and_the_two_are_the_named_pair(self):
         # The cut is by *main-EC* site, so the two bytes with pd-image sites
@@ -338,8 +335,7 @@ class TheSplit(unittest.TestCase):
                    if ids.population_of(r) == ids.NO_SITE_ANY_IMAGE]
         pd_only = [r for r in self.rows
                    if ids.population_of(r) == ids.PD_IMAGE_ONLY]
-        self.assertEqual(len(nowhere), NOWHERE)
-        self.assertEqual(len(pd_only), PD_IMAGE_ONLY)
+        self.assertTrue(nowhere)
         self.assertEqual({r["addr"]: int(r["mov_dptr_pd_image"]) for r in pd_only},
                          PD_ONLY_ADDRESSES)
         self.assertEqual([r["addr"] for r in pd_only
@@ -355,9 +351,6 @@ class TheSplit(unittest.TestCase):
         the73 = [r["addr"] for r in declined(self.rows)]
         self.assertEqual(the73[:len(NAMED_HEAD)], list(NAMED_HEAD))
         self.assertEqual(the73[-1], LAST_OF_THE_73)
-        self.assertEqual(len(NAMED_HEAD) + NAMED_ELSEWHERE, len(the73),
-                         f"§4.7 says {NAMED_HEAD.__len__()} named addresses "
-                         f"plus {NAMED_ELSEWHERE} more")
 
     def test_the_eleventh_address_is_not_one_section_4_7_names(self):
         # The issue's prose says eleven; §4.7's list has ten and then "63
@@ -647,7 +640,9 @@ class NoWrites(unittest.TestCase):
     def test_the_csv_mode_writes_only_to_stdout(self):
         _code, out, err = self.refuse(FIRMWARE, "--csv")
         self.assertTrue(out.startswith("addr,seed,direction,accessor,"), err)
-        self.assertEqual(len(ids.read_rows(out)), ONLY_INC)
+        with open(ids.SITES_CSV, encoding="utf-8") as f:
+            committed = ids.read_rows(f.read())
+        self.assertEqual(len(ids.read_rows(out)), len(committed))
 
     def test_the_check_mode_writes_nothing(self):
         # `--check` diffs the committed table and returns its verdict. A tool
@@ -657,8 +652,8 @@ class NoWrites(unittest.TestCase):
 
     def test_the_summary_mode_writes_nothing(self):
         _code, out, err = self.refuse(FIRMWARE)
-        self.assertRegex(out, rf"\d+ addresses are reached by a pair "
-                              rf"accessor, {ONLY_INC} of them only as")
+        self.assertRegex(out, r"\d+ addresses are reached by a pair "
+                              r"accessor, \d+ of them only as")
         self.assertIn("is §4.7's 73", out)
 
     def test_an_unidentified_pd_image_refuses_rather_than_reporting_zeroes(self):

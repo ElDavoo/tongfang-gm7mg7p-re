@@ -140,7 +140,7 @@ Unmoved, each verified rather than assumed: `DIRECTION_INVARIANT` in every key
 before or after; `eq_after` is 838 either way); every `ORACLE` key, because
 membership and count do not change; `HAND_CHECKED`, none of whose five
 addresses is `0x076A`; `NOT_IN_TREE`; and `xdata-clusters.csv`, which carries no
-direction column and whose writer-axis Jaccard for `main-ec-035` does not move
+direction column and whose writer-axis Jaccard for `main-ec-0769` does not move
 because `0x076A` had a writer before this change. The clusters CSV was
 regenerated and is byte-identical; if a future change to this classifier makes
 it differ, that is a finding to report rather than a diff to accept quietly.

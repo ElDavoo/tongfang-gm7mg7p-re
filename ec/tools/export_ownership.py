@@ -393,42 +393,14 @@ def check(args) -> int:
 # replace all three rather than reconciling them. Re-derive any of them with
 # --map --threshold, or read the class shape with --self-test.
 OWNERSHIP_ORACLE = {
-    # No row total: it is index.csv's length, every seeded routine moved it,
-    # and the self-test asserts one row per index.csv row instead.
-    "classes": 56,
-    "shared_rows": 146,
+    # The one figure kept (2026-10-04): the bank1:0x8001 run exported as one
+    # 42-file class, which is a fact about the firmware's export shape that
+    # every `bank1:0x8001` citation rests on. The class and non-owner counts,
+    # the chained-class counts and the floor-1 flood that used to sit here are
+    # figures of the export map, which every seeded or renamed routine moves
+    # (#1849 took the flood from 562 to 578); the self-test holds the relations
+    # they stood in for, and docs/findings keeps them as what was measured.
     "largest_class": 42,
-    # The floor's cost, both measured as classes whose two largest members are
-    # *not* contained in each other -- classes that hold together only through
-    # a chain. Without the floor the count is 14 and the largest of them is 562
-    # members; with it, 7, all of them small. See the docstring.
-    #
-    # 13 -> 14 on 2026-09-28, issue #489: naming the 37 unannotated `pd`
-    # listings. Both floor-1 figures moved, and `classes_no_floor` with them,
-    # because `body_of` builds a body from the statements between the braces, so
-    # a rename changes the text containment is measured on. `pd` 0x10BC is the
-    # worked case: four of this issue's rows -- 0x3497, 0x998B, 0x9C1B, 0x9C4D --
-    # are one-instruction forwarders to it that had carried the *callee's* name
-    # `add_full_product_to_dptr` and are now `call_10bc`. Everyone calling one
-    # of them had that call statement renamed with them, whether directly or by
-    # jumping into a body that makes it: 0x4402 (`lcall 0x3497`), 0xC901
-    # (`lcall 0x9C1B`), 0xF22E (`lcall 0x998B`), and 0x4800 and 0xF79F, which
-    # `ljmp` into 0x4402. Those five left the 193-member floor-1 class. The four
-    # forwarders kept the body `add_full_product_to_dptr();` -- they still call
-    # 0x10BC under its own name -- and with 0xB263, a fifth forwarder to 0x10BC
-    # that #489 did not name, plus 0xCCB7 and 0xEDB5, which merely contain that
-    # statement, they stopped folding into that class and form one of their own.
-    # One class net, and one more of them held together only through a chain.
-    # `bridged` (7) and `flood_no_floor` (562) did not move, so the floor is
-    # doing the same work it was pinned for.
-    "bridged": 7,
-    "bridged_no_floor": 14,
-    # The largest class a floor of 1 produces, and how many classes it produces
-    # at all, both at this tool's own threshold rather than at 0.0. The floor-1
-    # flood is the whole argument for the floor, so both are measured where the
-    # table above measures them and pinned.
-    "classes_no_floor": 29,
-    "flood_no_floor": 562,
 }
 
 # What `--min-share` would cost, measured at CANDIDATE_MIN_SHARE and pinned the
@@ -452,11 +424,11 @@ OWNERSHIP_ORACLE = {
 # resolution from that section at this constant as a prompt to open the
 # checklist row, not as a statement about the pd image.
 SHARE_ORACLE = {
-    "classes": 50,
-    "shared_rows": 133,
+    # What `--min-share` must leave alone. Its cost in classes, non-owner rows
+    # and files handed back moves with the export map, so it is printed by the
+    # self-test and held as a relation rather than pinned (2026-10-04).
     "largest_class": 42,
     "largest_class_owner": "bank1/8001.c",
-    "newly_read": 13,
 }
 
 
@@ -617,8 +589,7 @@ def self_test(args) -> int:
           f"and floor {MIN_BODY_STMTS}",
           len(recs) == len(rows) > 0)
     check(f"{len(real)} containment classes, {len(shared)} non-owner rows",
-          len(real) == OWNERSHIP_ORACLE["classes"]
-          and len(shared) == OWNERSHIP_ORACLE["shared_rows"])
+          0 < len(real) <= len(shared) < len(recs))
 
     by_file = {r["out_file"]: r for r in recs}
     big_class = [m for m in real
@@ -649,10 +620,9 @@ def self_test(args) -> int:
     check(f"the body floor is load-bearing: {with_floor} chained classes with "
           f"it, {without} without it, and at the committed threshold a floor of "
           f"1 giving {classes_floor1} classes with a {flood}-member flood",
-          with_floor == OWNERSHIP_ORACLE["bridged"]
-          and without == OWNERSHIP_ORACLE["bridged_no_floor"]
-          and classes_floor1 == OWNERSHIP_ORACLE["classes_no_floor"]
-          and flood == OWNERSHIP_ORACLE["flood_no_floor"])
+          with_floor < without
+          and classes_floor1 < len(real)
+          and flood > 10 * max(len(m) for m in real))
 
     tiny = sum(1 for v in bodies.values() if len(v) < MIN_BODY_STMTS)
     check(f"{tiny} of the {len(rows)} bodies are too short to carry a "
@@ -672,14 +642,11 @@ def self_test(args) -> int:
     check(f"a --min-share floor of {CANDIDATE_MIN_SHARE} leaves the "
           f"{SHARE_ORACLE['largest_class']}-file class whole and owned by "
           f"{SHARE_ORACLE['largest_class_owner']}, moves "
-          f"{OWNERSHIP_ORACLE['shared_rows']} non-owner rows to "
+          f"{len(shared)} non-owner rows to "
           f"{cost['shared_rows']} across {cost['classes']} classes, and hands "
           f"{cost['newly_read']} files back to the census",
-          cost["classes"] == SHARE_ORACLE["classes"]
-          and cost["shared_rows"] == SHARE_ORACLE["shared_rows"]
-          and cost["largest_class"] == SHARE_ORACLE["largest_class"]
-          and cost["largest_class_owner"] == SHARE_ORACLE["largest_class_owner"]
-          and cost["newly_read"] == SHARE_ORACLE["newly_read"])
+          cost["largest_class"] == SHARE_ORACLE["largest_class"]
+          and cost["largest_class_owner"] == SHARE_ORACLE["largest_class_owner"])
 
     # A floor that high must cost *something*: a check whose refusals the tree
     # does not notice is indistinguishable from a check that stopped refusing.
@@ -723,7 +690,7 @@ def main(argv=None) -> int:
                             "committed CSV; no Ghidra, no image, no network")
     modes.add_argument("--self-test", action="store_true",
                        help="fixture cases for the containment rule, then the "
-                            "tree-wide figures against OWNERSHIP_ORACLE")
+                            "tree-wide relations")
     modes.add_argument("--map", action="store_true",
                        help="write the derived map to --out (default: the "
                             "committed CSV)")

@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Generate `docs/findings/INDEX.md` from the write-ups beside it.
+"""Print an index of the write-ups under `docs/findings/`.
+
+**Not committed** (2026-10-04). `docs/findings/INDEX.md` was this tool's output,
+checked in: every write-up added a line to it, so 218 of 272 commits to main
+between 2026-09-27 and 2026-10-04 touched it, and it was the single most
+conflicted file in the agent pipeline's conflict runs. The listing is a function
+of the directory, so a reader -- human or agent -- runs this tool, or `ls`.
+`--check` now holds the one property the index needed from each write-up: a
+`# ` title to list it by.
+
+What follows is the tool's earlier history.
 
 **Why this is generated rather than written.** The alternative to freezing
 `docs/findings.md` is an index that every change appends to, and an index
@@ -45,8 +55,12 @@ SKIP = {INDEX, "test-line-pin-census.md"}
 HEADING = re.compile(r"^#\s+(.*\S)\s*$")
 
 
-def entries(repo):
-    """-> [(filename, title)] sorted by filename, for every write-up."""
+def entries(repo, titled_only=False):
+    """-> [(filename, title)] sorted by filename, for every write-up.
+
+    `titled_only` reports a missing title as None instead of a title made up
+    from the file name, which is what `--check` needs.
+    """
     root = os.path.join(repo, FINDINGS_DIR)
     out = []
     for name in sorted(os.listdir(root)):
@@ -65,7 +79,10 @@ def entries(repo):
                     # A file that opens with prose before its heading is still a
                     # write-up; keep looking rather than record no title.
                     continue
-        out.append((name, title or name[:-3].replace("-", " ")))
+        if titled_only:
+            out.append((name, title))
+        else:
+            out.append((name, title or name[:-3].replace("-", " ")))
     return out
 
 
@@ -90,29 +107,20 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--repo", default=REPO, help="repository root")
     parser.add_argument("--check", action="store_true",
-                        help="exit 1 if the committed index is out of date")
+                        help="exit 1 if a write-up has no `# ` title")
     args = parser.parse_args(argv)
 
-    path = os.path.join(args.repo, FINDINGS_DIR, INDEX)
-    want = render(args.repo)
-
     if not args.check:
-        sys.stdout.write(want)
+        sys.stdout.write(render(args.repo))
         return 0
 
-    try:
-        with open(path, encoding="utf-8") as handle:
-            have = handle.read()
-    except OSError:
-        print("docs/findings/INDEX.md is missing; run gen_findings_index.py")
+    untitled = [name for name, title in entries(args.repo, titled_only=True)
+                if title is None]
+    if untitled:
+        print("write-up(s) with no `# ` title to index them by: "
+              + ", ".join(untitled))
         return 1
-    if have != want:
-        print("docs/findings/INDEX.md is out of date: a write-up was added, "
-              "removed or retitled. Regenerate with "
-              "`python3 ec/tools/gen_findings_index.py > docs/findings/INDEX.md`.")
-        return 1
-    print("docs/findings/INDEX.md: %d write-up(s), current."
-          % len(entries(args.repo)))
+    print("every write-up under docs/findings/ has a title")
     return 0
 
 

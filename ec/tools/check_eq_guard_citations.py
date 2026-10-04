@@ -20,8 +20,8 @@ so does a citation reworded out of the shape the declared list expects.
 
 **The `:NNN` itself is not held to today's line** (2026-10-04). It used to be,
 and every branch that grew `xdata_register_map.py` above an anchor then had to
-re-point five write-ups it had not otherwise touched -- #1849 went red on seven
-of them for seeding routines. That is the lock CLAUDE.md's "Cite code by name"
+re-point five write-ups it had not otherwise touched -- #1849 went red on them
+for seeding routines. That is the lock CLAUDE.md's "Cite code by name"
 and the unheld pin census are about: the numbers are what the prose measured on
 the tree it names, and a citation whose line has since moved is printed as a
 note with the anchor's current line beside it, so a reader can follow it, and

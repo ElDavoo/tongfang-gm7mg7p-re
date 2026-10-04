@@ -94,7 +94,8 @@ sys.path.insert(0, HERE)
 # defect this module exists to avoid.
 from check_cluster_citations import (  # noqa: E402
     ADDRESS, CLAUSE_BREAK, CLUSTER_KEY, ROOTS, SPAN, census, cited_clusters,
-    clean, name_re, pairings, skip_reason, transcript_lines, units)
+    RANK_ONLY, RANK, clean, name_re, pairings, skip_reason,
+    transcript_lines, units)
 
 # The role lexicon the issue names: an address introduced as a bound, an
 # immediate, an operand or a target. A word-based test, necessarily -- markdown
@@ -295,7 +296,7 @@ def cites_a_cluster(text, names):
             or bool(names and names.search(text)))
 
 
-def census_of(repo=None, clusters_csv=None, registers_csv=None):
+def census_of(repo=None, clusters_csv=None, registers_csv=None, ranks=True):
     """(units, skip reasons) over every file the checker would walk.
 
     Each unit is `(path, lineno, text, ids, (verdict, signal), addresses)`,
@@ -308,6 +309,11 @@ def census_of(repo=None, clusters_csv=None, registers_csv=None):
     `census_evidence_citations.census()`'s reason: a def-time default binds at
     import and silently defeats a caller that patches the base, so a suite
     case would read the committed tree while believing it had read its fixture.
+
+    `ranks` is the checker's own switch. It defaults to holding ranks, unlike
+    the checker's committed-tree run, because what this measures is the rank
+    corpus an exemption would act on; `ranks=False` skips a unit citing any
+    cluster by rank as `RANK_ONLY`, the way that run does.
     """
     if repo is None:
         repo = REPO
@@ -329,6 +335,9 @@ def census_of(repo=None, clusters_csv=None, registers_csv=None):
             if not known_here:
                 continue
             reason = skip_reason(lineno, unit, transcripts)
+            if not reason and not ranks:
+                if RANK.search(unit):
+                    reason = RANK_ONLY
             if reason:
                 skipped[reason] += 1
                 continue
@@ -336,7 +345,7 @@ def census_of(repo=None, clusters_csv=None, registers_csv=None):
             # one id named cannot be paired, since there is nothing to choose
             # between.
             pairs = (pairings(unit, [t for _, t in known_here])
-                     if len(ids) > 1 else {})
+                     if ranks and len(ids) > 1 else {})
             addresses = [classify(unit, span, token, members, ids,
                                  pairs.get(token))
                          for span, token in known_here]
