@@ -89,6 +89,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`cited-set-population.md`](cited-set-population.md) — The cited set was intersected with the reachable set, and the work list was the intersection (issue #460)
 - [`citing-listing-evidence.md`](citing-listing-evidence.md) — The citing listing is the other half of the citation question (issue #525)
 - [`class-b-access-cell-corrections.md`](class-b-access-cell-corrections.md) — The three class-B `access` cells were short rather than wrong, and all three are corrected (issue #865)
+- [`closure-vs-function-inventory.md`](closure-vs-function-inventory.md) — The closure against the function inventory, and the `0x808E` boundary that answers §4 (issue #1080)
 - [`code-pointer-site-census.md`](code-pointer-site-census.md) — The 54 image-wide CODE-pointer sites, written down as a regenerable table, and what the list is not
 - [`code-table-record-writers.md`](code-table-record-writers.md) — The writers a `MOV DPTR` scan cannot see: every record of the EC's CODE tables
 - [`committed-checkout-triples-held.md`](committed-checkout-triples-held.md) — What the checkout suite holds, which was seven of nine depths and no `stated` at all
