@@ -621,13 +621,15 @@ into `r2 -a 8051` with no stitching needed.
 - **`tools/pd_index_tables.py`** — the same reader search and the same decode
   and well-formedness checks, imported from `decode_index_table.py` rather than
   restated, run over the `ITE8850-PD` image at `0x20000`. It finds three
-  dispatchers a caller names, not the two the committed census names, and reads
-  each one's entry stride off its own loop: the PD's `0x11C2` and `0x11EF` walk
-  4- and 6-byte entries where the main EC's reader walks 3, so their verdicts
-  are the main EC's rule over another layout and the CSV says so per row.
+  dispatchers a caller names and reads each one's entry stride off its own
+  loop: the PD's `0x11C2` and `0x11EF` walk 4- and 6-byte entries where the
+  main EC's reader walks 3, so their verdicts are the main EC's rule over
+  another layout and the CSV says so per row.
   `--spans-csv` regenerates `annotations/pd-index-table-spans.csv` and
   `--self-test` pins the search, the reconciliation against
-  `pd_image_census.py`'s 9 and 16, and all 28 census rows.
+  `pd_image_census.py` — over every reader, not only the ones the census
+  already names, so all three dispatchers' site counts and their 3-, 4- and
+  6-byte entry widths have to agree — and all 28 census rows.
 - **`tools/bank_attribution.py`** — a per-bank reachability closure seeded from
   the 403 BL51 trampolines, whose stub identity names the bank, so those entry
   points are linker-attributed rather than assumed. Reuses
