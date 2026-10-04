@@ -233,21 +233,50 @@ class PopulationTests(unittest.TestCase):
                                  c.access)
 
     def test_the_three_tables_and_the_census_are_the_only_ones_moved(self):
-        """Every *other* committed row still satisfies
-        `classify(walk(d, off)) == access`, so the corrections are three cells
-        and not a loosened invariant.
+        """Every committed row that is not a *callee-set* site still
+        satisfies `classify(walk(d, off)) == access`, so the corrections are
+        three cells and not a loosened invariant.
+
+        The exclusion is the one `trace_xdata_refs.py --callee-column` makes,
+        and it is derived from that tool's committed input rather than typed
+        as a list of offsets: a row is exempt only when its cell carries the
+        `DPTR from` spelling **and** equals the cell
+        `trace_xdata_refs.load_callee_map()` produces for its
+        `(addr, file_offset)`. Those rows are held to the resolver's table by
+        the next case, which is a stronger check than this one, not a gap in
+        it.
 
         Held as the per-row property rather than as a count of the
         population: a merge that adds a table or a row moves no total here.
         """
         d = firmware()
+        callee = T.load_callee_map()
         for name in W.TABLES:
             for row in rows_of(name):
                 off = int(row["file_offset"], 16)
+                key = (row["addr"], row["file_offset"])
+                if callee.get(key) == row["access"]:
+                    continue
                 derived = T.classify(T.walk(d, off))
                 want = ACC.corrected(off, derived)
                 with self.subTest(table=name, offset=row["file_offset"]):
                     self.assertEqual(row["access"], want)
+
+    def test_a_callee_set_cell_is_the_resolver_table_s_own(self):
+        """The rows this case exempts are checked against a committed table
+        instead of against the image, because `classify()` cannot derive them:
+        the DPTR behind such a `movx` was loaded in another function. What
+        they are held to is `callee_dptr_sites.py`'s own `--csv` output, so a
+        cell typed into the sweep table by hand fails here.
+        """
+        callee = T.load_callee_map()
+        self.assertTrue(callee)
+        for name in W.TABLES:
+            for row in rows_of(name):
+                key = (row["addr"], row["file_offset"])
+                if T.DPTR_FROM in row["access"]:
+                    with self.subTest(table=name, offset=row["file_offset"]):
+                        self.assertEqual(row["access"], callee.get(key))
 
 
 class SelfTestTests(unittest.TestCase):
