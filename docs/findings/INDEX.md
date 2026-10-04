@@ -200,6 +200,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`pd-xdata-collision-survey.md`](pd-xdata-collision-survey.md) — The 39 other collisions, decoded: the PD image hands them on, and the low 4 KiB's excess sits on one page
+- [`per-workflow-rule-census.md`](per-workflow-rule-census.md) — The per-workflow rule's over-reach, and what it costs over the population the sweep reads
 - [`perturb-arm-colliding-marks.md`](perturb-arm-colliding-marks.md) — The perturbation arm's capture holds the colliding marks #1376 said had never been taken, and the Fn arm's negative survives both readings of its window (issue #1432)
 - [`pin-table-beside-the-citing-file.md`](pin-table-beside-the-citing-file.md) — The beside-the-citing-file reading, in the tool that had only the tree's (issue #952)
 - [`pin-table-by-cited-file.md`](pin-table-by-cited-file.md) — Which test file the corpus's pins name, and the indexed suites none of them does (issue #941)

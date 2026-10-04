@@ -99,6 +99,7 @@ EXPECTED_CORPUS_FILES = (
     "docs/findings/history-checkout-run-contract.md",
     "docs/findings/history-checkout-site-identity.md",
     "docs/findings/history-checkouts-gate-wiring.md",
+    "docs/findings/per-workflow-rule-census.md",
     "docs/findings/provenance-clone-depth-behaviour.md",
     "docs/findings/testdata-index-repair-census.md",
     "docs/findings/testdata-row-claims-repair-measurement.md",
@@ -112,6 +113,13 @@ EXPECTED_CORPUS_FILES = (
 # `tools/README.md` left the population on 2026-10-02: its depth claims were in
 # the per-suite table rows, and the table was removed in favour of each suite's
 # own docstring, where the same claims already were.
+#
+# `per-workflow-rule-census.md` entered it the other way, on 2026-10-04 with
+# #1046: a write-up about this rule that names a workflow and a depth word, so
+# the sweep found it and judged it. It carries one site, and it names a job of
+# every workflow it names -- the first draft did not, and reddened the tool
+# instead, which is why the correction was to name the job in the prose rather
+# than to exempt the page.
 
 # **`docs/agent-pipeline.md:103` as it stood before #1031**, verbatim from the
 # pre-fix source. It is the new control and the reason one is needed: the three
