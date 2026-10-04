@@ -442,12 +442,25 @@ def main(argv=None):
                     # reads nothing and prints nothing is indistinguishable
                     # from a range that read nothing and moved nothing, which
                     # is the reading #94 is about.
-                    print(f"nothing read: 0x{start:04X}+0x{length:04X} is "
-                          "inside the fan-tach bytes "
-                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} "
-                          "and they are left out by default (#94). Move the "
-                          "range off the page, or pass --include-fan-tach to "
-                          "read it anyway.", file=sys.stderr)
+                    #
+                    # `dropped` is non-zero exactly when the exclusion emptied
+                    # the set, so it says which of the two explanations is the
+                    # true one. A `--len 0` never held a page byte, and naming
+                    # the page for it diagnoses a range that did not touch it.
+                    if dropped:
+                        print(f"nothing read: 0x{start:04X}+0x{length:04X} is "
+                              "inside the fan-tach bytes "
+                              f"0x{FAN_TACH.start:04X}-"
+                              f"0x{FAN_TACH.stop - 1:04X} "
+                              "and they are left out by default (#94). Move "
+                              "the range off the page, or pass "
+                              "--include-fan-tach to read it anyway.",
+                              file=sys.stderr)
+                    else:
+                        print(f"nothing read: 0x{start:04X}+0x{length:04X} is "
+                              "an empty range -- it names no address to read, "
+                              "so there is nothing to read. Give --len a "
+                              "length.", file=sys.stderr)
                     return 1
                 got = {}
                 if args.block:

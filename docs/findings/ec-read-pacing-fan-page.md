@@ -107,6 +107,13 @@ tools say so on stderr and exit non-zero, issuing no read at all.
 `ecrw.py dump` marks a partly-excluded byte `--` in the hexdump for the same
 reason: a zero there would read as a byte the EC returned.
 
+The refusal names the page only when the page is why. `--len 0` reaches the
+same branch having excluded nothing, and a message blaming the page there
+would send the reader after a keep-out their range never held, whose remedy
+cannot make an empty range non-empty — so that range is told it is empty
+instead. Both tools split the two on the same count, and each suite holds the
+split.
+
 ## 4. What this does not establish
 
 - **Not that 6 ms is the right gap on this machine.** It is the figure a

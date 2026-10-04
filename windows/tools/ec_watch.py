@@ -633,15 +633,24 @@ def main(argv=None):
     # An empty address set is reported rather than swept. A sweep with nothing
     # in it prints a baseline and then "nothing moved", which reads as an
     # observation about the EC rather than as the refusal to read it that it
-    # is (#94). This is the only range that reaches it by default: the page is
-    # sixteen bytes, so a range wholly inside one is a range that asked for
-    # nothing else.
+    # is (#94).
+    #
+    # The two ways of arriving here are reported separately. `dropped` is
+    # non-zero exactly when the exclusion emptied the set, so it is what says
+    # which explanation is the true one: a `--len 0` never held a page byte,
+    # and naming the page for it is a diagnosis of a range that did not touch
+    # it, whose remedy cannot help.
     if not addrs:
-        print(f"nothing to sweep: 0x{start:04X}+0x{length:04X} holds no "
-              f"address outside the fan-tach bytes "
-              f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} (#94). Move "
-              "the range off the page, or pass --include-fan-tach to read it "
-              "anyway.", file=sys.stderr)
+        if dropped:
+            print(f"nothing to sweep: 0x{start:04X}+0x{length:04X} holds no "
+                  f"address outside the fan-tach bytes "
+                  f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} (#94). "
+                  "Move the range off the page, or pass --include-fan-tach to "
+                  "read it anyway.", file=sys.stderr)
+        else:
+            print(f"nothing to sweep: 0x{start:04X}+0x{length:04X} is an empty "
+                  "range -- it names no address to read, so there is nothing "
+                  "to sweep. Give --len a length.", file=sys.stderr)
         return 1
 
     # The --block path reads runs rather than the range, which is what makes

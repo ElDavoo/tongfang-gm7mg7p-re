@@ -686,6 +686,21 @@ class DumpPacingTests(unittest.TestCase):
         self.assertIn("0x0460-0x046F", err)
         self.assertIn("--include-fan-tach", err)
 
+    def test_an_empty_dump_is_not_blamed_on_the_page(self):
+        K32.calls = []
+        rc, out, err = self.run_dump("0x0700", "0x00", "--gap-ms", "0")
+        # Same refusal and the same empty stdout as the case above, but this
+        # range never held a page byte: naming the page diagnoses a range that
+        # did not touch it, and the flag it offers cannot fill it.
+        self.assertNotEqual(rc, 0)
+        self.assertEqual(out, "")
+        self.assertEqual(K32.calls, [])
+        self.assertIn("nothing read", err)
+        self.assertNotIn("0x0460-0x046F", err)
+        self.assertNotIn("--include-fan-tach", err)
+        # The remedy that does apply to it.
+        self.assertIn("empty range", err)
+
     def test_a_dump_entirely_inside_the_page_runs_with_the_flag(self):
         rc, out, _ = self.run_dump("0x0460", "0x10", "--include-fan-tach",
                                    "--gap-ms", "0")

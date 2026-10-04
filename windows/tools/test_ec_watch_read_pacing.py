@@ -188,6 +188,22 @@ class ExclusionTests(unittest.TestCase):
         self.assertIn('0x0460-0x046F', err)
         self.assertIn('--include-fan-tach', err)
 
+    def test_an_empty_range_is_not_blamed_on_the_page(self):
+        rc, ec, out, err = run_watch('--start', '0x0700', '--len', '0',
+                                     '--gap-ms', '0')
+        # Same refusal, same non-zero exit and the same silence on stdout as
+        # the case above -- but this range never held a page byte, so naming
+        # the page is a diagnosis of a range that did not touch it, and the
+        # remedy it offers cannot make an empty range non-empty.
+        self.assertNotEqual(rc, 0)
+        self.assertEqual(ec.reads, [])
+        self.assertNotIn('baseline', out)
+        self.assertIn('nothing to sweep', err)
+        self.assertNotIn('0x0460-0x046F', err)
+        self.assertNotIn('--include-fan-tach', err)
+        # The remedy that does apply to it.
+        self.assertIn('empty range', err)
+
     def test_a_range_entirely_inside_the_page_runs_with_the_flag(self):
         rc, ec, _, _ = run_watch('--start', '0x0460', '--len', '0x10',
                                  '--gap-ms', '0', '--include-fan-tach')
