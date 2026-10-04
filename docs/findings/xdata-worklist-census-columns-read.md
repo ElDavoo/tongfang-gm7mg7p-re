@@ -90,9 +90,9 @@ all three were right.
 **This is the finding, not a null result.** The figures in §5 are hand-typed
 prose about a generated CSV, and until now two of the four were checked by
 nothing at all. They happen to be right today. That is a statement about
-*right now*: the two columns that drifted in #253's day and the four that
-drifted before #272 would have been caught, and any that drift from here will
-be. The value of the re-derivation is that the guard now exists, not that it
+*right now*: `main-ec-004`'s size and reference count had drifted once, and a
+two-column reading is what would have caught it, as it will any that drift from
+here. The value of the re-derivation is that the guard now exists, not that it
 found something.
 
 `main-ec-002`'s size and reference count are the pair to look at first when
@@ -105,44 +105,57 @@ discussion). The census holds `92` and `1130`; the row holds `92` and `1,130`.
 The worklist is the census's top twelve by the ranking `xdata_register_map.py`
 uses — `(size, refs, lowest address)` — and it is a ranking, not a
 significance order. Two readings off the figures §5 publishes, both derived
-from `xdata-clusters.csv` and re-derivable with the command below:
+from `xdata-clusters.csv` and re-derivable with the command below.
 
-**The twelve rows are a third of the address space and half of the references.**
-417 of the 1218 main-EC cluster addresses, and 7840 of the 14838 references.
-The worklist is not a sample of the XDATA map; it is where the firmware spends
-its references.
+**The twelve rows are a third of the address space and half of the references**
+— 417 of the 1218 main-EC cluster addresses, and 7840 of the 14838 references.
+Both halves are properties of the committed census's `size` and `refs`
+columns, and only the first survives the export-ownership reading below.
 
-**`main-ec-003` is referenced about five times more per address than any other
-cluster on the list.** 4,966 references across 43 addresses is 115.5 per
-address, against 23.3 for `main-ec-007` (`ff-fill-stubs`) — 280 references
-across 12 addresses, the next highest here — and 12.3 for `main-ec-002`
-(`mode-oem-init`). The comparator has to be the highest rather than a
-consecutive one for the phrasing to hold: against `main-ec-002` the same two
-figures are 9.4×, and `main-ec-007`'s 23.3 is what caps the claim at five.
-The counter block the tree names `counter-sweep` is walked on almost every
-pass, which is why a cluster under a third the size of `main-ec-001` (43 of
-its 152 addresses) earns a row here while five of the list's clusters are
-touched fewer than five times per address.
+**The `refs` column is a count of files, and 42 files can be one routine.**
+`ec/annotations/xdata-06c2-06db-timers.md` §2a measures the size of that here:
+at least 4,642 of `main-ec-003`'s 4,966 references are the same 393 bytes
+counted once per each of 42 overlapping function-boundary exports, and the 43
+addresses have 345 direct `MOV DPTR,#addr` sites between them, which is the
+number that means something. `xdata-register-map.md` §4.5 is the same reading
+for the census as a whole. So `main-ec-003`'s 115.5 references per address
+against `main-ec-007`'s 23.3 is a statement about how the routine is exported,
+not about how often the firmware reads those addresses — and
+`--export-ownership`, which reads each routine once from the export that owns
+it, inverts the ranking: `ff-fill-stubs` becomes the densest of the twelve, and
+the sweep cluster is not carried by that run at all (its `k733222e83898` best
+matches any of that run's clusters at 0.48, under the 0.50 floor). That run
+re-keys the clusters, so the two columns are read by name there, not by id.
 
 ```console
+$ python3 ec/tools/xdata_register_map.py --export-ownership \
+    --out-clusters /tmp/own-clusters.csv --out-registers /tmp/own-registers.csv
 $ python3 -c "
 import csv
-rows = [r for r in csv.DictReader(open('ec/annotations/xdata-clusters.csv'))
-        if r['program'] != 'pd']
-top = rows[:12]
-tot_a = sum(int(r['size']) for r in rows); tot_r = sum(int(r['refs']) for r in rows)
-print(f'{sum(int(r[\"size\"]) for r in top)}/{tot_a} addrs, '
-      f'{sum(int(r[\"refs\"]) for r in top)}/{tot_r} refs')
-per = sorted(((int(r['refs'])/int(r['size']), r['cluster_id'])
-              for r in top), reverse=True)
-for v, cid in per[:3]: print(f'{cid}: {v:.1f} refs/addr')
-print(f'43/152 sizes: {43/152:.2f}')"
-417/1218 addrs, 7840/14838 refs
-main-ec-003: 115.5 refs/addr
-main-ec-007: 23.3 refs/addr
-main-ec-002: 12.3 refs/addr
-43/152 sizes: 0.28
+def top(p): return [r for r in csv.DictReader(open(p)) if r['program'] != 'pd']
+for label, p in (('committed', 'ec/annotations/xdata-clusters.csv'),
+                 ('export-ownership', '/tmp/own-clusters.csv')):
+    rows = top(p); t = rows[:12]
+    print(f'{label}: {sum(int(r[\"size\"]) for r in t)}/{sum(int(r[\"size\"]) for r in rows)} addrs, '
+          f'{sum(int(r[\"refs\"]) for r in t)}/{sum(int(r[\"refs\"]) for r in rows)} refs')
+    for v, cid, nm in sorted(((int(r['refs'])/int(r['size']), r['cluster_id'], r['cluster_name'])
+                              for r in t), reverse=True)[:2]:
+        print(f'  {cid}: {v:.1f} refs/addr {nm}')"
+committed: 417/1218 addrs, 7840/14838 refs
+  main-ec-003: 115.5 refs/addr counter-sweep
+  main-ec-007: 23.3 refs/addr ff-fill-stubs
+export-ownership: 419/1218 addrs, 2962/9320 refs
+  main-ec-007: 15.5 refs/addr ff-fill-stubs
+  main-ec-002: 12.7 refs/addr mode-oem-init
 ```
+
+The two censuses disagree about which cluster is densest and about how much of
+the reference mass the twelve hold, and both are readings the tree's own
+`--export-ownership` flag produces. Nothing here establishes a call frequency.
+`docs/findings/counter-sweep-entry-set.md` bounds the sweep's **call sites** —
+one confirmed caller among the 180 census rows that target into the run — and
+that is a bound on sites, not on executions; what would establish the latter is
+a live reading on the machine.
 
 **A caveat on all of it.** Every figure here re-derives from two committed
 CSVs. Nothing was read back from hardware, no register was observed, and none
