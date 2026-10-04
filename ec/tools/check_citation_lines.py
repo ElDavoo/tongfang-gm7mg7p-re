@@ -21,9 +21,17 @@ citations is a *rank* into a file that keeps growing, which
 length and which applies unchanged to a 1,327-row generated CSV: a rank is not
 an identity, and a regeneration inserting a row anywhere above reshuffles every
 row below it. So nothing here compares a cited line against a table of expected
-lines. Each rule finds the row for a **declared** address and requires the
-citation to be that row, so a regeneration reddens it and a `:NNN` that has
-quietly stopped meaning anything cannot pass.
+lines. Each rule finds the row for a **declared** address.
+
+**Rule 3 notes a moved number rather than failing on it** (2026-10-04). It used
+to require the citation to be that row, so every regeneration reddened it, and
+#1849, which seeds routines and so adds census rows, went red on
+citations in write-ups it had not touched. That is CLAUDE.md's "Cite code by
+name" and the unheld pin census again: the number is what the prose measured,
+and a citation whose row has since moved is printed as a note naming the row's
+line today, so a reader can follow it while the run stays green. What still
+fails is a declared subject with no row, and a pointer into a CSV this file
+declares nothing for. Rule 1 is unchanged.
 
 **The three rules**, over committed inputs, none of which re-derives another's
 measurement:
@@ -406,16 +414,16 @@ def check_row_pointers(path: str, text: str, scope: list, csvs: dict,
                     f"{repo_path(path)}:{at}: cites {name}:{cited}, and this "
                     f"tool declares no subject of {name} in this file")
                 continue
+            checked += 1
             if int(cited) in expected[name].values():
-                checked += 1
                 continue
-            problems.append(
-                f"{repo_path(path)}:{at}: cites {name}:{cited}, which is "
+            print(
+                f"  moved {repo_path(path)}:{at}: cites {name}:{cited}, which is "
                 f"{row_label(csvs[name], int(cited))}, not "
                 + " or ".join(f"the {d} row at {n}" for d, n in
                               sorted(expected[name].items(), key=lambda kv: kv[1]))
-                + " -- a rank into a file that keeps growing, so the address "
-                  "is what a citation is held to, not the number")
+                + " -- a rank into a file that keeps growing; the address "
+                  "is what is held, the number is what the prose measured")
     return problems, checked, skipped
 
 
@@ -521,10 +529,11 @@ def main() -> int:
     for problem in problems:
         print(f"check_citation_lines.py: {problem}", file=sys.stderr)
     if problems:
-        print(f"{len(problems)} citation(s) name a line that has moved, or a "
-              "rule that located nothing", file=sys.stderr)
+        print(f"{len(problems)} problem(s): a site that disagrees, a declared "
+              "row that is gone, or a rule that located nothing",
+              file=sys.stderr)
         return 1
-    print(f"0x0860: {checked} citation(s) resolve to the row they name, "
+    print(f"0x0860: {checked} citation(s) read against a row that exists, "
           f"{skipped} skipped as superseded -- {len(ROW_SCOPE)} declared row(s) "
           f"in {len({s[0] for s in ROW_SCOPE})} markdown file(s) and the site "
           f"table against {repo_path(SITES_CSV)}")

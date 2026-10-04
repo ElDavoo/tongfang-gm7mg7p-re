@@ -23,8 +23,8 @@ keys still name a cluster.
 Because that is the weak handle, three citation forms are accepted, in this
 order of durability:
 
-  * `main-ec-NNN` — the rank, exactly as before. Still resolved, still
-    checked, still the form every existing sentence uses.
+  * `main-ec-NNN` — the rank. Resolved, and checked only under `--ranks`
+    (2026-10-04, below).
   * `k<12 hex>` — the `cluster_key` column, a content hash over the program
     and the sorted membership. An identity for as long as the membership is
     that membership.
@@ -34,7 +34,25 @@ order of durability:
     rather than hard-coded here, so a name is added by editing one CSV.
 
 All three resolve to a cluster id before anything is checked, so a sentence
-citing one is held to exactly what a `main-ec-NNN` sentence was. `--clusters`
+citing one is held to exactly what a `main-ec-NNN` sentence was.
+
+**A rank is not held on the committed tree** (2026-10-04). Seeding a routine
+moves the references the ranking sorts on, so one seeding branch renumbers
+clusters it never touched: #1849 seeded routines and the rule went red across
+write-ups it had not edited, every failure a rank that had moved and none a
+membership that had changed. Re-pointing them would make every
+seeding branch edit the same shared write-ups, which is the merge-conflict
+shape CLAUDE.md's "No totals of the repository's own text" is about. So the
+committed-tree run holds the two durable forms, and a unit that cites a rank
+is passed over under its own counted reason -- a unit that mixes a rank with
+a key or a name too, since its addresses may be claimed for the rank and the
+rule cannot tell which: its ranks are what the
+prose measured on the census it was written against. Across #1849 nearly
+every `cluster_key` survived the seeding and most ranks did not. `--ranks`
+holds ranks as
+well, for checking prose against the census it was just written for, and
+`check()` holds them by default, because a fixture census is the census its
+fixture was written against. New prose cites a cluster by name or key. `--clusters`
 and `--registers` take an alternate census, which is what lets the same
 sentences be run against a regeneration (`xdata_register_map.py --map` is what
 says which clusters moved, and this is what says whether a sentence still
@@ -258,7 +276,8 @@ REGENERATES = re.compile(
 # directions, so a reason added to `skip_reason()` without being added here is
 # named by name rather than arriving as a figure that moved.
 SKIPS = ("census-regeneration transcript", "disclaims membership",
-         "no membership claim")
+         "no membership claim", "cites a rank")
+RANK_ONLY = SKIPS[-1]
 
 # The preposition that turns two tokens into one claim. Both orders occur in
 # the corpus -- "`0x06C6` in `main-ec-121`", and "`main-ec-011` is the
@@ -551,9 +570,8 @@ def census_row(path, lineno, unit, counts):
 
     Only the range is held (2026-10-04). The size, the reference count and the
     named count beside it are figures of the census, and seeding one routine
-    moves them: #1849 seeded 23 and went red on five §5 rows of
-    `xdata-register-map.md`, a shared file every such branch would then have
-    to edit. CLAUDE.md's rule for a census figure in prose is to stop holding
+    moves them: #1849 went red on §5 rows of `xdata-register-map.md`, a
+    shared file every such branch would then have to edit. CLAUDE.md's rule for a census figure in prose is to stop holding
     it; `xdata-clusters.csv`, which `--check` regenerates, is where they are
     current. The range is the cell that says which cluster the row is about.
 
@@ -673,8 +691,14 @@ def skip_reason(lineno, unit, transcripts):
     return None
 
 
-def check(path, members, counts, known, by_key=None, by_name=None, verbose=False):
+def check(path, members, counts, known, by_key=None, by_name=None, verbose=False,
+          ranks=True):
     """(problems, lines read, skip reasons) for one file.
+
+    `ranks=False` is the committed-tree run: a `main-ec-NNN` is neither paired
+    nor held, the census-row rule (which reads a rank in a row's first cell)
+    does not run, and a unit naming any rank is skipped as `RANK_ONLY`. The
+    default holds ranks, for a fixture census.
 
     The skip reasons come back rather than being counted here, so `main()` can
     print one figure for the whole corpus instead of one per file. They are the
@@ -699,7 +723,8 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         ids = cited_clusters(unit, by_key, by_name, names)
         if not ids:
             continue
-        problems += census_row(path, lineno, unit, counts)
+        if ranks:
+            problems += census_row(path, lineno, unit, counts)
         addresses = sorted({"0x" + a.upper() for a in ADDRESS.findall(unit)
                             if "0x" + a.upper() in known})
         if not addresses:
@@ -710,6 +735,9 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         # committed CSV. The two rules stay apart the way the docstring's
         # second one is.
         reason = skip_reason(lineno, unit, transcripts)
+        if not reason and not ranks:
+            if CLUSTER_ID.search(unit):
+                reason = RANK_ONLY
         if reason:
             skipped.append(reason)
             if verbose:
@@ -719,7 +747,7 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         # rule reached first would read "a size-1 cluster of its own" as an
         # attribution. The fallback is per address, not per unit, so a unit
         # that pairs one byte still has its other addresses checked.
-        pairs = pairings(unit, addresses) if len(ids) > 1 else {}
+        pairs = pairings(unit, addresses) if ranks and len(ids) > 1 else {}
         for address in addresses:
             expected = [pairs[address]] if address in pairs else ids
             if not any(address in members.get(cid, ()) for cid in expected):
@@ -741,6 +769,11 @@ def main() -> int:
     ap.add_argument("--registers", default=REGISTERS,
                     help=f"registers CSV whose address column bounds what is an "
                          f"XDATA address (default: {REGISTERS})")
+    ap.add_argument("--ranks", action="store_true",
+                    help="hold `main-ec-NNN` ranks and census rows too, for "
+                         "prose written against the census being checked; "
+                         "the committed-tree run holds only cluster keys and "
+                         "names, since seeding renumbers the ranks")
     args = ap.parse_args()
 
     members, known, counts, by_key, by_name = census(args.clusters, args.registers)
@@ -757,7 +790,7 @@ def main() -> int:
     skipped = []
     for path in paths:
         found, lines, reasons = check(path, members, counts, known, by_key,
-                                      by_name, args.verbose)
+                                      by_name, args.verbose, ranks=args.ranks)
         problems += found
         read += lines
         skipped += reasons
@@ -787,10 +820,12 @@ def main() -> int:
         print(f"{len(problems)} citation(s) disagree with "
               f"{os.path.relpath(args.clusters, REPO)}", file=sys.stderr)
         return 1
+    held = ("`main-ec-NNN`, `cluster_key` or `cluster_name`" if args.ranks
+            else "`cluster_key` or `cluster_name`")
     print(f"{len(paths)} files / {read} lines: every checked cluster citation "
-          f"(`main-ec-NNN`, `cluster_key` or `cluster_name`) resolves to the "
-          f"membership it names, and every census row's range agrees "
-          f"with {os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
+          f"({held}) resolves to the membership it names"
+          + (", and every census row's range agrees" if args.ranks else "")
+          + f" with {os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
           f"passed over under the {len(SKIPS)} reasons above, each of them: "
           f"not checked, not absent")
     return 0

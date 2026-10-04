@@ -201,6 +201,12 @@ trusting one of theirs: every row says whether it was verified against
     regenerates, are where a move shows up. Do not add a figure of the census
     back to a constant, a test or prose; `check_census_figures.py --print`
     prints them.
+  - Its ranks are not identities either. Cite a cluster by its `cluster_name`
+    or `cluster_key`, never its `main-ec-NNN`, and a row of a census CSV by its
+    address, never its line: one seeding branch (#1849) renumbered rank
+    citations in write-ups it never touched, while nearly every key survived
+    it. Only the durable forms are held on the committed tree
+    (`check_cluster_citations.py`); existing ranks stay as measured.
 - **Cite code by name, not by line number.** Write
   `grade_0751_isolation.py`'s `build_windows`, not `grade_0751_isolation.py:1981`.
   If the line itself is the point, pin it to a commit:

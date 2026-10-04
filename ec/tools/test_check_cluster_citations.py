@@ -654,7 +654,7 @@ class CensusCounts(unittest.TestCase):
     def test_the_size_and_the_reference_count_are_not_held(self):
         # main-ec-004's row once read 30 and 312 for a cluster the census put at
         # 26 and 278. Both are figures of the census, which seeding a routine
-        # moves: #1849 seeded 23 and five §5 rows went red. So the rule leaves
+        # moves: #1849 turned §5 rows red. So the rule leaves
         # them alone, the way it leaves the named count.
         text = ('| `main-ec-003` | 42 | 4,900 | `0x0460`-`0x09CE` | 43 | one '
                 'loop walking a block of counters |\n')
@@ -891,7 +891,8 @@ class TheSkipListHasOneSource(unittest.TestCase):
                     if name.endswith('.md'):
                         path = os.path.join(dirpath, name)
                         _, _, reasons = ccc.check(path, members, counts, known,
-                                                  by_key, by_name, False)
+                                                  by_key, by_name, False,
+                                                  ranks=False)
                         seen |= set(reasons)
         self.assertTrue(seen, "the walk reached no unit to skip at all")
         check_every_skip(self, seen)
