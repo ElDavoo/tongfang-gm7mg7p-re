@@ -30,7 +30,7 @@ its rows changed direction, across two addresses. The whole-image sweep moves
 197 of 10,414 mapped `MOV DPTR,#imm16` sites; the other 176 move only the
 `terminator` token.
 
-## 1. The six constructions, and the ones that are not among them
+## 1. The constructions, and the ones that are not among them
 
 | opcode | instruction | length | how often it fires here |
 |---|---|---:|---:|
@@ -40,6 +40,17 @@ its rows changed direction, across two addresses. The whole-image sweep moves
 | `0x88`-`0x8F` | `mov 0x82,rN` / `mov 0x83,rN` | 2 | 29 |
 | `0x75` | `mov 0x83,#imm` | 3 | 1 |
 | `0x85` | `mov 0x83,0xnn` | 3 | 1 |
+| `0x86`-`0x87` | `mov 0x82,@Ri` / `mov 0x83,@Ri` | 2 | 0 |
+
+**CORRECTION 2026-10-04, issue #1391: two rows, and the numeral.**
+`mov direct,@Ri` (`0x86`/`0x87`) joined the guard, so the table is no longer
+"the six constructions" and the lead above — "`is_dptr_rebuild()`, which names
+all six" — is left as it was written. The numbers **do not move**: the two new
+rows carry **0** firings over the mapped sites, because §9's step-9 tally
+prints the construction that ended each window and neither row appears in it,
+and every figure above the rule is reproduced by that same command unchanged.
+§3 is where the form is discussed and carries the correction beside the
+argument it was left out on.
 
 `0x85` names its **destination** at `d[i+2]` and its source at `d[i+1]`, the
 reverse of every other entry, which is why the predicate's bounds check is
@@ -291,6 +302,38 @@ about this image and not a reason to leave the list wrong:
 `ec/tools/dptr_rebuild_forms.py` counts the form anyway, and
 `test_dptr_rebuild_forms.py` holds the difference between the two opcodes
 lists as `GUARD_GAP_OPS` so the census is not quietly inheriting it.
+
+**CORRECTION 2026-10-04, issue #1391: the gap is closed.** `0x86` and `0x87`
+are in `trace_xdata_refs.DIRECT_STORE_OPS`, and the paragraph above is left as
+it was written. Three things it states are now false or stale, and each is
+corrected where it stands rather than here:
+
+- `DIRECT_STORE_OPS` **does** name the two forms. They key on `d[i+1]`, the
+  index every other two-byte store form in the table uses, so the existing
+  branch of `is_dptr_rebuild()` answers for them with no change to the
+  function body and `MOV_DIRECT_DIRECT`'s separate three-byte handling at
+  `d[i+2]` untouched.
+- `GUARD_GAP_OPS` **no longer exists**. The case that held the gap open named
+  the two opcodes and asserted `is_dptr_rebuild()` was false for both, which
+  is what would have turned red on the fix. It is replaced by an asserted
+  **equality** of the two lists — `set(STORE_FORMS) == set(DIRECT_STORE_OPS)
+  | {MOV_DIRECT_DIRECT}`, with `0x85` the one exception and for the stated
+  reason — beside a negative control that drives each set with a member
+  missing and a member added and asserts inequality both ways. The old case
+  asserted a union naming the gap, and a union that names an exception is
+  idempotent: it would have stayed green after the fix while being unable to
+  notice that the exception had closed.
+- The two opcode lists **no longer disagree**, which was the sharper half of
+  the problem: the tree held two sets answering the same question differently,
+  with a test asserting the disagreement.
+
+The measurement the paragraph leans on is unchanged and still does not
+license leaving the list wrong: the 11 `0x87` byte pairs are a fact about a
+byte census over this image, and after the fix `0x86` and `0x87` fire **0**
+times at any mapped `MOV DPTR,#imm16` site — §9's step-9 tally prints the
+construction that ended each window, and neither row appears in it. No
+committed row moved. The account is
+[`dptr-guard-mov-direct-at-ri.md`](dptr-guard-mov-direct-at-ri.md).
 
 ## 4. A second, narrower copy of the list, and the class that emptied
 
