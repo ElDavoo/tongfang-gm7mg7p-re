@@ -255,8 +255,11 @@ jobs:
               and transcribe that, rather than picking either side's transcript.
 
             When no conflict markers remain (`git grep -nE '^(<<<<<<<|>>>>>>>) '` returns
-            nothing), run `.github/scripts/agent-gates.sh`, and the suites that name a file
-            you resolved:
+            nothing), run:
+
+                .github/scripts/agent-gates.sh
+
+            and the suites that name a file you resolved:
 
                 for f in $(cat /tmp/conflicts.txt); do git grep -l "$(basename "$f")" -- '*/test_*.py' 'test_*.py'; done | sort -u
 
