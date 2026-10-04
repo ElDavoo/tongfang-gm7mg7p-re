@@ -311,7 +311,7 @@ addresses in that oracle — and since issue #280 it is **not** the only net:
 the self-test now also asserts, over the whole tree rather than over these
 five, that every occurrence the census buckets `write` or `read+write` has an
 assignment and not a `==` after the address, measured by a second code path
-that does not re-implement the classifier. That check covers 5,662
+that does not re-implement the classifier. That check covers 5,677
 occurrences across 1,008 addresses, and against the pre-fix classifier it
 fails naming `0x0860` and `0x0440` — so the hand check is now the per-address
 *count* oracle and the wide one is the per-occurrence shape oracle, and the

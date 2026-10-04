@@ -7858,7 +7858,7 @@ out, per §4a; the full derivation is in
 [`xdata-4-4-identity-rederivation.md`](findings/xdata-4-4-identity-rederivation.md)'s
 "Which tree §4.4 was measured against".)*
 Re-running the block's recipe with the flag that now does what its workaround
-did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:4410`) gives
+did (`--no-eq-guard`, `ap.add_argument` in `xdata_register_map.py:4481`) gives
 439 → 445, 124 ranks intact and 315 changed, 424 keys unchanged, 434 committed
 rows reaching a new cluster, 15 clusters a key cannot carry (10 on overlap, 5
 on nothing), nine names carried and 430 committed clusters with a key and none.
@@ -13251,9 +13251,9 @@ results are in
 `--no-eq-guard` block above cited `xdata_register_map.py:4568` for the flag, and
 on `d330478` that line is `--co-reading-group-table prints the other half: every
 group over two` — **a different flag's help**. `ap.add_argument("--no-eq-guard"`
-is at **`:4410`**. That is the shape issue #873 found at `:4457`, naming the tail
+is at **`:4481`**. That is the shape issue #873 found at `:4457`, naming the tail
 of `--reconcile`'s help (`"image and registers.yaml, unlike every other mode"`,
-now **`:4397`**): on this tree the same defect has moved on to a *third* flag's
+now **`:4468`**): on this tree the same defect has moved on to a *third* flag's
 help, which is the argument for anchoring the code rather than re-pointing the
 number. §17's #254 correction block cited `xdata_register_map.py:916` for
 `store_target()`, `:939` for its `==` rejection and `:243` for `ASSIGN`, and
