@@ -49,6 +49,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`0762-provenance-citation-reanchor.md`](0762-provenance-citation-reanchor.md) — The measurement tool's pins, re-anchored, and one `what` that had to be re-worded (issue #762)
 - [`07d6-07d7-pd-image-census.md`](07d6-07d7-pd-image-census.md) — `0x07D6`/`0x07D7` are 213 PD-image sites and 0 EC sites, and the two bytes reach opposite conclusions
 - [`3202-block-walk.md`](3202-block-walk.md) — `0x3202` and the `0x32xx` block: four read sites, no writer found, and two addresses the census does not carry (issue #338)
+- [`3c-named-versus-spelled.md`](3c-named-versus-spelled.md) — §3c's named-versus-spelled counts, re-derived, and the 17 addresses that sit between them (issue #1162)
 - [`4900-stride-table.md`](4900-stride-table.md) — The 0x4900 stride table: how far it runs, what geometry the two strides imply, and what the index is
 - [`7151-case-tables-in-the-walk.md`](7151-case-tables-in-the-walk.md) — The main EC's `0x7151` dispatcher carries a case table inline, so the walk was decoding it as instructions (issue #1257)
 - [`7b14-07c9-token.md`](7b14-07c9-token.md) — The 0x07C9 token in `pd/7B14.c` is a variable row on the *callee*, and the re-export is a fixed point
