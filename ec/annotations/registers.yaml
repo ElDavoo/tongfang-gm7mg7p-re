@@ -1156,6 +1156,7 @@ registers:
       the record stores and not what the byte holds between reset and the first
       real reading. Method: docs/findings/code-table-record-writers.md.
 
+      *** 2026-10-03 (issue #175) ***: the call site the sentence above could not place is now placed. bank1 0x83B7 is inside zero_045a_then_reset_0459_bit3_and_0456_low5 (bank1/8354.asm), which loads DPTR with 0x8453 and R2 with 0x43 and calls 0xA530 -- the record that stores 0x20 into this byte. The other claim in that sentence also moves: the routine has an export and now a recorded caller, so "when that table is walked" is still not established but "which routine holds the call site" is. **The status is unchanged and this is not a readback**: a record storing a constant is still not evidence of what the byte holds between reset and the first real reading. static_refs stays 15.
   - name: GPU_TEMP
     addr: 0x044F
     sources: [uniwill-laptop, live]
@@ -1234,6 +1235,7 @@ registers:
       ec/annotations/site-resolution.csv. A static direction is not behaviour;
       status stays present-untested.
 
+      *** 2026-10-03 (issue #175) ***: 0x0403's bank1 0xBB68 site is now inside stage_0834_from_0403_threshold_and_0497 (bank1/BB40.asm), which reads the byte, subtracts 0x14 with `subb a,#0x14` and branches on the borrow -- one of the ten threshold comparisons named above, in the `subb`-against-A form rather than the `jz`-after-`subb` of bank1 0xA269. static_refs stays 11 and the status stays present-untested.
   - name: XDATA_0390
     addr: 0x0390
     sources: [xdata-refs]
@@ -1326,6 +1328,7 @@ registers:
       or write; it is not evidence the EC acts on the byte, and status stays
       present-untested.
 
+      *** 2026-10-03 (issue #175) ***: two of the page's handoffs now resolve into named exports. bank1 0xE70B hands DPTR to 0x8886 (`read_xdata_pair_to_r1r2`) inside read_0404_0405_into_r1r2_then_mul_and_clamp (bank1/E6DC.asm), so 0x0404/0x0405 is read as a 16-bit pair and fed to a multiply-and-clamp chain -- and bank0 0xAA34 reads the pair by hand, `inc dptr` to 0x0405, into R6:R7, inside compare_0404_0405_pair_against_0436_0437 (bank0/AA04.asm), which then exclusive-ORs it against 0x0436/0x0437. **That is a 16-bit equality test between the two pairs**, and it says how the firmware uses them, not what either measures. static_refs stays 11; a pair read is still not a readback.
   - name: BAT_DESIGN_VOLTAGE_1
     addr: 0x0408
     sources: [uniwill-laptop, xdata-refs]
@@ -1554,6 +1557,7 @@ registers:
       at all remains unestablished, and no static direction would have settled
       it. status stays present-untested.
 
+      *** 2026-10-03 (issue #175) ***: the sentence above calls bank1 0xE779 a blind spot because the routine is unnamed. It is named -- clamp_r2r1_to_0420_above_3c0b, entered at bank1/E769.asm since issue #1105 -- and 0xE779 is four instructions into that body: `mov DPTR,#0x420 / mov R2,DPH / mov R1,DPL / ret`. The byte's address is still handed to a caller this scan cannot see and the site is still neither a read nor a store; what changed is that the routine is no longer the gap.
   - name: BAT_STATUS_1
     addr: 0x0432
     sources: [uniwill-laptop, xdata-refs]
@@ -1570,6 +1574,7 @@ registers:
       five routines named in ec/annotations/xdata-0400-045f.md; which bit
       means discharging is not established here.
 
+      *** 2026-10-03 (issue #175) ***: 0x0432's bank0 0xAA13 site is now inside compare_0404_0405_pair_against_0436_0437 (bank0/AA04.asm), where it is read and branched on for **bit 1 only** (`jnb acc.1`). Upstream reads bit 0 as BAT_DISCHARGING; this is the one site on the byte that tests any bit, and it tests a different one, so which bit means discharging is still not established. static_refs stays 12.
   - name: BAT_CURRENT_MA
     addr: [0x0434, 0x0435]
     sources: [uniwill-laptop, xdata-refs, live]
@@ -1751,6 +1756,7 @@ registers:
       would settle the name. static_refs, status and sources all unchanged.
       Write-up: docs/findings/0436-capacity-ladder.md.
 
+      *** 2026-10-03 (issue #175) ***: bank0 0xAA3C is now inside compare_0404_0405_pair_against_0436_0437 (bank0/AA04.asm) and is the strongest thing this repository has on the byte: DPTR is pointed at 0x0436, the byte is exclusive-ORed against R6, and only on a match is DPTR incremented so 0x0437 can be exclusive-ORed against R7 -- so **the EC compares this pair against 0x0404/0x0405 for equality, as two 16-bit values**, and a match on both halves tail-jumps to 0xC09C (`set_1608_bit5_and_clear_1601_bit4`). This is a fact about how the firmware uses the pair and not about what it measures: the live read beside WMI `RemainingCapacity` in `docs/hardware-tests/remain-capacity-0436.md` is still what would settle the counter-versus-capacity question, and it has not been run. static_refs stays 17 and the status stays present-untested.
   - name: BAT_VOLTAGE_MV
     addr: [0x0438, 0x0439]
     sources: [uniwill-laptop, xdata-refs, live]
@@ -1842,6 +1848,7 @@ registers:
       an unnamed routine. No upstream name. Per-address table:
       ec/annotations/xdata-0400-045f.md.
 
+      *** 2026-10-03 (issue #175) ***: bank1 0x8640 is now inside copy_043f_to_1501 (bank1/8640.asm), which reads the byte and stores it into XDATA 0x1501 with no arithmetic on it. It is the high half of CPU_TEMP's pair and the same routine shape as copy_043e_to_1501 at bank1 0x8637, so each half has its own entry and each clobbers the same 0x1501. static_refs stays 3.
   - name: XDATA_0440
     addr: 0x0440
     sources: [xdata-refs, "dsdt(ECRW: uncalled)"]
@@ -1906,6 +1913,7 @@ registers:
       a different unit from the 181 C-level references, and they do not move
       either.
 
+      *** 2026-10-03 (issue #175) ***: five more of the page's readers are now in named exports, and all five read the byte the same way -- for non-zero and nothing else, discarding the value. bank1 0xF326, 0xF33B and 0xF350 are three separate entries, gate_06e6_01_and_0440_nonzero_then_set_06ff_bit3 / _bit2 / _bit1 (bank1/F31F.asm, F334.asm, F349.asm), each gated on 0x06E6 reading 0x01 *and* on 0x0440 being non-zero, differing only in which bit of 0x06FF they then set. **Taken together the three say a non-zero 0x0440 raises three separate bits of 0x06FF, and nothing here says what reads those bits.** That is a fact about which byte the gate opens, and it is narrower than it first reads: each of the three is still a zero test whose zero arm is a bare `ret`, which is the enable-flag shape the paragraph above assigns to 32 of the 39 zero tests, and this does not change that reading. The selector reading -- zero not being one state either, so the byte choosing between behaviours -- is already recorded above and in ec/annotations/xdata-0440-readers.md §2/§3; these three add to the set of sites that are now named, not to the shape. The other two are bank0 0xC703 in flip_0751_bit6_when_r7_zero_and_0440_nonzero (bank0/C700.asm), which exclusive-ORs bit 6 of 0x0751 -- a toggle, so its effect depends on state this repository has not measured -- and bank0 0xC71A in fan_mode_from_0440_into_0741_0751 (bank0/C717.asm), which is gated on the same two conditions with the same sense: both encode the 0x0440 test as `jz` to their own `ret`, so both run when the byte is non-zero, and which of the two runs is settled by the caller and not by 0x0440. static_refs stays 43 and the status stays present-untested.
   - name: XDATA_0442
     addr: 0x0442
     sources: [xdata-refs]
@@ -2138,6 +2146,7 @@ registers:
       not recorded here as live evidence. Per-address table:
       ec/annotations/xdata-0400-045f.md.
 
+      *** 2026-10-03 (issue #175) ***: the bank1 0x83E5 `anl a,#0xe0` the sentence above names is now inside zero_045a_then_reset_0459_bit3_and_0456_low5 (bank1/8354.asm), and the same routine holds the 0x83EE store. It clears bits 0-4 and leaves bits 5-7, which is the **first writer in this repository's exports to touch this byte from bank 1 at all** -- the two writers named above (bank0 0xAD65 clearing bits 4-5, bank0 0xDA81 setting bits 6 then 7) are both in bank 0. So the byte's writers now account for bits 4-5 being cleared, bits 6-7 being set, and bits 0-4 being cleared outright, and nothing in this repository's exports establishes what bits 0-3 hold in between; upstream tests only bits 5-7. The bit-7 reading as HAS_GPU is unchanged and still a plausible reading of a consistent shape. status stays present-untested.
   - name: XDATA_0457
     addr: 0x0457
     sources: [xdata-refs]
@@ -2181,6 +2190,7 @@ registers:
       ec/annotations/xdata-code-table-records.csv. status unchanged; a stored
       value is not a readback and not a behaviour.
 
+      *** 2026-10-03 (issue #175) ***: the sentence above's central claim -- that none of the four sites is in an exported function, and that seeding them would need --mode rebuild-project -- is resolved for the coverage; the rebuild itself did not run, for the reason `docs/findings/ghidra-project-owner.md` records. All four now sit in named exports: 0x8190 in set_0472_20_and_0457_low3_101 (bank1/818A.asm), 0x81D1 in clear_0457_low3_and_dispatch_0800_bit7 (bank1/81C5.asm), 0x8246 in set_0472_08_and_0457_low3_011 (bank1/823A.asm) and 0x826A in set_0472_20_and_0457_low3_101_then_gate (bank1/8261.asm). **What the seeding establishes is a shape, not a meaning.** Each site clears bits 0-2 with `anl a,#0xf8` and then either ORs a constant or does not: 0b101 at 0x8190 and 0x826A, 0b011 at 0x8246, and 0b000 at 0x81D1, which has no `orl` at all and is therefore the one site that zeroes the field. Bits 3-7 pass through untouched in all four. Naming the routines rather than their order: set_0472_20_and_0457_low3_101 (bank1 0x818A, 0x8190) stores the constant 0x20 into 0x0472 whole -- `mov A,#0x20 / movx @DPTR,A`, no mask and no `orl`, so it is not a bit move at all. The other three each do a one-bit move inside 0x0472 first, with `anl A,#0x10 / orl A,#0xNN`: clear_0457_low3_and_dispatch_0800_bit7 (bank1 0x81C5, 0x81CC-0x81CE) moves bit 4 into bit 0 (`orl A,#0x01`), set_0472_08_and_0457_low3_011 (bank1 0x823A, 0x8241-0x8243) into bit 3 (`orl A,#0x08`), and set_0472_20_and_0457_low3_101_then_gate (bank1 0x8261, 0x8265-0x8267) into bit 5 (`orl A,#0x20`). Those same three are the ones that clear bits 0-2 of 0x0457 and load 0b000, 0b011 and 0b101 respectively, so three of the four routines change a bit of one byte and load a constant into a three-bit field of another, while the fourth only clears. **That the field is a small enumerated state rather than a flag is the strongest reading this shape supports; what any of the four values means is not established.** static_refs stays 4, status stays present-untested, and the four CODE records above are untouched by this.
   - name: XDATA_0458
     addr: 0x0458
     sources: [xdata-refs]
@@ -2217,6 +2227,7 @@ registers:
       recomputed from the image by check_register_counts.py, and a record is not
       one. docs/findings/code-table-record-writers.md.
 
+      *** 2026-10-03 (issue #175) ***: bank1 0x83C0 is now inside zero_045a_then_reset_0459_bit3_and_0456_low5 (bank1/8354.asm), which clears bit 3 (`anl a,#0xf7`) -- so the writer the sentence above could not name is named, and bit 3 joins bits 1 and 2 as a bit this byte's writers assemble. static_refs stays 6.
   - name: XDATA_045A
     addr: 0x045A
     sources: [xdata-refs]
@@ -2247,6 +2258,7 @@ registers:
       role is not established; nothing in this work says what sets it. No
       `status:` moves on a direction class.
 
+      *** 2026-10-03 (issue #175) ***: bank1 0x8354 is now the entry of zero_045a_then_reset_0459_bit3_and_0456_low5 (bank1/8354.asm), and what it does to this byte is the plainest form on the page: `mov A,#0x00 / movx @DPTR,A`, a whole-byte zero with no mask and no OR. The two read-modify-writes named above remain the only bit operations; this is a third writer and a different kind. **That 0x045A is zeroed outright while its other writers assemble single bits is consistent with the packed-flag reading and does not settle it** -- nothing here says which bits a non-zero value would carry. static_refs stays 22.
   - name: XDATA_045B
     addr: 0x045B
     sources: [xdata-refs]
@@ -2342,6 +2354,8 @@ registers:
       CODE. static_refs stays 10 and no source tag is added: those keys are MOV
       DPTR site counts recomputed from the image by check_register_counts.py,
       and a record is not one. docs/findings/code-table-record-writers.md.
+
+      *** 2026-10-03 (issue #175) ***: the two writers the sentence above could not place are now named, and they are a set/clear pair rather than two independent stores. bank1 0x8609 is store_db_to_045f_and_set_04ff_bit5 (bank1/8609.asm), which stores the constant 0xDB into this byte whole -- no mask, so it does not preserve bits a reader may be testing -- and then sets bit 5 of 0x04FF; bank1 0x8617 is zero_045f (bank1/8617.asm), four instructions that write 0x00 to the same byte. **So this byte has a stored-0xDB state and a stored-0x00 state, and nothing in this repository's exports says which bits it is expected to hold between them.** static_refs stays 10.
 
   - name: MAIN_FAN_RPM
     addr: [0x0464, 0x0465]

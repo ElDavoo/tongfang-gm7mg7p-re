@@ -14,6 +14,7 @@ addr,seed,direction,accessor,census_refs,census_read,census_write,census_read_wr
 0x0346,0x0345,write,write_r1r2_to_xdata_pair,1,0,1,0,0,0,0,0,no
 0x034F,0x034E,read,read_xdata_pair_to_r3r4,1,1,0,0,0,0,0,0,no
 0x0364,0x0363,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,6,3,3,0,0,0,0,0,no
+0x036B,0x036A,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,4,2,2,0,0,0,0,0,no
 0x036F,0x036E,read,read_xdata_pair_to_r1r2,2,2,0,0,0,0,0,0,no
 0x0379,0x0378,write,write_r1r2_to_xdata_pair,1,0,1,0,0,0,0,0,no
 0x037B,0x037A,write,write_r1r2_to_xdata_pair,1,0,1,0,0,0,0,0,no
@@ -44,15 +45,15 @@ addr,seed,direction,accessor,census_refs,census_read,census_write,census_read_wr
 0x03F7,0x03F6,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,9,1,8,0,0,0,1,0,no
 0x03F9,0x03F8,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,9,1,8,0,0,0,1,0,no
 0x03FD,0x03FC,read+write,read_xdata_pair_to_r1r2;write_r3r4_to_xdata_pair,4,2,2,0,0,0,0,0,no
-0x0403,0x0402,read+write,read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,28,25,3,0,0,0,11,0,yes
-0x0405,0x0404,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,13,7,6,0,0,0,0,0,no
+0x0403,0x0402,read+write,read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,30,27,3,0,0,0,11,0,yes
+0x0405,0x0404,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,14,8,6,0,0,0,0,0,no
 0x0409,0x0408,write,write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,3,0,3,0,0,0,0,0,no
 0x040B,0x040A,read+write,read_xdata_pair_to_r1r2;write_r1r2_to_xdata_pair,3,2,1,0,0,0,0,0,no
 0x040D,0x040C,read+write,read_xdata_pair_to_r1r2;write_r1r2_to_xdata_pair,2,1,1,0,0,0,0,0,no
 0x040F,0x040E,read+write,read_xdata_pair_to_r1r2;write_r1r2_to_xdata_pair,2,1,1,0,0,0,0,0,no
 0x0411,0x0410,write,write_r3r4_to_xdata_pair,1,0,1,0,0,0,0,0,no
 0x0435,0x0434,read+write,read_xdata_pair_to_r1r2;write_r1r2_to_xdata_pair,16,6,10,0,0,0,2,0,yes
-0x0437,0x0436,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,17,10,7,0,0,0,1,5,yes
+0x0437,0x0436,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,18,11,7,0,0,0,1,5,yes
 0x0439,0x0438,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,19,11,8,0,0,0,3,0,yes
 0x043B,0x043A,read,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4,6,6,0,0,0,0,0,2,no
 0x04A1,0x04A0,write,write_r1r2_to_xdata_pair,9,6,3,0,0,0,5,3,no
@@ -80,7 +81,7 @@ addr,seed,direction,accessor,census_refs,census_read,census_write,census_read_wr
 0x051D,0x051C,read+write,read_xdata_pair_to_r1r2;write_r1r2_to_xdata_pair,4,2,2,0,0,0,0,0,no
 0x051F,0x051E,write,write_r1r2_to_xdata_pair,2,0,2,0,0,0,0,0,no
 0x0521,0x0520,write,write_r1r2_to_xdata_pair,2,0,2,0,0,0,0,0,no
-0x0523,0x0522,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,15,9,6,0,0,0,1,0,yes
+0x0523,0x0522,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,16,10,6,0,0,0,1,0,yes
 0x0529,0x0528,write,write_r1r2_to_xdata_pair,3,0,3,0,0,0,1,0,no
 0x052B,0x052A,write,write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,4,0,4,0,0,0,0,0,no
 0x052F,0x052E,write,write_r1r2_to_xdata_pair;write_r3r4_to_xdata_pair,3,0,3,0,0,0,0,0,no
@@ -105,4 +106,4 @@ addr,seed,direction,accessor,census_refs,census_read,census_write,census_read_wr
 0x060F,0x060E,read,read_xdata_pair_to_r1r2,3,3,0,0,0,0,2,0,no
 0x0647,0x0646,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,6,4,2,0,0,0,0,0,no
 0x0835,0x0834,read+write,read_xdata_pair_to_b_and_a;read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,48,41,7,0,0,0,2,9,no
-0x0837,0x0836,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,9,5,4,0,0,0,1,7,no
+0x0837,0x0836,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,10,5,5,0,0,0,1,7,no

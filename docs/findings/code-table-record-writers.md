@@ -192,9 +192,11 @@ page.
   strengthens nor weakens. The seed is a static fact about a table.
 - **`0x0457` is seeded four different ways** — `0x00`, `0x05`, `0x80`, `0x83`,
   from four call sites. This is the sharpest case on the page and the reason it
-  is worth a method: three of the four call sites sit in unexported routines
-  (`0x83B7`, `0x82FD`, `0x82C9`), and its four EC-side `MOV DPTR` sites are all
-  read-modify-writes in code no export covers (§5 of the page document, §11
+  is worth a method: two of the four call sites sit in unexported routines
+  (`0x82FD`, `0x82C9`), and its four EC-side `MOV DPTR` sites are all
+  read-modify-writes, one in each of the four named exports
+  `ec/decompiled/bank1/818A.asm`, `81C5.asm`, `823A.asm` and `8261.asm`
+  (§5 of the page document, §11
   item 4). Four whole-byte stores and four bit operations on one byte.
 - **`0x0440` keeps its §5 reading**: three records, all storing `0x00`. The
   entry's "no direct writer" is now explained by mechanism rather than left as

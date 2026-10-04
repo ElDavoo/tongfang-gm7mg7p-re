@@ -35,9 +35,7 @@ bank0,F0B1,FUN_CODE_f0b1,2,fall-through,bank0,F0A3,gate_on_a_then_set_0a56_block
 bank0,F4B3,FUN_CODE_f4b3,14,adjacent-no-fallthrough,bank0,F4AB,zero_3_xdata_bytes_at_dptr1,yes,bank0/F4B3.asm
 bank1,2BD5,FUN_CODE_2bd5,155,not-adjacent,,,,,bank1/2BD5.asm
 bank1,3A60,FUN_CODE_3a60,107,not-adjacent,,,,,bank1/3A60.asm
-bank1,86C4,FUN_CODE_86c4,30,not-adjacent,,,,,bank1/86C4.asm
 bank1,8ABB,FUN_CODE_8abb,42,adjacent-no-fallthrough,bank1,8AA7,clear_06f9_bits_0_3_then_call_abee,yes,bank1/8ABB.asm
-bank1,8D62,FUN_CODE_8d62,18,adjacent-no-fallthrough,bank1,8D25,combine_0490_0495_049d_flags_into_carry,yes,bank1/8D62.asm
 bank1,9B3C,FUN_CODE_9b3c,170,adjacent-no-fallthrough,bank1,9B35,write_4_to_068b,yes,bank1/9B3C.asm
 bank1,B224,FUN_CODE_b224,124,adjacent-no-fallthrough,bank1,B214,set_carry_if_0404_0405_is_0201,yes,bank1/B224.asm
 bank1,CAB8,FUN_CODE_cab8,80,not-adjacent,,,,,bank1/CAB8.asm

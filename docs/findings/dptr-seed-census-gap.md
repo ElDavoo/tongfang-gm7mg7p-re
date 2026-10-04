@@ -202,6 +202,21 @@ text-merge it, so two branches that both rebuild cannot merge. The gap and what
 would close it are recorded; the closing is a human's. `0x0457` stays
 `present-untested`.
 
+> **Superseded 2026-10-04, issue #175.** The gap above is closed, and the
+> partition this write-up is about is now nine carried and one not. #175 seeded
+> the routines the four sites sit in through `ghidra-functions.csv` rows, which
+> the default build mode exports from a scratch copy of the project, so
+> `--mode rebuild-project` was not needed after all. `site-resolution.csv` now
+> resolves the four to bank1 `0x818A` `set_0472_20_and_0457_low3_101`, `0x81C5`
+> `clear_0457_low3_and_dispatch_0800_bit7`, `0x823A`
+> `set_0472_08_and_0457_low3_011` and `0x8261`
+> `set_0472_20_and_0457_low3_101_then_gate`, still `read+write` and still with no
+> callee. `xdata-registers.csv` carries a `0x0457` row, spelled by symbol rather
+> than by the pair-literal seed shape the other eight have, and
+> `xdata_register_map.py`'s `NOT_IN_TREE` has no entry for it. Nothing here moves
+> its status: it stays `present-untested`. `0x0420` is still the one the census
+> does not carry, for the reason in §3.
+
 **Why not `ec/annotations/bank-call-audit.md`.** The issue points there, and the
 file is the right *kind* of record — calls naming an address no program exports
 — but its subject is call *targets*, and nothing calls these. The four are

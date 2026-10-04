@@ -641,7 +641,8 @@ only related text is a generic `0xFE410000+addr` mention in
   chunks of one table (`0x00`, `0x05`, `0x80`, `0x83`), and `0x043E`, `0x0459`,
   `0x045B`, `0x045C`, `0x045F` and eight others are zeroed or seeded by records
   the direct scan cannot see. `0x0457` is the sharpest case — its only four
-  EC-side sites are read-modify-writes in code no export covers (§11 item 4 of
+  EC-side sites are read-modify-writes, one in each of four named exports
+  (§11 item 4 of
   the page document), and it now has a table-driven writer as well. That is the
   same gap the seven comments have, one level down.
 - **Follow-ups this opens**, in rough value order:

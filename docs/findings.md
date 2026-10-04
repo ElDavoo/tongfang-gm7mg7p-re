@@ -5381,7 +5381,7 @@ hands back, and it needs a function seed.
 
 **The reading itself.** 37 of the 43 are countdowns the same twenty
 instructions walk over, 6 are what four of them do at zero, and the two the
-clustering cut into `main-ec-128` and `main-ec-214` (`0x06C6`, `0x06CD`) are
+clustering cut into `countdown-06c6` and `countdown-06cd` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
 `0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
 its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
