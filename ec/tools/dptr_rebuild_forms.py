@@ -52,9 +52,9 @@ the firmware cannot contain the form.
 
 **Three buckets, and the third is not a rounding error.** `store` is the
 form that replaces the pointer or one of its bytes -- every construction
-`is_dptr_rebuild()` names, plus the two `mov direct,@Ri` forms it does not,
-which `../../docs/findings/dptr-rebuild-walk-guard.md` §3 records as a gap
-in the guard rather than a decision in it. `read` is a load of one of the
+`is_dptr_rebuild()` names, the two `mov direct,@Ri` forms included since
+#1391 closed the gap `../../docs/findings/dptr-rebuild-walk-guard.md` §3
+recorded against the guard. `read` is a load of one of the
 two bytes into A, an Rn, an indirect cell or the stack, which rebuilds
 nothing and must not be swept in with the stores. `in place` is the
 arithmetic, logical, `inc`/`dec`, `clr`, `djnz` and `xch` group, which name
@@ -213,9 +213,8 @@ IN_PLACE_FORMS = {
 }
 BUCKETS = (("store", STORE_FORMS,
             "it replaces DPTR or one of its two bytes -- every construction "
-            "`is_dptr_rebuild()` names, and the two `mov direct,@Ri` forms it "
-            "does not, which dptr-rebuild-walk-guard.md §3 records as a gap "
-            "in the guard rather than a decision in it"),
+            "`is_dptr_rebuild()` names, which is what "
+            "test_dptr_rebuild_forms.py asserts these two sets are"),
            ("read", READ_FORMS,
             "the other side of the operand order -- it loads one of the two "
             "bytes, so it rebuilds nothing and ends no window; `0x85` is here "

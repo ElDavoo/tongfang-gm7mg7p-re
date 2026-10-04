@@ -1,0 +1,496 @@
+========================================================================
+acpica-region-access-excerpt.c.txt -- what ACPICA does with the operand
+of a `Field` read out of a `SystemMemory` operation region
+========================================================================
+
+Issue #1337 asked what the *interpreter* does with the unaligned operand
+`MMRD` passes to `MMRW`, because `docs/findings/mmrd-unaligned-escape.md`
+holds the ASL and the vendor driver and neither of those interprets AML.
+This is the source the behaviour comes from: the ACPI reference
+implementation, which the specification is written against and which the
+Linux kernel builds a copy of. `linux-acpi-region-access-excerpt.c.txt`
+is that copy; the two hold the same decision points in two independent
+implementations, because the claim is that both behave the same way and
+one of them doing it would not show that.
+
+Each fragment below is a `sed -n A,Bp` range of the real upstream file, with
+upstream's own line number as a prefix, so a line cited from the write-up
+means the same line here and in the ACPICA tree. The fragments are here
+because a claim rests on them, and they are bounded rather than whole
+files for that reason -- `linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt`
+says why, and `fetch-acpi-sources.sh` re-derives every one of them from a
+fresh fetch and diffs the result against this file.
+
+  Project      : acpica/acpica
+  Revision     : e85aa3bebaae81ed1e6d163511ac7e1eafe732cf (branch master, committed 2026-09-30)
+  Licence      : BSD-3-Clause OR GPL-2.0-only. Every file excerpted below
+                 carries `SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0-only`
+                 in its header, at `acmacros.h` line 10 upstream -- above every
+                 excerpted range, so the line is quoted as a fragment further
+                 down rather than being asserted here.
+  Retrieved    : 2026-10-04
+  Fetched from : https://raw.githubusercontent.com/acpica/acpica/e85aa3bebaae81ed1e6d163511ac7e1eafe732cf/
+
+What the write-up reads out of them, so a reader knows what to look at:
+
+  * `AcpiExSystemMemorySpaceHandler` validates the access *width* and, on
+    Itanium only, the access *address*. On anything else the pointer it
+    loads from is derived from the requested address and nothing tests
+    its residue against the width.
+  * `MMRW`'s field is declared `ByteAcc`, and `AcpiExDecodeFieldAccess`
+    turns that into an access width of 8 bits -- so the width reaching
+    the handler is the access granularity, not the 32 bits the field
+    declares.
+  * `AcpiExExtractFromField` therefore issues one region access per datum,
+    advancing the offset by the access width each time, which is four
+    separate byte-wide accesses for a 32-bit field.
+  * The route a field read takes to get there, so that "the field read is
+    split" is checkable as a route and not only as a claim: the resolve and
+    read-data fragments carry the first two edges, and the
+    `AcpiExAccessRegion` banner carries the third.
+
+Nothing here was run. These are static reads of public source, and they say
+what the interpreter does with the operand -- not what this machine's
+Windows `ACPI.sys` does, which is closed source and is recorded as a null
+in `docs/findings/acpi-interpreter-region-access.md`.
+
+--- fragments below this line are verbatim from acpica at the revision above ---
+
+  [AcpiExSystemMemorySpaceHandler -- the bit-width switch that rejects a width it does not know, and the alignment test that is behind #ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED]
+  source/components/executer/exregion.c lines 41-105
+     41: ACPI_STATUS
+     42: AcpiExSystemMemorySpaceHandler (
+     43:     UINT32                  Function,
+     44:     ACPI_PHYSICAL_ADDRESS   Address,
+     45:     UINT32                  BitWidth,
+     46:     UINT64                  *Value,
+     47:     void                    *HandlerContext,
+     48:     void                    *RegionContext)
+     49: {
+     50:     ACPI_STATUS             Status = AE_OK;
+     51:     void                    *LogicalAddrPtr = NULL;
+     52:     ACPI_MEM_SPACE_CONTEXT  *MemInfo = RegionContext;
+     53:     ACPI_MEM_MAPPING        *Mm = MemInfo->CurMm;
+     54:     UINT32                  Length;
+     55:     ACPI_SIZE               MapLength;
+     56: #ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
+     57:     UINT32                  Remainder;
+     58: #endif
+     59: 
+     60: 
+     61:     ACPI_FUNCTION_TRACE (ExSystemMemorySpaceHandler);
+     62: 
+     63: 
+     64:     /* Validate and translate the bit width */
+     65: 
+     66:     switch (BitWidth)
+     67:     {
+     68:     case 8:
+     69: 
+     70:         Length = 1;
+     71:         break;
+     72: 
+     73:     case 16:
+     74: 
+     75:         Length = 2;
+     76:         break;
+     77: 
+     78:     case 32:
+     79: 
+     80:         Length = 4;
+     81:         break;
+     82: 
+     83:     case 64:
+     84: 
+     85:         Length = 8;
+     86:         break;
+     87: 
+     88:     default:
+     89: 
+     90:         ACPI_ERROR ((AE_INFO, "Invalid SystemMemory width %u",
+     91:             BitWidth));
+     92:         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
+     93:     }
+     94: 
+     95: #ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
+     96:     /*
+     97:      * Hardware does not support non-aligned data transfers, we must verify
+     98:      * the request.
+     99:      */
+    100:     (void) AcpiUtShortDivide ((UINT64) Address, Length, NULL, &Remainder);
+    101:     if (Remainder != 0)
+    102:     {
+    103:         return_ACPI_STATUS (AE_AML_ALIGNMENT);
+    104:     }
+    105: #endif
+
+  [the access itself: LogicalAddrPtr is derived from the requested Address, and the read switch loads at that pointer with ACPI_GET8/16/32/64]
+  source/components/executer/exregion.c lines 194-247
+    194: access:
+    195:     /*
+    196:      * Generate a logical pointer corresponding to the address we want to
+    197:      * access
+    198:      */
+    199:     LogicalAddrPtr = Mm->LogicalAddress +
+    200:         ((UINT64) Address - (UINT64) Mm->PhysicalAddress);
+    201: 
+    202:     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+    203:         "System-Memory (width %u) R/W %u Address=%8.8X%8.8X\n",
+    204:         BitWidth, Function, ACPI_FORMAT_UINT64 (Address)));
+    205: 
+    206:     /*
+    207:      * Perform the memory read or write
+    208:      *
+    209:      * Note: For machines that do not support non-aligned transfers, the target
+    210:      * address was checked for alignment above. We do not attempt to break the
+    211:      * transfer up into smaller (byte-size) chunks because the AML specifically
+    212:      * asked for a transfer width that the hardware may require.
+    213:      */
+    214:     switch (Function)
+    215:     {
+    216:     case ACPI_READ:
+    217: 
+    218:         *Value = 0;
+    219:         switch (BitWidth)
+    220:         {
+    221:         case 8:
+    222: 
+    223:             *Value = (UINT64) ACPI_GET8 (LogicalAddrPtr);
+    224:             break;
+    225: 
+    226:         case 16:
+    227: 
+    228:             *Value = (UINT64) ACPI_GET16 (LogicalAddrPtr);
+    229:             break;
+    230: 
+    231:         case 32:
+    232: 
+    233:             *Value = (UINT64) ACPI_GET32 (LogicalAddrPtr);
+    234:             break;
+    235: 
+    236:         case 64:
+    237: 
+    238:             *Value = (UINT64) ACPI_GET64 (LogicalAddrPtr);
+    239:             break;
+    240: 
+    241:         default:
+    242: 
+    243:             /* BitWidth was already validated */
+    244: 
+    245:             break;
+    246:         }
+    247:         break;
+
+  [AcpiExDecodeFieldAccess -- the access-type switch. ByteAcc lands in the AML_FIELD_ACCESS_BYTE case and returns 8, not 32]
+  source/components/executer/exprep.c lines 226-278
+    226:     Access = (FieldFlags & AML_FIELD_ACCESS_TYPE_MASK);
+    227: 
+    228:     switch (Access)
+    229:     {
+    230:     case AML_FIELD_ACCESS_ANY:
+    231: 
+    232: #ifdef ACPI_UNDER_DEVELOPMENT
+    233:         ByteAlignment =
+    234:             AcpiExGenerateAccess (ObjDesc->CommonField.StartFieldBitOffset,
+    235:                 ObjDesc->CommonField.BitLength,
+    236:                 0xFFFFFFFF /* Temp until we pass RegionLength as parameter */);
+    237:         BitLength = ByteAlignment * 8;
+    238: #endif
+    239: 
+    240:         ByteAlignment = 1;
+    241:         BitLength = 8;
+    242:         break;
+    243: 
+    244:     case AML_FIELD_ACCESS_BYTE:
+    245:     case AML_FIELD_ACCESS_BUFFER:   /* ACPI 2.0 (SMBus Buffer) */
+    246: 
+    247:         ByteAlignment = 1;
+    248:         BitLength     = 8;
+    249:         break;
+    250: 
+    251:     case AML_FIELD_ACCESS_WORD:
+    252: 
+    253:         ByteAlignment = 2;
+    254:         BitLength     = 16;
+    255:         break;
+    256: 
+    257:     case AML_FIELD_ACCESS_DWORD:
+    258: 
+    259:         ByteAlignment = 4;
+    260:         BitLength     = 32;
+    261:         break;
+    262: 
+    263:     case AML_FIELD_ACCESS_QWORD:    /* ACPI 2.0 */
+    264: 
+    265:         ByteAlignment = 8;
+    266:         BitLength     = 64;
+    267:         break;
+    268: 
+    269:     default:
+    270: 
+    271:         /* Invalid field access type */
+    272: 
+    273:         ACPI_ERROR ((AE_INFO,
+    274:             "Unknown field access type 0x%X",
+    275:             Access));
+    276: 
+    277:         return_UINT32 (0);
+    278:     }
+
+  [AcpiExPrepCommonFieldObject -- AccessBitWidth becomes AccessByteWidth, and the comment above it says what ByteAlignment means]
+  source/components/executer/exprep.c lines 341-391
+    341:     /*
+    342:      * Decode the access type so we can compute offsets. The access type gives
+    343:      * two pieces of information - the width of each field access and the
+    344:      * necessary ByteAlignment (address granularity) of the access.
+    345:      *
+    346:      * For AnyAcc, the AccessBitWidth is the largest width that is both
+    347:      * necessary and possible in an attempt to access the whole field in one
+    348:      * I/O operation. However, for AnyAcc, the ByteAlignment is always one
+    349:      * byte.
+    350:      *
+    351:      * For all Buffer Fields, the ByteAlignment is always one byte.
+    352:      *
+    353:      * For all other access types (Byte, Word, Dword, Qword), the Bitwidth is
+    354:      * the same (equivalent) as the ByteAlignment.
+    355:      */
+    356:     AccessBitWidth = AcpiExDecodeFieldAccess (
+    357:         ObjDesc, FieldFlags, &ByteAlignment);
+    358:     if (!AccessBitWidth)
+    359:     {
+    360:         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
+    361:     }
+    362: 
+    363:     /* Setup width (access granularity) fields (values are: 1, 2, 4, 8) */
+    364: 
+    365:     ObjDesc->CommonField.AccessByteWidth = (UINT8)
+    366:         ACPI_DIV_8 (AccessBitWidth);
+    367: 
+    368:     /*
+    369:      * BaseByteOffset is the address of the start of the field within the
+    370:      * region. It is the byte address of the first *datum* (field-width data
+    371:      * unit) of the field. (i.e., the first datum that contains at least the
+    372:      * first *bit* of the field.)
+    373:      *
+    374:      * Note: ByteAlignment is always either equal to the AccessBitWidth or 8
+    375:      * (Byte access), and it defines the addressing granularity of the parent
+    376:      * region or buffer.
+    377:      */
+    378:     NearestByteAddress =
+    379:         ACPI_ROUND_BITS_DOWN_TO_BYTES (FieldBitPosition);
+    380:     ObjDesc->CommonField.BaseByteOffset = (UINT32)
+    381:         ACPI_ROUND_DOWN (NearestByteAddress, ByteAlignment);
+    382: 
+    383:     /*
+    384:      * StartFieldBitOffset is the offset of the first bit of the field within
+    385:      * a field datum.
+    386:      */
+    387:     ObjDesc->CommonField.StartFieldBitOffset = (UINT8)
+    388:         (FieldBitPosition - ACPI_MUL_8 (ObjDesc->CommonField.BaseByteOffset));
+    389: 
+    390:     return_ACPI_STATUS (AE_OK);
+    391: }
+
+  [AcpiExAccessRegion -- the function the dispatch below sits in, so a reader can see which one it is without leaving this file]
+  source/components/executer/exfldio.c lines 202-222
+    202:  * FUNCTION:    AcpiExAccessRegion
+    203:  *
+    204:  * PARAMETERS:  ObjDesc                 - Field to be read
+    205:  *              FieldDatumByteOffset    - Byte offset of this datum within the
+    206:  *                                        parent field
+    207:  *              Value                   - Where to store value (must at least
+    208:  *                                        64 bits)
+    209:  *              Function                - Read or Write flag plus other region-
+    210:  *                                        dependent flags
+    211:  *
+    212:  * RETURN:      Status
+    213:  *
+    214:  * DESCRIPTION: Read or Write a single field datum to an Operation Region.
+    215:  *
+    216:  ******************************************************************************/
+    217: 
+    218: ACPI_STATUS
+    219: AcpiExAccessRegion (
+    220:     ACPI_OPERAND_OBJECT     *ObjDesc,
+    221:     UINT32                  FieldDatumByteOffset,
+    222:     UINT64                  *Value,
+
+  [the width handed to the address-space handler is AccessByteWidth * 8, so the AML field's declared bit length is not what reaches the handler]
+  source/components/executer/exfldio.c lines 273-278
+    273:     /* Invoke the appropriate AddressSpace/OpRegion handler */
+    274: 
+    275:     Status = AcpiEvAddressSpaceDispatch (RgnDesc, ObjDesc,
+    276:         Function, RegionOffset,
+    277:         ACPI_MUL_8 (ObjDesc->CommonField.AccessByteWidth), Value);
+    278: 
+
+  [AcpiExFieldDatumIo's own call site for AcpiExAccessRegion -- the datum goes through AccessRegion on its way to the dispatch above, rather than to the dispatch directly]
+  source/components/executer/exfldio.c lines 480-491
+    480: 
+    481:         ACPI_FALLTHROUGH;
+    482: 
+    483:     case ACPI_TYPE_LOCAL_REGION_FIELD:
+    484:         /*
+    485:          * For simple RegionFields, we just directly access the owning
+    486:          * Operation Region.
+    487:          */
+    488:         Status = AcpiExAccessRegion (
+    489:             ObjDesc, FieldDatumByteOffset, Value, ReadWrite);
+    490:         break;
+    491: 
+
+  [AcpiExExtractFromField -- AccessBitWidth, and the single-access shortcut that only applies when the field is exactly one datum wide]
+  source/components/executer/exfldio.c lines 725-746
+    725:     memset (Buffer, 0, BufferLength);
+    726:     AccessBitWidth = ACPI_MUL_8 (ObjDesc->CommonField.AccessByteWidth);
+    727: 
+    728:     /* Handle the simple case here */
+    729: 
+    730:     if ((ObjDesc->CommonField.StartFieldBitOffset == 0) &&
+    731:         (ObjDesc->CommonField.BitLength == AccessBitWidth))
+    732:     {
+    733:         if (BufferLength >= sizeof (UINT64))
+    734:         {
+    735:             Status = AcpiExFieldDatumIo (ObjDesc, 0, Buffer, ACPI_READ);
+    736:         }
+    737:         else
+    738:         {
+    739:             /* Use RawDatum (UINT64) to handle buffers < 64 bits */
+    740: 
+    741:             Status = AcpiExFieldDatumIo (ObjDesc, 0, &RawDatum, ACPI_READ);
+    742:             memcpy (Buffer, &RawDatum, BufferLength);
+    743:         }
+    744: 
+    745:         return_ACPI_STATUS (Status);
+    746:     }
+
+  [DatumCount / FieldDatumCount, and the priming read at offset zero]
+  source/components/executer/exfldio.c lines 758-774
+    758:     /* Compute the number of datums (access width data items) */
+    759: 
+    760:     DatumCount = ACPI_ROUND_UP_TO (
+    761:         ObjDesc->CommonField.BitLength, AccessBitWidth);
+    762: 
+    763:     FieldDatumCount = ACPI_ROUND_UP_TO (
+    764:         ObjDesc->CommonField.BitLength +
+    765:         ObjDesc->CommonField.StartFieldBitOffset, AccessBitWidth);
+    766: 
+    767:     /* Priming read from the field */
+    768: 
+    769:     Status = AcpiExFieldDatumIo (ObjDesc, FieldOffset, &RawDatum, ACPI_READ);
+    770:     if (ACPI_FAILURE (Status))
+    771:     {
+    772:         return_ACPI_STATUS (Status);
+    773:     }
+    774:     MergedDatum = RawDatum >> ObjDesc->CommonField.StartFieldBitOffset;
+
+  [the per-datum loop: the offset advances by AccessByteWidth, and datum i is shifted up by i * AccessBitWidth]
+  source/components/executer/exfldio.c lines 776-818
+    776:     /* Read the rest of the field */
+    777: 
+    778:     for (i = 1; i < FieldDatumCount; i++)
+    779:     {
+    780:         /* Get next input datum from the field */
+    781: 
+    782:         FieldOffset += ObjDesc->CommonField.AccessByteWidth;
+    783:         Status = AcpiExFieldDatumIo (
+    784:             ObjDesc, FieldOffset, &RawDatum, ACPI_READ);
+    785:         if (ACPI_FAILURE (Status))
+    786:         {
+    787:             return_ACPI_STATUS (Status);
+    788:         }
+    789: 
+    790:         /*
+    791:          * Merge with previous datum if necessary.
+    792:          *
+    793:          * Note: Before the shift, check if the shift value will be larger than
+    794:          * the integer size. If so, there is no need to perform the operation.
+    795:          * This avoids the differences in behavior between different compilers
+    796:          * concerning shift values larger than the target data width.
+    797:          */
+    798:         if (AccessBitWidth - ObjDesc->CommonField.StartFieldBitOffset <
+    799:             ACPI_INTEGER_BIT_SIZE)
+    800:         {
+    801:             MergedDatum |= RawDatum <<
+    802:                 (AccessBitWidth - ObjDesc->CommonField.StartFieldBitOffset);
+    803:         }
+    804: 
+    805:         if (i == DatumCount)
+    806:         {
+    807:             break;
+    808:         }
+    809: 
+    810:         /* Write merged datum to target buffer */
+    811: 
+    812:         memcpy (((char *) Buffer) + BufferOffset, &MergedDatum,
+    813:             ACPI_MIN(ObjDesc->CommonField.AccessByteWidth,
+    814:                 BufferLength - BufferOffset));
+    815: 
+    816:         BufferOffset += ObjDesc->CommonField.AccessByteWidth;
+    817:         MergedDatum = RawDatum >> ObjDesc->CommonField.StartFieldBitOffset;
+    818:     }
+
+  [why the alignment test is compiled out on anything but Itanium]
+  source/include/actypes.h lines 143-155
+    143: /*
+    144:  * In the case of the Itanium Processor Family (IPF), the hardware does not
+    145:  * support misaligned memory transfers. Set the MISALIGNMENT_NOT_SUPPORTED
+    146:  * flag to indicate that special precautions must be taken to avoid alignment
+    147:  * faults. (IA64 or ia64 is currently used by existing compilers to indicate
+    148:  * IPF.)
+    149:  *
+    150:  * Note: EM64T and other X86-64 processors support misaligned transfers,
+    151:  * so there is no need to define this flag.
+    152:  */
+    153: #if defined (__IA64__) || defined (__ia64__)
+    154: #define ACPI_MISALIGNMENT_NOT_SUPPORTED
+    155: #endif
+
+  [AcpiExResolveNodeToValue -- an ACPI_TYPE_LOCAL_REGION_FIELD source dispatches to AcpiExReadDataFromField, which is where a field read becomes a value]
+  source/components/executer/exresolv.c lines 278-287
+    278:     case ACPI_TYPE_LOCAL_REGION_FIELD:
+    279:     case ACPI_TYPE_LOCAL_BANK_FIELD:
+    280:     case ACPI_TYPE_LOCAL_INDEX_FIELD:
+    281: 
+    282:         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+    283:             "FieldRead SourceDesc=%p Type=%X\n",
+    284:             StackDesc, StackDesc->Common.Type));
+    285: 
+    286:         Status = AcpiExReadDataFromField (WalkState, StackDesc, &ObjDesc);
+    287: 
+
+  [AcpiExReadDataFromField calls AcpiExExtractFromField, the function that decides how many accesses to issue]
+  source/components/executer/exfield.c lines 274-278
+    274: 
+    275:     /* Read from the field */
+    276: 
+    277:     Status = AcpiExExtractFromField (ObjDesc, Buffer, BufferLength);
+    278:     AcpiExReleaseGlobalLock (ObjDesc->CommonField.FieldFlags);
+
+  [the SPDX-License-Identifier line the Licence field above rests on -- it sits above the excerpted ranges, so it would otherwise not be visible here]
+  source/include/acmacros.h lines 7-11
+      7: /******************************************************************************
+      8:  *
+      9:  * Copyright (c) 1999 - 2026, Intel Corp.
+     10:  * SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0-only
+     11:  *
+
+  [ACPI_GET32 -- the load itself, and the comment above it naming the hazard a wider access carries]
+  source/include/acmacros.h lines 18-34
+     18: /*
+     19:  * Extract data using a pointer. Any more than a byte and we
+     20:  * get into potential alignment issues -- see the STORE macros below.
+     21:  * Use with care.
+     22:  */
+     23: #define ACPI_CAST8(ptr)                 ACPI_CAST_PTR (UINT8, (ptr))
+     24: #define ACPI_CAST16(ptr)                ACPI_CAST_PTR (UINT16, (ptr))
+     25: #define ACPI_CAST32(ptr)                ACPI_CAST_PTR (UINT32, (ptr))
+     26: #define ACPI_CAST64(ptr)                ACPI_CAST_PTR (UINT64, (ptr))
+     27: #define ACPI_GET8(ptr)                  (*ACPI_CAST8 (ptr))
+     28: #define ACPI_GET16(ptr)                 (*ACPI_CAST16 (ptr))
+     29: #define ACPI_GET32(ptr)                 (*ACPI_CAST32 (ptr))
+     30: #define ACPI_GET64(ptr)                 (*ACPI_CAST64 (ptr))
+     31: #define ACPI_SET8(ptr, val)             (*ACPI_CAST8 (ptr) = (UINT8) (val))
+     32: #define ACPI_SET16(ptr, val)            (*ACPI_CAST16 (ptr) = (UINT16) (val))
+     33: #define ACPI_SET32(ptr, val)            (*ACPI_CAST32 (ptr) = (UINT32) (val))
+     34: #define ACPI_SET64(ptr, val)            (*ACPI_CAST64 (ptr) = (UINT64) (val))

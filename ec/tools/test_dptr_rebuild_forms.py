@@ -285,14 +285,20 @@ BIT_ADDRESSED = frozenset(
      0xB0,                                          # anl c,/bit
      0xB2, 0xC1, 0xD2))                             # cpl / clr / setb bit
 
-# The two forms the census counts and `is_dptr_rebuild()` does not. `mov
-# direct,@Ri` replaces DPTR's byte by exactly the argument the rest of the
-# store table replaces it by, so leaving them out of the guard is a gap rather
-# than a decision -- and the census is not allowed to inherit it silently,
-# which is what naming them here is for. `dptr-rebuild-walk-guard.md` §3
-# records it against the guard and `dptr-guard-census-vs-1027.md` §3 counts
-# it; this file only holds the delta from being anything else.
-GUARD_GAP_OPS = frozenset((0x86, 0x87))
+# **The two lists are one relation, and it is asserted as a relation.**
+# `STORE_FORMS` above is `trace_xdata_refs.DIRECT_STORE_OPS` plus
+# `MOV_DIRECT_DIRECT`, the one form whose destination is its *second*
+# operand and so the guard carries as a separate case. They used to disagree,
+# by `GUARD_GAP_OPS` below: `mov direct,@Ri` (`0x86`/`0x87`) replaces DPTR's
+# byte by exactly the argument the rest of the store table replaces it by, so
+# leaving them out of the guard was a gap rather than a decision, and naming
+# the delta here held it open so the census could not inherit it silently.
+# #1391 closed it, and the delta is gone rather than renamed: a set that is
+# asserted equal cannot also carry a documented exception, and one that could
+# is the shape that let the two drift at all. The account is
+# `dptr-guard-mov-direct-at-ri.md`; the argument the guard left them out on
+# is left visible in `dptr-rebuild-walk-guard.md` §3 with the correction beside
+# it, and `dptr-guard-census-vs-1027.md` §3 counts them.
 
 # The committed Ghidra listings, which are the authority `DIRECT_BEARING` is
 # checked against. Read from disk rather than transcribed: the whole point of
@@ -664,8 +670,7 @@ class BucketShapeTests(unittest.TestCase):
         # `ec/tools/test_direct_address_renderings.py`.
         for op in F.STORE_FORMS:
             with self.subTest(op=hex(op)):
-                self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT}
-                              | GUARD_GAP_OPS)
+                self.assertIn(op, T.DIRECT_STORE_OPS | {T.MOV_DIRECT_DIRECT})
         for op in F.IN_PLACE_FORMS:
             with self.subTest(op=hex(op)):
                 self.assertNotIn(op, T.DIRECT_STORE_OPS)
@@ -697,31 +702,66 @@ class BucketShapeTests(unittest.TestCase):
         self.assertEqual(mnemonic(bytes([0x42, 0xF0]), 0), "orl  0xf0,a")
         self.assertEqual(mnemonic(bytes([0x63, 0x65, 0xFF]), 0), "xrl  0x65,#0xff")
 
-    def test_the_store_table_is_the_guard_opcode_set_plus_a_named_gap(self):
+    def test_the_store_table_is_the_guard_opcode_set_plus_the_85_exception(self):
         # `DIRECT_STORE_OPS` plus the `0x85` exception is what
         # `trace_xdata_refs.is_dptr_rebuild()` consults, and the census's
         # store table has to be that set or the census is counting something
         # else. Asserted as equality rather than as a count, so an opcode
         # added to one and not the other is red whichever way it went.
         #
-        # The equality is against the guard's set **plus the two `mov
-        # direct,@Ri` forms the guard does not name**. That delta is
-        # `GUARD_GAP_OPS`, written out here so it is a decision on the page
-        # rather than a difference a reader has to notice themselves;
-        # `dptr-rebuild-walk-guard.md` §3 records what it is and
-        # `dptr-guard-census-vs-1027.md` §3 counts it.
+        # **Corrected 2026-10-04, issue #1391: the right-hand side names the
+        # gap no longer.** It used to add `GUARD_GAP_OPS` on top of `0x85`,
+        # and a union that names an exception is idempotent -- once the guard
+        # carried `0x86`/`0x87` themselves this comparison still passed while
+        # being structurally unable to notice that it had. The negative
+        # control that shows this comparison can reject a wrong answer is the
+        # case below.
         self.assertEqual(set(F.STORE_FORMS),
-                         set(T.DIRECT_STORE_OPS) | {0x85} | GUARD_GAP_OPS)
+                         set(T.DIRECT_STORE_OPS) | {T.MOV_DIRECT_DIRECT})
 
-    def test_the_two_mov_direct_at_ri_forms_are_the_only_gap(self):
-        # The census counts the two forms the guard declines, and nothing
-        # else. Asserted against the guard's own set rather than as "two",
-        # so widening either list without the other is red whichever way it
-        # went -- and so the delta cannot quietly grow into a different claim.
-        self.assertEqual(GUARD_GAP_OPS, frozenset((0x86, 0x87)))
-        for op in GUARD_GAP_OPS:
-            with self.subTest(op=hex(op)):
-                self.assertFalse(T.is_dptr_rebuild(bytes([op, 0x82]), 0))
+    def test_an_opcode_added_to_one_store_list_without_the_other_is_caught(self):
+        # The property the case above could not check, and the reason it is
+        # written as equality rather than as a union that tolerates a named
+        # exception. Both ways of getting the relation wrong -- a member one
+        # set has and the other does not, from either side -- are driven
+        # through the same comparison and asserted to be caught, so the check
+        # is shown able to reject rather than only to accept what is there
+        # today. A relation, not a census: the property is "these two sets
+        # agree", which no merge into this file can falsify, and not a count of
+        # opcodes, which the next form added to the map would.
+        census = set(F.STORE_FORMS)
+        guard = set(T.DIRECT_STORE_OPS) | {T.MOV_DIRECT_DIRECT}
+        self.assertEqual(census, guard)
+        # One member missing from the census side -- `0x87` is `mov direct,@r1`,
+        # which is the form the two lists actually disagreed about, so this is
+        # the direction that drifted once.
+        self.assertNotEqual(census - {0x87}, guard)
+        # One member added to the census side, and the same member added to the
+        # guard side. `0x2C` is `add a,r4`: a register form with no operand byte
+        # at all, so either list carrying it is wrong by construction.
+        self.assertNotEqual(census | {0x2C}, guard)
+        self.assertNotEqual(census, guard | {0x2C})
+
+    def test_the_mov_direct_at_ri_forms_rebuild_dptr_for_the_guard_too(self):
+        # The positive statement replacing the case that held the gap open.
+        # `mov direct,@Ri` names its destination at `d[i+1]`, the index every
+        # other two-byte store form uses, so the `DIRECT_STORE_OPS` branch of
+        # `is_dptr_rebuild()` answers for them with no special case -- and
+        # `walk_budget_census.dptr_store_byte()`, which is what the census
+        # reads, names the same byte. Asserted per operand rather than as a
+        # count, so the store side and the load side are both held.
+        for op in (0x86, 0x87):
+            for byte in (T.DPL, T.DPH):
+                with self.subTest(op=hex(op), byte=hex(byte)):
+                    self.assertTrue(T.is_dptr_rebuild(bytes([op, byte]), 0))
+        from walk_budget_census import dptr_store_byte
+        self.assertEqual(dptr_store_byte(bytes([0x86, T.DPL, 0x00])), T.DPL)
+        self.assertEqual(dptr_store_byte(bytes([0x87, T.DPH, 0x00])), T.DPH)
+        # And the forms the guard names for one byte and not the other, so the
+        # two subTests above cannot be satisfied by a predicate reading the
+        # wrong operand index: `d[i+1]` for `0x86`/`0x87`, `d[i+2]` for `0x85`.
+        self.assertFalse(T.is_dptr_rebuild(bytes([0x86, 0x00, T.DPL]), 0))
+        self.assertFalse(T.is_dptr_rebuild(bytes([0x85, 0x00, 0x00]), 0))
 
     def test_the_three_tables_are_the_whole_direct_map(self):
         # The completeness claim, against an oracle that shares no source with

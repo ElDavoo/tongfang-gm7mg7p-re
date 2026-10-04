@@ -197,6 +197,30 @@ into `r2 -a 8051` with no stitching needed.
   smaller number, and a smaller number nobody can audit is indistinguishable
   from absence. Reads the committed image and the committed YAML only — no
   capture, no EC, no register read back.
+- **`tools/bank_call_regions.py`** — writes
+  `annotations/bank-call-regions.csv`, which labels **every** bucket-C site and
+  every paged `ajmp`/`acall` site with the data region it lands in, and answers
+  the second of the two questions `tools/data_regions.py` asks about an offset:
+  not only *is this site inside a listed region* but *is it on that region's
+  entry grid*. `--write` regenerates the committed table, `--check` re-derives
+  every cell of every row from the image and `annotations/data-regions.yaml` and
+  diffs — naming the first differing `file_offset` rather than printing a count
+  — and a **missing** file is a failure rather than something to create, since a
+  `--check` that writes the file it is checking decides what the file says.
+  `--self-test` holds the refusals (an unknown region name, a `file_offset`
+  outside the image, a cell outside its closed vocabulary, the
+  `in_data_region`/`region_name` conflation in both directions, and an alignment
+  computed against a null stride), each run once with the mutation in place,
+  plus the oracle from `../docs/findings/ec-data-regions.md`.
+  `entry_aligned` is **three**-valued and keyed on the YAML's `confidence`, not
+  its `shape`: only a `read-by-hand`
+  region's grid is a claim the modulo test may be asked about, so an `inferred`
+  or `inferred-unchecked` row leaves the cell empty and names the reason in
+  `region_confidence`. A **sibling** of the committed per-site call tables
+  rather than a column on any of them — `bank-call-targets.csv` and
+  `build_ec_decompile.py`'s `CALL_TARGET_COLUMNS` are unchanged, since that list
+  is asserted in the cheap gate. The write-up is
+  [`../docs/findings/bank-call-regions-csv.md`](../docs/findings/bank-call-regions-csv.md).
 - **`tools/check_register_counts.py`** — recomputes every `static_refs`,
   `static_refs_main_ec` and `static_refs_pd_image` in
   `annotations/registers.yaml` from the image and exits non-zero on a mismatch
@@ -413,8 +437,8 @@ into `r2 -a 8051` with no stitching needed.
   `annotations/xdata-clusters.csv`, both regenerable, with `--check` and
   `--self-test` running on committed text alone (no image, no Ghidra, no
   network). Reach for it when the question is "which addresses exist, which
-  routines share them, and is this number a read or a write" — the whole
-  `registers.yaml` list is 153 addresses, and this census is 1,326. Two limits
+  routines share them, and is this number a read or a write" — the census is
+  many times the size of the `registers.yaml` list. Two limits
   it earns the right to state: it splits the main EC from the separate
   `ITE8850-PD` program rather than mixing them, and a cluster is a
   co-occurrence in static code, not a purpose —
@@ -725,8 +749,8 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
 - **`annotations/registers.yaml`** — every EC register the `uniwill-laptop`
   driver or the Windows service touches, cross-referenced against static-scan
   results and live-hardware behaviour. This is the primary research output;
-  start here. It is 144 addresses, and `annotations/xdata-register-map.md`
-  covers 1,326 — the two corpora are nearly disjoint, and which of the two a
+  start here. `annotations/xdata-register-map.md` covers many times as many
+  addresses — the two corpora are nearly disjoint, and which of the two a
   question is about decides where the answer lives.
 - **`annotations/data-regions.yaml`** — the seven byte ranges in this image
   that `annotations/bank-call-audit.md` §2 and §5 read as **data tables rather
@@ -849,7 +873,13 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   `annotations/bank-call-targets.csv`,
   `annotations/bank-paged-call-targets.csv`,
   `annotations/bank-relative-branch-targets.csv` and
-  `annotations/trampoline-target-reading.csv` are the per-site tables.
+  `annotations/trampoline-target-reading.csv` are the per-site tables, and
+  `annotations/bank-call-regions.csv` is a generated sibling of the first two
+  carrying the `annotations/data-regions.yaml` label per site — including
+  `entry_aligned`, which says whether a site is on its region's entry grid
+  rather than merely inside the span, for the whole population rather than for
+  a sample. It is why the answer is a sibling file and not a column on one of
+  the others; see `tools/bank_call_regions.py` above.
 - **`annotations/bank-attribution.md`** — what the 403-trampoline closure does
   with the 1288 pairs §4 of that file leaves to the same-bank assumption: 775
   evidence-decided (568 agreeing, 207 contradicting), 115 attributed to both
