@@ -2334,9 +2334,9 @@ symbol table.
 | cluster | key | name | size | refs | range | named inside | co-reading (§4.5) | the functions the cluster's addresses share |
 |---|---|---|---:|---:|---|---|---|---|
 | `main-ec-001` | `ke794087e13a6` | — | 152 | 873 | `0x0300`-`0x097B` | 11 | 37/100 fns, 479 (55%) | `FUN_CODE_dee8`, `FUN_CODE_def1`, `FUN_CODE_db0b` — **new, and the pass is what made it**: §4.7's 155 addresses are spread across this same `0x0300`-`0x05xx` working page, and the three routines whose `FUN_CODE_0402`/`FUN_CODE_0408` calls the pass resolves are the ones this cluster's addresses share. The old `0x0300`-page row is inside it (§4.7) |
-| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 34 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
+| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | 1,130 | `0x0456`-`0x1809` | 35 | 25/136 fns, 294 (26%) | `fill_08xx_from_code_table`, `apply_oem_overrides_then_fill_08xx`, `mode_tick_084c_07a5_09ee`, `charge_target_update` — the mode/OEM initialisation set |
 | `main-ec-003` | `k733222e83898` | `counter-sweep` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | **63/127 fns, 4,642 (93%)** | `decrement_nonzero_xdata_counters`, `read_06c6`, `skip_06c6_decrement` — one loop walking a block of counters |
-| `main-ec-004` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
+| `main-ec-004` | `ka39cda99615f` | `level-block-086x` | 28 | 181 | `0x045C`-`0x1C3A` | 15 | 8/21 fns, 66 (36%) | `gate_06e6_442_then_sync_046a_from_086b`, `dispatch_on_0860`, `compute_level_blocks_086b_086c_086e` — the `0x06E6`/`0x0860` gate block |
 | `main-ec-005` | `ka07bfc4f80cd` | — | 16 | 94 | `0x043E`-`0x300E` | `0x043E` | 6/22 fns, 34 (36%) | `FUN_CODE_9b3c`, `FUN_CODE_9c53`, `stage_3000_block_then_probe_3000_3007` |
 | `main-ec-006` | `k49c52e2b2052` | — | 15 | 68 | `0x0388`-`0x03C9` | none | 0/5 fns, 0 (0%) | `mul_0342_0514_into_0388_when_03d0_lt_0384`, `FUN_CODE_d6ee`, `add_03a6_plus_0388_into_039e` |
 | `main-ec-007` | `kea0c67af9b51` | `ff-fill-stubs` | 12 | 280 | `0x0045`-`0x1504` | none | 10/31 fns, 209 (75%) | three `ff_filler_not_a_function_*`, the fill stub block |
@@ -2425,7 +2425,7 @@ produces — `--check` exits 0 on this tree, where it exited 1 on both sides of
 this merge.)*
 
 `main-ec-002` is the one that matters most and the one most likely to be
-misread. It is where 34 named registers land, so it looks like "the named
+misread. It is where 35 named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
 92 addresses reached by one mode tick and one OEM override pass is a statement

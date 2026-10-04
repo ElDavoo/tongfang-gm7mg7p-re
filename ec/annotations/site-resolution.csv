@@ -403,6 +403,8 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x093AE,bank0,0x93AE,write,write,0x9334 seed_tcc_defaults_from_ba36,,
 0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x093B9,bank0,0x93B9,write,write,0x9334 seed_tcc_defaults_from_ba36,,
 0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x093C6,bank0,0x93C6,write,write,0x9334 seed_tcc_defaults_from_ba36,,
+0x078E,XDATA_078E,0x0A7DB,bank0,0xA7DB,read+write,read+write,0xA7C8 FUN_CODE_a7c8,,
+0x078E,XDATA_078E,0x0B12C,bank0,0xB12C,read+write,read+write,0xB12C manual_ctrl_profile_gate,,
 0x0786,CPU_TCC_OFFSET (APTC/APTN),0x09492,bank0,0x9492,read,read,0x948D code_byte_to_0a4a_then_push_r7,,
 0x0786,CPU_TCC_OFFSET (APTC/APTN),0x094A0,bank0,0x94A0,read,read,0x948D code_byte_to_0a4a_then_push_r7,,
 0x0786,CPU_TCC_OFFSET (APTC/APTN),0x0AD81,bank0,0xAD81,write,write,0xACB4 reset_xdata_flags_and_07d5_to_ff,,
@@ -935,3 +937,147 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0EAE,CTL6,0x0F365,bank0,0xF365,read,read,not exported,,
 0x0EAF,CTL7,0x0F36D,bank0,0xF36D,read,read,not exported,,
 0x0EB8,MGI8,0x0F228,bank0,0xF228,read+write,read+write,0xF221 gate_on_0x12_update_0xeb8,,
+0x047C,MAILBOX_PAYLOAD_LATCH,0x10922,bank1,0x8922,read,read,0x8915 saturating_count_09f0_then_call_88f0,,
+0x047C,MAILBOX_PAYLOAD_LATCH,0x10937,bank1,0x8937,write,write,0x8915 saturating_count_09f0_then_call_88f0,,
+0x047C,MAILBOX_PAYLOAD_LATCH,0x1094B,bank1,0x894B,write,write,0x8915 saturating_count_09f0_then_call_88f0,,
+0x047C,MAILBOX_PAYLOAD_LATCH,0x1095C,bank1,0x895C,write,write,0x8955 init_09f1_and_zero_09f2_through_09f9,,
+0x070F,EVENT_RING_INDEX,0x108FD,bank1,0x88FD,read,read,0x88F0 push_r5_into_070f_ring_when_gates_pass,,
+0x070F,EVENT_RING_INDEX,0x10904,bank1,0x8904,write,write,0x8902 mask_and_store_to_070f_ring,,
+0x09F0,MAILBOX_DRAIN_COUNT,0x10928,bank1,0x8928,read,read,0x8915 saturating_count_09f0_then_call_88f0,,
+0x09F0,MAILBOX_DRAIN_COUNT,0x1092D,bank1,0x892D,write,write,0x8915 saturating_count_09f0_then_call_88f0,,
+0x09F0,MAILBOX_DRAIN_COUNT,0x1093C,bank1,0x893C,write,write,0x8915 saturating_count_09f0_then_call_88f0,,
+0x09F1,MAILBOX_INDEX,0x10940,bank1,0x8940,read,read,0x8915 saturating_count_09f0_then_call_88f0,,
+0x09F1,MAILBOX_INDEX,0x10957,bank1,0x8957,write,write,0x8955 init_09f1_and_zero_09f2_through_09f9,,
+0x09F1,MAILBOX_INDEX,0x1097B,bank1,0x897B,read,read,0x897B index_09f2_by_09f1_bits_7_5_and_bump_09f1,,
+0x09F1,MAILBOX_INDEX,0x10989,bank1,0x8989,read+write,read+write,0x897B index_09f2_by_09f1_bits_7_5_and_bump_09f1,,
+0x09F1,MAILBOX_INDEX,0x109A1,bank1,0x89A1,read+write,read+write,0x897B index_09f2_by_09f1_bits_7_5_and_bump_09f1,,
+0x09F1,MAILBOX_INDEX,0x109B5,bank1,0x89B5,read,read,0x89B5 store_r7_to_09f2_by_09f1_bits_0_2_and_bump,,
+0x09F1,MAILBOX_INDEX,0x109BC,bank1,0x89BC,read,read,0x89B5 store_r7_to_09f2_by_09f1_bits_0_2_and_bump,,
+0x09F1,MAILBOX_INDEX,0x109C8,bank1,0x89C8,read+write,read+write,0x89B5 store_r7_to_09f2_by_09f1_bits_0_2_and_bump,,
+0x09F1,MAILBOX_INDEX,0x109DF,bank1,0x89DF,read+write,read+write,0x89B5 store_r7_to_09f2_by_09f1_bits_0_2_and_bump,,
+0x09F2,MAILBOX_RING_SLOT0,0x10962,bank1,0x8962,write,write,0x8955 init_09f1_and_zero_09f2_through_09f9,,
+0x09F2,MAILBOX_RING_SLOT0,0x10982,bank1,0x8982,handed to lcall/ljmp (unresolved),unresolved-handoff,0x897B index_09f2_by_09f1_bits_7_5_and_bump_09f1,0x89A9,0x89A9 read_xdata_at_dptr_plus_a
+0x09F2,MAILBOX_RING_SLOT0,0x109C2,bank1,0x89C2,handed to lcall/ljmp (unresolved),unresolved-handoff,0x89B5 store_r7_to_09f2_by_09f1_bits_0_2_and_bump,0x89E7,0x89E7 write_xdata_at_dptr_plus_a
+0x09EF,MAILBOX_PUBLISH_GUARD,0x09F8C,bank0,0x9F8C,read,read,0x9D9B compute_level_blocks_086b_086c_086e,,
+0x09EF,MAILBOX_PUBLISH_GUARD,0x09F99,bank0,0x9F99,write,write,0x9D9B compute_level_blocks_086b_086c_086e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x00A80,common,0x0A80,write,write,0x0A7F FUN_CODE_0a7f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x00ABB,common,0x0ABB,write,write,0x0A7F FUN_CODE_0a7f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x00AC1,common,0x0AC1,read,read,0x0A7F FUN_CODE_0a7f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02240,common,0x2240,write,write,0x223F FUN_CODE_223f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0232C,common,0x232C,write,write,0x22EF FUN_CODE_22ef,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02332,common,0x2332,read,read,0x22EF FUN_CODE_22ef,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x027E4,common,0x27E4,write,write,0x27E3 FUN_CODE_27e3,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02806,common,0x2806,write,write,0x2802 FUN_CODE_2802,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0280C,common,0x280C,read,read,0x2802 FUN_CODE_2802,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02D8F,common,0x2D8F,write,write,0x2D8F FUN_CODE_2d8f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02DA8,common,0x2DA8,read,read,0x2D8F FUN_CODE_2d8f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02DBE,common,0x2DBE,read,read,0x2D8F FUN_CODE_2d8f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02DD0,common,0x2DD0,read,read,0x2D8F FUN_CODE_2d8f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x02F85,common,0x2F85,write,write,0x2F85 FUN_CODE_2f85,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03042,common,0x3042,write,write,0x3042 FUN_CODE_3042,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03057,common,0x3057,handed to lcall/ljmp -> callee reads,read,0x3042 FUN_CODE_3042,0x3C03,0x3C03 FUN_CODE_3c03
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0308F,common,0x308F,handed to lcall/ljmp -> callee reads,read,0x3042 FUN_CODE_3042,0x3C03,0x3C03 FUN_CODE_3c03
+0x0A47,MAILBOX_PUBLISH_VALUE,0x034C2,common,0x34C2,write,write,0x3459 FUN_CODE_3459,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x034C6,common,0x34C6,read,read,0x34C6 FUN_CODE_34c6,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0353A,common,0x353A,read,read,0x34C6 FUN_CODE_34c6,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03555,common,0x3555,read+write,read+write,0x3555 FUN_CODE_3555,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03C00,common,0x3C00,read,read,0x3C00 FUN_CODE_3c00,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03C2F,common,0x3C2F,read,read,0x3C2F FUN_CODE_3c2f,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03FA7,common,0x3FA7,write,write,0x3FA7 FUN_CODE_3fa7,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03FD4,common,0x3FD4,read+write,read+write,0x3FA7 FUN_CODE_3fa7,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03FF1,common,0x3FF1,read,read,0x3FA7 FUN_CODE_3fa7,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x03FFB,common,0x3FFB,read,read,0x3FA7 FUN_CODE_3fa7,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x04058,common,0x4058,read,read,0x4016 FUN_CODE_4016,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x04060,common,0x4060,read,read,0x4060 FUN_CODE_4060,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0415A,common,0x415A,read,read,0x412E FUN_CODE_412e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x04163,common,0x4163,read,read,0x412E FUN_CODE_412e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0416E,common,0x416E,read,read,0x412E FUN_CODE_412e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0418F,common,0x418F,read,read,0x412E FUN_CODE_412e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x04379,common,0x4379,read,read,0x4376 FUN_CODE_4376,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x088F6,bank0,0x88F6,handed to lcall/ljmp -> callee reads,read,0x888D fan_table_mailbox_handler,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x08918,bank0,0x8918,handed to lcall/ljmp -> callee reads,read,0x888D fan_table_mailbox_handler,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x08B1D,bank0,0x8B1D,handed to lcall/ljmp -> callee reads,read,0x8B14 FUN_CODE_8b14,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x08B88,bank0,0x8B88,handed to lcall/ljmp -> callee reads,read,0x8B14 FUN_CODE_8b14,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x092B9,bank0,0x92B9,write,write,0x9277 FUN_CODE_9277,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09303,bank0,0x9303,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0931A,bank0,0x931A,read,read,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09322,bank0,0x9322,read,read,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0935B,bank0,0x935B,write,write,0x9334 seed_tcc_defaults_from_ba36,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09375,bank0,0x9375,write,write,0x9334 seed_tcc_defaults_from_ba36,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0938F,bank0,0x938F,write,write,0x9334 seed_tcc_defaults_from_ba36,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0939B,bank0,0x939B,write,write,0x9334 seed_tcc_defaults_from_ba36,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x093A5,bank0,0x93A5,handed to lcall/ljmp -> callee reads,read,0x9334 seed_tcc_defaults_from_ba36,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x093BD,bank0,0x93BD,handed to lcall/ljmp -> callee reads,read,0x9334 seed_tcc_defaults_from_ba36,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09401,bank0,0x9401,handed to lcall/ljmp -> callee reads,read,0x9334 seed_tcc_defaults_from_ba36,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0942A,bank0,0x942A,handed to lcall/ljmp -> callee reads,read,0x93FF select_table_byte_against_044f,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0945D,bank0,0x945D,handed to lcall/ljmp -> callee reads,read,0x93FF select_table_byte_against_044f,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09476,bank0,0x9476,handed to lcall/ljmp -> callee reads,read,not exported,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09B00,bank0,0x9B00,handed to lcall/ljmp -> callee writes,write,0x9AAD dispatch_044b_then_write_01_02_03_or_04,0xBAF4,0xBAF4 store_r4_and_a_to_xdata_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09F66,bank0,0x9F66,handed to lcall/ljmp -> callee writes,write,0x9D9B compute_level_blocks_086b_086c_086e,0xBC7E,0xBC7E store_a_then_read_086c_set_cy
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09F88,bank0,0x9F88,write,write,0x9D9B compute_level_blocks_086b_086c_086e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x09F91,bank0,0x9F91,read,read,0x9D9B compute_level_blocks_086b_086c_086e,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A1CE,bank0,0xA1CE,write,write,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A1E1,bank0,0xA1E1,write,write,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A1F6,bank0,0xA1F6,write,write,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A202,bank0,0xA202,write,write,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A220,bank0,0xA220,handed to lcall/ljmp -> callee reads,read,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A24D,bank0,0xA24D,handed to lcall/ljmp -> callee reads,read,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A273,bank0,0xA273,handed to lcall/ljmp -> callee reads,read,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0A299,bank0,0xA299,handed to lcall/ljmp -> callee reads,read,0xA1C8 select_code_table_entry_and_store_0872_087a_088a,0xB987,0xB987 read_dptr_byte_into_r6
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0ADA3,bank0,0xADA3,write,write,0xADA3 write_0a47_from_r7,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0ADAE,bank0,0xADAE,read,read,0xADAE dispatch_on_0a47,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B17C,bank0,0xB17C,write,write,0xB158 charge_target_update,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B187,bank0,0xB187,no movx in window,unresolved-none,0xB158 charge_target_update,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B195,bank0,0xB195,read,read,0xB158 charge_target_update,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B362,bank0,0xB362,read,read,0xB35E charge_target_minus_r3_times_0a47,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B4BC,bank0,0xB4BC,handed to lcall/ljmp -> callee writes,write,0xB4A8 FUN_CODE_b4a8,0xBE2A,0xBE2A write_64_91_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B4D2,bank0,0xB4D2,handed to lcall/ljmp -> callee writes,write,0xB4A8 FUN_CODE_b4a8,0xBE32,0xBE32 write_64_c7_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B4E8,bank0,0xB4E8,handed to lcall/ljmp -> callee writes,write,0xB4A8 FUN_CODE_b4a8,0xBE3A,0xBE3A write_64_d9_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B4F4,bank0,0xB4F4,no movx in window,unresolved-none,0xB4A8 FUN_CODE_b4a8,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B508,bank0,0xB508,handed to lcall/ljmp -> callee reads,read,0xB4A8 FUN_CODE_b4a8,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B565,bank0,0xB565,handed to lcall/ljmp -> callee reads,read,0xB4A8 FUN_CODE_b4a8,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B607,bank0,0xB607,handed to lcall/ljmp -> callee writes,write,0xB5D3 FUN_CODE_b5d3,0xBE2A,0xBE2A write_64_91_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B61D,bank0,0xB61D,handed to lcall/ljmp -> callee writes,write,0xB5D3 FUN_CODE_b5d3,0xBE32,0xBE32 write_64_c7_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B637,bank0,0xB637,no movx in window,unresolved-none,0xB5D3 FUN_CODE_b5d3,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B64E,bank0,0xB64E,no movx in window,unresolved-none,0xB5D3 FUN_CODE_b5d3,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B662,bank0,0xB662,handed to lcall/ljmp -> callee reads,read,0xB5D3 FUN_CODE_b5d3,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B680,bank0,0xB680,handed to lcall/ljmp -> callee reads,read,0xB5D3 FUN_CODE_b5d3,0xB989,0xB989 finish_dptr_be16_load
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B6A8,bank0,0xB6A8,handed to lcall/ljmp -> callee reads,read,0xB5D3 FUN_CODE_b5d3,0xBA77,0xBA77 load_dptr_from_be16_at_dptr
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B6EE,bank0,0xB6EE,handed to lcall/ljmp -> callee reads,read,0xB5D3 FUN_CODE_b5d3,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B708,bank0,0xB708,handed to lcall/ljmp -> callee reads,read,0xB5D3 FUN_CODE_b5d3,0xB989,0xB989 finish_dptr_be16_load
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B767,bank0,0xB767,handed to lcall/ljmp -> callee writes,write,0xB737 FUN_CODE_b737,0xBE2A,0xBE2A write_64_91_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B77D,bank0,0xB77D,handed to lcall/ljmp -> callee writes,write,0xB737 FUN_CODE_b737,0xBE32,0xBE32 write_64_c7_pair
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B797,bank0,0xB797,no movx in window,unresolved-none,0xB737 FUN_CODE_b737,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B7AE,bank0,0xB7AE,no movx in window,unresolved-none,0xB737 FUN_CODE_b737,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B7C2,bank0,0xB7C2,handed to lcall/ljmp -> callee reads,read,0xB737 FUN_CODE_b737,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B7DA,bank0,0xB7DA,handed to lcall/ljmp -> callee reads,read,0xB737 FUN_CODE_b737,0xB989,0xB989 finish_dptr_be16_load
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B7FE,bank0,0xB7FE,handed to lcall/ljmp -> callee reads,read,0xB737 FUN_CODE_b737,0xB93D,0xB93D load_dptr_be16_from_xdata
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B820,bank0,0xB820,handed to lcall/ljmp -> callee reads,read,0xB737 FUN_CODE_b737,0xB989,0xB989 finish_dptr_be16_load
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B84D,bank0,0xB84D,write,write,0xB83B FUN_CODE_b83b,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B865,bank0,0xB865,read,read,0xB83B FUN_CODE_b83b,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0B876,bank0,0xB876,read,read,0xB83B FUN_CODE_b83b,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0BB51,bank0,0xBB51,no movx in window,unresolved-none,0xBB4D store_a_to_08b9,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0BC56,bank0,0xBC56,write,write,0xBC4F fan_table_base_offset_helper,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0BC7B,bank0,0xBC7B,write,write,0xBC7B load_dptr_0a47_then_nothing,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0BCD2,bank0,0xBCD2,write,write,0xBCCB store_be16_of_08e6_and_arg_to_0a47,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0BE64,bank0,0xBE64,no movx in window,unresolved-none,0xBE5D add_20_carry_to_r6_r7,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0BE73,bank0,0xBE73,write,write,0xBE73 write_a_then_zero_at_0a47_0a48,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0D508,bank0,0xD508,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0D517,bank0,0xD517,read,read,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0D524,bank0,0xD524,read,read,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0D53B,bank0,0xD53B,read,read,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DE2F,bank0,0xDE2F,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DE35,bank0,0xDE35,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DE3B,bank0,0xDE3B,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DE41,bank0,0xDE41,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DE47,bank0,0xDE47,write,write,not exported,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DF1E,bank0,0xDF1E,handed to lcall/ljmp -> callee writes,write,0xDF1E stage_0a47_then_call_de83_r5_1a,0xE02D,0xE02D mul_r7_by_8
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DF24,bank0,0xDF24,handed to lcall/ljmp -> callee reads,read,0xDF1E stage_0a47_then_call_de83_r5_1a,0xE03F,0xE03F set_09c1_09c3_from_dptr
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DF35,bank0,0xDF35,handed to lcall/ljmp -> callee writes,write,0xDF35 stage_0a47_then_call_de83_r5_1b,0xE02D,0xE02D mul_r7_by_8
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DF3B,bank0,0xDF3B,handed to lcall/ljmp -> callee reads,read,0xDF35 stage_0a47_then_call_de83_r5_1b,0xE03F,0xE03F set_09c1_09c3_from_dptr
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DF7E,bank0,0xDF7E,handed to lcall/ljmp -> callee reads+writes,read+write,0xDF78 scale_r7_by_8_then_set_09c1_09c3,0xE033,0xE033 FUN_CODE_e033
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0DF84,bank0,0xDF84,read,read,0xDF78 scale_r7_by_8_then_set_09c1_09c3,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0EADA,bank0,0xEADA,write,write,0xEADA FUN_CODE_eada,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0EB2A,bank0,0xEB2A,read,read,0xEADA FUN_CODE_eada,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0EB98,bank0,0xEB98,read,read,0xEADA FUN_CODE_eada,,
+0x0A47,MAILBOX_PUBLISH_VALUE,0x0ED79,bank0,0xED79,read,read,0xED74 write_0a59_block_then_445e,,
