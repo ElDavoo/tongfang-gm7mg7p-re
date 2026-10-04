@@ -36,7 +36,7 @@ before it means anything:
      `../docs/findings/dptr-rebuild-walk-guard.md` is the census of what
      widening the reload guard did to committed rows.
   4. *What does the C-level census say about the same site?* `--census-column`
-appends a `census` column to the `--csv` table carrying the per-site
+     appends a `census` column to the `--csv` table carrying the per-site
      correspondence from `../annotations/xdata-*-census-sites.csv` -- one file
      per address, found by the address rather than listed here: the bucket and
      occurrence count of the decompiled C's references at that site, or the

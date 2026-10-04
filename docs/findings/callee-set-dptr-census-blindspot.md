@@ -267,8 +267,12 @@ seven that were always there.
   `present-untested` and stays so.
 - **That the other fourteen addresses of the page are free of this shape.**
   The resolver covers the whole `0x0860`-`0x086E` page and this write-up
-  records what it establishes *for `0x0860`*; the census correspondence for the
-  others stays `not recorded` — "not done by this method", never an absence.
+  records what it establishes *for `0x0860`*; the census correspondence is
+  recorded for every address the sweep covers —
+  `xdata-086x-dispatch-sites.csv` has no `not recorded` cell — and what no
+  method has joined is the page addresses no sweep row reaches (`0x0861`,
+  `0x0863`, `0x0864`, `0x086C`), and the tree-wide version. A recorded cell
+  is an answer, never an absence.
 - **That a `movx` the resolver could not resolve is off the page.** The
   unresolved count is printed for that reason, kept apart from the count
   resolved off the page, and an `unresolved` row in the table is a named token
@@ -285,8 +289,9 @@ seven that were always there.
    rather than decoding around it. A version that walks the image would need
    function boundaries the image does not carry.
 2. **The census still reads the C.** A `dptr-from-callee` class now exists in
-   one table for one address; the same join for the other fourteen page
-   addresses, and the tree-wide version of it, are separate work.
+   the correspondence tables for `0x0860`, `0x0867` and `0x0868`; the same
+   join for the page addresses with no sweep row, and the tree-wide version of
+   it, are separate work.
 3. **`0xBD3D`'s entry `movx`** reads `0x0867` from the caller's own DPTR, which
    each of its three callers loads before the `lcall`, and the sweep's
    8-instruction window does not reach across the listing boundary. Whether

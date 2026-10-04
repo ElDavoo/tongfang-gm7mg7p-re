@@ -1019,8 +1019,8 @@ entries stay `present-untested`, and the names stay placeholders.
      every `movx` on this page and its table is the answer for it,
      `docs/findings/callee-set-dptr-census-blindspot.md` is the write-up, and
      §3's and §4's corrections are the two stores of `0x0860` that came out
-     of it. What is **not** closed is the same class on the fourteen other
-     addresses of the page and the tree-wide version — the resolver reads the
+     of it. What is **not** closed is the same class on the page addresses no
+     sweep row reaches, and the tree-wide version — the resolver reads the
      committed `.asm` listings, so it sees what they cover and reports what
      they do not rather than decoding around it.
   5. The live step of §10, which needs the physical machine.

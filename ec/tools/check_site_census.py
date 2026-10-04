@@ -133,8 +133,9 @@ against the generated `xdata-registers.csv` row.
     at a site where the sweep decoded one. It does not say how many such sites
     exist where no sweep site exists at all, which is a different question and
     an open one (`xdata-086x-dispatch.md` §11's last numbered item). The same
-    goes for `dptr-from-callee`: one address's correspondence records it, the
-    other page addresses and the tree-wide version are separate.
+    goes for `dptr-from-callee`: the correspondence tables for `0x0860`,
+    `0x0867` and `0x0868` record it, and the page addresses with no sweep row
+    and the tree-wide version are separate.
 
 Usage:
     python3 check_site_census.py [--address ADDR | --all] [--verbose]
