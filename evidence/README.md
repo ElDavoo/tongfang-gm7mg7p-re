@@ -22,6 +22,9 @@ independently checkable rather than taken on faith:
 - **`acpi/dsdt.dsl`** — full disassembled DSDT (`iasl`). Referenced for the
   `ECMG` operation-region field-list gap around `0x07B9` and the cycle-count
   gated capacity-rescaling logic in `_BIF`/`_BST`.
+- **`acpi/`** — also the per-directory index for the interpreter excerpts
+  fetched into it for issue #1337, each with its URL, revision, licence and
+  retrieval date. See [`acpi/README.md`](acpi/README.md).
 - **`hid/0003-048d-*.report_descriptor.bin`** — raw HID report descriptors
   for both on-board ITE 8291 devices, parseable for their usage
   page/usage (`0xFF12`/`0xFF03`) to confirm which is the keyboard and which

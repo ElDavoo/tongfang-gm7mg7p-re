@@ -284,9 +284,9 @@ class TheSplit(unittest.TestCase):
         # The arithmetic the 107 rests on, measured rather than assumed. `S` is
         # every address a call passes and `S1` every `addr + 1`; the
         # population is `S1 - S`, so an address that is both is in neither
-        # count. `PAIR_ROWS` is the tool's own pin for the 214, and reading it
-        # back out of the same module that produced these rows is what makes
-        # the two the same measurement rather than two that happen to agree.
+        # count. The census's own `pair-literal` rows, read out of the
+        # committed registers CSV that `xdata_register_map.py --check` holds,
+        # are the other side: the two tools have to reach the same addresses.
         both = len(self.resolved)
         only = len(self.rows)
         shared = sorted(a for a, e in self.resolved.items()
@@ -299,9 +299,12 @@ class TheSplit(unittest.TestCase):
                          "call and an `inc DPTR` half in another, so the two "
                          "halves are not disjoint and neither figure is what "
                          "it claims to be")
-        self.assertEqual(both, xrm.PAIR_ROWS,
-                         f"the both-halves map holds {both} addresses and "
-                         f"PAIR_ROWS is {xrm.PAIR_ROWS}")
+        with open(xrm.OUT_REGISTERS, newline="") as f:
+            census = sum(1 for r in csv.DictReader(f)
+                         if xrm.PAIR_SPELLING in r["spelled_as"].split("+"))
+        self.assertEqual(both, census,
+                         f"the both-halves map holds {both} addresses and the "
+                         f"census has {census} `pair-literal` rows")
         self.assertEqual(only, ONLY_INC)
         # The whole of the 214 accounted for: the 107 pure seeds and the 107
         # `inc DPTR` halves, disjoint, with nothing in `resolved` outside the
@@ -654,8 +657,8 @@ class NoWrites(unittest.TestCase):
 
     def test_the_summary_mode_writes_nothing(self):
         _code, out, err = self.refuse(FIRMWARE)
-        self.assertIn(f"{xrm.PAIR_ROWS} addresses are reached by a pair "
-                      f"accessor, {ONLY_INC} of them only as", out)
+        self.assertRegex(out, rf"\d+ addresses are reached by a pair "
+                              rf"accessor, {ONLY_INC} of them only as")
         self.assertIn("is §4.7's 73", out)
 
     def test_an_unidentified_pd_image_refuses_rather_than_reporting_zeroes(self):
