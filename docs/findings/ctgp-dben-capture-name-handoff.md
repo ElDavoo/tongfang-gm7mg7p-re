@@ -168,8 +168,9 @@ written, so a `ctrl_read` row is the EC's *answer* to the arm byte, not the arm
 byte itself: the arm byte while the write holds, and the starting byte if the EC
 takes the write back. Which of the two a capture shows is the open question
 `ctgp-dben-07c4-bit3.md` §4.3 already asks, and §2's `0x0522` citation is why
-the second is not a surprise. Driven offline against `ecrw_fake` from both
-starts, the byte written and the byte read back are the same —
+the second is not a surprise. Driven offline against `test_ctgp_dben_probe.py`'s
+`FakeEc` from both starts — the byte map it scripts over `ecrw_fake`, which
+holds nothing on its own — the byte written and the byte read back are the same —
 `arm_bytes(0x00) == arm_bytes(0x03) == (0x03, 0x01)` — so the two runs are
 **indistinguishable by their `0x0743` columns** *there*. That is the fixture's
 behaviour and not a claim about the EC, so the consequence is scoped the same

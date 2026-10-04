@@ -453,9 +453,13 @@ class LoosenedDiscriminatorTests(unittest.TestCase):
     def test_a_section_six_that_drops_the_scope_is_reported(self):
         # The other direction the claim fails in, and the one the fixture
         # cannot object to: "while the host write holds" taken out. Offline
-        # against `ecrw_fake` the unhedged sentence is exactly what the
-        # evidence shows, so nothing here would catch it -- which is why it is
-        # a named negative here rather than something the arithmetic settles.
+        # against `test_ctgp_dben_probe.py`'s `FakeEc` the unhedged sentence is
+        # exactly what the evidence shows, so nothing here would catch it --
+        # which is why it is a named negative here rather than something the
+        # arithmetic settles. (It is `FakeEc` and not the `ecrw_fake` this
+        # module installs: `ecrw_fake.Ec` answers every read with `0x00` and
+        # drops every write, so against it alone the second run's `ctrl_read`
+        # is the starting byte -- §4.3's take-back branch, not a held write.)
         # §4.3 of the procedure asks whether a `ctrl_read` that came back at
         # the original means the EC took the byte back, and §2 cites the
         # `0x0522` work measuring that in under 100 us. In that branch the
