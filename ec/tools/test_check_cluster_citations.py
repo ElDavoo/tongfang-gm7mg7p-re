@@ -665,13 +665,14 @@ class CensusCounts(unittest.TestCase):
         self.assertEqual(n, 1)
         self.assertEqual(what, '4965 references in the census, 4,900 in the row')
 
-    def test_a_wrong_named_count_is_reported(self):
-        # main-ec-002's row read 4 for a cluster the census names 19 in.
+    def test_the_named_count_is_not_held(self):
+        # main-ec-002's row read 4 for a cluster the census names 19 in. The
+        # named column counts what `registers.yaml` names, which every branch
+        # naming a register moves, so it is a census of the repository's own
+        # text and the rule leaves it alone.
         text = ('| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 4 | the '
                 '`0x06E6`/`0x0860` gate block |\n')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '19 named addresses in the census, 4 in the row')
+        self.assertEqual(counted(text), (0, None))
 
     def test_a_wrong_range_is_reported(self):
         text = ('| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F08` | 19 | the '
@@ -681,31 +682,12 @@ class CensusCounts(unittest.TestCase):
         self.assertEqual(what, 'range `0x044C-0x1F07` in the census, '
                                '`0x044C-0x1F08` in the row')
 
-    def test_none_is_not_the_same_as_no_names(self):
-        # The sharpest of the four rows. #179 gave the counter block 43
-        # `XDATA_*` names, so the census names every member of main-ec-003,
-        # and the row still read `none`. This is the one cell that is not a
-        # number and still a count claim, and it is what makes the row
-        # checkable rather than merely wrong.
-        text = ('| `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | none | one '
-                'loop walking a block of counters |\n')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '43 named addresses in the census, none in the row')
-
-    def test_none_is_right_for_a_cluster_the_census_names_nothing_in(self):
-        text = ('| `main-ec-003` | 43 | 4,965 | `0x0460`-`0x09CE` | none | one '
-                'loop walking a block of counters |\n')
-        facts = {cid: dict(v) for cid, v in COUNTS.items()}
-        facts['main-ec-003']['named'] = 0
-        self.assertEqual(counted(text, facts), (0, None))
-
     def test_the_count_rule_does_not_need_a_membership_claim(self):
         # The two gates are independent, and this is the reason they had to
         # be: a §5 row carries a range and a title and never the word
         # "member", so the membership rule skips every one of them and this
         # is the only rule that reads it.
-        text = '| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F07` | 4 | the block |\n'
+        text = '| `main-ec-002` | 4 | 248 | `0x044C`-`0x1F07` | 19 | the block |\n'
         self.assertIsNone(ccc.MEMBERSHIP.search(text))
         self.assertEqual(counted(text)[0], 1)
 

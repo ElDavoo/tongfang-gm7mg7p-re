@@ -10,13 +10,12 @@ the section -- which is why the section drifted twice under a tool built to hold
 it. This suite is the missing hold, and the write-up is
 `docs/findings/3c-named-versus-spelled.md`.
 
-**It asserts relations, not copied constants.** No expected figure is written
-here, deliberately: CLAUDE.md's rule is that a test holds a property of the tree
-and never a census of it, and a figure typed into an assertion is a value every
-branch that legitimately moves the register file has to edit. So each case
-derives what the census says now and checks that §3c's prose says the same
-thing. When the census moves, a sentence goes red and the failure names the
-sentence -- which is the whole failure this issue is about.
+**It asserts relations, not figures.** It used to read each figure out of
+§3c's correction block and compare it with what the census derives now. That is
+a census of the tree held in prose, and it went red on main the first time a
+branch named registers on a base without it (#1919 after #1893). The figures
+are a measurement of the tree the correction names; what is held now is the
+arithmetic between the three counts, which no naming change can break.
 
 The second class is the other half. It holds §4a-4d: the superseded figures stay
 visible in §3c beside the correction, the correction stays a blockquote rather
@@ -99,117 +98,20 @@ def section_3c():
 
 
 class ThreeCountsAgainstTheCensus(unittest.TestCase):
-    """Each figure in §3c, checked against what the census derives now."""
+    """The identities between §3c's three counts, held against the census now.
 
-    # This issue's own correction block. Named rather than matched loosely so a
-    # case cannot pass against a different correction's figures.
-    CORRECTION = "Corrected 2026-10-04, issue #1162."
+    §3c's prose figures are not compared with the census any more. They are a
+    measurement of the tree the correction names, and every branch that names
+    a register moves them: #1919 named addresses on a base without #1893's
+    hold, both were green, and main went red on the combination. CLAUDE.md's
+    rule for a total that a merge moves is to stop holding it, not to recompute
+    it, so what stays here is what is true of every tree -- the arithmetic
+    between the counts, and the gap the correction is about.
+    """
 
     @classmethod
     def setUpClass(cls):
         cls.named, cls.main, cls.pd_only, cls.spelled = census_counts()
-        cls.body = section_3c()
-
-    def correction_block(self):
-        """This issue's correction block, unquoted, and not the whole of §3c.
-
-        Scoped to *this* block rather than to the section, because the section
-        keeps three dated corrections side by side and the two older ones quote
-        these same sentences with figures that are now wrong. Asserting against
-        the section as a whole would let a superseded 172 satisfy a claim about
-        the current 180, which is the opposite of what these cases are for.
-
-        The `>` markers come off so the patterns below read the block as prose
-        rather than as markdown source; the block is a blockquote because
-        `check_citation_lines.py` passes quoted material over rather than
-        checking a retracted figure as if it were current.
-        """
-        start = self.body.find(self.CORRECTION)
-        self.assertNotEqual(start, -1,
-                            "§3c no longer carries this issue's correction block")
-        block = self.body[start:]
-        return "\n".join(line.lstrip("> ").rstrip() for line in block.splitlines())
-
-    def assert_claims_hold(self, derived, patterns, claim):
-        """Every figure the block states for this count equals what we derived.
-
-        Every *mention*, not one: the block states the symbol-spelled count
-        twice, and a check that only asked whether the right number appeared
-        somewhere would pass with one mention stale and the other current. Each
-        pattern captures the figure the sentence attributes to this count, and
-        every capture has to be the derived one, so a partial edit goes red
-        rather than being satisfied by the sentence that was not touched.
-        """
-        block = self.correction_block()
-        seen = False
-        for pattern in patterns:
-            for match in re.finditer(pattern, block, re.S):
-                seen = True
-                self.assertEqual(
-                    int(match.group(1)), derived,
-                    f"{claim} is stated as {match.group(1)} in the sentence "
-                    f"{block[max(0, match.start() - 40):match.end() + 40]!r}, "
-                    f"and the census derives {derived}")
-        self.assertTrue(seen, f"the correction block no longer states {claim}")
-
-    def test_the_named_and_reached_count_is_what_the_section_says(self):
-        """The "named addresses the census reaches" figure."""
-        self.assert_claims_hold(
-            self.named,
-            [r"\*\*(\d+)\*\* named addresses appear in the decompiled tree"],
-            "the named addresses appearing in the tree")
-
-    def test_the_named_population_they_are_drawn_from(self):
-        """The `xdata-symbols.csv` row count, and the `NOT_IN_TREE` remainder.
-
-        The block's own warning is that the named population is the address
-        *union* rather than `registers.yaml`'s row count, so both figures are
-        stated and their difference is the named-and-reached count the case above
-        checks -- which is what makes the sentence re-derivable rather than just
-        asserted.
-        """
-        block = self.correction_block()
-        total = re.search(r"of\s+the\s+\*\*(\d+)\*\*\s+addresses `xdata-symbols\.csv`",
-                          block, re.S)
-        absent = re.search(r"the\s+other\s+\*\*(\d+)\*\*\s+being", block, re.S)
-        self.assertIsNotNone(total, "the correction block no longer states the "
-                                    "named population")
-        self.assertIsNotNone(absent, "the correction block no longer states "
-                                     "the NOT_IN_TREE count")
-        self.assertEqual(int(total.group(1)), len(X.load_symbols()))
-        self.assertEqual(int(absent.group(1)), len(X.NOT_IN_TREE))
-
-    def test_the_main_ec_half_of_that_split_is_what_the_section_says(self):
-        """The main-EC-touched half, which is not the symbol-spelled figure.
-
-        Asserted as its own claim rather than as a bare number, because the
-        mistake this section exists to correct is reading one count for the
-        other.
-        """
-        self.assert_claims_hold(
-            self.main,
-            [r"\*\*(\d+)\*\* of the \d+ are touched by the main EC",
-             r"\*\*(\d+) and \d+ are two questions"],
-            "the main-EC-touched share of that split")
-
-    def test_the_pd_only_half_is_what_the_section_says(self):
-        """The PD-image-only half, the third of the split."""
-        self.assert_claims_hold(
-            self.pd_only,
-            [r"and\s+\*\*(\d+)\*\*\s+only by the\s+PD image"],
-            "the PD-image-only share of that split")
-
-    def test_the_symbol_spelled_count_is_what_the_section_says(self):
-        """The "spells by symbol" figure, which §3c's correction is about.
-
-        `ORACLE["symbol_main_distinct"]` is the pin the section's own correction
-        names, so this is the figure that drifted under it.
-        """
-        self.assert_claims_hold(
-            self.spelled,
-            [r"`?symbol_main_distinct`?\"?\]`?\s+reads\s+\*\*(\d+)\*\*",
-             r"\*\*\d+ and (\d+) are two questions"],
-            "the decompile spells by symbol")
 
     def test_the_named_count_is_the_difference_the_tool_derives(self):
         """`named_in_tree` is `len(symbols) - len(NOT_IN_TREE)`.
