@@ -25,6 +25,7 @@ import io
 import os
 import re
 from pathlib import Path
+import shutil
 import sys
 import tempfile
 import unittest
@@ -482,10 +483,13 @@ class SkipsDeliberately(unittest.TestCase):
         self.assertEqual(drifted(text), (0, None))
 
     def test_txt_capture_is_reported_not_passed_over(self):
-        # A .txt capture is out of the oracle -- `main()` indexes the .csv
-        # files and this one is not among them, so there is no row set to hold
-        # a claim against -- but it says so on stderr rather than looking like
-        # nothing to check.
+        # A capture with no `addr` column is out of the oracle -- this one is an
+        # `ecrw.py dump` hex dump, with the address as a line prefix rather than
+        # a field -- so there is no row set to hold a claim against. It says so
+        # on stderr rather than looking like nothing to check. **The wording is
+        # the rule and not the file**: it said "not a .csv" until #1397, and a
+        # `ts,note` log with a `.csv` extension is refused for the same reason
+        # this dump is, which `TheCaptureIsRoutedByItsColumn` is what says.
         text = ('`0x07A6` moved in '
                 'evidence/ec-watch/2026-09-23-power-mode-cycle-0f00-final.txt.\n')
         with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
@@ -498,7 +502,29 @@ class SkipsDeliberately(unittest.TestCase):
         finally:
             os.unlink(path)
         self.assertEqual(problems, [])
-        self.assertIn('not a .csv', err.getvalue())
+        self.assertIn('no addr column', err.getvalue())
+
+    def test_a_committed_columnless_capture_is_named_in_the_skip(self):
+        # The same reason, on a capture in the tree rather than one named by a
+        # test: a reader auditing what is outside the oracle should be able to
+        # see it without holding the file open. `2026-09-23-ctgp-live.txt` is
+        # the one with its own reader, so it is the better witness that the
+        # skip is about the *column* -- it is a real capture this tool names on
+        # every `--verbose` run and declines for want of a row, not for want of
+        # a file.
+        text = ('setting `0x0743` bit 2 raised the power limit in '
+                'evidence/ec-watch/2026-09-23-ctgp-live.txt.\n')
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(text)
+            path = f.name
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                problems, _, checked = ccc.check(path, INDEX, True)
+        finally:
+            os.unlink(path)
+        self.assertEqual((problems, checked), ([], 0))
+        self.assertIn('2026-09-23-ctgp-live.txt', err.getvalue())
 
     def test_derived_counts_are_not_row_counts(self):
         # All three are true, and none is a row count for a named address:
@@ -560,6 +586,188 @@ class SkipsDeliberately(unittest.TestCase):
             ccc.read_capture(os.path.join(
                 ccc.REPO, 'evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv'))
         self.assertEqual(drifted(text, index), (0, None))
+
+
+class TheCaptureIsRoutedByItsColumn(unittest.TestCase):
+    """Which side of the oracle a capture lands on is asked of the file.
+
+    Issue #1397. `captures_in()`, `main()`'s index and `check()`'s skip all
+    answered "is this a capture I can read a claim in" from the **extension**,
+    while `has_addr_column()` -- sitting in this same file since #990 put it
+    here -- answered it from the file. On the committed corpus the two agree:
+    every `.csv` under `evidence/ec-watch/` carries an `addr` header and every
+    `.txt` does not. **So nothing here turns a verdict red today**, and the
+    suite says so by holding membership and the skip's wording rather than a
+    figure that a later capture would move. What it holds is that the hole
+    stays closed: a `.csv` with no column is outside the oracle, a columned
+    capture named beside one is still read, and neither half can go back to the
+    extension without a case going red.
+
+    The fixture for the first case is a `ts,note` log with a `.csv` extension,
+    written to a scratch tree rather than to `testdata/`: the committed
+    fixtures carry a `constructed` header and a 2026-01-01 date for exactly
+    this reason, and a committed one would put a claim about it into the
+    committed-tree case below.
+    """
+
+    # `ts,note` is the shape the extension mis-reads: a real `.csv` with rows
+    # and no `addr` field, which `read_capture()` reads as 1 row / 0 distinct
+    # addresses rather than raising.
+    COLUMNLESS_CSV = ('# constructed by a scratch case, not a capture\n'
+                      'ts,note\n'
+                      '2026-01-01T00:00:00Z,0x07A6 moved at the plug-in\n')
+
+    def columnless_capture(self):
+        """(a scratch directory holding it, the path a unit would name it by).
+
+        `captures_in()` only resolves a path that starts with `WATCH + "/"` or
+        `FIXTURES + "/"`, so the scratch directory is pointed at by patching
+        `WATCH` to it rather than by writing into the tree: a capture left in
+        `ec/tools/testdata/` would be a committed-tree fixture that six cases
+        share a writer with, which is the thing that directory's README exists
+        to prevent. The file itself is real and `has_addr_column()` reads it,
+        which is the half that matters -- the predicate is under test, not a
+        stand-in for it.
+        """
+        scratch = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, scratch)
+        with open(os.path.join(scratch, '2026-01-01-columnless.csv'), 'w',
+                  encoding='utf-8', newline='') as f:
+            f.write(self.COLUMNLESS_CSV)
+        patch = mock.patch.object(ccc, "WATCH", os.path.relpath(scratch, ccc.REPO))
+        patch.start()
+        self.addCleanup(patch.stop)
+        return scratch
+
+    def as_watch(self, name):
+        """The path a unit names a scratch capture by."""
+        return f"{ccc.WATCH}/{name}"
+
+    def test_a_csv_with_no_addr_column_is_not_an_oracle_member(self):
+        # The definition, stated as a claim rather than a count. A `.csv` whose
+        # header names no column has no row set to read a claim in, exactly as
+        # a hex dump has none, and `has_addr_column()` is what decides it.
+        self.columnless_capture()
+        columned, columnless = ccc.captures_in(
+            f'`0x07A6` moved in {self.as_watch("2026-01-01-columnless.csv")}.\n')
+        self.assertEqual(columned, [])
+        self.assertEqual(columnless, [self.as_watch('2026-01-01-columnless.csv')])
+
+    def test_the_real_fixture_is_still_an_oracle_member(self):
+        # The other side of the same predicate, so the case above cannot pass by
+        # `captures_in()` refusing everything. `POWER` is a committed fixture
+        # under `ec/tools/testdata/`, which is the other directory `captures_in`
+        # resolves a path against.
+        columned, columnless = ccc.captures_in(f'`0x07A6` moved in {POWER}.\n')
+        self.assertEqual(columned, [POWER])
+        self.assertEqual(columnless, [])
+
+    def test_a_columned_member_beside_a_columnless_one_is_still_checked(self):
+        # The control the sibling suite pins, and the case `if others: continue`
+        # at the old skip would fail: a unit naming both is checked against the
+        # columned one. `0x07C4` really has two rows in `POWER`, so the check
+        # holds and the case would be red if the skip had swallowed the unit.
+        self.columnless_capture()
+        text = (f'`0x07C4` moved at the AC plug-in in '
+                f'{self.as_watch("2026-01-01-columnless.csv")} and in {POWER}, '
+                'the same window in which 0x07C6 moved.\n')
+        problems, checked = claims(text, INDEX)
+        self.assertEqual(problems, [])
+        self.assertEqual(checked, 2, "the columned half is checked, not dropped")
+
+    def test_routing_by_extension_fails_the_control_case(self):
+        # The drop-it-in-turn form #990 used, in this suite's existing idiom
+        # (`mock.patch.object`). The old implementation back in, and the case
+        # above asserted to go red -- which is what says the rule is
+        # load-bearing rather than merely asserted to be.
+        self.columnless_capture()
+        text = (f'`0x07C4` moved at the AC plug-in in '
+                f'{self.as_watch("2026-01-01-columnless.csv")} and in {POWER}, '
+                'the same window in which 0x07C6 moved.\n')
+
+        def by_extension(unit):
+            csvs, others = set(), set()
+            for token in ccc.FILE_TOKEN.findall(unit):
+                named = token.strip("`'\"()[]")
+                if not named.startswith((ccc.WATCH + "/", ccc.FIXTURES + "/")):
+                    continue
+                (csvs if named.endswith(".csv") else others).add(named)
+            return sorted(csvs), sorted(others)
+
+        self.assertEqual(claims(text, INDEX)[1], 2)
+        with mock.patch.object(ccc, "captures_in", by_extension):
+            # The columnless `.csv` is taken for an oracle member, the unit is
+            # dropped, and both claims are lost -- the extension reading this
+            # tool's own bug.
+            self.assertEqual(claims(text, INDEX)[1], 0)
+
+    def test_the_skip_reason_names_the_column_not_the_extension(self):
+        # The "done looks like" clause, and the only thing holding the wording:
+        # a reader auditing what is outside the oracle has to be able to tell a
+        # shape from a file name, because the two now come apart.
+        self.columnless_capture()
+        text = ('`0x07A6` moved in '
+                f'{self.as_watch("2026-01-01-columnless.csv")}.\n')
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(text)
+            prose = f.name
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                problems, _, checked = ccc.check(prose, INDEX, True)
+        finally:
+            os.unlink(prose)
+        self.assertEqual((problems, checked), ([], 0))
+        self.assertIn('no addr column', err.getvalue())
+        # The reason names the shape; the path beside it may of course end in
+        # `.csv`, which is the whole difference between the two readings.
+        reason = err.getvalue().split('  skip (')[1]
+        self.assertTrue(reason.startswith('capture has no addr column)'), reason)
+
+    def test_a_path_that_resolves_to_nothing_is_still_the_tree_skip(self):
+        # `has_addr_column()` raises on a missing path, so `captures_in()` has to
+        # guard it -- and a name that resolves to nothing is not a capture
+        # *without* a column, it is a capture that is not there. Folding the
+        # two would report a missing file as a shape, and would lose the
+        # `capture not in the tree` line a reader gets today.
+        columned, columnless = ccc.captures_in(
+            '`0x07A6` moved in evidence/ec-watch/2026-01-01-not-here.csv.\n')
+        self.assertEqual(columnless, [])
+        self.assertEqual(len(columned), 1,
+                         "so `absent` is what names it, not the shape skip")
+        text = '`0x07A6` moved in evidence/ec-watch/2026-01-01-not-here.csv.\n'
+        with tempfile.NamedTemporaryFile('w', suffix='.md', delete=False) as f:
+            f.write(text)
+            path = f.name
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                problems, _, _ = ccc.check(path, INDEX, True)
+        finally:
+            os.unlink(path)
+        self.assertEqual(problems, [])
+        self.assertIn('capture not in the tree', err.getvalue())
+        self.assertNotIn('no addr column', err.getvalue())
+
+    def test_the_committed_tree_is_unchanged_by_the_routing(self):
+        # The "not a floor" form: a whole-tree run still exits 0, and the files
+        # the docstring names still yield claims. Membership rather than a
+        # figure, because the next capture a human commits into the prose adds
+        # a claiming file that nobody wrote down.
+        err = io.StringIO()
+        argv = sys.argv
+        sys.argv = ['check_capture_claims.py', '--check', '--verbose']
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), \
+                    contextlib.redirect_stderr(err):
+                rc = ccc.main()
+        finally:
+            sys.argv = argv
+        self.assertEqual(rc, 0, err.getvalue())
+        run = verbose_surface(err.getvalue())
+        for path in docstring_surface():
+            self.assertIn(path, run,
+                          f"{path} is named and no run confirms it")
 
 
 class SubjectResolution(unittest.TestCase):

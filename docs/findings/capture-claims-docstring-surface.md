@@ -86,11 +86,27 @@ oracle is `main()`'s `evidence/ec-watch/*.csv` index — `check()` skips a unit
 naming anything else, before either rule runs — and not because of what the
 file holds.
 
+**Superseded 2026-10-04 (issue #1397), in the clause above and in one other
+sentence of this file.** The *reason* this paragraph gives is right and stands:
+`2026-09-23-0751-isolation.txt` is not skipped for want of a row per change, it
+is skipped for want of an index entry. The *oracle* it names is not what is
+built any more, and the scope is wrong twice over. `main()`'s index is now every
+capture **with an `addr` column**, asked of the file rather than of its
+extension, and `check()` skips a columnless capture rather than the **unit**
+naming it — so a unit naming a columnless capture *and* a columned one has its
+columned half checked, where the sentence above says "skips a unit naming
+anything else". Every committed `.csv` carries the column and every committed
+`.txt` does not, so **this changed no verdict on this tree**; the hole it
+closes was latent. The write-up is
+[`capture-claims-column-oracle.md`](capture-claims-column-oracle.md), which
+prices each columnless capture at the claims a reader for it could check.
+
 The `ecrw.py dump` attribution most likely crossed over from the testdata fixture
 `ec/tools/testdata/0751-isolation-example-moved-fan-after-0f00.txt`, whose
 header does say "the same `ecrw.py dump 0x0F00 0x0060` as §3's step 6 takes
 it" — a *constructed* input modelled on a dump, which `--verbose` also reports
-as a `.txt` skip, and not a member of the evidence tree at all.
+as a capture with no `addr` column (it said "a `.txt` skip" until #1397), and
+not a member of the evidence tree at all.
 
 **Three — the corpus-scan sentence.** It read:
 

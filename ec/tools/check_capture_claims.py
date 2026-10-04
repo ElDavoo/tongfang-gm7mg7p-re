@@ -12,8 +12,9 @@ So this walks the same prose `check_cluster_citations.py` walks -- it imports
 that tool's `units()` rather than writing a second sentence splitter, so a
 fix to the splitting logic (issue #273) lands once and both checkers get it,
 and the shared module stays the only place that knows how a sentence ends.
-For every unit naming an `evidence/ec-watch/*.csv` capture it holds two
-things against that file:
+For every unit naming a capture under `evidence/ec-watch/` that has an `addr`
+column to read the claim in -- asked of the file, not of its extension, since
+issue #1397 -- it holds two things against that file:
 
   * **address presence** -- an address the unit attributes to the capture
     has to have a row in it, and an address the unit says did *not* move in
@@ -108,20 +109,44 @@ denial about an address the capture never watched*, below.
     satisfied if it matches either. The same weaker sense
     `check_cluster_citations.py` gives "a unit naming two clusters", and the
     same reason: it catches a wrong number, not a wrong pairing.
-  * *`.txt` captures.* A `.txt` capture is outside the oracle: `main()`
-    indexes `evidence/ec-watch/*.csv` and nothing else, and `check()` skips a
-    unit naming one before either rule runs, so there is no row set here for
-    a claim to agree or disagree with. That is the whole reason, and it is not
-    the file's shape -- `2026-09-23-0751-isolation.txt` is a per-change watch
-    log, and it is skipped for want of an index entry rather than for want of a
-    row per change. What an individual capture holds is a fact about that file
-    rather than about this tool; `evidence/README.md` indexes the `.txt`
-    captures under `evidence/ec-watch/` but not `2026-09-23-ctgp-live.txt`, and
-    the roster is in
-    `docs/findings/capture-claims-docstring-surface.md`. A unit naming one is
-    reported as skipped rather than passed over in silence, which is the part
-    that matters: it keeps "outside the oracle" distinguishable from "nothing
-    to check".
+  * *A capture with no `addr` column.* **Corrected 2026-10-04 (issue #1397).
+    What this bullet said until then -- "`.txt` captures", "outside the
+    oracle: `main()` indexes `evidence/ec-watch/*.csv` and nothing else, and
+    `check()` skips a unit naming one before either rule runs" -- stated the
+    skip three ways as a property of the *corpus*, and none of the three was
+    the reason.** Every `.csv` under `evidence/ec-watch/` does carry an `addr`
+    header and every `.txt` does not, so the extension and the column agree on
+    every committed file; the routing was by extension in all three places and
+    the bullet described it accurately as written and wrongly as a *reason*.
+    It is now the file, asked: `captures_in()` and `main()`'s index both go
+    through `has_addr_column()`, the same de-duplication #990 made in
+    `check_testdata_row_claims.py`, and the skip reason is `capture has no addr
+    column`. Two of the three sentences above were also wrong about scope, and
+    are corrected here rather than left:
+    - *It skipped the whole unit.* It skipped the *member*, so a unit naming a
+      columnless capture **and** a columned one has its columned half checked.
+      The `continue` moved under `if not captures`.
+    - *It was a property of the corpus.* It is a property of the reader, and
+      the difference is what this issue is about: a `.csv` with no `addr`
+      column is outside the oracle for the same reason a `.txt` is, and before
+      it was not.
+
+    **What does not change, and is the half that matters:** such a capture
+    still has no row set here for a claim to agree or disagree with, so a unit
+    naming one is reported as skipped rather than passed over in silence. That
+    keeps "outside the oracle" distinguishable from "nothing to check". The
+    reason it has no row set is not the extension -- `2026-09-23-0751-isolation.txt`
+    is a per-change watch log, and it is skipped for want of an index entry
+    rather than for want of a row per change. What an individual capture holds
+    is a fact about that file rather than about this tool;
+    `evidence/README.md` indexes the `.txt` captures under `evidence/ec-watch/`
+    but not `2026-09-23-ctgp-live.txt`, and the roster is in
+    `docs/findings/capture-claims-docstring-surface.md`. The one of these that
+    is a *reader* rather than a skip is `2026-09-23-ctgp-live.txt`, whose
+    addresses are the table's columns; it is
+    `read_ctgp_state_table.py`'s, presence-only, and
+    `docs/findings/capture-claims-column-oracle.md` prices the other four
+    `.txt` captures at the claims a reader for each could check.
   * *Addresses the unit does not name.* A count resolves to the enclosing
     `registers.yaml` entry's `addr:`, because the sentence usually does not
     write the address it is about ("Moved 238 times ... the second-busiest
@@ -436,24 +461,44 @@ def read_capture(path: str):
 
 
 def captures_in(unit: str):
-    """(named captures, named non-csv captures) in one unit.
+    """(named columned captures, named captures with no addr column) in a unit.
 
     A path is resolved repository-relative, and `ec-watch/...` -- how
     `evidence/README.md` names its own files -- is the same file with the
-    `evidence/` prefix implied. Anything that resolves to a `.txt` is
-    reported rather than dropped, so "this is outside the oracle" stays
-    visible in `--verbose` instead of being indistinguishable from "nothing
-    to check".
+    `evidence/` prefix implied. Anything that resolves to a file with no
+    `addr` column is reported rather than dropped, so "this is outside the
+    oracle" stays visible in `--verbose` instead of being indistinguishable
+    from "nothing to check".
+
+    **Routed by the column, not by the extension**, which is the same
+    de-duplication issue #990 made in `check_testdata_row_claims.py`: that tool
+    had `with_column()` testing `path.endswith(".csv")` and
+    `carried_by_column()` testing the read, both now going through
+    `has_addr_column()`. Holding both here too is what stops this file keeping
+    the second definition of "has an addr column" that finding removed there --
+    and this is the one that guards `registers.yaml`.
+
+    `os.path.isfile()` is the guard rather than a try, because `has_addr_column()`
+    raises on a path that does not resolve, and a name that resolves to nothing
+    is not a capture without a column: it is the `capture not in the tree` skip
+    further down, which reports it as unresolved rather than as a shape. The two
+    are kept apart rather than merged, because only one of them is a fact about
+    the file -- which is also why that name goes in the first list rather than
+    the second, so `absent` below is what names it.
     """
-    csvs, others = set(), set()
+    columned, others = set(), set()
     for token in FILE_TOKEN.findall(unit):
         path = token.strip("`'\"()[]")
         if path.startswith("./"):
             path = path[2:]
         if not path.startswith((WATCH + "/", FIXTURES + "/")):
             continue
-        (csvs if path.endswith(".csv") else others).add(path)
-    return sorted(csvs), sorted(others)
+        full = os.path.join(REPO, path)
+        if not os.path.isfile(full) or has_addr_column(full):
+            columned.add(path)
+        else:
+            others.add(path)
+    return sorted(columned), sorted(others)
 
 
 def address_tokens(unit: str):
@@ -747,13 +792,11 @@ def check(path, index, verbose):
     subjects = entry_subjects(lines)
 
     for lineno, unit in units(text):
-        captures, others = captures_in(unit)
-        if others:
-            if verbose:
-                for name in others:
-                    print(f"  skip (capture is not a .csv) {where}:{lineno} {name}",
-                          file=sys.stderr)
-            continue
+        captures, columnless = captures_in(unit)
+        if columnless and verbose:
+            for name in columnless:
+                print(f"  skip (capture has no addr column) {where}:{lineno} "
+                      f"{name}", file=sys.stderr)
         if not captures:
             continue
         if not MOVEMENT.search(unit):
@@ -910,7 +953,7 @@ def main() -> int:
 
     index = {}
     for name in sorted(os.listdir(os.path.join(REPO, WATCH))):
-        if name.endswith(".csv"):
+        if has_addr_column(os.path.join(REPO, WATCH, name)):
             index[WATCH + "/" + name] = read_capture(os.path.join(REPO, WATCH, name))
 
     paths = []

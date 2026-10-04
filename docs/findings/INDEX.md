@@ -73,6 +73,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`call-site-framing-census.md`](call-site-framing-census.md) — Every bucket-A and bucket-C scan site against the committed listings: `anchored` predicts a real opcode across bucket A, and fails to in bucket C and in the fill band (issue #594)
 - [`callee-depth-n.md`](callee-depth-n.md) — `--callee-depth` follows a chain of handoffs, and the two `LIGHTBAR_BAT_*` sites that were unresolved at depth 1 are reads at depth 2
 - [`capture-claim-denials-are-checks.md`](capture-claim-denials-are-checks.md) — A denial is the only shape a retraction takes, so `check_capture_claims.py` checks it instead of skipping it (issue #328)
+- [`capture-claims-column-oracle.md`](capture-claims-column-oracle.md) — Which side of the oracle a capture lands on is asked of the file, and the cTGP state table gets a reader (issue #1397)
 - [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
 - [`capture-prefix-vs-contents.md`](capture-prefix-vs-contents.md) — The date in a capture's name, held to the dates the capture carries: 15 captures, 14 agreeing, 1 stating none, 0 disagreeing (issue #1000)
