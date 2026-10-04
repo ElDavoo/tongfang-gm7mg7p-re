@@ -253,7 +253,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`tools-readme-totals.md`](tools-readme-totals.md) — The runner's totals, re-derived from a run, and why a red suite moves them (issue #817)
 - [`trampoline-relative-branch-sites.md`](trampoline-relative-branch-sites.md) — All 170 of §8's trampoline-landing relative sites are the trampoline block's own operands, and no branch reaches the block from outside it
 - [`trampoline-target-census.md`](trampoline-target-census.md) — Every trampoline in the BL51 block gets a decoded target, read in the bank its stub selects (issue #574)
-- [`trampoline-target-reading.md`](trampoline-target-reading.md) — A trampoline target inside a `ret` run is a one-instruction far routine, and the bank-pointer reading does not survive the stub's bytes (issue #1090)
+- [`trampoline-target-reading.md`](trampoline-target-reading.md) — A trampoline target inside a `ret` run is a one-instruction far routine, and the bank-pointer reading is consistent with the stub's bytes (issue #1090)
 - [`uncalled-vendor-setters.md`](uncalled-vendor-setters.md) — The three bytes the uncalled vendor setters write (issue #106)
 - [`uniwill-variable-0x60-writers.md`](uniwill-variable-0x60-writers.md) — Every writer of `UniWillVariable`, and which of them can explain offset 0x60
 - [`unresolved-transfer-causes.md`](unresolved-transfer-causes.md) — Why the call-graph's unresolved and unreached rows are the ones they are

@@ -26,14 +26,17 @@ which holds the two committed tables against each other.
 **What a target inside a `ret` run is, and what this does not decide.** The
 stub at `0x1100` pushes `0x08`, pushes the accumulator, pushes DPL and DPH,
 selects the bank through the P1.0-P1.2 port bits, and `ret`s -- and that `ret`
-consumes the two DPTR bytes it pushed, so **control reaches the target**; what
-the target's own `ret` then pops is the marker, not the caller's return address
-(`docs/findings/scheduler-run-8518-entries.md` section 2 derives this from the
-stub's bytes, and `run_entry_map.py --self-test` re-derives it). A target that
-begins with `0x22` is therefore a far routine one instruction long. The stub
-never writes `0x82` or `0x83` again, so DPTR still holds the target across the
-jump -- nothing is handed back because control resumes in the stub window rather
-than in the caller.
+consumes the two DPTR bytes it pushed, so **control reaches the target**. What
+the target's own `ret` pops is the marker, landing at `0x11XX` inside the stub
+window, which is the stub's own bank-select tail; that tail's `ret` pops the
+caller's return address, which the stub's four pushes left untouched below the
+marker (`docs/findings/scheduler-run-8518-entries.md` section 2 derives the
+landing from the stub's bytes, and `run_entry_map.py --self-test` re-derives
+it). A target that begins with `0x22` is therefore a far routine one
+instruction long, on a route whose net effect is the bank-pointer handoff the
+issue was opened with: nothing on the path writes `0x82` or `0x83`, so the
+caller resumes holding DPTR = the target with the bank selected. The bytes fix
+the route, not the choice between the two readings of it.
 
 That is the *mechanism*, and it is settled from bytes. Whether the 138-byte
 run at `0xBF54`-`0xBFDD` is linker padding, a shared return, or dead code is

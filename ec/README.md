@@ -568,7 +568,7 @@ into `r2 -a 8051` with no stitching needed.
   and diffs it, and `--self-test` walks every `ret`-run threshold so the one
   chosen is visibly inside a flat band rather than on its edge. The read-up
   settles what such a target is from the bank-select stub's own bytes, and
-  corrects the bank-pointer reading of it:
+  traces the route by which the bank pointer reaches the caller:
   [`../docs/findings/trampoline-target-reading.md`](../docs/findings/trampoline-target-reading.md).
 - **`tools/bucket_c_codemap.py`** — classifies all 140 bucket-C sites against a
   code map of the common area recovered by recursive descent, so

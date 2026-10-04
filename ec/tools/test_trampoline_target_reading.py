@@ -354,15 +354,19 @@ class RefusalTests(unittest.TestCase):
                                 "would fail its own framing check rather than "
                                 "quietly reporting a larger block")
 
-    def test_the_stub_belongs_to_a_far_call_and_not_to_a_pointer_handoff(self):
-        """The premise the `ret` reading rests on, read off the stub's bytes.
+    def test_the_stub_belongs_to_a_far_call_over_a_bank_select_tail(self):
+        """The route the `ret` reading rests on, read off the stub's bytes.
 
         The stub pushes DPL and DPH, switches the bank through P1.0-P1.2, then
         `ret`s. That `ret` consumes the two bytes it pushed as a **jump
         target**, so control reaches the far routine; what the far routine's own
-        `ret` pops is the marker above it, not the caller's return address.
-        Asserted as the byte shape so a stub that stopped having it is caught
-        here rather than leaving the write-up's reading resting on nothing.
+        `ret` pops is the marker above it, landing at `0x11XX` inside the stub
+        window, and that landing is the stub's own bank-select tail whose `ret`
+        pops the caller's return address from below the marker. Asserted as the
+        byte shape so a stub that stopped having it is caught here rather than
+        leaving the write-up's reading resting on nothing. Which route the
+        caller took to reach the pointer is not something these bytes decide,
+        and nothing here asserts that it did not.
         """
         stub = act.STUB_SITES[0][0]
         window = bytes(self.d[stub:stub + STUB_LENGTH])

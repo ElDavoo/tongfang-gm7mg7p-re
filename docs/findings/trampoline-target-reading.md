@@ -1,4 +1,4 @@
-# A trampoline target inside a `ret` run is a one-instruction far routine, and the bank-pointer reading does not survive the stub's bytes (issue #1090)
+# A trampoline target inside a `ret` run is a one-instruction far routine, and the bank-pointer reading is consistent with the stub's bytes (issue #1090)
 
 [`trampoline-target-census.md`](trampoline-target-census.md) (issue #574) gave
 every entry in the BL51 block a decoded target, read in the bank its own
@@ -31,14 +31,18 @@ opened, no Windows machine and no Ghidra run. Every figure is a static read of
 `ec/firmware/GMxMGxx_11.800` and of files already committed, and no `status:` in
 `ec/annotations/registers.yaml` moves on any of it.
 
-## The correction: the trampoline hands back nothing
+## The route: a far call whose `ret` comes back through the stub's tail
 
 The reading this issue was opened with is that a target inside a `ret` run is
 the Keil idiom for *handing a caller a bank pointer* — `lcall` an entry, it sets
 DPTR to a bank address, switches the bank, and returns, so the caller reads a
 pointer into the newly-selected bank. It is the reading that makes the 138-byte
-run uninteresting and the 146 single-caller thunks exactly what to expect. It is
-also **wrong on the stub's own bytes**, and the tree already says so.
+run uninteresting and the 146 single-caller thunks exactly what to expect.
+
+**The stub's bytes do not separate that reading from this one. They show the
+route, and on either route the caller resumes holding DPTR = the target with the
+bank selected.** What follows is the trace; what it settles is the mechanism, and
+the two accounts of *how* differ only in route, not in caller-observable effect.
 
 The bank-switch stub at `0x1100` is 20 bytes:
 
@@ -67,32 +71,51 @@ three bytes, and `bank-attribution.md` §1 records that as the one link in the
 bank chain that is not new evidence.
 
 So the stub pushes the bank register, pushes a marker, pushes DPTR, selects a
-bank, and returns — it never writes `0x82` or `0x83` again.
+bank, and returns — it never writes `0x82` or `0x83`.
 
 That `ret` consumes the two DPTR bytes just pushed and uses them as a **jump
-target**. So control arrives *at the far address*; what the far routine's own
-`ret` pops is the marker above it — the accumulator and the saved `0x08` — and
-not the caller's return address. DPTR still holds the target across that jump;
-there is nothing to hand back because control resumes in the stub window rather
-than in the caller.
+target**, so control arrives *at* the far address. The far routine's own `ret`
+then pops the marker above it — the accumulator and the saved `0x08` — landing
+at `0x11XX`, which is inside the stub window. The caller's `lcall` return
+address is still on the stack *below* the marker, untouched, because the stub's
+four pushes went above it.
 
-This is not a new reading.
-[`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) §2 derives it
-from these bytes and `run_entry_map.py --self-test` re-derives the landing
-window from them; `test_trampoline_target_reading.py` holds the shape, so a stub
-that stopped having it would redden a run rather than leave this reading
-resting on nothing.
+And `0x11XX` is not a dead end: it is a stub's own bank-select tail. The four
+landings the marker can take are `0x110A`, `0x111E`, `0x1132` and `0x1146`
+(§2's derivation, from the four values the stubs write into `0x08`), and each
+is the `mov 0x08,#…` that begins its stub's tail — `0x110A`-`0x1113` is
+`mov 0x08,#0x0a / clr 0x90 / clr 0x91 / clr 0x92 / ret`, and the other three
+stubs end the same way at `0x1127`, `0x113B` and `0x114F`. That tail's `ret`
+pops the caller's `PCH` then its `PCL`. So control does come back to the caller
+— one bank-select tail later — and **nothing on that path writes `0x82` or
+`0x83`**, so the caller resumes holding DPTR = the target with the bank
+selected.
+
+That is the bank-pointer handoff the issue named, reached by a longer route than
+the idiom suggests: out to the far address and back through the stub window,
+rather than straight out of the entry. **The evidence does not separate the two
+readings; it shows the route.** What it does settle is that where the target's
+first byte is `0x22`, an intervening far routine sits on that route — one
+instruction long.
+
+This is not a new derivation.
+[`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) §2 derives the
+marker landing from these bytes — its own premise is that a tail-jumped slot's
+target *returns to the entry's caller* — and `run_entry_map.py --self-test`
+re-derives the landing window from them; `test_trampoline_target_reading.py`
+holds the shape, so a stub that stopped having it would redden a run rather than
+leave this reading resting on nothing.
 
 **What follows for the 149.** A trampoline target is not an address a caller
-*learns the contents of*. It is an address the CPU **jumps to**, in the bank the
-stub just selected. So when that first byte is `0x22`, the far routine is **one
-instruction long** — it returns immediately — and control resumes in the stub
-window. That is the settled part, and it is a statement about mechanism.
+*learns the contents of* by the target itself doing the handing. It is an
+address the CPU **jumps to**, in the bank the stub just selected. So when that
+first byte is `0x22`, the far routine on the route is **one instruction long** —
+it returns immediately, and its own `ret` is what continues along the stub's
+tail. That is the settled part, and it is a statement about mechanism.
 
-The reading also survives a check the issue's framing did not ask for: the
-entries reach their target by **`ljmp` 163 times to `lcall`'s 5**
-(`caller_ops` in the table). A tail jump has no caller to hand a pointer back
-to.
+The 146-single-caller shape is worth stating for what it is: one caller, one
+address, no sharing. That is what the bank-pointer reading predicts, so it is not
+evidence against it.
 
 ## What the run is, and what that decides
 
@@ -168,15 +191,19 @@ naming three candidates. Against the bytes:
 - **A case label inside one routine** predicts a compiler-emitted jump table,
   which would put an instruction at the target. There is a `ret` there.
 
-So the reading the evidence fits is the fourth one, and it is a narrower one than
-the bank-pointer story it replaces: **these are one-instruction far routines.**
-The bank switch happens, the far routine immediately returns, and control resumes
-in the stub window. Whether the linker emitted 133 identical `ret`s because it
-was padding a gap, or because 133 distinct routines each compiled to a bare
-return, or because the targets were never distinct to begin with, **this does not
-decide** — that is issue #1080's question and re-deciding it is out of scope
-here. What this settles is the mechanism the three readings share a wrong
-premise about, and it is the premise that decides the rest.
+So the three candidates are each argued against by something, and the fourth
+reading — the issue's own bank pointer — is **consistent with the bytes rather
+than eliminated by them**, on the route traced above: the caller does get DPTR =
+the target with the bank selected. What the trace adds is the mechanism, and
+with it the statement this write-up does make: **a target inside a `ret` run is
+reached through a far routine one instruction long**, whose `ret` continues
+along the stub's own bank-select tail rather than returning to the caller
+directly.
+
+Whether the linker emitted 133 identical `ret`s because it was padding a gap, or
+because 133 distinct routines each compiled to a bare return, or because the
+targets were never distinct to begin with, **this does not decide** — that is
+issue #1080's question and re-deciding it is out of scope here.
 
 ### What would distinguish them
 
@@ -224,6 +251,12 @@ export and settles nothing about the block.
 - **Not #1080's question.** Whether the run is padding, dead code or a shared
   return is settled there or nowhere; this reports the run's extent, the bank
   asymmetry and the callers, and stops.
+- **Not that the bank-pointer reading is refuted.** The trace fixes the route
+  and shows the caller resumes holding DPTR = the target; it does not decide
+  which account of that route the compiler emitted. The single-caller shape is
+  the bank-pointer reading's own prediction, so it cannot weigh against it
+  either. Which of the two is right is what the two missing inputs below would
+  settle.
 - **`in_erased_run` reads `no` throughout, and that is kept as a result.** No
   target sits in a run of 16 `0xFF` bytes, which is
   `bank-call-audit.md` §4's own rule run at the target byte. It is **not found by
