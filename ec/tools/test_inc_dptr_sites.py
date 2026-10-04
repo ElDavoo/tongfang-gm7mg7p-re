@@ -99,14 +99,29 @@ FIRMWARE = str(EC / "firmware" / "GMxMGxx_11.800")
 # what it measured; the cases hold the partitions between them. The two
 # pd-image-only addresses are held by address, since that is the claim.
 PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
-# 7 -> 8 with issue #1425, which is the eighth and the only one of the eight
-# that is a *high* half: `0x04A3` is `PACK_TEMP_DK_1`, the byte above
-# `0x04A2`. The other seven are all low halves of a pair their seed is, which
-# is what "entered" has meant here throughout -- a name on the byte a `MOV
-# DPTR` would have to find. `0x04A3` has a main-EC `MOV DPTR` site of its own
-# (`bank0:0xBAE7`, a read of the high half), so it is an ordinary entered row
-# and the invariant below covers it like the other seven; being a high half is
-# a fact about the byte, not a reason to hold it out of the check.
+# The addresses `xdata-inc-dptr-only.md` §2 lists as entered, which is what
+# "entered" has meant here throughout -- a name on the byte a `MOV DPTR` would
+# have to find. Most are low halves of a pair their seed is. Two are high
+# halves, and they are here on visibly different warrants rather than on one
+# shared rule:
+#
+#   `0x04A3` is `PACK_TEMP_DK_1`, the byte above `0x04A2`, and has a main-EC
+#   `MOV DPTR` site of its own (`bank0:0xBAE7`, a read of the high half), so it
+#   is an ordinary entered row and the invariant below covers it like any
+#   other. Being a high half is a fact about the byte, not a reason to hold it
+#   out of the check.
+#
+#   `0x04A5` is the high half of the `0x04A4` pair and has no main-EC `MOV
+#   DPTR` site at all: `trace_xdata_refs.py` finds three sites for it and every
+#   one is the ITE8850-PD image's. Issue #1202 entered it on a committed
+#   capture instead -- the byte takes more than one value there and tracks the
+#   row's own `current_now / 1000` -- which is an observation rather than the
+#   static access §6's rule admits on. It is named and asserted on its own
+#   terms below rather than skipped, so a silent exemption cannot let the next
+#   such entry pass unnoticed.
+#
+# The population this list has is `population_of`'s to say, not this comment's;
+# what is pinned here is the set of addresses, not how many there are.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
                      "0x04A3", "0x04A5", "0x04A7", "0x0523")
 
@@ -371,24 +386,16 @@ class TheSplit(unittest.TestCase):
         self.assertEqual(the73[len(NAMED_HEAD)], "0x0364")
         self.assertNotIn(the73[len(NAMED_HEAD)], NAMED_HEAD)
 
-    def test_the_eight_entered_are_the_eight_named(self):
+    def test_the_entered_rows_are_exactly_the_named_addresses(self):
         entered = [r["addr"] for r in self.rows if r["entered"] == "yes"]
         self.assertEqual(entered, list(ENTERED_ADDRESSES))
-        # Every entered row but one, `0x04A3` included, has a main-EC `MOV
-        # DPTR` site of its own -- so this is asserted for all of them rather
-        # than for seven of them. `0x04A3` is the only entered row that is a
-        # high half, which is a fact about the byte and not a reason to hold it
-        # out: its site is `bank0:0xBAE7`, a read of the high half, and the pin
-        # below is what keeps that from being re-read as an exception.
-        #
-        # `0x04A5` is the one entered row with no main-EC site at all, and it
-        # is named rather than skipped: it was entered by issue #1202 on a
-        # committed capture in which the byte moves and tracks the row's own
-        # `current_now / 1000`, which is an observation rather than the static
-        # access §6's rule admits on. Asserting it here rather than exempting
-        # it is the point -- a silent exemption would let the next such entry
-        # pass unnoticed, and `xdata-inc-dptr-only.md` §3 carries the same
-        # note in prose.
+        # Every entered row has a main-EC `MOV DPTR` site of its own except
+        # `0x04A5`, whose warrant is a committed capture instead; the constant
+        # above says why each is here. Both high halves are covered rather
+        # than exempted: `0x04A3` through the ordinary invariant, `0x04A5`
+        # through its own assertions. The invariant is checked for the rest
+        # rather than for all of them because a real second warrant is a
+        # thing this table has to be able to record.
         for r in self.rows:
             if r["entered"] == "yes" and r["addr"] != "0x04A5":
                 self.assertNotEqual(r["mov_dptr_main_ec"], "0",

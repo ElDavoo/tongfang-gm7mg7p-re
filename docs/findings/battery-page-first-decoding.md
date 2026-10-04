@@ -106,7 +106,7 @@ $ grep -n "0x434\|0x4a4\|lcall    0x888c" ec/decompiled/bank1/B43B.asm
 ```
 
 So the two addresses are written by one routine through one accessor, twenty
-lines apart. `0x04A4` is **write-only** in the census — `xdata-inc-dptr-only.csv`
+lines apart. `0x04A4` is **write-only** in the census — `xdata-registers.csv`
 gives it seven references and no reads, against `0x0434`'s sixteen including
 reads — so the direction of the copy is settled by static evidence even though
 which value the EC treats as authoritative is not.
@@ -121,21 +121,32 @@ consistent with the two addresses disagreeing on two rows and is why the
 capture's disagreement is evidence about the sources rather than about a copy.
 
 Both addresses gained rows in `registers.yaml`: `0x04A4` at `present-untested`
-(it has an EC-side site), `0x04A5` at `unknown-not-absent` (all three of its
-sites are in the PD image, which is another program's byte at the same address
-number — see `ec/annotations/xdata-register-map.md` and
-`ec/annotations/pd-xdata-overlap.md`).
+(it has an EC-side site), `0x04A5` at `unknown-not-absent` (all three of the
+sites `trace_xdata_refs.py` reports for it are in the PD image, which is another
+program's byte at the same address number — see
+`ec/annotations/xdata-register-map.md` and `ec/annotations/pd-xdata-overlap.md`).
 
 **`0x04A5` is entered on a different warrant than the other, and that is worth
 saying rather than leaving to the census's `entered` column.** It is one of the
 107 `inc DPTR`-only bytes `ec/annotations/xdata-inc-dptr-only.md` governs, and
 that page's rule admits a byte on a direct main-EC `MOV DPTR` site, which
-`0x04A5` does not have — every site the scan finds is the PD image's. It was
+`0x04A5` does not have — every site that scan finds is the PD image's. It was
 entered on the capture instead: the byte takes more than one value here, tracks
 the row's own `current_now / 1000` as the high half of the `0x04A4` pair, and
 the main EC's writer for that pair is the named one in §4. So the rule still
 describes what admits a byte on static evidence, and this is the first entry in
 that population made on a committed observation instead.
+
+**The grade is about that scan, and the census does not contradict it — it
+counts a different spelling.** `0x04A5` is not empty of main-EC references:
+`xdata-registers.csv` gives it seven, all writes, none pd-image, and they are
+the seven functions that write `0x04A4` through `write_r1r2_to_xdata_pair`,
+reaching the high half by that accessor's own `inc DPTR`. The two scans do not
+disagree about the firmware; they spell the address differently, and
+`static_refs_main_ec` is a direct-`MOV DPTR` count by the header's definition,
+so rule 2 grades on the one that is zero. Recording the census's seven here is
+what keeps the grade from reading as a claim that nothing in the main EC
+touches the byte.
 
 ## 5. `0x04A6`: the count steps mid-charge, and the tree already says why
 
