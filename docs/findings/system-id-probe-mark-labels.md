@@ -95,6 +95,15 @@ design and why there is no vocabulary to check one against. The `--mark` help
 is the one an operator sees at `--help`, and the §3 paragraph is the one they
 read while holding a run together.
 
+`system_id_probe.py`'s parser moved out of `main` into a `build_parser` of its
+own. Nothing about the parser changed in the move: the same options, the same
+help strings, and `--help` output byte-identical to the commit before it —
+checked by diffing the two, since a parser is exactly the thing a reader
+trusts without reading. It is there so the case below can ask the parser a
+question without `main`'s side effects, which is the whole difference between
+that case failing and hanging — see the correction in *What
+`FreeFormLabelTests` is for`.
+
 ### Why the new tests sit at the end of the suite file
 
 `docs/findings/test-line-pin-census.md` carries pins that cite lines *into*
@@ -211,14 +220,48 @@ for `--label-vocab` and expects argparse's exit 2, so a flag added to this tool
 fails it outright. The class docstring says so, so the next reader does not read
 red as a bug.
 
-The other two are **not** that detector, and rounding them into it would be the
+**CORRECTION (#1329 fix round 1, 2026-10-04), beside the paragraph above rather
+than under it.** *"Asks `main`'s parser … fails it outright"* was right about
+the answer and wrong about what a reader would have seen. That case invoked
+`main`, and with the flag added `main` does not fail: it parses the flag, falls
+through to `with Ec() as ec:` and sweeps the six addresses under the default
+`--seconds 0` until it is killed. So the one case this file points a reader at
+would have hung to the suite timeout — a red that names no assertion and says
+nothing about which one mattered. Verified by adding the flag and calling what
+that case called: it prints the sweep banner, opens the fake EC, and is still
+sweeping when a timeout kills it — exit 124, eleven sweeps in, with stdin a pipe
+and with stdin `/dev/null` alike.
+
+The fix is not a better assertion but a smaller blast radius. The parser now has
+a name of its own — `build_parser` returns it, `main` takes what it returns, and
+no option, help string or `--help` line changed — so the case asks the parser
+to parse the flag, which has no side effect in either direction. The flag then
+makes the assertion fail at once and by name rather than run on into a sweep.
+Same run with the flag injected:
+
+```
+FAIL: test_there_is_no_vocabulary_to_hold
+AssertionError: False is not true : this tool now takes --label-vocab,
+so the free-form decision its labels rest on needs reopening
+Ran 4 tests in 0.002s
+```
+
+and that check is no longer only a claim about a change nobody has made. Its own
+case, `test_that_case_can_go_red`, arms the flag on a fresh copy of this tool's
+real parser and fails if the detector stays green with it — the same instrument,
+and for the same reason, as the AST case's liveness check above, which is what
+the guard in this section should have had from the start. A claim about the
+future that has never been seen to fire has not been shown to fire.
+
+The other cases are **not** that detector, and rounding them into it would be the
 same overclaim this change is correcting elsewhere. They read the runbook and
-`grade_0751_isolation.parse_mark`, and neither touches this probe's parser —
-adding `--label-vocab` here would not change `parse_mark`, so both stay green.
-Verified by adding the flag and running them: still passing. What they hold is
-the *consequence* the decision rests on: every label the procedure mandates is
-one that check would refuse, so a flag added alongside them would be refusing
-the runbook's own labels at the first mark. That is an argument, not a detector.
+`grade_0751_isolation.parse_mark`, and none of them touches this probe's
+parser — adding `--label-vocab` here would not change `parse_mark`, so they stay
+green. Verified by adding the flag and running them: still passing. What they
+hold is the *consequence* the decision rests on: every label the procedure
+mandates is one that check would refuse, so a flag added alongside them would be
+refusing the runbook's own labels at the first mark. That is an argument, not a
+detector.
 
 The extraction guards itself against a vacuous pass by naming the labels the
 decision rests on and requiring each to be among what it found, so a §3 that

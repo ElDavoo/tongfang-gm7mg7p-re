@@ -785,15 +785,29 @@ class FreeFormLabelTests(unittest.TestCase):
     in the probe, and the next reader should read the red as the question this
     file already answers.
 
-    The other two cases are *not* that tripwire, and the distinction is worth
+    **CORRECTION (#1329 fix round 1, 2026-10-04), beside the paragraph above
+    rather than under it.** "Fails it outright" was wrong about what a reader
+    would see. That case invoked `main`, and with the flag added `main` does not
+    fail: it parses, opens the EC and sweeps the six addresses until it is
+    killed, so the case hung until the suite timed out -- which names no
+    assertion and says nothing about which one mattered. It now asks
+    `probe.build_parser()` to parse the flag instead, which has no side effect
+    in either direction, so the flag makes the assertion fail at once and by
+    name. `test_that_case_can_go_red` exists for the same reason as
+    `BlankMarkTests`' liveness check above: the paragraph above is a claim
+    about the future, and a claim about the future that cannot fire is worse
+    than no claim, so that case arms the flag on a fresh copy of the real
+    parser and fails if the detector above stays green with it.
+
+    The other cases are *not* that tripwire, and the distinction is worth
     keeping straight rather than rounding off into "the class detects it". They
-    read the runbook and the grader, and neither touches this probe's parser:
-    adding `--label-vocab` here would not change `parse_mark`, so both stay
-    green. What they hold is the *consequence* the decision rests on -- every
-    label the procedure mandates is one that check would refuse -- which is why
-    they are worth having, and why a flag added alongside them would be refusing
-    the procedure's own labels at the first mark. That is an argument, not a
-    detector; the detector is the third case.
+    read the runbook and the grader, and none of them touches this probe's
+    parser: adding `--label-vocab` here would not change `parse_mark`, so they
+    stay green. What they hold is the *consequence* the decision rests on --
+    every label the procedure mandates is one that check would refuse -- which is
+    why they are worth having, and why a flag added alongside them would be
+    refusing the procedure's own labels at the first mark. That is an argument,
+    not a detector; the detector is the parser case.
 
     What none of it establishes is that an operator's marks are *good*.
     `parse_mark` returning `(None, None)` for a runbook label is the design,
@@ -858,16 +872,56 @@ class FreeFormLabelTests(unittest.TestCase):
     def test_there_is_no_vocabulary_to_hold(self):
         # `main`'s parser, asked for the flag rather than the module's
         # attributes: an operator reaching for `--label-vocab` on this tool
-        # gets argparse's exit 2, which is the shape of the answer. The
-        # parser is reached through `main` because it is built there.
-        with contextlib.redirect_stderr(io.StringIO()):
-            with self.assertRaises(SystemExit) as cm:
-                probe.main(['--label-vocab', '0751'])
-        self.assertEqual(cm.exception.code, 2)
+        # gets argparse's exit 2, which is the shape of the answer. That is the
+        # parser `build_parser` hands `main`, unchanged.
+        #
+        # `build_parser().parse_args`, and not `main`, because asking `main`
+        # is only a bounded question while the answer is no. With the flag
+        # present `main` parses it, opens the EC and sweeps the six addresses
+        # until it is killed, so a case meant to catch that would hang to the
+        # suite timeout instead of failing -- a red that names no assertion.
+        # Parsing has no side effect in either direction, so asking it the
+        # question costs nothing and answers it in microseconds.
+        self.assertTrue(self.refuses_vocabulary(probe.build_parser()),
+                        'this tool now takes --label-vocab, so the free-form '
+                        'decision its labels rest on needs reopening')
         # And nothing on the class either, so the vocabulary cannot be passed
         # in by a caller that did not go through the parser.
         self.assertFalse(hasattr(probe.Marker(sink=None), '_check'))
         self.assertFalse(hasattr(probe.Marker(sink=None), '_forms'))
+
+    def test_that_case_can_go_red(self):
+        # And this case is required to be able to fail, for the reason
+        # `BlankMarkTests` gives for its own: a guard that cannot is worse than
+        # no guard, because it tells the next reader that a flag added here
+        # would be caught when it would not. Run the same check against a
+        # parser that has the flag -- a fresh copy of *this* tool's own, so
+        # what is exercised is its set of options and not a synthetic one.
+        armed = probe.build_parser()
+        if self.refuses_vocabulary(armed):
+            # Not there yet, so arm a copy the way adding it would. Once the
+            # flag does land this stops adding it -- argparse would raise on a
+            # duplicate, and an error naming the conflict rather than the guard
+            # is the same weak signal this case exists to rule out.
+            armed.add_argument("--label-vocab", default=None)
+        self.assertFalse(self.refuses_vocabulary(armed),
+                         'this guard no longer detects the flag it is here to '
+                         'detect')
+
+    @staticmethod
+    def refuses_vocabulary(ap):
+        """Whether `ap` refuses `--label-vocab` with argparse's exit 2.
+
+        A function of the parser so the case above and the liveness check
+        below can ask the same question of two parsers, and so the question
+        never reaches `main`'s EC handle or its sweep.
+        """
+        with contextlib.redirect_stderr(io.StringIO()):
+            try:
+                ap.parse_args(['--label-vocab', '0751'])
+            except SystemExit as e:
+                return e.code == 2
+        return False
 
 
 if __name__ == '__main__':

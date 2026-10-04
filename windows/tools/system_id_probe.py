@@ -332,7 +332,19 @@ class Marker:
             print(f"--- {ts}  MARK: {label} ---", flush=True)
 
 
-def main(argv=None):
+def build_parser():
+    """`main`'s parser, on its own.
+
+    Split out so a test can ask it a question without `main`'s side effects.
+    That matters for exactly one question -- whether `--label-vocab` is
+    accepted -- because asking `main` is only bounded while the answer is no:
+    with the flag present, `main(['--label-vocab', '0751'])` parses it, opens
+    the EC and sweeps the six addresses until it is killed, so the case
+    written to catch that would hang rather than fail. Parsing here has no
+    side effect at all, so the same question costs nothing either way. See
+    `test_system_id_probe.py`'s `FreeFormLabelTests` and
+    docs/findings/system-id-probe-mark-labels.md.
+    """
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--seconds", type=float, default=0,
@@ -356,6 +368,11 @@ def main(argv=None):
     ap.add_argument("--len", dest="length", type=lambda s: int(s, 0),
                     help=f"length of the --start context range (default: "
                          f"0x{CONTEXT_LEN:02X})")
+    return ap
+
+
+def main(argv=None):
+    ap = build_parser()
     args = ap.parse_args(argv)
 
     if args.length is not None and args.start is None:
