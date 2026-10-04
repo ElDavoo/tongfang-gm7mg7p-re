@@ -193,9 +193,8 @@ the pair machinery.
 
 The plan this implements expected a straight-line chain. It is not
 straight-line: **the six routines are selected through a jump table keyed on
-a second register**, and one of them is not reachable from that table at
-all. That is the substantive correction to what the issue asked for, so it
-is set out in full.
+a second register**. That is the substantive correction to what the issue
+asked for, so it is set out in full.
 
 `bank1 0xADFD dispatch_on_056a_low3` reads `0x056A`, masks it with `0x07`,
 multiplies by three by adding `R0` to `A` twice, and does `jmp @A+DPTR` with

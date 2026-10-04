@@ -15,14 +15,13 @@ knowing before reading the cases below:
     answer and the assertion fails, rather than a table in this file
     agreeing with itself.
   - **The six banding routines are selected by a jump table, not called.**
-    Nothing `lcall`s or `ljmp`s to any of them; `bank1 0xADFD` reads XDATA
-    0x056A and indexes a table of eight three-byte `ljmp`s at 0xADE2. The
-    table's bytes are in no committed listing, so they are read out of
-    `ec/firmware/GMxMGxx_11.800` at the file offset the listings' own headers
-    give, and the recovered targets are checked against
-    `ec/annotations/bank-call-targets.csv`. That is the one place this suite
-    reads the firmware rather than a listing, and it is what the table claim
-    cannot be checked against anything else.
+    `bank1 0xADFD` reads XDATA 0x056A and indexes a table of eight
+    three-byte `ljmp`s at 0xADE2. The table's bytes are in no committed
+    listing, so they are read out of `ec/firmware/GMxMGxx_11.800` at the
+    file offset the listings' own headers give, and the recovered targets are
+    checked against `ec/annotations/bank-call-targets.csv`. That is the one
+    place this suite reads the firmware rather than a listing, and it is what
+    the table claim cannot be checked against anything else.
 
 What the suite holds is the *shape* claim: which addresses the derivation
 writes and what expression each receives, that the band bounds are three of
