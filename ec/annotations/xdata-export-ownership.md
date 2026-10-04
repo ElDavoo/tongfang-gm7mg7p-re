@@ -118,7 +118,7 @@ committed 0.90, so the three columns are one detector rather than two:
 
 | body floor | containment classes | classes holding together only through a chain | largest class |
 |---:|---:|---:|---:|
-| 1 | 28 | 13 | **562** |
+| 1 | 29 | 14 | **562** |
 | 3 (committed) | 56 | 7 | 42 |
 
 The floor-1 flood is not a slightly-wrong count. It is 562 `bank1` files, 155

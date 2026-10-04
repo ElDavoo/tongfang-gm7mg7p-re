@@ -288,12 +288,31 @@ def report(assessed) -> str:
         cells = ["%-22s" % _cells(here, probe) for probe in PROBES]
         lines.append("  ".join(["%-12s %5d" % (verdict, len(here))]
                               + cells).rstrip())
-    lines += ["",
-              "Neither probe separates the two verdicts, so the boundary is "
-              "still not",
-              "mechanically settleable from the committed decompile "
-              "(annotations/xdata-06c2-06db-timers.md",
-              "8 item 7). A row with no verdict is %r, and a probe firing on "
+    # Stated from `separates` rather than hardcoded, so the sentence is a
+    # property of the cross-tab printed directly above it. A conclusion typed
+    # in beside a table that can contradict it is a claim about the tool, not
+    # a measurement of the tree, and this is the line the write-up offers as
+    # the evidence for the negative result.
+    counts = crosstab(assessed)
+    discriminates = [probe for probe in PROBES
+                     if separates(counts, verdicts, probe)]
+    if discriminates:
+        verdict_line = [
+            "%s %s the recorded verdicts, so the boundary is mechanically"
+            % (", ".join(discriminates),
+               "separates" if len(discriminates) == 1 else "separate"),
+            "settleable from the committed decompile. The negative result "
+            "this write-up",
+            "records no longer holds; re-derive it before citing it."]
+    else:
+        verdict_line = [
+            "Neither probe separates the two verdicts, so the boundary is "
+            "still not",
+            "mechanically settleable from the committed decompile "
+            "(annotations/xdata-06c2-06db-timers.md",
+            "8 item 7)."]
+    lines += [""] + verdict_line + [
+              "A row with no verdict is %r, and a probe firing on "
               "it" % UNMEASURED,
               "says nothing about the fold: %d of %d non-owner rows carry no "
               "verdict, over" % (len(unjudged), len(assessed)),

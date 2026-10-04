@@ -311,6 +311,27 @@ class CrossTabTests(unittest.TestCase):
         self.assertIn("yes=1", text)
         self.assertIn("%s=1" % efi.NOT_AUDITED, text)
 
+    def test_the_conclusion_follows_the_table_it_sits_under(self):
+        # The conclusion is derived from `separates` over the cross-tab the
+        # report prints above it, so a population that does discriminate says
+        # so. Asserted on both directions because a literal typed in beside
+        # the table reads the same either way, which is the defect: on the
+        # committed tree the sentence is true, and it would have kept being
+        # printed under a table that said the opposite.
+        separating = [assessed("bank0/8004.c", named="yes", start="yes",
+                               value="re-export"),
+                      assessed("bank0/8008.c", named="no", start="no",
+                               value="fragment")]
+        flat = " ".join(efi.report(separating).split())
+        self.assertNotIn("Neither probe separates", flat)
+        for probe in efi.PROBES:
+            self.assertIn(probe, flat)
+
+        together = [assessed("bank0/8004.c", value="re-export"),
+                    assessed("bank0/8008.c", value="fragment")]
+        self.assertIn("Neither probe separates",
+                      " ".join(efi.report(together).split()))
+
 
 class CommittedTreeTests(unittest.TestCase):
     """The one place this suite reads the tree, and only for a relation."""
