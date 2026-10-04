@@ -104,25 +104,33 @@ ANNOT = HERE.parent / "annotations"
 # header because reading them off the file would let a file that lost its
 # `terminator` column decide that it no longer needs one; `OptionalColumnsTests`
 # is what holds them, in the other direction.
+#
+# `callee` is `load_callee_map()`'s, and it adds **rows rather than a column**:
+# the `0x086x` page's table carries the sites whose DPTR a callee left behind,
+# which a `MOV DPTR` scan cannot find (`callee_dptr_sites.py`, issue #799). So
+# the committed header cannot express it -- there is nothing in the header to
+# read off -- which is why it is the one flag a table has to declare here or
+# its regeneration silently drops every one of those rows and the comparison
+# fails on a row set rather than on a column.
 TABLES = {
     "ec-07c4-07d5-sites.csv": (
-        ["0x07C4", "0x07D3", "0x07D4", "0x07D5"], True, False),
+        ["0x07C4", "0x07D3", "0x07D4", "0x07D5"], True, False, False),
     "ec-07d6-07d7-sites.csv": (
-        ["0x07D6", "0x07D7"], True, False),
+        ["0x07D6", "0x07D7"], True, False, False),
     "ec-09e9-09eb-sites.csv": (
-        ["0x09E9", "0x09EA", "0x09EB"], False, False),
+        ["0x09E9", "0x09EA", "0x09EB"], False, False, False),
     "ec-0x07c5-sites.csv": (
-        ["0x07C5"], True, False),
+        ["0x07C5"], True, False, False),
     "ec-0x07d0-sites.csv": (
-        ["0x07D0"], True, False),
+        ["0x07D0"], True, False, False),
     "ec-0x07d1-sites.csv": (
-        ["0x07D1"], True, False),
+        ["0x07D1"], True, False, False),
     "ec-0x07d2-sites.csv": (
-        ["0x07D2"], True, False),
+        ["0x07D2"], True, False, False),
     "ap-oem-0741-bit7-sites.csv": (
-        ["0x0741"], True, False),
+        ["0x0741"], True, False, False),
     "manual-fan-ctrl-0751-sites.csv": (
-        ["0x0751"], True, False),
+        ["0x0751"], True, False, False),
     "xdata-0400-045f-sites.csv": (
         ["0x%04X" % a for a in (
             0x0400, 0x0401, 0x0402, 0x0403, 0x0404, 0x0408, 0x040A, 0x040C,
@@ -132,11 +140,11 @@ TABLES = {
             0x043E, 0x043F, 0x0440, 0x0442, 0x0443, 0x0448, 0x0449, 0x044B,
             0x044C, 0x044F, 0x0450, 0x0451, 0x0452, 0x0454, 0x0455, 0x0456,
             0x0457, 0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E,
-            0x045F)], True, False),
+            0x045F)], True, False, False),
     "xdata-086x-dispatch-sites.csv": (
         ["0x0860", "0x0862", "0x0865", "0x0866", "0x0867", "0x0868", "0x0869",
          "0x086A", "0x086B", "0x086D", "0x086E", "0x1C39", "0x1C3A", "0x1F01",
-         "0x1F07"], False, True),
+         "0x1F07"], False, True, True),
     # Committed order, and deliberately not sorted: `csv_table()` emits each
     # address's sites where the caller put the address, so this table is
     # 0x1C39's rows, then 0x1C3A's, then 0x1C12's, and a sorted list produces
@@ -144,7 +152,7 @@ TABLES = {
     # leaving it in a comment.
     "xdata-1c3x-consumers-sites.csv": (
         ["0x1C39", "0x1C3A", "0x1C12", "0x1C13", "0x1C14", "0x1C36", "0x1C37",
-         "0x1C38", "0x1C01", "0x1C02", "0x1C03"], False, False),
+         "0x1C38", "0x1C01", "0x1C02", "0x1C03"], False, False, False),
 }
 
 OPTIONAL_COLUMNS = ("census", "terminator")
@@ -163,6 +171,23 @@ def firmware():
 
 
 firmware._cached = None
+
+
+def callee_map():
+    """The resolver's per-site table, read once, for the one table cut with
+    `--callee-column`.
+
+    Lazy for `census_map()`'s reason and one step further: it names a file
+    that only the `0x086x` page's table has rows from, so loading it for the
+    ten tables that do not would make a failure in a table that never used it
+    name a file none of them has anything to do with.
+    """
+    if not callee_map._cached:
+        callee_map._cached = T.load_callee_map()
+    return callee_map._cached
+
+
+callee_map._cached = None
 
 
 def census_map():
@@ -237,10 +262,11 @@ def regenerate(name):
     table -- which is the whole point of the mutation cases.
     """
     if name not in regenerate._cached:
-        addrs, terminator, census = TABLES[name]
+        addrs, terminator, census, callee = TABLES[name]
         regenerate._cached[name] = T.csv_table(
             firmware(), addrs, pd_verified(),
-            census_map() if census else None, terminator=terminator)
+            census_map() if census else None, terminator=terminator,
+            callee=callee_map() if callee else None)
     return regenerate._cached[name]
 
 
@@ -346,7 +372,7 @@ class RegenerationTests(unittest.TestCase):
     """
 
     def test_every_committed_table_regenerates_from_the_firmware(self):
-        for name, (addrs, terminator, census) in sorted(TABLES.items()):
+        for name, (addrs, terminator, census, callee) in sorted(TABLES.items()):
             with self.subTest(table=name):
                 self.assertTrue(
                     addrs,
@@ -393,7 +419,7 @@ class NonVacuousTests(unittest.TestCase):
         # support -- a typo in the list, or an address whose sites the walk
         # stopped reaching. Either way it is not something to discover from a
         # passing byte comparison.
-        for name, (addrs, _, _) in sorted(TABLES.items()):
+        for name, (addrs, _, _, _) in sorted(TABLES.items()):
             with self.subTest(table=name):
                 seen = {row[0] for row in rows_of(regenerate(name)[0])[1:]}
                 self.assertEqual(
@@ -464,7 +490,7 @@ class AddressOrderTests(unittest.TestCase):
 
     def test_a_sorted_address_list_is_not_accepted_for_a_committed_table(self):
         name = "xdata-1c3x-consumers-sites.csv"
-        addrs, terminator, census = TABLES[name]
+        addrs, terminator, census, _ = TABLES[name]
         self.assertNotEqual(addrs, sorted(addrs),
                             f"{name} is no longer committed out of order, so "
                             "the frozen list and this case's claim are both "
@@ -483,7 +509,7 @@ class AddressOrderTests(unittest.TestCase):
         # sorted -- or that had gained an address in the wrong place -- fails
         # here rather than only in the byte comparison, where the failure text
         # would be a diff to read.
-        for name, (addrs, _, _) in sorted(TABLES.items()):
+        for name, (addrs, _, _, _) in sorted(TABLES.items()):
             with self.subTest(table=name):
                 seen = []
                 for row in rows_of(regenerate(name)[0])[1:]:
@@ -505,7 +531,7 @@ class OptionalColumnsTests(unittest.TestCase):
     """
 
     def test_each_frozen_flag_matches_the_committed_header(self):
-        for name, (_, terminator, census) in sorted(TABLES.items()):
+        for name, (_, terminator, census, _) in sorted(TABLES.items()):
             with self.subTest(table=name):
                 header = T.committed_columns(str(ANNOT / name)) or []
                 self.assertEqual("terminator" in header, terminator, name)
@@ -541,7 +567,7 @@ class CensusColumnTests(unittest.TestCase):
 
     def test_the_census_column_comes_from_the_committed_correspondence_files(self):
         name = "xdata-086x-dispatch-sites.csv"
-        addrs, terminator, census = TABLES[name]
+        addrs, terminator, census, _ = TABLES[name]
         self.assertTrue(census, f"{name} is expected to carry a census column")
         self.assertFalse(terminator)
         _, unmapped = regenerate(name)
@@ -568,7 +594,7 @@ class CensusColumnTests(unittest.TestCase):
         # goes red on a column the file has no room for. Asserted rather than
         # assumed, because the failure it prevents is the exact one this suite
         # would otherwise be reporting against itself.
-        for name, (addrs, terminator, census) in sorted(TABLES.items()):
+        for name, (addrs, terminator, census, callee) in sorted(TABLES.items()):
             if census:
                 continue
             with self.subTest(table=name):
