@@ -63,6 +63,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
 - [`arms-table-budget-exclusion.md`](arms-table-budget-exclusion.md) — The arms table stays out of the budget census because no committed row ends on a budget, and that is a measurement rather than a promise (issue #866)
+- [`bank-call-regions-csv.md`](bank-call-regions-csv.md) — The region label as data: `bank-call-regions.csv`, and `entry_aligned` for the whole population (issue #1146)
 - [`bank-map-and-image-census.md`](bank-map-and-image-census.md) — The bank map, and a second image in the dump
 - [`bank0-c118-3202-bit0-thunk.md`](bank0-c118-3202-bit0-thunk.md) — bank0 `0xC118` is a thunk on `test_3202_bit0`, and it is one of four in an unexported run
 - [`bank1-c1e7-reachability.md`](bank1-c1e7-reachability.md) — No transfer in bank 1 names `0xC1E7`, which is why a reading of it stood unchallenged (issue #336)
