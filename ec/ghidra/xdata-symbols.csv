@@ -74,6 +74,11 @@ addr,name,from_register,register_status,derivation,programs
 0x045D,XDATA_045D,XDATA_045D,present-untested,scalar-name,bank0;bank1
 0x045E,XDATA_045E,XDATA_045E,present-untested,scalar-name,bank0;bank1
 0x045F,XDATA_045F,XDATA_045F,present-untested,scalar-name,bank0;bank1
+0x0464,MAIN_FAN_RPM_0,MAIN_FAN_RPM,confirmed-working,override,bank0;bank1
+0x0465,MAIN_FAN_RPM_1,MAIN_FAN_RPM,confirmed-working,override,bank0;bank1
+0x046C,SECOND_FAN_RPM_0,SECOND_FAN_RPM,confirmed-working,override,bank0;bank1
+0x046D,SECOND_FAN_RPM_1,SECOND_FAN_RPM,confirmed-working,override,bank0;bank1
+0x046B,XDATA_046B,XDATA_046B,present-untested,scalar-name,bank0;bank1
 0x04A6,BAT_CYCLE_COUNT_0,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
 0x04A7,BAT_CYCLE_COUNT_1,BAT_CYCLE_COUNT,confirmed-working,override,bank0;bank1
 0x04A2,PACK_TEMP_DK_0,"PACK_TEMP_DK (pack temperature, decikelvin)",present-untested,override,bank0;bank1
