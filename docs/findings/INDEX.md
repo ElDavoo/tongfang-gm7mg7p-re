@@ -101,6 +101,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`cross-decoder-blind-population.md`](cross-decoder-blind-population.md) — What the cross-decoder's `vacuous` bucket is made of (issue #350)
 - [`cross-decoder-disagreement-population.md`](cross-decoder-disagreement-population.md) — What the cross-decoder's `disagree` bucket is made of (issue #510)
 - [`csv-column-usage-advice.md`](csv-column-usage-advice.md) — A `Usage:` line that reproduces its table, and a note for the diff a reader writes instead (issue #1020)
+- [`ctgp-dben-capture-name-handoff.md`](ctgp-dben-capture-name-handoff.md) — The `0x07C4` DBEN probe: §3's paths, the tool's usage example, and what the second run actually is (issue #1188)
 - [`cut-classification-by-mechanism.md`](cut-classification-by-mechanism.md) — Every stop reason `descend()` records is now classified where it is emitted, not recovered from how its message begins
 - [`d8a0-init-routine.md`](d8a0-init-routine.md) — `bank0,0xD8A0`: the routine the reset operand lands one byte short of, and the four `0x20xx` bytes it alone touches (issue #575)
 - [`de3c-1c04-to-0563.md`](de3c-1c04-to-0563.md) — The store at `bank1,0xDE96` writes the `0x1C04` byte to the address the bytes at XDATA `0x0563`/`0x0564` spell, and that pair is staged by the same routine from two CODE tables — an indexed set, not one address and not the caller's
