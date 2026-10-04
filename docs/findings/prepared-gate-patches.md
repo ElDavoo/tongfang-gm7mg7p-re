@@ -423,10 +423,10 @@ all, and the honest move at that point is upstream in
 [`ElDavoo/agent-pipeline`](https://github.com/ElDavoo/agent-pipeline) rather
 than a seventh local patch.
 
-**2026-10-04, issue #1146 — the fourth fold, and the collision table's verdict
+**2026-10-04, issue #1146 — a fold, and the collision table's verdict
 confirmed rather than discovered.** `ec/tools/bank_call_regions.py` folds into
-the same file as a fourth tool, for the reason the paragraph above records: there
-is no free line left in the tool list, so a standalone seventh
+the same file as the tools already there, for the reason the paragraph above
+records: there is no free line left in the tool list, so a standalone
 `docs/ci/agent-gates-*.patch` would have to cut the same
 `windows/tools/decompile_native.py; do` line and would then fail only
 `CompositionTests`, having applied cleanly on its own. Planning for that rather
@@ -435,12 +435,11 @@ than finding it at the end is what the table is for, and it held.
 The detail belongs in [`bank-call-regions-csv.md`](bank-call-regions-csv.md),
 which carries the tool, the fold and what landing it would and would not buy.
 What is recorded here is only the fact of the fold and the reason for it, which
-is this file's stated purpose. `ArmRetentionTests.REQUIRED` grows by both halves
-of the fourth tool — the extended `\`-continued list entry and the new arm — for
-the reason the class already gives: a re-cut that lands three tools' halves and
-drops the fourth's still applies, still composes, and still passes every other
-case, because the dropped arm is exactly what keeps its tool off the `*)`
-default.
+is this file's stated purpose. `ArmRetentionTests.REQUIRED` grows by the tool's
+two halves — the extended `\`-continued list entry and the new arm — for the
+reason the class already gives: a re-cut that lands some tools' halves and drops
+another's still applies, still composes, and still passes every other case,
+because the dropped arm is exactly what keeps its tool off the `*)` default.
 
 **2026-09-28, issue #772 — what this suite does once a patch is landed.** A
 patch that has been applied and committed has, by definition, stopped

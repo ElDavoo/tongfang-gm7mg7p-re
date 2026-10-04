@@ -33,7 +33,7 @@ regenerate it produce the same bytes and merge in content rather than in prose.
 **`bank-call-targets.csv` and its siblings are not touched.** This is the
 sibling `audit_call_targets.py`'s `write_paged_csv()` docstring names ("A
 sibling of `write_csv()` rather than more columns on it"), one step further
-along: a 13th column on that file needs `build_ec_decompile.py`'s
+along: one more column on that file needs `build_ec_decompile.py`'s
 `CALL_TARGET_COLUMNS` edited, and that list's `--self-test` runs in the cheap
 gate, so the column would turn a gate assertion red for an unrelated cause --
 the cheapest way to get a gate switched off. `ec/tools/test_data_regions.py`

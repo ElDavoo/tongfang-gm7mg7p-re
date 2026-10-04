@@ -18,13 +18,13 @@
 # not compose. `tools/test_agent_gates_patches.py::CompositionTests` is what
 # says so rather than this header: it applies the set in every ordered pair, and
 # a standalone patch would fail only there, having applied cleanly on its own.
-# bank_call_regions.py folds in here rather than a ninth for the same reason a
-# third time over: `prepared-gate-patches.md`'s collision table had already
-# recorded that the tool list has no free line left, so this one was planned into
-# an existing hunk's post-image rather than discovered at the end. **There is
-# deliberately still no count of the tools here**, for the reason the paragraph
-# below gives about ArmRetentionTests: a fold that edited this sentence to say
-# four is precisely the edit the next fold would not make.
+# bank_call_regions.py folds in here for the same reason one step further along:
+# `prepared-gate-patches.md`'s collision table had already recorded that the
+# tool list has no free line left, so this one was planned into an existing
+# hunk's post-image rather than discovered at the end. **There is deliberately
+# still no count of the tools here**, for the reason the paragraph below gives
+# about ArmRetentionTests: a fold that edited this sentence to name a number is
+# precisely the edit the next fold would not make.
 # The filename is KEPT for the reference-count reason that file
 # gives for agent-gates-capture-claims.patch: the patch is named in prose across
 # many markdown files outside docs/ci/, each of which names it as the canonical

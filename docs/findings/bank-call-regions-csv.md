@@ -216,22 +216,22 @@ map said.
 
 ## Gate wiring: the fold
 
-A seventh `ec/tools/` entry has no free line left in
+Another `ec/tools/` entry has no free line left in
 `agent-gates.sh`'s tool list — `prepared-gate-patches.md`'s collision table says
 so, and the header of the patch below records the same for the fold that came
 after. So **`--check` and `--self-test` fold into
 [`../ci/agent-gates-disasm8051-self-test.patch`](../ci/agent-gates-disasm8051-self-test.patch)
-as its fourth tool**, rather than shipping a standalone seventh file that would
-have to cut the same `windows/tools/decompile_native.py; do` line and would then
-fail only `CompositionTests`, having applied cleanly alone. The arm runs
+alongside the tools already there**, rather than shipping a standalone file that
+would have to cut the same `windows/tools/decompile_native.py; do` line and would
+then fail only `CompositionTests`, having applied cleanly alone. The arm runs
 `--check` **and** `--self-test`, on `data_regions.py`'s reason: `--check` is the
 mode that holds the file to the image, and the arm is what keeps the tool off the
 `*)` default, which passes `--work "$scratch"` and a flag this tool does not take.
 
-`ArmRetentionTests.REQUIRED` gains both halves — the extended `\`-continued list
-entry and the new arm — because a re-cut that lands three of the four tools'
-halves still applies, still composes, and still passes every other case in that
-suite. That is the whole reason the class exists.
+`ArmRetentionTests.REQUIRED` gains the tool's two halves — the extended
+`\`-continued list entry and the new arm — because a re-cut that lands some
+tools' halves and drops another's still applies, still composes, and still passes
+every other case in that suite. That is the whole reason the class exists.
 
 `.github/scripts/agent-gates.sh` itself is **not** edited: a branch touching
 `.github/` cannot be pushed (the pipeline's push token has no `workflow`
