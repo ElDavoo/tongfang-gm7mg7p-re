@@ -1904,6 +1904,15 @@ sources is the standing control. And a group is a relation over *this* export:
 a re-export that moved a boundary would move the groups, which is another
 reason the durable citation is §4.4's `cluster_key` and not an id or a flag.
 
+**A different relation, and a different ruling.** The groups above relate
+*files* that read the same addresses. What `functions_touched` counts is not a
+relation at all but a definition — one committed `index.csv` row (one
+`out_file`) per function key — and the export nests some of its own frames
+inside others, so the "one frame of code" reading is a real alternative rather
+than a hypothetical one. It is ruled on, against the measured cost of taking it,
+in `docs/findings/xdata-frame-credit-column.md` (issue #1360), and
+`ec/tools/xdata_frame_credit.py` prints both readings.
+
 ### 4.6 What flipping the default would cost, measured (2026-09-25, issue #554)
 
 Numbered after §4.5 rather than before it, for the reason §4.5 gives: the
