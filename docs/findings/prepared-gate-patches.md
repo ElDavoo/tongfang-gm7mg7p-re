@@ -539,7 +539,10 @@ on the half-folded patch**: it applies, it composes in every ordered pair, it
 passes `bash -n` and `shellcheck`, `check_gate_arm_coverage.py --check` stays
 green, and `tools/test_agent_gates_patches.py` stays green — so the new suite is
 the only thing in the tree that notices a fold that lost a call, and a gate that
-runs one of its two checks and is green is what that mutation looks like.
+runs one of its two checks and is green is what that mutation looks like. Its
+second class runs the block the patch lands, against a stub tool, for each row of
+the mutation table in [`audit-call-targets-gate-arm.md`](audit-call-targets-gate-arm.md) —
+so the transcript assertion that arm carries is re-derived rather than asserted.
 
 **Issue #1081's `bank_attribution.py` folds here too, and the two must serialise
 on this patch file and on that retention test.** Same region, same reason, and
@@ -566,4 +569,8 @@ suite red without this arm — measured by mutation on the committed tree, forci
 either check's condition false. What the arm adds is that it runs the tool **as
 a command**, which is the only place `main()`, `argparse` and the exit status are
 exercised: breaking `--self-test`'s dispatch leaves the command exiting 0 in
-silence with that suite green. The write-up carries the retraction in place.
+silence with that suite green. **A re-cut must keep the transcript assertion as
+well as the status** — the call greps the command's stdout for its
+`self-test passed` line, because an exit-status-only arm is green on that
+mutation, which is the one it exists for. The write-up carries the retraction in
+place.

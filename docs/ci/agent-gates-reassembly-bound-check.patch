@@ -146,15 +146,23 @@
 # mutation on the committed tree, forcing either check's condition false turns
 # that suite red.
 #
-# What this call adds is narrower and is the reason to land it: it runs the
-# SHIPPED COMMAND as a process, where the suite calls `self_test()` in-process
-# and so never goes through `main()`, `argparse` or the exit status. Breaking
-# `--self-test`'s dispatch leaves the command exiting 0 in silence with that
-# suite green; renaming the flag leaves it exiting 2, also green. The same
-# distinction `test_call_graph_gaps.py` draws when it drives `--self-test` as a
-# subprocess, because the arm that matters is the one that returns an exit code.
-# That is a smaller claim than the one this header used to make, and it is the
-# one being made.
+# What this call adds is narrower than the reasoning behind it claimed, and is
+# the reason to land it: it runs the SHIPPED COMMAND as a process, where the
+# suite calls `self_test()` in-process and so never goes through `main()`,
+# `argparse` or the exit status. Two breaks are caught here and by neither other
+# place, and **the transcript assertion is what catches the first of them**:
+# break `--self-test`'s dispatch and the command exits 0 having printed nothing,
+# which an arm reading only `|| rc=1` calls green -- so the call greps the
+# transcript for its `self-test passed` line as well as reading the status.
+# Rename the flag and the command exits 2, which the status alone catches.
+# `test_call_graph_gaps.py` asserts its subprocess's stdout for the same reason
+# and its returncode alongside it; there, as here, the stdout assertion is the
+# half that catches a suppressed transcript.
+#
+# What this call still does not catch, so that a green run is not over-read: a
+# self-test that prints its summary line with a check deleted from it. This arm
+# reads a status and a line, and so does the in-process suite; neither counts
+# the checks.
 #
 # The two checks the transcript carries, for a reader landing this: that the BL51
 # trampoline block's 403 entries are one 6-byte-stride run over `0x1150-0x1AC2`,
@@ -170,10 +178,10 @@
 # paragraph and is not what these two checks are for.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 16c70c3..d9cd668 100755
+index 16c70c3..9e10a91 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -298,6 +298,61 @@ check_ghidra_tooling() {
+@@ -298,6 +298,77 @@ check_ghidra_tooling() {
          ;;
      esac
    done
@@ -222,6 +230,16 @@ index 16c70c3..d9cd668 100755
 +  # red without this arm. An earlier cut of this comment claimed they "ran in no
 +  # gate at all"; that was wrong, and it is retracted here rather than dropped.
 +  #
++  # The exit status is not enough on its own, so the transcript is asserted and
++  # not merely printed. Break `--self-test`'s dispatch and the command exits 0
++  # having printed nothing at all: the whole self-test stops running, and an arm
++  # reading only `|| rc=1` stays green on the one failure this call is here for.
++  # ec/tools/test_call_graph_gaps.py asserts its subprocess's stdout for the
++  # same reason, and it is the stdout assertion that does the work there.
++  # What neither this nor the in-process suite can catch is a self-test that
++  # prints its summary line with a check deleted from it -- both read a status
++  # and a line, and neither counts the checks.
++  #
 +  # The tool takes a positional firmware path and no --work, so it cannot go in
 +  # the tool loop above at all: on the `*)` default that is `--work "$scratch"
 +  # --check`, and the tool's argparse exits 2 on those flags. That is
@@ -230,7 +248,13 @@ index 16c70c3..d9cd668 100755
 +  # the image is committed, so the cheap-tier reason holds either way. No
 +  # Ghidra, no network, no assembler.
 +  if [ -f ec/tools/audit_call_targets.py ]; then
-+    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test || rc=1
++    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 \
++      --self-test > "$scratch/audit-call-targets-self-test.txt" || rc=1
++    cat "$scratch/audit-call-targets-self-test.txt"
++    if ! grep -q 'self-test passed' "$scratch/audit-call-targets-self-test.txt"; then
++      echo "audit_call_targets.py --self-test printed no 'self-test passed' line" >&2
++      rc=1
++    fi
 +  fi
    rm -rf "$scratch"
    return "$rc"

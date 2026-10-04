@@ -33,6 +33,15 @@ this file *does* import is `ec/tools/check_gate_arm_coverage.py`, and it imports
 the production checker rather than a test helper precisely because it is the
 authority on what a gate claim is; see `DocstringClaimTests`.
 
+**The second thing it holds is the arm's behaviour, not only its presence.** A
+re-cut that keeps `|| rc=1` and drops the transcript assertion is a patch that
+still applies, still composes, still lints, and leaves the gate green on the one
+break the call exists for — `--self-test` no longer dispatching, so the command
+exits 0 having printed nothing. `ArmBehaviourTests` runs the landed block
+against a stub tool for each row of the mutation table in
+`docs/findings/audit-call-targets-gate-arm.md`, so that claim is re-derived
+rather than asserted in prose here.
+
 **Not a gate, and not in the cheap tier**, for the reason the sibling suite's
 docstring gives: `.github/scripts/agent-gates.sh` is a template-copied file and
 the pipeline's push token has no `workflow` scope. This runs when
@@ -78,8 +87,15 @@ REQUIRED = [
     '    python3 ec/tools/reassembly_checked_bound.py --check || rc=1\n'
     '  fi',
     '  if [ -f ec/tools/audit_call_targets.py ]; then\n'
-    '    python3 ec/tools/audit_call_targets.py '
-    'ec/firmware/GMxMGxx_11.800 --self-test || rc=1\n'
+    '    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 \\\n'
+    '      --self-test > "$scratch/audit-call-targets-self-test.txt" || rc=1\n'
+    '    cat "$scratch/audit-call-targets-self-test.txt"\n'
+    '    if ! grep -q \'self-test passed\' '
+    '"$scratch/audit-call-targets-self-test.txt"; then\n'
+    '      echo "audit_call_targets.py --self-test printed no '
+    '\'self-test passed\' line" >&2\n'
+    '      rc=1\n'
+    '    fi\n'
     '  fi',
 ]
 
@@ -152,6 +168,42 @@ def has_git_repo():
     return (REPO / '.git').exists() and has_git()
 
 
+def landed_gate_text():
+    """The gate script with this patch applied, and the apply's stderr."""
+    with scratch_tree() as tree:
+        done = git('apply', str(REPO / PATCH), cwd=tree)
+        return (tree / GATE).read_text(), done
+
+
+# The `if` this patch lands for the second tool, and the line that closes it at
+# the block's own indent. Both are named rather than inlined so `arm_block()`
+# fails loudly on a re-cut that moved them, and neither is a count of the file.
+ARM_OPEN = '  if [ -f ec/tools/audit_call_targets.py ]; then\n'
+ARM_CLOSE = '\n  fi\n'
+
+
+def arm_block(gate_text):
+    """The landed `if` block on its own, so it can be run against a stub.
+
+    Cut by its own opening line and the first line at the block's own indent
+    that closes it. The inner `if ! grep -q ...` closes at a deeper indent and
+    is not what the second index finds, which is the same reading the shell
+    gives the block.
+
+    Sourced rather than executed by its caller: it sets `rc`, which is the gate
+    function's own accumulator, and its value afterwards is the result.
+    """
+    for anchor in (ARM_OPEN, ARM_CLOSE):
+        if anchor not in gate_text:
+            raise AssertionError(
+                f'{anchor!r} is not in the {GATE} this patch lands, so the '
+                'block cannot be cut out of it and nothing below would be '
+                'measuring the arm. Re-cut the patch, or move the anchor '
+                'constant here to wherever the block now is.')
+    start = gate_text.index(ARM_OPEN)
+    return gate_text[start:gate_text.index(ARM_CLOSE, start) + len(ARM_CLOSE)]
+
+
 class FoldRetentionTests(unittest.TestCase):
     """The folded patch lands both calls, and lands the image path with them.
 
@@ -168,9 +220,7 @@ class FoldRetentionTests(unittest.TestCase):
 
     def landed_gate(self):
         """The gate script with this patch applied, and the apply's stderr."""
-        with scratch_tree() as tree:
-            done = git('apply', str(REPO / PATCH), cwd=tree)
-            return (tree / GATE).read_text(), done
+        return landed_gate_text()
 
     def test_the_patch_lands_both_calls(self):
         landed, done = self.landed_gate()
@@ -354,6 +404,106 @@ class MutationTests(unittest.TestCase):
             '`audit_call_targets.py` call: dropping it is the mutation this '
             'suite exists to catch, and the gate would then run one of the two '
             'checks it was going to run and be green.')
+
+
+class ArmBehaviourTests(unittest.TestCase):
+    """The landed block, run: a silent self-test is as red as a failing one.
+
+    `FoldRetentionTests` holds that the block is in the patch. This holds what
+    it does once it is, against the mutation it exists for: a re-cut that keeps
+    `|| rc=1` and drops the transcript assertion still applies, still composes,
+    still lints, and leaves the **gate** green on the one break the call is here
+    for -- `--self-test` no longer dispatching, so the command a person would
+    type exits 0 having printed nothing. An exit status alone cannot see that,
+    which is why the block greps the transcript as well;
+    `ec/tools/test_call_graph_gaps.py` asserts its subprocess's stdout for the
+    same reason, and it is the half that carries it there too.
+
+    The block is run on its own rather than through `check_ghidra_tooling()`,
+    which would run the whole cheap tier to reach two lines, and against a stub
+    rather than the real tool, because the dispatch break cannot be expressed
+    without editing `ec/tools/audit_call_targets.py` itself. The stub is what
+    the arm runs -- `python3 <tool> <image> --self-test` -- and it ignores both
+    arguments, so no image has to be on disk beside it.
+    """
+
+    # The self-test that ran, and the transcript it prints. Also the arm's own
+    # success path, and what the `cat` in the block exists to keep in the gate
+    # log rather than swallow into the scratch dir.
+    PASSING = 'print("  ok   a check")\nprint("self-test passed")\n'
+
+    # (what the stub does, the status the arm must return for it, its body).
+    # Each row is a row of the mutation table in
+    # `docs/findings/audit-call-targets-gate-arm.md`.
+    STUBS = (
+        ('the self-test ran', 0, PASSING),
+        ('`--self-test` no longer dispatches to self_test()', 1,
+         'import sys\nsys.exit(0)\n'),
+        ('a check in the self-test failed', 1,
+         'import sys\nprint("  FAIL  a check")\nprint("self-test FAILED")\n'
+         'sys.exit(1)\n'),
+        ('`--self-test` no longer exists as a flag', 1,
+         'import sys\nsys.stderr.write("unrecognized arguments\\n")\n'
+         'sys.exit(2)\n'),
+    )
+
+    def setUp(self):
+        if not has_git_repo():
+            self.skipTest('no git, or no .git beside the repository; there is '
+                          'nothing to apply the patch to')
+        landed, done = landed_gate_text()
+        self.assertEqual(
+            done.returncode, 0,
+            f'{PATCH} no longer applies to the committed {GATE}:\n'
+            f'{done.stderr.strip()}')
+        self.block = arm_block(landed)
+
+    def run_arm(self, stub):
+        """The landed block over a stub tool, and what it returned.
+
+        Sourced rather than run, in a tree of its own: the block writes to
+        `$scratch` and sets `rc`, so both have to exist and `rc`'s value
+        afterwards is the result. The scratch dir is made here because the
+        block only ever appends to it -- in the gate the function creates it.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tool = root / 'ec' / 'tools' / 'audit_call_targets.py'
+            tool.parent.mkdir(parents=True)
+            tool.write_text(stub)
+            (root / 'scratch').mkdir()
+            (root / 'block.sh').write_text(self.block)
+            return subprocess.run(
+                ['bash', '-c',
+                 # `bash -c <script> <$0> <$1> <$2>`, so the scratch dir and
+                 # the block are passed in rather than interpolated.
+                 'scratch="$1"; rc=0; . "$2"; exit "$rc"',
+                 'arm', str(root / 'scratch'), str(root / 'block.sh')],
+                cwd=root, capture_output=True, text=True)
+
+    def test_the_arm_catches_each_of_them(self):
+        for name, want, stub in self.STUBS:
+            with self.subTest(stub=name):
+                ran = self.run_arm(stub)
+                self.assertEqual(
+                    ran.returncode, want,
+                    f'the block {PATCH} lands returned {ran.returncode} where '
+                    f'{want} is what {name!r} must produce.\n'
+                    f'stdout:\n{ran.stdout}\nstderr:\n{ran.stderr}')
+
+    def test_the_transcript_still_reaches_the_gate_log(self):
+        """The `cat` is not decoration: the tool's output is the gate's log.
+
+        Grepping the transcript into `$scratch` and reading it there is what
+        lets the arm assert on it, and a re-cut that dropped the `cat` would
+        make every self-test assertion invisible in the run that reports it.
+        """
+        ran = self.run_arm(self.PASSING)
+        self.assertIn(
+            'self-test passed', ran.stdout,
+            f'the block {PATCH} lands no longer prints what the tool printed, '
+            'so a gate run says the self-test ran and shows nothing of it:\n'
+            f'{ran.stdout}')
 
 
 class DocstringClaimTests(unittest.TestCase):

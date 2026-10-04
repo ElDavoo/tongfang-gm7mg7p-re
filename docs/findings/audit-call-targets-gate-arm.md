@@ -46,12 +46,16 @@ So a dump that broke either check is already noticed on every sweep, before this
 
 What the arm does add is real, and it is one thing: **it runs the shipped command as a process rather than calling the function.** The suite calls `act.self_test(d)` in-process, so it never goes through `main()`, `argparse`, or the exit status — and a break in any of those is invisible to it. Also measured, on the committed tree:
 
-| mutation to `audit_call_targets.py` | the shipped command | `test_audit_call_targets.py` |
-|---|---|---|
-| `--self-test` no longer dispatches to `self_test()` | exits 0, printing nothing | **green** |
-| the `--self-test` flag itself is renamed | exits 2 | **green** |
+| mutation to `audit_call_targets.py` | the shipped command | `test_audit_call_targets.py` | the arm |
+|---|---|---|---|
+| `--self-test` no longer dispatches to `self_test()` | exits 0, printing nothing | **green** | **red** |
+| the `--self-test` flag itself is renamed | exits 2 | **green** | **red** |
 
-The first is the sharp one: the tool's whole self-test stops running and the command a person would type reports success. That is the shape of failure the in-process suite cannot have, and it is the same distinction `test_call_graph_gaps.py` draws when it drives `--self-test` as a subprocess — "the arm that matters is the one that returns an exit code, and calling the function would not exercise the argument handling that reaches it."
+The first is the sharp one: the tool's whole self-test stops running and the command a person would type reports success. **Catching it takes both halves of what the arm reads, not the exit status alone** — a break that exits 0 in silence is green to `|| rc=1`, which is the whole reason the landed call writes the command's stdout to `$scratch` and greps it for the `self-test passed` line the tool prints on success. The second row is caught by the status on its own.
+
+That is the shape of failure the in-process suite cannot have, and it is the same distinction `test_call_graph_gaps.py` draws when it drives `--self-test` as a subprocess: it asserts `proc.returncode == 0` **and** `assertIn("all assertions passed", proc.stdout)`, and it is the stdout assertion that carries the first row. The arm is that assertion with the transcript printed as well as grepped, so the tool's own output still reaches the gate log. `tools/test_gate_arm_audit_call_targets.py::ArmBehaviourTests` runs the landed block against a stub for each row, rather than leaving this table to be the only evidence.
+
+What the arm still does not catch, so that a green run is not over-read: **a self-test that prints its summary line with a check deleted from it.** The arm reads a status and a line; so does the in-process suite; neither counts the checks.
 
 That is a much smaller claim than the one this branch began with, and it is the one the patch now makes. Two of the transcript's checks are worth naming anyway, because they are what a *different* image would move, and both name themselves when they break:
 
@@ -94,6 +98,8 @@ The case that matters is the mutation. A re-cut that keeps `reassembly_checked_b
 | `tools/test_gate_arm_audit_call_targets.py` | **red** | this suite |
 
 It is the only case in the tree that fails on that mutation, which is how it is known to be worth having. The suite builds the half-folded patch itself rather than asserting the property in prose, so the "it would have been silent" claim is measured on every run and not just at the time it was written.
+
+The second thing it holds is the arm's own behaviour: `ArmBehaviourTests` extracts the `if` block the patch lands, runs it under `bash` against a stub `audit_call_targets.py` for each row of the mutation table above, and asserts the exit status each one has to produce. That is the same measurement the table records, re-derived on every sweep instead of being a claim a reader has to take on the write-up's word — and it is what would go red if a later re-cut dropped the transcript assertion and left only `|| rc=1`, which is the failure this section is about.
 
 ## Not claimed
 
