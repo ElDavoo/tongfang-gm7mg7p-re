@@ -403,6 +403,8 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x07D8,MODE_TCC_OFFSET_DEFAULTS,0x093AE,bank0,0x93AE,write,write,0x9334 seed_tcc_defaults_from_ba36,,
 0x07D9,MODE_TCC_OFFSET_DEFAULTS,0x093B9,bank0,0x93B9,write,write,0x9334 seed_tcc_defaults_from_ba36,,
 0x07DA,MODE_TCC_OFFSET_DEFAULTS,0x093C6,bank0,0x93C6,write,write,0x9334 seed_tcc_defaults_from_ba36,,
+0x078E,XDATA_078E,0x0A7DB,bank0,0xA7DB,read+write,read+write,0xA7C8 FUN_CODE_a7c8,,
+0x078E,XDATA_078E,0x0B12C,bank0,0xB12C,read+write,read+write,0xB12C manual_ctrl_profile_gate,,
 0x0786,CPU_TCC_OFFSET (APTC/APTN),0x09492,bank0,0x9492,read,read,0x948D code_byte_to_0a4a_then_push_r7,,
 0x0786,CPU_TCC_OFFSET (APTC/APTN),0x094A0,bank0,0x94A0,read,read,0x948D code_byte_to_0a4a_then_push_r7,,
 0x0786,CPU_TCC_OFFSET (APTC/APTN),0x0AD81,bank0,0xAD81,write,write,0xACB4 reset_xdata_flags_and_07d5_to_ff,,
