@@ -780,7 +780,7 @@ written against:
 | `ec/tools/grade_timer_sweep.py:354` | `:153` |
 | `ec/tools/grade_timer_sweep.py:355` | `:154` |
 
-**Seven pins were added rather than moved, and they are new sites rather than
+**Pins were added rather than moved, and they are new sites rather than
 re-anchored ones.** The mark-free class section 2 now prints needed the
 writers' `--mark` gates cited, and the index check added below needed its own
 mark-recognition site in the census — so the table grew:
@@ -793,7 +793,7 @@ mark-recognition site in the census — so the table grew:
 | `windows/tools/system_id_probe.py:385` | gate: and again in the class that imports no `ec_watch` at all |
 | `ec/tools/ec_timer_capture.py:324` | gate: `--auto-mark` |
 | `ec/tools/ec_timer_capture.py:328` | gate: `--mark-input` |
-| `ec/tools/check_capture_marks.py:147` | reader: the index check's own mark count, the rule section 2 shares with `read_capture` |
+| `ec/tools/check_capture_marks.py:151` | reader: the index check's own mark count, the rule section 2 shares with `read_capture` |
 
 `check_page` requires every cited *file* to be named in one of this tool's two
 pages, which is why `windows/tools/gpu_block_watch.py` is named in "The
