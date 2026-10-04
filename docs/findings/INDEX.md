@@ -195,6 +195,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-07d2-index-or-word-half.md`](pd-07d2-index-or-word-half.md) — `0x07D2` is an index in some routines and a 16-bit window's low byte in others, and choosing between them is the wrong question
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
 - [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
+- [`pd-call-target-census.md`](pd-call-target-census.md) — The PD call-target census: sixteen sites get sixteen verdicts, and two of them are calls
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
 - [`pd-code-table-inline-width.md`](pd-code-table-inline-width.md) — Per-dispatcher inline width, and the PD image's third CODE-table dispatcher
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)
