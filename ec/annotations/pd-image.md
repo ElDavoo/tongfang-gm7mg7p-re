@@ -193,11 +193,11 @@ are fixed in the image, in a constant table of five CODE words:**
 
 | vector | 3 CODE bytes read from | the jump target is | that target is |
 |---|---|---|---|
-| `0x03` | `0x0151`-`0x0153` | the big-endian word at `0x0152`/`0x0153` | `0xA8AE` |
-| `0x0B` | `0x0154`-`0x0156` | `0x0155`/`0x0156` | `0xF7AE` |
-| `0x13` | `0x0157`-`0x0159` | `0x0158`/`0x0159` | `0xF7AF` |
-| `0x1B` | `0x015A`-`0x015C` | `0x015B`/`0x015C` | `0xF790` |
-| `0x23` | `0x015D`-`0x015F` | `0x015E`/`0x015F` | `0xF7B0` |
+| `0x03` | `0x0151`-`0x0153` | the big-endian word at `0x0152`/`0x0153` | `0xA8AE` — a committed entry, `event_dispatch_ff80_ffe0` |
+| `0x0B` | `0x0154`-`0x0156` | `0x0155`/`0x0156` | `0xF7AE` — `ret` |
+| `0x13` | `0x0157`-`0x0159` | `0x0158`/`0x0159` | `0xF7AF` — `ret` |
+| `0x1B` | `0x015A`-`0x015C` | `0x015B`/`0x015C` | `0xF790` — `lcall 0xEFEA` then `ret` |
+| `0x23` | `0x015D`-`0x015F` | `0x015E`/`0x015F` | `0xF7B0` — `ret` |
 
 ```console
 $ xxd -s 0x150 -l 0x10 /tmp/pd.bin
@@ -213,18 +213,71 @@ does not show is **not determined** — the bytes say only that three are read.
 committed function entry, `event_dispatch_ff80_ffe0` (§4.1's table). The other
 four are **not** committed entries — no listing in `ec/decompiled/pd/` starts
 at or spans `0xF790`, `0xF7AE`, `0xF7AF` or `0xF7B0`, all four of which fall in
-the two gaps the committed extents leave, `0xF78B`-`0xF79B` (after
-`0xF786`, before `0xF79C`) and `0xF7A2`-`0xF7B1` (after `0xF79F`, before
-`0xF7B2`). Their raw bytes are `0xF790` = `12 ef ea 22` and
-`0xF7AE`/`0xF7AF`/`0xF7B0` = `22`, a bare `RET`, inside the ten-byte run of
-`0x22` at `0xF7AE`-`0xF7B7` that ends the image's used range — the committed
-`ret_only_f7b2` … `ret_only_f7b7` rows are the same shape and equally
-undecoded. **Whether those four are real handlers, padding, or an artefact of
-reading a constant pool as code is not determined here**, and the committed
-`pd,0x0056` row's careful "What the `0x0151` table entry selects is not decoded
-here" is not superseded by this section: the *address* is settled and the
-*target* is named, the *meaning* of four of the five targets is not. The
-`F7B2`-`F7B7` annotations make the same point about the same bytes.
+the gaps the committed extents leave inside `0xF78B`-`0xF7B7`. Their raw bytes
+are `0xF790` = `12 ef ea 22` and `0xF7AE`/`0xF7AF`/`0xF7B0` = `22`, a bare
+`RET`, inside the ten-byte run of `0x22` at `0xF7AE`-`0xF7B7` that ends the
+image's used range — the committed `ret_only_f7b2` … `ret_only_f7b7` rows are
+the same shape.
+
+**What those four bytes are is now settled, and it is not padding.** The
+paragraph above used to end by saying that whether they are "real handlers,
+padding, or an artefact of reading a constant pool as code is not determined
+here"; the correction is recorded here rather than made silently, because what
+replaced it is a positive reading of the same committed bytes. Three of the five
+vectors — `0x0B`, `0x13` and `0x23` — are wired to a **`ret`**, and a `ret` ends
+a body, so each of those three handlers does nothing and returns. Three pieces
+of committed code carry that:
+
+- **A bare `ret` is this convention's spelling of "does nothing", not padding.**
+  The chain is fixed by bytes and by nothing else. `0x010E
+  vector_wrapper_dp_015d` pushes 13 registers, `mov dptr,#0x015d`, `lcall
+  0x0050`, pops 13, `reti` — so a return address is on the stack. `0x0050` is
+  `lcall 0x10f1` then `ljmp 0x1229`; the `lcall` pushes, and `0x10f1` ends in a
+  `ret`, so the stack is back where the wrapper left it when the `ljmp` runs.
+  `0x1229` builds DPTR from R2:R1 and falls through into `0x122D`, whose last
+  instruction is `jmp @a+dptr` (`0x73`) and which pushes nothing. **So a
+  handler is reached by a jump, and the top of stack on entry is the wrapper's
+  return address.** A `ret` there pops exactly that and resumes the wrapper at
+  its first `pop`, which unwinds and executes `reti`.
+- **The same `0x22` bytes are demonstrably callable.** `0xF7B2`, `0xF7B3`,
+  `0xF7B4` and `0xF7B7` are bare-`ret` stubs inside this same run, and
+  `ec/decompiled/pd/DA44.asm` and `A8AE.asm` `lcall` them. A `0x22` here is a
+  no-op stub that committed code calls. Padding has no caller; that is what
+  rules it out here.
+- **The run reads as code throughout.** Between `0xF786 tailcall_7b14_with_r7_zero`
+  and the erased tail it holds `ljmp` forwarders at `0xF78B`, `0xF79C`, `0xF79F`,
+  `0xF7A8` and `0xF7AB`; `lcall`-then-`ret` bodies at `0xF790` (to `0xEFEA`) and
+  `0xF798` (to `0xE5EB`); register-setting stubs at `0xF7A2` and `0xF7A5`, which
+  return R7 = 2 and R7 = 3; and the ten-byte `0x22` run at `0xF7AE`-`0xF7B7`.
+  Three shapes, and the committed `forwarder` rows either side of the gap fix
+  the first of them.
+
+**So the positive finding is about the wiring, not only the bytes: of the five
+interrupt vectors, `0x03` goes to a dispatcher (`0xA8AE`), `0x1B` goes to a
+call into `0xEFEA`, and `0x0B`, `0x13` and `0x23` are wired to no-op returns.**
+`0xEFEA` and `0xE5EB` are **not decoded here** and no committed `pd` listing
+contains an `lcall` to either; that is *not found by this method* and not
+*unreachable* — a byte scan finds two sites for each, one of them the run's own
+call, and not one of them is inside a committed listing. A candidate is not a
+caller.
+
+`ec/tools/pd_vector_handlers.py` derives every cell of the table above from the
+committed image and the committed annotations, and `--check` holds the two to
+each other in both directions; the write-up is
+[`../../docs/findings/pd-vector-handler-words.md`](../../docs/findings/pd-vector-handler-words.md).
+
+**What is still open, and it is not the four targets.** The five
+`vector_wrapper_dp_*` rows' careful "What the `0x015X` table entry selects is not
+decoded here" now carry the selection beside the sentence they replace. What is
+*not* decoded is `0xEFEA` and `0xE5EB`, which of the physical sources sits on each
+vector, and whether the three no-op vectors are ever enabled — the last is a
+hardware observation and needs the machine. **One framing question stays open
+too**: a linear walk from `0xF78B` reads `inc a` at `0xF78E` and then a `jbc` at
+`0xF78F` whose operand bytes are `0xF790`-`0xF791`, so it steps over `0xF790`
+rather than landing on it. `0xF790` is an entry on the other reading, because
+the `0x1B` vector's word names it and `jmp @a+dptr` lands there. The two
+framings cannot both be the executed one and nothing in this image settles
+which is; the tool reports the conflict rather than picking a side.
 
 That makes the five CODE addresses a per-vector selector table with a 3-byte
 stride, and it ends exactly where `ProtoVer:01.00 ` begins: the last entry's
@@ -493,10 +546,11 @@ tell which sentences are load-bearing will over-read the ones that are.
    writes rather than to grep for the addresses.
 2. **Whether `0xFFE0`-`0xFFE2` is a host-facing register block**, and if so
    what protocol carries it. §4.2 names the addresses and nothing else.
-3. **Which physical source drives each of the five interrupt vectors**, and
-   why the two timer vectors are the short-form wrappers. §2.1. The five jump
-   targets are named; four of them (`0xF790`, `0xF7AE`, `0xF7AF`, `0xF7B0`) are
-   not committed entries and are not decoded.
+3. **Which physical source drives each of the five interrupt vectors**, why the
+   two timer vectors are the short-form wrappers, and whether the three no-op
+   vectors (`0x0B`, `0x13`, `0x23`) are ever enabled. §2.1 reads all five jump
+   targets; what is left is which source drives each, and the last of those
+   three is a hardware observation that needs the machine.
 4. **The five region copies in the SPI image**: which one a flash tool writes,
    and whether the descriptor table makes the other four live. §5.1.
 5. **Whether the PD program runs on a die of its own.** §5.2, and it needs
