@@ -233,11 +233,18 @@ def crosstab(assessed) -> list:
 
 
 def separates(counts, verdicts, probe) -> bool:
-    """Whether `probe` splits the recorded verdicts into different answers.
+    """Whether `probe` reads one verdict off another with no row left over.
 
-    True when the two verdicts' rows never share a value -- a criterion that
-    fires on every re-export and on no fragment, or the other way round. A
-    criterion that fires on both, or on neither, separates nothing.
+    True when each verdict's rows carry one value between them and the two
+    verdicts' values differ -- a criterion that fires on every re-export and on
+    no fragment, or the other way round, so either answer names the fold. A
+    criterion that fires on both, or on neither, separates nothing, and neither
+    does one that splits a verdict's own rows: a probe answering `yes` on most
+    re-exports and on some fragments reads no fold off either answer, because
+    the two classes share `yes` on the rows where both carry it. That is a
+    partial signal and not a criterion that settles anything, so it must not
+    read as one -- `report()` prints a conclusion about the boundary from this
+    answer, and the direction that errs is the one that claims settleability.
 
     Read off `counts` rather than off a list of rows so a caller can ask it
     about the cross-tab it already built, and so the answer is a property of
@@ -253,13 +260,15 @@ def separates(counts, verdicts, probe) -> bool:
             # No row of this verdict, so nothing to separate: not a
             # discriminator, and not evidence of one either.
             return False
-        if verdict in seen and seen[verdict] != values:
+        if len(values) > 1:
+            # This verdict's own rows disagree, so no single answer of the
+            # probe's names the fold and the boundary is not settled by it.
             return False
         seen[verdict] = values
     if len(seen) < 2:
         return False
     first, *rest = list(seen.values())
-    return any(values != first for values in rest)
+    return all(values.isdisjoint(first) for values in rest)
 
 
 def report(assessed) -> str:

@@ -159,10 +159,11 @@ the committed tree, so the day a future probe set *does* discriminate the suite
 goes red and says the boundary became mechanically settleable. A control builds
 the discriminating shape and shows the check recognises it — otherwise a
 `separates()` that always answered `no` would pass while measuring nothing — and
-the rest hold the three edges a reader could over-read: a program the
-reachability scan does not audit reads `not-audited` rather than `no`, an
-unmeasured row stays out of the counts, and the population is derived from the
-committed map rather than typed.
+the rest hold the edges a reader could over-read: a probe that splits one
+verdict's own rows separates nothing rather than reading as a discriminator off
+the two value *sets* it produces, a program the reachability scan does not audit
+reads `not-audited` rather than `no`, an unmeasured row stays out of the counts,
+and the population is derived from the committed map rather than typed.
 
 The one case that reads the committed tree asserts that every recorded verdict
 names a row the map contains — a relation — and not how many rows there are,

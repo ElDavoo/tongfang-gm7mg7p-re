@@ -19,12 +19,14 @@ this work is for.
 
 **Every other case here is a control on the measurement's own edges.** A probe
 that fires on everything separates nothing, so a case that would separate has to
-be built and shown to be detected; a row outside the audited programs has to
-read `not-audited` rather than `no`, because a scan that never ran over a
-program is not a scan that found nothing there; and a row with no recorded
-verdict has to come back `unmeasured` rather than agreeing with either class.
-Those three are the ways this report could be over-read, and each is caught
-against a constructed population rather than against the tree.
+be built and shown to be detected, and a probe that splits one verdict's own
+rows has to be rejected rather than read off the value *sets* it produces; a row
+outside the audited programs has to read `not-audited` rather than `no`, because
+a scan that never ran over a program is not a scan that found nothing there;
+and a row with no recorded verdict has to come back `unmeasured` rather than
+agreeing with either class. These are the ways this report could be over-read,
+and each is caught against a constructed population rather than against the
+tree.
 
 **Nothing here asserts a figure of the committed tree.** The one case that
 touches the committed inputs checks that the population is *derived* -- that
@@ -251,6 +253,45 @@ class TheProbesDoNotSeparate(unittest.TestCase):
                 efi.separates(counts, ("re-export", "fragment"), probe),
                 "%s fires on the re-export and not on the fragment, which is "
                 "the shape separates() exists to recognise" % probe)
+
+    def test_a_probe_that_splits_one_verdict_separates_nothing(self):
+        # The shape the two readings of the rule disagree on, in both
+        # orderings. The two classes share a value, so no row's fold can be
+        # read off the probe, but each verdict's value *set* is a different set
+        # from the other's -- and a predicate that compares the sets rather
+        # than the values calls that a separation, which is how a probe that
+        # gets most of one class right comes to be reported as settling the
+        # boundary. Asserted in both orderings because the split can sit in
+        # either class and either one is the shape.
+        mixed_fragment = [
+            assessed("bank0/8004.c", named="yes", start="yes",
+                     value="re-export"),
+            assessed("bank0/8008.c", named="yes", start="yes",
+                     value="re-export"),
+            assessed("bank1/9004.c", owner="bank1/9000.c", named="yes",
+                     start="yes", value="fragment"),
+            assessed("bank1/9008.c", owner="bank1/9000.c", named="no",
+                     start="no", value="fragment"),
+        ]
+        mixed_re_export = [
+            assessed("bank0/8004.c", named="yes", start="yes",
+                     value="re-export"),
+            assessed("bank0/8008.c", named="no", start="no", value="re-export"),
+            assessed("bank1/9004.c", owner="bank1/9000.c", named="yes",
+                     start="yes", value="fragment"),
+            assessed("bank1/9008.c", owner="bank1/9000.c", named="yes",
+                     start="yes", value="fragment"),
+        ]
+        for population, split in ((mixed_fragment, "the fragments"),
+                                  (mixed_re_export, "the re-exports")):
+            counts = efi.crosstab(population)
+            for probe in efi.PROBES:
+                self.assertFalse(
+                    efi.separates(counts, ("re-export", "fragment"), probe),
+                    "%s answers differently across %s while both classes still "
+                    "share a value, so it reads no fold off either answer and "
+                    "is a partial signal rather than a discriminator"
+                    % (probe, split))
 
     def test_one_verdict_alone_separates_nothing(self):
         # With only one verdict present there is no second class to tell it
