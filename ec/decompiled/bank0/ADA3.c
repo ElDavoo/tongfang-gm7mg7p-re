@@ -11,7 +11,7 @@
    type: writer
    evidence: ec/decompiled/bank0/ADA3.asm; ec/decompiled/bank0/ADA3.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void write_0a47_from_r7(char param_1)
 
@@ -22,7 +22,7 @@ void write_0a47_from_r7(char param_1)
   
   DAT_EXTMEM_0a4a = 3;
   puVar3 = (undefined1 *)0xa47;
-  DAT_EXTMEM_0a47 = param_1;
+  MAILBOX_PUBLISH_VALUE = param_1;
   if (param_1 == '\x01') {
     init_0a48_to_40();
     set_dptr_0a59_b955();

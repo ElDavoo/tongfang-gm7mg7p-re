@@ -5,7 +5,12 @@
 
 
 /* Calls 0x89B5 only when XDATA 0x06E6 reads 0x01 and XDATA 0x0440 is non-zero; in every other case
-   it returns immediately at 0x897A. Nothing else in the listing is read, written or called.
+   it returns immediately at 0x897A. Nothing else in the listing is read, written or called.  ***
+   2026-10-03 (issue #1444): this is the producer half's whole gate, and the byte it drops is the
+   payload rather than a selector: it goes to 0x09F2 + index and is read back by 0x8915, which
+   pushes 0x53 into the separate 16-entry ring at 0x0710-0x071F. Both gates are open in normal
+   operation -- 0x06E6 is the vendor's enable byte -- so the drop is a disable path, not an error
+   path. docs/findings/a73f-09f1-mailbox-payload.md.
    type: gate
    evidence: ec/decompiled/bank1/896A.asm; ec/decompiled/bank1/896A.c
    basis: hand-decoded

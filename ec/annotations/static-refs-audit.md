@@ -145,9 +145,17 @@ Two results worth naming:
 §4d says the static-scan method was checked against **20 registers with
 independently confirmed live behaviour** (15 working, 5 not) and predicted all
 20 correctly. That set is not enumerated register-by-register anywhere in this
-repo, so this table cannot claim to *be* those 20. What it is: every address in
-`registers.yaml` whose status comes from live observation — 14 addresses, 10
-graded live-working and 4 live-negative.
+repo, so this table cannot claim to *be* those 20. What it is: the live-verdict
+subset this audit resolved, and **not** every address `registers.yaml` grades
+from live observation — it is the addresses this file covered when it was
+written, and §10 below is what this file has done with an address that arrives
+late rather than extending a table. Which `confirmed-working` entries
+deliberately have no row here is therefore not listed: they are the entries
+carrying `status: confirmed-working` in `registers.yaml` that this table does
+not name, and that is a question about two files that both move, so it is
+answered by reading both rather than by a list here going stale. A live grade is
+a claim about a register's behaviour; it does not wait on having a row in this
+file.
 
 | addr | register | live verdict | main EC | PD | consistent with §4d |
 |---|---|---|---:|---:|---|
@@ -186,6 +194,28 @@ only a patch and a `BASE_COMMIT` (`../../linux/patches/`). Filling those rows
 would mean inventing addresses, so they are left out and named here instead.
 Resolving them needs the driver source pulled at that commit and its address
 defines read off; that is a follow-up issue, not a gap quietly dropped.
+
+**Correction (issue #29, 2026-10-04); the paragraph above is left as it was
+written.** Every sentence in it about what this repository holds is false, and
+the `grep` it reasons from is the shape of error this repository corrects
+elsewhere: a statement about what one search failed to return, phrased as a
+statement about the tree. The eight defines are committed, at the rev
+`../../linux/patches/BASE_COMMIT` pins, in
+[`../../linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt`](../../linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt) —
+`EC_ADDR_MAIN_FAN_RPM_1`/`_2` at `0x0464`/`0x0465`, `EC_ADDR_SECOND_FAN_RPM_1`/`_2`
+at `0x046C`/`0x046D`, `EC_ADDR_TRIGGER` at `0x0767` beside
+`TRIGGER_USB_CHARGING BIT(4)`, and `EC_ADDR_OEM_4` at `0x07A6` beside
+`TOUCHPAD_TOGGLE_OFF BIT(6)`. That directory's `feature-map.csv` maps each of
+the four features to its address with a graded reason, and
+`../../tools/check_dmi_descriptor.py` rule 7 holds the map to the excerpt byte
+for byte. What the excerpt does not quote is a function body — and it is not
+defines-only either, since it also carries the
+`struct uniwill_device_descriptor` definition and the `.features =`
+initializers — so how the driver *uses* a define is not re-derivable from this
+tree and is marked clone-derived where it is used at all; the addresses
+themselves are fully re-derivable offline. §10 is the resolution, and the
+write-up is
+[`../../docs/findings/fan-tachometer-addresses.md`](../../docs/findings/fan-tachometer-addresses.md).
 
 ## 4. The separate-maps premise, tested
 
@@ -910,3 +940,77 @@ site is a DPTR handoff that resolves no further, `0x0420` being the clearest
 case and its own note saying whether the byte is touched at all is not
 established. Neither is a re-grade this issue asked for, and the check
 deliberately encodes neither.
+
+## 10. The four §2 features resolved; §2, §3 and §5 stay the snapshots §6 sets out (2026-10-04, issue #29)
+
+The gap §3's closing paragraph named is closed, and it is closed by correction
+rather than by new rows: what that paragraph said was missing was never missing
+— see the correction above, which is left in place. What this section records
+is what the addresses turned out to be, and why no table above grew a row.
+
+**No table above is extended.** §2 and §5 are a 29-address snapshot and §3's
+table is the live-verdict subset this audit resolved, on the same terms §6
+sets out: the guard for an address that arrives late is
+`../tools/check_register_counts.py`, which recomputes all three `static_refs*`
+keys per address from the committed image and is in the agent gate. All five
+entries this issue adds carry the three keys, so they are audited by the same
+rule as the rest of the file, and `0x046B` joining `main-ec-004` and the four
+tachometer bytes joining `main-ec-145`/`main-ec-138` are the only things that
+moved in `../annotations/xdata-clusters.csv`.
+
+The addresses' own numbers, from the same tools as §1 and §6 above and
+reproducible from the committed image (as there, the blank line
+`trace_xdata_refs.py` prints between addresses is stripped here):
+
+```console
+$ python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800 --counts-only \
+    0x0464 0x0465 0x046B 0x046C 0x046D | grep -v '^$'
+0x0464: 3 direct MOV DPTR site(s)  bank0=3
+0x0465: 1 direct MOV DPTR site(s)  bank0=1
+0x046B: 4 direct MOV DPTR site(s)  bank0=4
+0x046C: 3 direct MOV DPTR site(s)  bank0=3
+0x046D: 1 direct MOV DPTR site(s)  bank0=1
+```
+
+All five are main-EC, all `bank0`, and none has a PD-image site — so unlike
+§9's PD-only population there is no split to classify here. `0x0464`/`0x0465`
+and `0x046C`/`0x046D` are each written and read by the EC as one 16-bit value,
+across an `inc DPTR` at the store (`gate_06e6_then_store_0464` at bank0
+`0xDFDF`, `store_r6_r7_to_046c_046d` at `0xE024`) and through the borrow at
+the reader (`be16_0464_0465_minus_100` at `0xBD5D`, `be16_046c_046d_minus_100`
+at `0xBD6B`), which is also what makes `0x046D` and not `0x046B` the second
+pair's low byte.
+
+**`0x046B` is the one address whose vendor name and whose use disagree**, and
+the disagreement is a fact about the vendor's code rather than about the
+hardware: `ECSpec.cs` names `ADDR_EC_SECOND_FAN_RPM_BYTE2` as `1131`, and
+`FanInfo.GetEcGpuFanRpm` reads `0x046C` then `0x046B` as `(num << 8) | b`,
+whereas upstream at the pinned rev, the EC's own store and reader, and the
+committed capture all put the low byte at `0x046D`. All four of `0x046B`'s
+sites sit inside one routine, `gate_06e6_442_then_sync_046a_from_086b` at
+bank0 `0x9CA6`. Two of them — the read at `0x9D22` and the write at `0x9D4D` —
+are in that routine's single four-byte sync of `0x046A`/`0x046B`/`0x046E`/
+`0x046F` from `0x086B`-`0x086E` (the compare chain at `0x9D1A`-`0x9D3E` and
+the store run at `0x9D41`-`0x9D60` of `ec/decompiled/bank0/9CA6.asm`). A third,
+the read at `0x9D69`, is downstream of the sync rather than in it: it sits past
+the end of the store run, in the tail that stages `0x046A`/`0x046B`/`0x046F`
+into R7 for the `0xDF1E`/`0xDF35`/`0xDF78` calls, and never reads `0x046E`. The
+fourth, the write at `0x9CEB`, is on an earlier path in the same routine and is
+a three-byte store of `0x08C1` into `0x046B` beside `0x046A`/`0x046F` that
+never touches `0x046E`. It is graded `present-untested` for that, not for the
+vendor's reading. The lead, the correlation and both byte orders measured are in
+[`../../docs/findings/fan-duty-channel-075b-075c.md`](../../docs/findings/fan-duty-channel-075b-075c.md)
+§4; the entry and the write-up are
+[`../../docs/findings/fan-tachometer-addresses.md`](../../docs/findings/fan-tachometer-addresses.md).
+
+**The other two §2 features are bits, and get no `status:` of their own.**
+`USB_POWERSHARE` is `TRIGGER` (`0x0767`) bit 4 and `TOUCHPAD_TOGGLE` is
+`OEM_4` (`0x07A6`) bit 6; both bytes already had an entry and neither feature
+has a live verdict at the register — the powershare write is a readback, which
+this repository's own vocabulary says is not evidence the EC acts on a byte,
+and the touchpad hotkey never emitted the event that would have reached the
+handler, so the byte was never touched at all. Both aliases are recorded in
+the two entries' notes. **No `status:` moved anywhere**, and the `0`-means-
+"not found by this method" caveat at the top of this file applies to these five
+exactly as it does to the rest: a count of 3 is 3 direct `MOV DPTR` sites, not
+3 register accesses.

@@ -63,21 +63,21 @@ void FUN_CODE_a139(char param_1,char param_2)
   }
   cfg_cell_count_selector(cVar1);
   if (param_2 == -0x40) {
-    DAT_EXTMEM_0a47 = 0x62;
+    MAILBOX_PUBLISH_VALUE = 0x62;
     DAT_EXTMEM_0a48 = 0x9d;
   }
   else if (DAT_EXTMEM_0539 == '\x01') {
-    DAT_EXTMEM_0a47 = 0x62;
+    MAILBOX_PUBLISH_VALUE = 0x62;
     DAT_EXTMEM_0a48 = 0xc1;
   }
   else {
     add_0318_0319_into_r7_r6();
     if ((param_1 == '.') && (param_2 == -0x20)) {
-      DAT_EXTMEM_0a47 = 99;
+      MAILBOX_PUBLISH_VALUE = 99;
       DAT_EXTMEM_0a48 = 9;
     }
     else {
-      DAT_EXTMEM_0a47 = 0x62;
+      MAILBOX_PUBLISH_VALUE = 0x62;
       DAT_EXTMEM_0a48 = 0xe5;
     }
   }

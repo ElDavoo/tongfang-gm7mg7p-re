@@ -6,13 +6,15 @@
 
 /* Clears bit 1 of XDATA 0x084F unless XDATA 0x0494 is non-zero and 0xB9D8 returns zero, in which
    case it sets that bit when bit 1 of 0x084F is clear and bit 1 of XDATA 0x0490 is set, and then
-   calls 0xA73F with R7=0xAE. It increments XDATA 0x0851, masks the pre-increment value with 0x07
-   and passes it to 0x7151. The bytes from 0xA34D onward are not instructions: 0x7151 begins by
-   popping the return address into DPTR, so the address the lcall at 0xA34A pushed is the base of a
-   CODE table, and the linear disassembly that follows decodes that data. Past the table the listing
-   branches to the bare ret at 0xA425 or clears bit 0 of the byte DPTR points at; the decompiled C
-   names that byte 0x0857, and also reads XDATA 0x0890 and calls 0x1654, but neither appears in this
-   listing.
+   calls 0xA73F with R7=0xAE, which queues that code at bank1 0x09F2 (see
+   ec/decompiled/bank0/A73F.asm and docs/findings/a73f-notify-path.md) -- the code itself is carried
+   by ec/tools/a73f_notify_census.py, not interpreted here. It increments XDATA 0x0851, masks the
+   pre-increment value with 0x07 and passes it to 0x7151. The bytes from 0xA34D onward are not
+   instructions: 0x7151 begins by popping the return address into DPTR, so the address the lcall at
+   0xA34A pushed is the base of a CODE table, and the linear disassembly that follows decodes that
+   data. Past the table the listing branches to the bare ret at 0xA425 or clears bit 0 of the byte
+   DPTR points at; the decompiled C names that byte 0x0857, and also reads XDATA 0x0890 and calls
+   0x1654, but neither appears in this listing.
    type: dispatch
    evidence: ec/decompiled/bank0/A312.asm; ec/decompiled/bank0/A312.c
    basis: hand-decoded

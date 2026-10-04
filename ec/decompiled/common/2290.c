@@ -42,13 +42,13 @@ char FUN_CODE_2290(char *param_1)
         if (DAT_INTMEM_4d != 0) {
           DAT_INTMEM_4c = DAT_INTMEM_4c | 0x10;
           FUN_CODE_2632();
-          DAT_EXTMEM_0a47 = 1;
+          MAILBOX_PUBLISH_VALUE = 1;
         }
-        if (DAT_EXTMEM_0a47 != 0) {
+        if (MAILBOX_PUBLISH_VALUE != 0) {
           cVar3 = FUN_CODE_23c9();
           return cVar3;
         }
-        DAT_INTMEM_67 = DAT_EXTMEM_0a47;
+        DAT_INTMEM_67 = MAILBOX_PUBLISH_VALUE;
         do {
           bVar5 = *(byte *)CONCAT11('\r' - (((0x8f < DAT_INTMEM_67) << 7) >> 7),DAT_INTMEM_67 + 0x70
                                    );

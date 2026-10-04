@@ -70,20 +70,20 @@ WRITE_OPEN = re.compile(r"open\([^)]*['\"][wax]")
 # and a census re-derivation are then both visible: the first by
 # `TheMapAgrees`, the second by these.
 PER_PROGRAM_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 838, 7459),
+    ("main-ec", "DAT_EXTMEM", 830, 7292),
     ("main-ec", "DAT_EXTMEM+pair-literal", 44, 490),
     ("main-ec", "pair-literal", 156, 468),
-    ("main-ec", "symbol", 166, 6225),
+    ("main-ec", "symbol", 174, 6392),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("pd", "DAT_EXTMEM", 157, 858),
 ]
 PER_PROGRAM_TOTAL = (1375, 15696)
 
 UNION_SPLIT = [
-    ("main-ec", "DAT_EXTMEM", 808, 7229),
+    ("main-ec", "DAT_EXTMEM", 800, 7062),
     ("main-ec", "DAT_EXTMEM+pair-literal", 41, 385),
     ("main-ec", "pair-literal", 155, 461),
-    ("main-ec", "symbol", 151, 5620),
+    ("main-ec", "symbol", 159, 5787),
     ("main-ec", "symbol+pair-literal", 14, 196),
     ("both", "DAT_EXTMEM", 30, 312),
     ("both", "DAT_EXTMEM+pair-literal", 4, 139),
@@ -92,47 +92,30 @@ UNION_SPLIT = [
 ]
 UNION_TOTAL = (1326, 15696)
 
-# §2's three-way partition of the main EC, per program and on the union key,
-# each `(named, DAT_EXTMEM, pair-only)` in distinct addresses. The two differ in
-# the last two terms by the one address the two keyings disagree about.
+# §2's three-way partition of the main EC, per program and on the union key.
 #
-# 172 / 890 -> 175 / 887 on the per-program reading, and the same 172 -> 175 on
-# the union one, in issue #649. Not a re-measurement of the partition rule and
-# not an effect of the `0x9AAD` annotation: that PR's re-export carried three
-# symbol renames the committed `.c` files had not yet caught up to --
-# `0x078B` and `0x07A5` move from `DAT_EXTMEM` to `symbol` and `0x0803` to
-# `symbol+DAT_EXTMEM` -- and all three are named in `registers.yaml` on
-# `origin/main`. Three addresses changing spelling is three off the `DAT_EXTMEM`
-# term and onto `named`, which is the whole of the move.
+# **The three terms are not pinned here.** The `named` term has moved on every
+# one of issues #649, #635 and #338 and again on this one, always by the same
+# mechanism and never because the partition rule changed: a re-export carries
+# symbol renames the committed `.c` had not caught up to, and each renamed
+# address moves off `DAT_EXTMEM` and onto `named`. A tuple of those three
+# numbers was therefore a value every branch whose export renames anything has
+# to edit -- a count of this repository's own decompiled text, and the shape
+# `CLAUDE.md` names under "no hand-kept totals".
 #
-# 175 / 887 -> 178 / 884, and the same 175 -> 178 on the union one, in issue
-# #635, by the identical mechanism and for the identical reason: that change's
-# re-export carried three more symbol renames, `0x1663`/`0x1667`/`0x1668`,
-# which are named in `registers.yaml` on this tree. The split tables move with
-# them -- main-EC `DAT_EXTMEM` 843 -> 840 distinct and 7,472 -> 7,467
-# references against `symbol` 161 -> 164 and 6,212 -> 6,217 per program, and
-# 813 -> 810 / 7,242 -> 7,237 against 146 -> 149 / 5,607 -> 5,612 on the union
-# key. Five references each way is the census's own 2 + 2 + 1. The totals, the
-# `pair-only` terms and the PD rows do not move, which is the check that the
-# move is a spelling change and not three new addresses.
-#
-# 178 / 884 -> 180 / 882, and the same 178 -> 180 on the union one, in issue
-# #338, by the same mechanism once more: that change's re-export carried two
-# more symbol renames, `0x0391` and `0x3202`, both named in `registers.yaml`.
-# The split tables move with them -- main-EC `DAT_EXTMEM` 840 -> 838 distinct
-# and 7,467 -> 7,459 references against `symbol` 164 -> 166 and 6,217 -> 6,225
-# per program, and 810 -> 808 / 7,237 -> 7,229 against 149 -> 151 / 5,612 ->
-# 5,620 on the union key. Eight references each way is the census's own 2 for
-# `0x0391` plus 6 for `0x3202`. `0x0391` is not #338's row -- it was named by
-# #295 and its rename had reached `registers.yaml` and the committed census
-# while the committed `.c` still spelled it `DAT_EXTMEM_0391`, so this is the
-# re-export where that one landed too. The totals, the `pair-only` terms and the
-# PD rows do not move, which is again the check that the move is a spelling
-# change and not two new addresses.
-PER_PROGRAM_PARTITION = (180, 882, 156)
-UNION_PARTITION = (180, 883, 155)
+# Nothing is lost by dropping it. Every property the tuple stood in for is
+# already asserted by `--check`, which this suite runs in
+# `TheToolChecksTheRelations`: that each partition places every main-EC row,
+# that its three terms sum to the main EC's distinct address count, and that the
+# two keyings differ in the pair-literal term by exactly the addresses whose
+# bucket moves. What the tool cannot see is the markdown beside it, and that is
+# what `TheMapAgrees` and `ThePublishedFigures` are for;
+# `check_census_figures.py --print` prints the figures themselves for a reader
+# who wants them.
 
-# The one address whose partition bucket moves, and the two directions.
+# The one address whose partition bucket moves, and the two directions. Held by
+# address rather than by count, and it is the claim: the two keyings disagree
+# about this one address and no other.
 MOVED = [("0x04A3", "DAT_EXTMEM", "pair-only")]
 
 
@@ -417,18 +400,11 @@ class ThePublishedFigures(unittest.TestCase):
         both = sum(1 for r in self.rows if r["program"] == "both")
         self.assertEqual(sum(per.values()) - sum(union.values()), both)
 
-    def test_the_partition_under_both_keys(self):
-        per_part, _ = keyed.partition(self.rows, True)
-        union_part, _ = keyed.partition(self.rows, False)
-        self.assertEqual(tuple(per_part[t][0] for t in keyed.TERMS),
-                         PER_PROGRAM_PARTITION)
-        self.assertEqual(tuple(union_part[t][0] for t in keyed.TERMS),
-                         UNION_PARTITION)
-
     def test_one_address_and_one_only_changes_partition_term(self):
-        # The 155-vs-156 claim, pinned to the address that causes it. Held by
-        # value because the *address* is the claim; the count that moves with it
-        # is not asserted anywhere.
+        # The pair-literal disagreement between the two keyings, pinned to the
+        # address that causes it. Held by value because the *address* is the
+        # claim; the two counts that move with it are not asserted anywhere,
+        # and `--check` already asserts they differ by exactly this many rows.
         moves = [(a, was, now) for a, was, now, _, _ in keyed.bucket_moves(self.rows)]
         self.assertEqual(moves, MOVED)
 

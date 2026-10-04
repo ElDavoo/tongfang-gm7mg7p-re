@@ -503,6 +503,16 @@ the answer.
   statements are bounded by the same list of unreadable inputs, which
   `../../docs/findings.md` §4o carries. A caller in firmware, or in a
   version of the service that is not committed, remains possible.
+  A second search reached the same `T1WR` negative on 2026-10-04 (issue
+  #1343) by a method this one cannot use: `../tools/t1wr_sites.py` reads
+  the `Arg0` off the call site's input buffer rather than off the value,
+  which is what makes the thirteen ambiguous values searchable at all, and
+  it adds a disassembly pass over every committed PE. The agreement is
+  worth having and is not to be assumed by the next reader — the two
+  methods fail differently. `../../docs/findings/t1wr-call-site-arms.md`
+  also measures the CPU power limits (`0x0783`-`0x0786`) as reaching the
+  EC through `ECRW` rather than through `T1WR`, which matters for a
+  driver and is a routing fact only.
 - **The DSDT is this machine's, not this BIOS image's.**
   `evidence/acpi/dsdt.dsl` is a live dump; `vendor/bios-1.09/BIOS_1.09.zip`
   has not been unpacked or compared against it.

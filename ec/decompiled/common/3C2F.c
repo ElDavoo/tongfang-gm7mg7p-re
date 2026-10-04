@@ -9,7 +9,7 @@
 char FUN_CODE_3c2f(void)
 
 {
-  return DAT_EXTMEM_0a47 + -0x73;
+  return MAILBOX_PUBLISH_VALUE + -0x73;
 }
 
 

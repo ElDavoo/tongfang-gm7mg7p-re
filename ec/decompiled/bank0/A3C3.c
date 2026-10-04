@@ -6,12 +6,17 @@
 
 /* Reads TRIGGER at XDATA 0x0767 and leaves through the bare ret at 0xA425 if bit 3 is clear.
    Otherwise it clears bit 3 of 0x0767, calls 0x1660, which loads DPTR with the constant 0xF160 and
-   jumps to 0x1114, then tail-calls 0xA73F with R7=0xA8; 0xA73F writes that value to internal RAM
-   0x6A and jumps to 0x1666, which ignores it, loads DPTR with the constant 0x896A and jumps to
-   0x1114. registers.yaml documents bit 0 of 0x0767, not bit 3, so what this bit gates is not
+   jumps to 0x1114, then tail-calls 0xA73F with R7=0xA8; 0xA73F round-trips that value through
+   internal RAM 0x6A and jumps to 0x1666, which loads DPTR with the constant 0x896A and jumps to
+   0x1114 (bl51_bank_select_1); 0x1114 pushes DPTR and returns into it, so the call re-enters the
+   CPU in bank 1 at 0x896A, whose 0x89B5 stores R7 -- unchanged by the stub -- into the ring at
+   XDATA 0x09F2 indexed by bits 0-2 of 0x09F1. So 0xA8 is queued as an entry code, not interpreted
+   at the destination; the code census is ec/tools/a73f_notify_census.py, and what any code means is
+   not decoded. registers.yaml documents bit 0 of 0x0767, not bit 3, so what this bit gates is not
    determined here.
    type: logic
-   evidence: ec/decompiled/bank0/A3C3.asm; ec/decompiled/bank0/A3C3.c; ec/annotations/registers.yaml
+   evidence: ec/decompiled/bank0/A3C3.asm; ec/decompiled/bank0/A3C3.c;
+   ec/decompiled/common/1114.asm; ec/annotations/registers.yaml
    basis: hand-decoded
    name_basis: ec-register */
 

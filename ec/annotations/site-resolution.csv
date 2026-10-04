@@ -297,6 +297,10 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x045F,XDATA_045F,0x16341,bank1,0xE341,read,read,0xE2D3 dispatch_036c_low3_then_seed_1c00_block,,
 0x045F,XDATA_045F,0x16357,bank1,0xE357,read,read,0xE2D3 dispatch_036c_low3_then_seed_1c00_block,,
 0x045F,XDATA_045F,0x163B5,bank1,0xE3B5,read,read,0xE3B5 copy_03cd_03ce_03cf_to_1c02_1c04_1c05,,
+0x046B,XDATA_046B,0x09CEB,bank0,0x9CEB,write,write,0x9CA6 gate_06e6_442_then_sync_046a_from_086b,,
+0x046B,XDATA_046B,0x09D22,bank0,0x9D22,read,read,0x9CA6 gate_06e6_442_then_sync_046a_from_086b,,
+0x046B,XDATA_046B,0x09D4D,bank0,0x9D4D,write,write,0x9CA6 gate_06e6_442_then_sync_046a_from_086b,,
+0x046B,XDATA_046B,0x09D69,bank0,0x9D69,read,read,0x9CA6 gate_06e6_442_then_sync_046a_from_086b,,
 0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x0BAEC,bank0,0xBAEC,read,read,0xBAE7 load_r6_r7_from_04a3_04a2,,
 0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x12F28,bank1,0xAF28,handed to lcall/ljmp -> callee writes,write,0xAF06 gate_0490_04ff_0505_then_call_b0d1,0x888C,0x888C write_r1r2_to_xdata_pair
 0x04A2,"PACK_TEMP_DK (pack temperature, decikelvin)",0x12F39,bank1,0xAF39,handed to lcall/ljmp -> callee writes,write,0xAF32 FUN_CODE_af32,0x888C,0x888C write_r1r2_to_xdata_pair
