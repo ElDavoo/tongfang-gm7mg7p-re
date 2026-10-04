@@ -50,6 +50,31 @@ independently checkable rather than taken on faith:
   (with its decoded `.jsonl`) is a passive loopback capture of the vendor
   broker over the same window. Source for findings.md §7 and
   `windows/vendor-ec-map.md` "Power modes".
+- **`ec-watch/2026-09-18-profile-switch-0700-07ff.csv`**,
+  **`ec-watch/2026-09-18-profile-switch-0400-07ff.csv`**: the issue #4 run.
+  Read-only Windows captures over the AC plug-in and all three Control Center
+  battery modes, `0x0700-0x07FF` in the first and `0x0400-0x07FF` in the
+  second, taken after the same cycle was repeated over the wider window. Each
+  is one row per change, `ts,addr,old,new` from line 1. **Neither carries a
+  `MARK` row**, so no row can be placed against a switch by the file: which
+  row belongs to which of the three switches is read from the address and the
+  ordering. Source for `docs/findings.md` §4g, including the
+  `0x0436`/`0x0438` correction recorded there in place.
+- **`ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`**: a **derived**
+  per-address summary, not a capture: `addr,change_count,first_old,last_new`,
+  one row per address over `0x0000-0x07FF` sweeping at 0.4 s across the AC
+  plug-in and the three mode switches on 2026-09-18. Its own `#` header is
+  authoritative and carries three things worth reading before citing it — the
+  32,499-row source log is **not committed**, the `change_count` column sums to
+  a different figure and neither can be checked from this tree, and the columns
+  carry no timestamp and no order, so an address with no row here is "not found
+  to move in this file", never "never written". It holds no `MARK` row and
+  could not: it is a per-address rollup of a log that is not here, so a mark
+  could not be placed in it even had one been taken. Read by
+  `ec/tools/grade_sweep_summary.py`; the schema and both blind spots are in
+  `docs/findings/sweep-summary-schema.md`. Source for `docs/findings.md` §4g's
+  `0x07B9`/`0x07D0`/`0x07D1` claim, which `ec/tools/check_capture_claims.py`
+  holds to this file by its denial rule.
 - **`ec-watch/2026-09-23-0751-isolation.txt`**: the issue #99 run that wrote
   `0x0751` alone, one block per value `0xA0`/`0x00`/`0x10`, from Turbo, with
   Control Center 3.1.39.0 running and GCUService+GCUBridge up, watching
@@ -123,3 +148,50 @@ independently checkable rather than taken on faith:
   outcome, all from `assembler-gap` to better.
   **`ec-reencode/2026-09-23-sdas8051-rowdiff.csv`** holds those 52 rows, the
   only rows that differ. Source for findings.md §14h.
+
+## Mark provenance per capture
+
+Whether a timing claim over a committed capture is **mechanical** or
+**inferred** depends on one thing: whether the file carries `ts,MARK,,label`
+rows to place a byte's move against. Where it does, the placement is
+mechanical. Where it does not, the placement is an inference from the ordering
+and the addresses — which is how
+`docs/hardware-tests/gpu-tgp-07c4-07d7-door.md`'s CORRECTION block came to
+retract "at the plug-in" for `0x07C4` in place. Nothing above said which
+captures were in which class, and a reader could not tell.
+
+**The count is the finding; a capture legitimately has none.** Every watcher
+builds its `Marker` over a sink that is `None` without `--csv` and starts the
+thread only under `--mark`, so a `MARK` row needs both flags; in
+`ec/tools/ec_timer_capture.py` a mark comes from `--mark`, `--auto-mark` or
+`--mark-input`. **No mark-free capture here records the flags it was taken
+with** — the two that do record theirs say so in their own `#` headers — so
+the last column says what the file is and that no mark was placed in it, and
+stops there. The kinds below are kept distinct because merging them
+would be a claim these files do not support. `.txt` files in `ec-watch/` are
+outside this table by construction — it is over `*.csv` — and are reported as
+out of scope by `ec/tools/check_capture_marks.py` rather than passed over in
+silence.
+
+| capture | `MARK` rows | why none, if none |
+|---|---|---|
+| `2026-09-18-ac-plugin-sweep-summary.csv` | 0 | Not a capture in this schema: a derived per-address summary (`addr,change_count,first_old,last_new`) rolled up from a 32,499-row log that is not committed. It carries no timestamp and no order, so no mark could be placed in it even had one been taken. |
+| `2026-09-18-profile-switch-0400-07ff.csv` | 0 | A `ts,addr,old,new` change log with no mark in it: the writer places a `MARK` row only for a label typed at the keyboard, so a byte's move here cannot be placed against the mode switch by the file alone. |
+| `2026-09-18-profile-switch-0700-07ff.csv` | 0 | The same, and the first of the two profile-switch cycles. |
+| `2026-09-23-power-mode-cycle-0700-07ff.csv` | 0 | The same, over the `0x0700-0x07FF` half of the power-mode cycle. This is the file whose `0x07C4` rows `docs/hardware-tests/gpu-tgp-07c4-07d7-door.md` had to retract as "at the plug-in". |
+| `2026-09-23-power-mode-cycle-0f00-0f5f.csv` | 0 | The same, over the `0x0F00-0x0F5F` fan-table half. |
+| `2026-09-24-06c2-06db-perturb-linux.csv` | 6 | — |
+| `2026-09-24-06c2-06db-suspend-linux.csv` | 2 | — |
+| `2026-09-24-06c2-06db-sweep-linux.csv` | 0 | The same, and the two mark-bearing captures in this root are the arms of the same issue #257 run that used `--auto-mark` and `--mark-input`. |
+| `2026-09-24-06d6-reload-linux.csv` | 0 | The same, the `0x06D6` arm of that run. |
+| `2026-09-24-06d9-hold-linux.csv` | 0 | The same, the `0x06D9` arm. |
+
+The counts come from `python3 ec/tools/measure_mark_provenance.py`, which
+reports this class rather than dropping it, and
+`python3 ec/tools/check_capture_marks.py` holds the table to the files. The
+write-up is `docs/findings/capture-mark-provenance.md`. **This is not a claim
+that any of these captures should have had marks, or that any was taken
+without a mark flag** — it is a claim that a reader can now tell which of these
+a timing claim may be made over mechanically. Re-taking any of them with a mark
+flag needs the physical machine; see
+`docs/hardware-tests/xdata-06c2-06db-sweep.md` for the arms specified to run.

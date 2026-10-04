@@ -270,8 +270,8 @@ The five above are left as this page measured them.
 ## The committed fixtures
 
 ```console
-   50 file(s), 247 MARK row(s), column counts [4]; header present in 50, `#` rows present in 44
-     ec/tools/testdata: 48 file(s), 239 MARK row(s)
+   59 file(s), 306 MARK row(s), column counts [4]; header present in 59, `#` rows present in 53
+     ec/tools/testdata: 57 file(s), 298 MARK row(s)
      evidence/ec-watch: 2 file(s), 8 MARK row(s)
 ```
 
@@ -280,18 +280,20 @@ of what the sentence claims: a capture taken at the machine and not committed is
 not in it, and "0 fixtures untouched" is a count over a directory, never a
 census of every capture that exists anywhere.
 
-All 50 files hold four-column MARK rows, all 50 carry a
-`ts,addr,old,new` header, and 44 carry `#` rows. So:
+Every file in that block holds four-column MARK rows and carries a
+`ts,addr,old,new` header — both are single figures across the whole set, and
+neither is restated here, because a number in this page the tool did not print
+is a number nobody can re-derive. So:
 
-- **Shape A leaves all 50 untouched.** Their mark rows keep their column
-  count, a writer's new field changes nothing about a file that has none, and
-  every reader above opens them exactly as it does today.
-- **Shape B adds a row shape none of the 50 carries.** It does not alter a
-  single mark row, and it does not collide with the 44 files' existing `#`
-  blocks either — the skip rule is a prefix test and `# provenance` is a
-  different prefix from `# CONSTRUCTED INPUT` or `# baseline`. "Adds a row
-  shape" is the cost; "breaks a fixture" would be a much larger claim than the
-  measurement supports.
+- **Shape A leaves every one of them untouched.** Their mark rows keep their
+  column count, a writer's new field changes nothing about a file that has
+  none, and every reader above opens them exactly as it does today.
+- **Shape B adds a row shape none of them carries.** It does not alter a
+  single mark row, and it does not collide with their existing `#` blocks
+  either — the skip rule is a prefix test and `# provenance` is a different
+  prefix from `# CONSTRUCTED INPUT` or `# baseline`. "Adds a row shape" is the
+  cost; "breaks a fixture" would be a much larger claim than the measurement
+  supports.
 
 The two directories are not symmetric, and neither number should be quoted
 without its split. `evidence/ec-watch/` holds 15 committed files — 10 CSVs and
@@ -304,6 +306,27 @@ the CSVs hold MARK rows at all; the other 8 hold none. The two are
 `ec_timer_capture.py` and both in the timer family, so under either shape they
 are fixtures a later change would have to be able to read *and* would have
 stopped being representative the day a capture was taken with the new shape.
+
+**The tool now prints the class that sentence describes and used to drop,**
+which is why the console block above is the only one here: the second block
+`measure_mark_provenance.py` prints under it lists the committed CSVs holding
+no MARK row, per root, with each file's schema. What this page's sentence
+above already said in prose — 2 of the capture root's CSVs hold marks and 8
+hold none — is what that block now prints as the tool's own output rather
+than as a claim only prose makes. What the block adds is the fixture root's
+half, which is **not** eight captures: `ec/tools/testdata/` holds annotation
+CSVs (`call-graph/index.csv` and its siblings) that merely sit under a
+fixture root, which is why the block reports each file's schema instead of
+calling the class captures. The reason a given committed capture is in it is a
+fact about the command that wrote it, which is knowable from the writers'
+source — `windows/tools/ec_watch.py`, `windows/tools/gpu_block_watch.py` and
+`windows/tools/system_id_probe.py` each build the `Marker` over a sink that is
+`None` without `--csv` and start the thread only under `--mark`, and
+`ec/tools/ec_timer_capture.py` takes a mark from `--mark`, `--auto-mark` or
+`--mark-input`. Those six gates are citations in the tool's own table and
+appear in its section 5. `evidence/README.md` records which applies per
+capture and `ec/tools/check_capture_marks.py` holds it; the write-up is
+[`capture-mark-provenance.md`](capture-mark-provenance.md).
 
 ## What each shape costs each reader
 
@@ -756,6 +779,28 @@ written against:
 | `ec/tools/grade_timer_sweep.py:327` | `:130` |
 | `ec/tools/grade_timer_sweep.py:354` | `:153` |
 | `ec/tools/grade_timer_sweep.py:355` | `:154` |
+
+**Seven pins were added rather than moved, and they are new sites rather than
+re-anchored ones.** The mark-free class section 2 now prints needed the
+writers' `--mark` gates cited, and the index check added below needed its own
+mark-recognition site in the census — so the table grew:
+
+| now | what it is |
+|---|---|
+| `windows/tools/ec_watch.py:601` | gate: `marker.start()`, the `--mark` half |
+| `windows/tools/ec_watch.py:597` | gate: the sink is `None` without `--csv`, so both flags are needed |
+| `windows/tools/gpu_block_watch.py:193` | gate: the same `--mark` gate in the writer that imports `ec_watch`'s `Marker` |
+| `windows/tools/system_id_probe.py:385` | gate: and again in the class that imports no `ec_watch` at all |
+| `ec/tools/ec_timer_capture.py:324` | gate: `--auto-mark` |
+| `ec/tools/ec_timer_capture.py:328` | gate: `--mark-input` |
+| `ec/tools/check_capture_marks.py:147` | reader: the index check's own mark count, the rule section 2 shares with `read_capture` |
+
+`check_page` requires every cited *file* to be named in one of this tool's two
+pages, which is why `windows/tools/gpu_block_watch.py` is named in "The
+committed fixtures" above: it is a writer of this row and of the `--mark` gate,
+and until the class this page now reports existed the page had no sentence
+that needed it. `capture-mark-provenance.md` is the write-up for the class and
+for `ec/tools/check_capture_marks.py`.
 
 **The prose above still carries the pre-re-anchor numbers, and that is a
 correction rather than an oversight.** `:845`, `:890`, `:1061`, `:1063`, `:852`,
