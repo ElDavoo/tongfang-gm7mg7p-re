@@ -258,6 +258,13 @@ trusting one of theirs: every row says whether it was verified against
   `unknown-not-absent`, ...) is deliberate — use the existing values rather
   than inventing new ones, and update this file whenever a register's
   status actually changes, in the same PR as the evidence for the change.
+  **A `note:` is not a log** (2026-10-04): do not append a dated paragraph
+  of new findings to a register's note. That paragraph is the line every
+  branch working on the same register edits, so two of them conflict there.
+  The finding goes in its own `docs/findings/` write-up; the entry changes
+  only the fields whose value changed (`status:`, `sources:`, a count) plus,
+  at most, one appended line naming the write-up. A retraction of the
+  note's own existing text still goes in place, per the calibration rule.
 - **`windows/antitamper/README.md`** explains why most `GCUService.exe`
   method bodies don't decompile (ConfuserEx-style anti-tamper). Don't
   re-report "this method is empty" as a finding — check whether it's a

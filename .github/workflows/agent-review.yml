@@ -169,7 +169,10 @@ jobs:
               correction next to it (the `docs/findings.md` §4 pattern);
             - `ec/annotations/registers.yaml` breaking its conventions: a `status:` value outside
               the existing vocabulary, or a register whose status the PR's own evidence changes
-              left un-updated in the same PR;
+              left un-updated in the same PR, or a dated paragraph of new findings appended to a
+              register's `note:` (that is a log, and the line two branches on one register
+              collide on): the finding belongs in its `docs/findings/` write-up, and the entry
+              gets at most one line pointing at it (CLAUDE.md, the registers.yaml bullet);
             - a hand-edit to generated decompile output, a committed Ghidra `.gpr`/`.rep`, or a
               Ghidra XDATA symbol table, where the change belongs in that component's
               `annotations/ghidra-functions.csv` (the EC and BIOS have one; the Windows project
