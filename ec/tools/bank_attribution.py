@@ -65,7 +65,10 @@ out of budget stops, which is a statement about the walk and not about the
 code. Banks 2 and 3 are taken as unused on find_banks.py's word and were not
 re-derived. Nothing here measures the byte, so no `status:` in
 ../annotations/registers.yaml moves and nothing here is evidence that the EC
-executes any of it.
+executes any of it. `census_closure_functions.py`, beside this file, measures
+the closure against ec/decompiled/index.csv and answers the one-byte failure's
+open question; its write-up is
+../../docs/findings/closure-vs-function-inventory.md.
 
 Usage:
     python3 ec/tools/bank_attribution.py ec/firmware/GMxMGxx_11.800
