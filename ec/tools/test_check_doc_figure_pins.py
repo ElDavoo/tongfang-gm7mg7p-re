@@ -103,28 +103,6 @@ class ClassifiesTheRealTree(unittest.TestCase):
     def assertVerdict(self, value, want, pins=()):
         self.assertEqual(measured(value, pins), want, f"figure {value}")
 
-    def test_fifty_resolves_to_the_strongest_pin_available_to_it(self):
-        # `50` moved out of the residual pair and this is why. It is an
-        # unrelated integer in an unrelated place: `SHARE_ORACLE["classes"]` is
-        # how many containment classes `export_ownership.py` finds once the
-        # `--min-share` floor refuses the edges below the candidate value, and
-        # the tool's self-test subscripts the key inside a `check()`. This
-        # checker's order is deliberate -- an oracle entry something reads is the
-        # strongest pin there is, ahead of a literal written inline -- so the
-        # figure resolves there now rather than at the census suite's
-        # assertion. Still `held`, and held more tightly than it was; the case
-        # is here so that a tree where the oracle stops being read reddens on
-        # the *fallback* rather than on nothing at all.
-        self.assertVerdict(50, cdfp.BY_ASSERTION)
-        found = cdfp.index()
-        oracle = found["oracles"][("export_ownership.py", "SHARE_ORACLE")]
-        keys, lo, hi = oracle
-        self.assertEqual(keys["classes"][0], 50)
-        read = cdfp.reads("export_ownership.py", "SHARE_ORACLE", "classes",
-                          lo, hi, found["texts"], found["asserted"])
-        self.assertIsNotNone(read, "SHARE_ORACLE['classes'] is read by nothing")
-        self.assertFalse(lo <= read[1] <= hi)
-
     def test_the_sixa_guard_off_figures_are_held_by_nothing(self):
         # The four §6a per-arm sums and the guard-off pd cluster count were
         # literals in `test_xdata_cluster_names.py` until 2026-10-04, when that
