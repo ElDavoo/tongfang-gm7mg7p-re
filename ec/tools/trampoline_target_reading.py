@@ -25,12 +25,15 @@ which holds the two committed tables against each other.
 
 **What a target inside a `ret` run is, and what this does not decide.** The
 stub at `0x1100` pushes `0x08`, pushes the accumulator, pushes DPL and DPH,
-selects the bank, clears DPTR, and `ret`s -- and that `ret` consumes the two
-DPTR bytes it pushed, so **control reaches the target**; what the target's own
-`ret` then pops is the marker, not the caller's return address
+selects the bank through the P1.0-P1.2 port bits, and `ret`s -- and that `ret`
+consumes the two DPTR bytes it pushed, so **control reaches the target**; what
+the target's own `ret` then pops is the marker, not the caller's return address
 (`docs/findings/scheduler-run-8518-entries.md` section 2 derives this from the
 stub's bytes, and `run_entry_map.py --self-test` re-derives it). A target that
-begins with `0x22` is therefore a far routine one instruction long.
+begins with `0x22` is therefore a far routine one instruction long. The stub
+never writes `0x82` or `0x83` again, so DPTR still holds the target across the
+jump -- nothing is handed back because control resumes in the stub window rather
+than in the caller.
 
 That is the *mechanism*, and it is settled from bytes. Whether the 138-byte
 run at `0xBF54`-`0xBFDD` is linker padding, a shared return, or dead code is
@@ -40,8 +43,9 @@ moves on any of it.
 
 **The threshold, and why the count is not doing the work.** `ret` is a one-byte
 opcode that ends a routine, and the tree holds named one-instruction `ret`
-routines (`bank0,0xD9DB` `ret_stub`, `bank0,0xD2BE` `ret_only_d2be`, and issue
-#559's `0xD89F`), so a single byte decides nothing -- the same argument
+routines (`bank0,0xD9DB` `ret_stub` and `bank0,0xD2BE`
+`return_trampoline_d091_0860_guard_fail`, each a `size` 1 row in
+`ec/decompiled/index.csv`), so a single byte decides nothing -- the same argument
 `audit_call_targets.MIN_ERASED_RUN` makes for a lone `0xFF`. What decides it is
 the **run**, and the threshold is picked inside a range where the population
 does not move: `--self-test` sweeps it and the count is flat from

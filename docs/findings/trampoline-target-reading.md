@@ -56,16 +56,25 @@ $ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x01100 --runti
 0x1113  22       ret
 ```
 
-Reading the operands: `0x82` and `0x83` are DPL and DPH, `0x90`/`0x91`/`0x92`
-are DPL/DPH/DPS again, and `0x08` is the direct byte the four stubs each write
-their own bank value into. So the stub pushes the bank register, pushes a marker,
-pushes DPTR, selects a bank, **zeroes DPTR**, and returns.
+Reading the operands: `0x82` and `0x83` are DPL and DPH, `0x08` is the direct
+byte the four stubs each write their own bank value into, and `0x90`/`0x91`/
+`0x92` are **the bank-select port bits P1.0–P1.2**, not a second copy of DPTR.
+The four stubs differ in exactly those three bytes and in no other respect except
+their `0x08` value, and their `setb`/`clr` pattern is 000, 100, 010 and 110 for
+banks 0, 1, 2 and 3; a DPTR clear would be the same three bytes in all four.
+`find_banks.find_stubs()` already derives the bank number from exactly those
+three bytes, and `bank-attribution.md` §1 records that as the one link in the
+bank chain that is not new evidence.
+
+So the stub pushes the bank register, pushes a marker, pushes DPTR, selects a
+bank, and returns — it never writes `0x82` or `0x83` again.
 
 That `ret` consumes the two DPTR bytes just pushed and uses them as a **jump
 target**. So control arrives *at the far address*; what the far routine's own
 `ret` pops is the marker above it — the accumulator and the saved `0x08` — and
-not the caller's return address. DPTR is `0x0000` on return, so there is no
-pointer to read.
+not the caller's return address. DPTR still holds the target across that jump;
+there is nothing to hand back because control resumes in the stub window rather
+than in the caller.
 
 This is not a new reading.
 [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) §2 derives it
@@ -88,10 +97,15 @@ to.
 ## What the run is, and what that decides
 
 `ret` is one byte and ends a routine, and the tree holds named one-instruction
-`ret` routines — `bank0,0xD9DB` `ret_stub`, `bank0,0xD2BE` `ret_only_d2be`,
-and issue #559's `0xD89F` — so a single byte decides nothing. The **run**
-decides, and the threshold is where the population stops moving rather than
-where it first looks meaningful:
+`ret` routines — `bank0,0xD9DB` `ret_stub` and `bank0,0xD2BE`
+`return_trampoline_d091_0860_guard_fail`, each a `size` 1 row in
+`ec/decompiled/index.csv` — so a single byte decides nothing. Issue #559's
+`0xD89F` is not a third of those: it has no listing and no index row, and
+[`trampoline-target-census.md`](trampoline-target-census.md) records it as one
+of the 166 rather than one of the named ones, because a `ret` sits at `0xD89E`
+immediately below it — a two-byte run, and a lone `ret` byte is exactly what
+decides nothing here. The **run** decides, and the threshold is where the
+population stops moving rather than where it first looks meaningful:
 
 | threshold | 2 | 3 | 4 | 5 | 6 | 7 | **12** | 17 | 18 | 24 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|

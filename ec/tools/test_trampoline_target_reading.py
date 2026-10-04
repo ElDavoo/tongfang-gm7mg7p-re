@@ -67,20 +67,31 @@ TOOL = str(HERE / "trampoline_target_reading.py")
 RESET_VECTOR_TARGETS = ((0x158E, 0xD89F, 0x22), (0x1594, 0xD96C, 0x90))
 
 # The bank-select stub's own bytes, which are the premise the whole `ret`
-# reading rests on: it pushes DPL and DPH, switches the bank, clears DPTR, and
-# `ret`s -- so the `ret` consumes the two DPTR bytes it pushed and control
-# reaches the *target*. `docs/findings/scheduler-run-8518-entries.md` section 2
-# derives this from the same bytes and `run_entry_map.py --self-test`
-# re-derives it, so it is transcribed rather than re-decoded here: if the stub
-# ever stopped having this shape, the reading below would be a guess.
+# reading rests on: it pushes DPL and DPH, switches the bank through the
+# P1.0-P1.2 port bits, and `ret`s -- so the `ret` consumes the two DPTR bytes it
+# pushed and control reaches the *target*.
+# `docs/findings/scheduler-run-8518-entries.md` section 2 derives this from the
+# same bytes and `run_entry_map.py --self-test` re-derives it, so it is
+# transcribed rather than re-decoded here: if the stub ever stopped having this
+# shape, the reading below would be a guess.
 #
-# `push direct` / `clr direct` are each two bytes and `ret` is one. Checked as
-# a subsequence of the stub's own extent rather than at fixed offsets, because
-# what the claim needs is that these forms are present and that the stub ends
-# in a `ret` -- not that they sit at particular offsets, which the four stubs'
-# differing bank-select tails would move anyway.
+# `push direct` and `clr`/`setb direct` are each two bytes and `ret` is one.
+# Checked as a subsequence of the stub's own extent rather than at fixed
+# offsets, because what the claim needs is that these forms are present and that
+# the stub ends in a `ret` -- not that they sit at particular offsets, which the
+# four stubs' differing bank-select tails would move anyway.
 STUB_PUSHES_DPTR = (b"\xc0\x82", b"\xc0\x83")
-STUB_CLEARS_DPTR = (b"\xc2\x90", b"\xc2\x91", b"\xc2\x92")
+
+# The stub's bit writes are the bank-select port bits P1.0-P1.2, named as
+# direct addresses and not as an opcode: `clr` on one of them and `setb` on
+# another is how `find_banks.find_stubs()` derives each stub's bank number, and
+# the three differ across the four stubs while a DPTR clear would not. Reading
+# them as one opcode would only hold for the bank-0 stub.
+STUB_BANK_SELECT_BITS = (0x90, 0x91, 0x92)
+
+# DPL, DPH and DPS. The premise is that the stub writes none of them after
+# pushing the first two, so the `ret` still has a target to consume.
+DPTR_BYTES = (0x82, 0x83, 0x86)
 
 # How long a bank-select stub is. `find_banks.py` finds the four 20 bytes
 # apart, and reading one instruction-count's worth would run into the next
@@ -226,10 +237,11 @@ class RetRunTests(unittest.TestCase):
         """The rule needs a run, and here is why: a one-byte `ret` is code.
 
         The census's own docstring gives the precedents -- `bank0,0xD9DB`
-        `ret_stub` and `bank0,0xD2BE` `ret_only_d2be` -- and the suite asserts
-        the property rather than the names: a threshold of 1 would sweep in
-        rows that are a whole `ret` run long, and the table keeps them, with
-        `in_ret_run` false, precisely because a lone `ret` is a routine.
+        `ret_stub` and `bank0,0xD2BE` `return_trampoline_d091_0860_guard_fail`
+        -- and the suite asserts the property rather than the names: a
+        threshold of 1 would sweep in rows that are a whole `ret` run long, and
+        the table keeps them, with `in_ret_run` false, precisely because a lone
+        `ret` is a routine.
         """
         alone = [r for r in self.rows
                  if r["ret_run"] is not None
@@ -345,12 +357,12 @@ class RefusalTests(unittest.TestCase):
     def test_the_stub_belongs_to_a_far_call_and_not_to_a_pointer_handoff(self):
         """The premise the `ret` reading rests on, read off the stub's bytes.
 
-        The stub pushes DPL and DPH, then clears DPTR, then `ret`s. That `ret`
-        consumes the two bytes it pushed as a **jump target**, so control
-        reaches the far routine; what the far routine's own `ret` pops is the
-        marker above it, not the caller's return address. Asserted as the byte
-        shape so a stub that stopped having it is caught here rather than
-        leaving the write-up's reading resting on nothing.
+        The stub pushes DPL and DPH, switches the bank through P1.0-P1.2, then
+        `ret`s. That `ret` consumes the two bytes it pushed as a **jump
+        target**, so control reaches the far routine; what the far routine's own
+        `ret` pops is the marker above it, not the caller's return address.
+        Asserted as the byte shape so a stub that stopped having it is caught
+        here rather than leaving the write-up's reading resting on nothing.
         """
         stub = act.STUB_SITES[0][0]
         window = bytes(self.d[stub:stub + STUB_LENGTH])
@@ -366,15 +378,29 @@ class RefusalTests(unittest.TestCase):
                                 "bytes")
             return at
 
+        # Every `clr direct` / `setb direct` in the stub, as (offset, address).
+        bits = [(at, window[at + 1]) for at in range(len(window) - 1)
+                if window[at] in (0xC2, 0xD2)]
+        writes = [direct for _, direct in bits]
+
         pushed = [offset_of(f) for f in STUB_PUSHES_DPTR]
-        cleared = [offset_of(f) for f in STUB_CLEARS_DPTR]
         self.assertEqual(window[-1], ttc.RET,
                          "and the stub ends in a `ret`, which is what consumes "
                          "the pushed DPTR")
-        self.assertLess(max(pushed), min(cleared),
-                        "the DPTR bytes are pushed before DPTR is cleared, so "
-                        "the `ret` has something left to consume: clear first "
-                        "and the far call would have no target")
+        self.assertEqual(writes, list(STUB_BANK_SELECT_BITS),
+                         "the stub's bit writes are the bank-select port bits "
+                         "P1.0-P1.2 and nothing else, which is the reading "
+                         "`find_banks.find_stubs()` derives the bank number "
+                         "from")
+        self.assertEqual([direct for direct in writes if direct in DPTR_BYTES],
+                         [],
+                         "and none of them is DPL, DPH or DPS, so the bank "
+                         "switch does not overwrite the target")
+        self.assertLess(max(pushed), min(at for at, _ in bits),
+                        "the DPTR bytes are pushed before the bank-select "
+                        "tail, so the `ret` has something left to consume: "
+                        "write over DPTR first and the far call would have no "
+                        "target")
 
 
 class ToolTests(unittest.TestCase):
