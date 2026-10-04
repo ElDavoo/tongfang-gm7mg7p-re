@@ -76,6 +76,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`call-site-framing-census.md`](call-site-framing-census.md) — Every bucket-A and bucket-C scan site against the committed listings: `anchored` predicts a real opcode across bucket A, and fails to in bucket C and in the fill band (issue #594)
 - [`callee-depth-n.md`](callee-depth-n.md) — `--callee-depth` follows a chain of handoffs, and the two `LIGHTBAR_BAT_*` sites that were unresolved at depth 1 are reads at depth 2
+- [`callee-set-dptr-census-blindspot.md`](callee-set-dptr-census-blindspot.md) — The two committed XDATA methods were blind at the same two bytes, and `agree` was the wrong word for it
 - [`capture-claim-denials-are-checks.md`](capture-claim-denials-are-checks.md) — A denial is the only shape a retraction takes, so `check_capture_claims.py` checks it instead of skipping it (issue #328)
 - [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
@@ -207,6 +208,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-no-ret-fallthrough-boundaries.md`](pd-no-ret-fallthrough-boundaries.md) — `pd` 0x34EF falls through into `pd` 0x34F2, and the two are entries over a shared tail rather than one routine split in half (issue #646)
 - [`pd-only-status-vocabulary.md`](pd-only-status-vocabulary.md) — `0x07CC` is re-graded, and the rule that grades it is now written down and
 - [`pd-pair-unmoved-one-fold.md`](pd-pair-unmoved-one-fold.md) — The de-duplicated census's `157`/`858` pd pair is unmoved because the pass finds one fold in the PD program and that fold names no XDATA byte (issue #1364)
+- [`pd-pop-order-second-witness.md`](pd-pop-order-second-witness.md) — The `pop` order at PD `0x1052`/`0x1054` has a second witness, and it corroborates §3's reading (issue #1143)
 - [`pd-sites-address-range.md`](pd-sites-address-range.md) — `--sites` refuses an address outside the PD region, and the arithmetic the census's row 10 declined to guard becomes a statement about the code
 - [`pd-unannotated-listings.md`](pd-unannotated-listings.md) — Every `pd` listing now has a row, and #471's figures did not move (issue #489)
 - [`pd-vector-handler-words.md`](pd-vector-handler-words.md) — Three of the `pd` image's five interrupt vectors are wired to a `ret`, and that is now derived rather than guessed (issue #1062)
