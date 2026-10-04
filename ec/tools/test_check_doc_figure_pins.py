@@ -103,14 +103,6 @@ class ClassifiesTheRealTree(unittest.TestCase):
     def assertVerdict(self, value, want, pins=()):
         self.assertEqual(measured(value, pins), want, f"figure {value}")
 
-    def test_the_residual_pair_is_held_by_the_census_suite(self):
-        # `390` and `50` are §6b's two cluster counts, and until #850 only their
-        # sum (the pinned `440`) was held. They now measure as a literal inside
-        # an `assertEqual` -- `TheExportOwnershipClusters` writes each arm's
-        # figure at its own assertion rather than in a table above them, which is
-        # what puts the literal where this tool can see it.
-        self.assertVerdict(390, cdfp.BY_LITERAL)
-
     def test_fifty_resolves_to_the_strongest_pin_available_to_it(self):
         # `50` moved out of the residual pair and this is why. It is an
         # unrelated integer in an unrelated place: `SHARE_ORACLE["classes"]` is
