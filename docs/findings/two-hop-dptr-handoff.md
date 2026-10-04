@@ -127,7 +127,7 @@ each pass the DPTR they were given straight on:
 | site | first callee | second callee | verdict |
 |---|---|---|---|
 | `0x204F9` (`0x07E2`) | `0xB1F2` | `0x10C8` | read ×3 |
-| `0x2662D` (`0x07E5`) | `0x383A` | `0x0FCB` | read ×3 |
+| `0x2662D` (`0x07E5`) | `0x383A` | `0x0FCB` | read |
 | `0x0B6E8` (`0x089E`) | `0xBADE` | `0x70E4` | read **and write** |
 | `0x2B5F9` (`0x0811`) | `0x9A48` | `0x10C8` | read ×3 |
 | `0x2951B` (`0x07D6`) | `0xB2F7` | `0x10C8` | read ×3 |
@@ -137,6 +137,12 @@ issue and are a **consequence rather than a coincidence**, which is worth
 stating rather than leaving to be found later: `0x204F9`, `0x2B5F9` and
 `0x2951B` all reach a first callee that is a one-instruction trampoline onto
 `0x10C8`. They resolve as a family because they are one.
+
+The `×3` on the three `0x10C8` rows is `0x10C8`'s own — three
+`movx a,@dptr` and a `ret`. The `0x0FCB` row carries the direction alone,
+because the census window ends before that routine does and the count would
+be the window's; `lightbar-bat-flow.md` §3.5 records where the window stops
+and what a larger budget finds past it.
 
 `0x089E` is the only cell in this shape that is `r+w`, for a reason the window
 shows rather than the bucket asserting — `0x70E4` reads, adds and writes the
@@ -198,9 +204,12 @@ fixture rather than reading it.
   one call past an accessor stub, and every one of the fourteen callers
   continues into `0x347B` or `0x38CA`, which begin `movx a,@dptr` — and that
   is `walk_branch_arms.py`'s shape, not this one. `0x0420`'s R1:R2 handoff is
-  the same shape, which is why `handoff-site-warrant.md`'s forward reference to
-  this issue now says what remains rather than pointing at a closed issue for
-  work nobody has picked up.
+  **not** that shape: `clamp_r2r1_to_0420_above_3c0b` loads `0x0420` through
+  DPTR, copies it into R1:R2 and returns, with no branch in its window, so
+  what remains for it is what its one caller — bank1 `0x6727` — then does with
+  that pair. `handoff-site-warrant.md`'s forward reference to this issue says
+  that instead, rather than pointing at a closed issue for work nobody has
+  picked up.
 * **`check_site_resolution.py`'s census is deliberately still depth 1.** Its
   `site-resolution.csv` stays byte-identical, and two of its tests hold that
   depth. Worth knowing rather than rediscovering as a bug: at depth 2 the
