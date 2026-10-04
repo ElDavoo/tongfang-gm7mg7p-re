@@ -318,4 +318,5 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`xdata-self-test-deferral-already-lifted.md`](xdata-self-test-deferral-already-lifted.md) — The self-test deferral #628 was filed against had already been lifted, and one file still described it in the present tense (2026-10-03, issue #628)
 - [`xdata-spelled-as-union.md`](xdata-spelled-as-union.md) — `spelled_as` is a union across programs, and the column that says so (issue #709)
 - [`xdata-two-largest-case-restatement.md`](xdata-two-largest-case-restatement.md) — The two-largest case passed vacuously; its exhibits are now derived (issue #778)
+- [`xdata-worklist-census-columns-read.md`](xdata-worklist-census-columns-read.md) — §5's `size` and `refs` columns were never read; re-derived, they hold
 - [`xdata-write-direction-correction.md`](xdata-write-direction-correction.md) — The 833 enters `write` and never leaves it: the word was wrong, the number was not (issue #890)
