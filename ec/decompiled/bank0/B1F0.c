@@ -37,17 +37,17 @@ void charge_stress_update(char param_1)
       }
     }
   }
-  DAT_EXTMEM_09c7 = DAT_EXTMEM_09c7 + 1;
-  if (0x3b < DAT_EXTMEM_09c7) {
-    DAT_EXTMEM_09c7 = 0;
+  XDATA_09C7 = XDATA_09C7 + 1;
+  if (0x3b < XDATA_09C7) {
+    XDATA_09C7 = 0;
     bVar1 = DAT_EXTMEM_0a48 <
             (byte)(DAT_EXTMEM_0a4a - (((DAT_EXTMEM_0a49 < DAT_EXTMEM_0a4b + 1) << 7) >> 7));
     if (!bVar1) {
-      DAT_EXTMEM_09c8 = DAT_EXTMEM_09c8 + 1;
-      bVar1 = DAT_EXTMEM_09c8 < 0x3cU - ((bVar1 << 7) >> 7);
+      XDATA_09C8 = XDATA_09C8 + 1;
+      bVar1 = XDATA_09C8 < 0x3cU - ((bVar1 << 7) >> 7);
       cVar7 = bVar1 << 7;
       if (!bVar1) {
-        DAT_EXTMEM_09c8 = 0;
+        XDATA_09C8 = 0;
         cVar3 = DAT_EXTMEM_0a4a;
         bVar6 = DAT_EXTMEM_0a4b;
         stress_headroom(0x9c9,0xfd,0xe8);
@@ -97,18 +97,18 @@ void charge_stress_update(char param_1)
       charge_target_minus_r3_times_0a47(bVar6,200);
       return;
     }
-    bVar6 = 0x2c - (((DAT_EXTMEM_09ca < 0xb9) << 7) >> 7);
-    cVar7 = DAT_EXTMEM_09c9 - bVar6;
-    if ((DAT_EXTMEM_09c9 < bVar6) &&
+    bVar6 = 0x2c - (((XDATA_09CA < 0xb9) << 7) >> 7);
+    cVar7 = XDATA_09C9 - bVar6;
+    if ((XDATA_09C9 < bVar6) &&
        (bVar6 = 1 - (((DAT_EXTMEM_0a4d < 0x5e) << 7) >> 7), cVar7 = DAT_EXTMEM_0a4c - bVar6,
        (DAT_EXTMEM_0a4c < bVar6) << 7 < '\0')) {
-      bVar6 = 0x1f - (((DAT_EXTMEM_09ca < 0xc9) << 7) >> 7);
-      bVar5 = DAT_EXTMEM_09c9 - bVar6;
-      if (((DAT_EXTMEM_09c9 < bVar6) &&
+      bVar6 = 0x1f - (((XDATA_09CA < 0xc9) << 7) >> 7);
+      bVar5 = XDATA_09C9 - bVar6;
+      if (((XDATA_09C9 < bVar6) &&
           (cVar7 = ((DAT_EXTMEM_0a4d < 0xfa) << 7) >> 7, bVar5 = DAT_EXTMEM_0a4c + cVar7,
           DAT_EXTMEM_0a4c < (byte)-cVar7)) && (bVar5 = OEM_4_CHARGING_PROFILE & 0x30, bVar5 != 0x10)
          ) {
-        if ((0x12U - (((DAT_EXTMEM_09ca < 0xc1) << 7) >> 7) <= DAT_EXTMEM_09c9) ||
+        if ((0x12U - (((XDATA_09CA < 0xc1) << 7) >> 7) <= XDATA_09C9) ||
            ((byte)-(((DAT_EXTMEM_0a4d < 0x96) << 7) >> 7) <= DAT_EXTMEM_0a4c)) {
           bVar2 = 0x32;
         }

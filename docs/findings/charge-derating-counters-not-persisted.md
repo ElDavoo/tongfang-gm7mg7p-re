@@ -168,10 +168,10 @@ The classification is `ec/decompiled/bank0/B12C.c`, which is committed: its
 
 ```c
   if ((DAT_EXTMEM_0490 >> 1 & 1) != 1) {
-    DAT_EXTMEM_09c7 = 0;
-    DAT_EXTMEM_09c8 = 0;
-    DAT_EXTMEM_09c9 = 0;
-    DAT_EXTMEM_09ca = 0;
+    XDATA_09C7 = 0;
+    XDATA_09C8 = 0;
+    XDATA_09C9 = 0;
+    XDATA_09CA = 0;
     return;
   }
 ```
@@ -236,6 +236,13 @@ stating in the first place.
   this is about *lifetime across a reset*, not about whether the EC touches the
   bytes. Adding rows would mean inventing a `status:` for four bytes the host
   cannot read, which is the overclaiming CLAUDE.md's calibration rule forbids.
+
+  *(Correction, 2026-10-04, issue #299: the bullet above is left as it was
+  written, and its reasoning about `status:` does not hold. All four addresses
+  carry rows now, at `present-untested` — the vocabulary's own value for "the EC
+  writes and reads it, no host has ever read it back", which is the static
+  warrant the site lists in this same file supply, so nothing needed inventing.
+  See [`xdata-09c7-09ca-register-rows.md`](xdata-09c7-09ca-register-rows.md).)*
 - **Nothing was observed on hardware.** Every verdict is a static execution of
   committed bytes.
 
@@ -293,3 +300,7 @@ What the cheap tier *does* pick up is `python3 -m py_compile` over
 - **Should `0x09C7`–`0x09CA` get `registers.yaml` rows at all**, given they are
   host-unreadable? The answer here is "not yet", and that is worth revisiting
   if a Linux driver ever needs to reason about the tier.
+
+  *(Corrected 2026-10-04, issue #299: the question is answered — the rows exist,
+  at `present-untested`, as the correction above says. What stays open is the
+  second half of it, what a Linux driver would need to reason about the tier.)*

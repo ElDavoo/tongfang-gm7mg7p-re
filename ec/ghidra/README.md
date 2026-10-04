@@ -68,15 +68,18 @@ directory and then asserts two facts about bank-0 `0xB1F0`, the two
 `../annotations/charge-target-derating.md` established by hand:
 
 - the listing carries an `lcall 0xbf08` at `0xB200`; and
-- the C carries `DAT_EXTMEM_09c7 = DAT_EXTMEM_09c7 + 1;` immediately followed by
-  `if (0x3b < DAT_EXTMEM_09c7)` — the seconds counter and its 60-second
-  threshold.
+- the C increments `0x09c7` and compares it against `0x3b` on the next line —
+  the seconds counter and its 60-second threshold. The token is either
+  `DAT_EXTMEM_09c7`, the exporter's placeholder for an address
+  `../annotations/registers.yaml` has no row for, or `XDATA_09C7`, the name
+  `xdata-symbols.csv` gives it once it does.
 
-Both are matched on the address rather than on Ghidra's name for the callee.
+Both are matched on the address rather than on a name. For the callee,
 `FUN_CODE_bf08` is what `0xbf08` is called before an annotation renames it, and
 the committed export calls that same routine
-`sub_0a4e_against_4d_with_borrow`; a check written against the name would fail
-on the rename rather than on anything about the code. The increment and the
+`sub_0a4e_against_4d_with_borrow`; for the counter, both spellings above are
+names for one address. A check written against a name would fail on the rename
+rather than on anything about the code. The increment and the
 compare are one pattern rather than two, because either half alone is satisfied
 by an unrelated line.
 

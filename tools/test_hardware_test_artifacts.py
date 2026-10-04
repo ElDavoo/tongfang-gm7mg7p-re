@@ -153,6 +153,17 @@ HELD = {
             "*-snapshot.txt": ("## 2.", "in the snapshot style of"),
         },
     },
+    "pd-index-geometry-live.md": {
+        # Five `ec_timer_capture.py` captures -- one census by redirection and
+        # four `--csv` -- and nothing else. The operator's plug/unplug actions
+        # reach the captures as MARK rows over stdin, which the tool writes into
+        # the CSV rather than into a separate file, so there is no allowance
+        # here: what the operator contributes is rows in a capture §3 already
+        # produces. §4's "what this cannot conclude" is prose and names no
+        # artifact.
+        "command_producers": True,
+        "hand_saved": {},
+    },
     "pl-clear-0741-gate.md": {
         # Four arms, four `ec_timer_capture.py --csv` captures, and nothing
         # else: the `ecmem.py read`/`write` calls in the arms print to stdout

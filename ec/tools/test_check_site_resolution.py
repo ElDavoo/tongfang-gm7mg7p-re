@@ -84,6 +84,12 @@ TEN = {
     '0x0410': [('write', '0xB50E')],
     '0x0420': [('unresolved-none', '0xE769')],
     '0x043A': [('read', '0xB56C'), ('read', '0xB56C'), ('read', '0xB56C')],
+    # 0x04A4 joined the population when it was entered in `registers.yaml`
+    # (issue #1202): its one EC-side site is a DPTR handoff, and the census
+    # carries a row per `present-untested` address. The class name is the
+    # point -- a handoff is what puts an address in this population at all --
+    # so it is transcribed here like the rest rather than special-cased.
+    '0x04A4': [('write', '0xB43B')],
     '0x0733': [('write', '0x94D0')],
     '0x0735': [('write', '0x94D0'), ('write', '0x94D0')],
 }
