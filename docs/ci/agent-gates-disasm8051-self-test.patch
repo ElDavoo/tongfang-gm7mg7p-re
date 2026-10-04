@@ -1,7 +1,8 @@
 # ec/tools/disasm8051.py --self-test, ec/tools/data_regions.py --check
-# --self-test, and ec/tools/dsdt_ec_fields.py --csv --check --self-test, wired
-# into the cheap gate. THREE tools in one patch, and the
-# reason is in docs/findings/prepared-gate-patches.md: the free hunks in
+# --self-test, ec/tools/dsdt_ec_fields.py --csv --check --self-test, and
+# ec/tools/bank_call_regions.py --check --self-test, wired into the cheap gate
+# as one patch, and the reason is in
+# docs/findings/prepared-gate-patches.md: the free hunks in
 # .github/scripts/agent-gates.sh are already spent, so a second tool wanting
 # the same tool-list and case-arm context would have to cut the same
 # `windows/tools/decompile_native.py; do` line to be independently applicable
@@ -17,6 +18,13 @@
 # not compose. `tools/test_agent_gates_patches.py::CompositionTests` is what
 # says so rather than this header: it applies the set in every ordered pair, and
 # a standalone patch would fail only there, having applied cleanly on its own.
+# bank_call_regions.py folds in here for the same reason one step further along:
+# `prepared-gate-patches.md`'s collision table had already recorded that the
+# tool list has no free line left, so this one was planned into an existing
+# hunk's post-image rather than discovered at the end. **There is deliberately
+# still no count of the tools here**, for the reason the paragraph below gives
+# about ArmRetentionTests: a fold that edited this sentence to name a number is
+# precisely the edit the next fold would not make.
 # The filename is KEPT for the reference-count reason that file
 # gives for agent-gates-capture-claims.patch: the patch is named in prose across
 # many markdown files outside docs/ci/, each of which names it as the canonical
@@ -29,7 +37,7 @@
 # tools/test_agent_gates_patches.py's ArmRetentionTests.REQUIRED
 # carries both of each tool's halves for the same reason FoldTests carries two
 # functions' worth of strings for the capture-claims patch: a re-cut that
-# lands one tool's halves and drops another's -- or either of the other two's --
+# lands one tool's halves and drops another's -- or any of the others' --
 # applies cleanly and passes every other case here.
 #
 # Original header, for ec/tools/disasm8051.py alone:
@@ -95,9 +103,9 @@
 #
 # The three `ec/tools/` entries sit at the *end* of the `for tool in` list,
 # after `windows/tools/decompile_native.py` and so not grouped with the other
-# `ec/tools/` paths; the three `case` arms sit after `*xdata_register_map.py)`
+# `ec/tools/` paths; the `case` arms sit after `*xdata_register_map.py)`
 # and so not beside any semantic neighbour (`*citation_gap_scan.py)` for
-# disasm8051, and none at all for the other two). All six are
+# disasm8051, and none at all for the others). All of them are
 # deliberate and none is where a reader would put them.
 # The second tool's own `case` arm runs `--check` as well as `--self-test`,
 # unlike the first's, because `data_regions.py --check` is the mode that
@@ -112,8 +120,8 @@
 # registers.yaml moves, which is why it belongs in the cheap tier beside
 # check_register_counts rather than anywhere deeper.
 #
-# The third tool's arm runs `--csv --check` and `--self-test`, and is the only
-# one of the three that passes an argument: `ECMG` is in `XDATA_REGIONS`, so
+# dsdt_ec_fields.py's arm runs `--csv --check` and `--self-test`, and is the only
+# one that passes an argument: `ECMG` is in `XDATA_REGIONS`, so
 # its three `static_refs*` columns are functions of the image and both
 # `--check` and the bare table refuse to run without one. The path is relative
 # to the repo root the way every other path in this script is.
@@ -149,10 +157,10 @@
 #
 #   tool list :119-124  held by agent-gates-gap-text-check.patch hunk 1
 #   tool list :123-128  held by agent-gates-0751-self-test.patch hunk 1
-#   tool list :127-133  this patch's hunk 1
+#   tool list :141-147  this patch's hunk 1
 #   arms      :163-168  held by agent-gates-gap-text-check.patch hunk 2
 #   arms      :190-195  held by agent-gates-0751-self-test.patch hunk 2
-#   arms      :138-143  this patch's hunk 2
+#   arms      :152-157  this patch's hunk 2
 #
 # (Content-matched against the committed script rather than read off the `@@`
 # numbers, which are stale for most of this set; that is what the first two
@@ -162,10 +170,10 @@
 # The union of the two tool-list windows this patch was cut against is :119-128,
 # and :129 -- the `; do` line this hunk splits -- was the only line in the list
 # outside every one of them. Adding this patch's own window makes the union of
-# all three :119-133: the whole list, the `[ -f "$tool" ] || continue` guard and
+# them all :119-147: the whole list, the `[ -f "$tool" ] || continue` guard and
 # the `case "$tool" in` line. **There is no free boundary left in the tool list
-# for a fourth `ec/tools/` entry**, which is the whole reason the third tool
-# folds into an existing hunk's post-image -- the pre-images are untouched, so
+# for another `ec/tools/` entry**, which is the whole reason the later tools
+# fold into an existing hunk's post-image -- the pre-images are untouched, so
 # the spans above are still the spans, and every other patch still composes.
 # The arm's is the same shape at the other end of the arm list. List order here
 # is cosmetic: nothing reads the order, the loop is over a `for tool in` word
@@ -177,10 +185,9 @@
 # start.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index ce9f0964..5db19cdf 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -127,7 +127,10 @@ check_ghidra_tooling() {
+@@ -141,7 +141,11 @@ check_ghidra_tooling() {
                ec/tools/xdata_register_map.py \
                ec/tools/check_status_vocabulary.py \
                bios/tools/bios_extract.py \
@@ -188,11 +195,12 @@ index ce9f0964..5db19cdf 100755
 +              windows/tools/decompile_native.py \
 +              ec/tools/disasm8051.py \
 +              ec/tools/data_regions.py \
-+              ec/tools/dsdt_ec_fields.py; do
++              ec/tools/dsdt_ec_fields.py \
++              ec/tools/bank_call_regions.py; do
      [ -f "$tool" ] || continue
      case "$tool" in
        # The symbol generator takes no --work and has no --self-test; its
-@@ -138,6 +141,16 @@ check_ghidra_tooling() {
+@@ -152,6 +156,19 @@ check_ghidra_tooling() {
        *decompile_native.py)
          python3 "$tool" --check && python3 "$tool" --self-test || rc=1
          ;;
@@ -205,6 +213,9 @@ index ce9f0964..5db19cdf 100755
 +      *dsdt_ec_fields.py)
 +        python3 "$tool" ec/firmware/GMxMGxx_11.800 --csv --check && \
 +        python3 "$tool" --self-test || rc=1
++        ;;
++      *bank_call_regions.py)
++        python3 "$tool" --check && python3 "$tool" --self-test || rc=1
 +        ;;
        # The annotation merge's refusals. It is what stands between a fan-out's
        # CSV and main, and a check that has quietly stopped rejecting anything

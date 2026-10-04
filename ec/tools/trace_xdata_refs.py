@@ -144,14 +144,26 @@ DPL = 0x82
 DPH = 0x83
 
 # The opcodes that store a value into a *directly addressed* byte, and so can
-# replace DPTR. Three of them name their destination at `d[i+1]`; `0x85` is
-# the one that does not, which is why it is a separate case below and why the
-# bounds check the predicate carries is not the same for every member.
+# replace DPTR. All but one of them name their destination at `d[i+1]`; `0x85`
+# is the one that does not, which is why it is a separate case below and why
+# the bounds check the predicate carries is not the same for every member.
 #   0xF5     mov  0xnn,a
 #   0x75     mov  0xnn,#0xmm
+#   0x86-87  mov  0xnn,@Ri
 #   0x88-8F  mov  0xnn,rN
 #   0xD0     pop  0xnn
-DIRECT_STORE_OPS = frozenset((0x75, 0xD0, 0xF5)) | frozenset(range(0x88, 0x90))
+#
+# `0x86`/`0x87` were an omission and are no longer one (#1391): they replace
+# DPTR's byte by exactly the argument every row above replaces it by, so the
+# table was not the set of forms that rebuild the pointer. The account is in
+# ../../docs/findings/dptr-guard-mov-direct-at-ri.md; the argument they were
+# absent on is left visible in §3 of
+# ../../docs/findings/dptr-rebuild-walk-guard.md, with the correction beside
+# it. `test_dptr_rebuild_forms.py` asserts this set equal to
+# `dptr_rebuild_forms.STORE_FORMS` plus the `0x85` exception below, so a form
+# added to one list and not the other is red whichever way it went.
+DIRECT_STORE_OPS = (frozenset((0x75, 0x86, 0x87, 0xD0, 0xF5))
+                    | frozenset(range(0x88, 0x90)))
 # `mov 0xnn,0xmm` is `0x85 src dst`: the *source* is `d[i+1]` and the
 # destination is `d[i+2]`, the reverse of every opcode above.
 MOV_DIRECT_DIRECT = 0x85
@@ -160,9 +172,9 @@ MOV_DIRECT_DIRECT = 0x85
 def is_dptr_rebuild(d: bytes, i: int) -> bool:
     """Whether the instruction at `d[i]` replaces DPTR rather than using it.
 
-    `MOV DPTR,#imm16` is one of six ways an 8051 rebuilds the pointer, and
-    `walk_why()`'s guard tested only that one. Every construction in this
-    table replaces the whole pointer or one of its two bytes, so a walk that
+    `MOV DPTR,#imm16` is one of several ways an 8051 rebuilds the pointer,
+    and `walk_why()`'s guard tested only that one. Every construction named
+    here replaces the whole pointer or one of its two bytes, so a walk that
     runs past one charges the `movx` behind it to the address the site's own
     `MOV DPTR` named -- a window that reads as this register's access and is
     in fact another's. `0xE372` and `0xDE8E` are the two the `.asm` listings
