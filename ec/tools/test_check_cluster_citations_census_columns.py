@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Offline checks that a census row's three counts are read where they are.
+"""Offline checks that a census row's two counts are read where they are.
 
 `check_cluster_citations.py`'s count rule is the only thing holding
-`ec/annotations/xdata-register-map.md` §5's hand-typed `size`, `refs` and
-`named inside` columns to `ec/annotations/xdata-clusters.csv`. For as long as
+`ec/annotations/xdata-register-map.md` §5's hand-typed `size` and `refs`
+columns to `ec/annotations/xdata-clusters.csv`; its `named inside` column is
+not held, because it counts what `registers.yaml` names. For as long as
 the rule found its columns by fixed index, it read the size and the reference
 count out of the wrong cells on §5's own table -- `row[1]` is a `cluster_key`
 and `row[2]` a `cluster_name` there -- and `number()` returned `None` for both,
@@ -99,15 +100,16 @@ class ReadsEachFigureFromItsOwnColumn(unittest.TestCase):
     code would.
     """
 
-    def test_the_three_figures_are_read_from_their_own_columns(self):
-        # The case that goes red when the column resolution is reverted: all
-        # three perturbed at once, and all three named. On the pre-fix reader
+    def test_the_two_figures_are_read_from_their_own_columns(self):
+        # The case that goes red when the column resolution is reverted: both
+        # perturbed at once, and both named. The named cell is perturbed too and
+        # is not reported, because that count is not held. On the pre-fix reader
         # every one of these rows reads clean, because the size and the
         # reference count are looked for in the key and the name.
         text = ('| `main-ec-001` | `ke794087e13a6` | — | 999 | 888 | '
                 '`0x0300`-`0x097B` | 77 | prose |')
         n, what = counted(text)
-        self.assertEqual(n, 3)
+        self.assertEqual(n, 2)
         self.assertEqual(what, '152 addresses in the census, 999 in the row')
 
     def test_a_wrong_size_is_reported(self):
@@ -133,14 +135,11 @@ class ReadsEachFigureFromItsOwnColumn(unittest.TestCase):
                 '`1,130` | `0x0456`-`0x1809` | 35 | prose |')
         self.assertEqual(counted(text), (0, None))
 
-    def test_a_wrong_named_count_is_reported(self):
-        # The cell after the range. This one was read before the fix and is
-        # here to hold it still: an anchor that moved the named count off the
-        # range would pass every other case in this class.
+    def test_the_named_count_is_not_held(self):
+        # The cell after the range counts what `registers.yaml` names, which
+        # every branch naming a register moves, so the rule leaves it alone.
         text = NINE_COLUMN.replace('| 11 |', '| 40 |')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '11 named addresses in the census, 40 in the row')
+        self.assertEqual(counted(text), (0, None))
 
     def test_the_shorter_shape_is_still_read(self):
         # The same three figures with the key and the name columns absent, so
@@ -274,15 +273,18 @@ class TheCommittedWorklistIsHeldToTheCsv(unittest.TestCase):
         # The negative of the case above, on the committed census rather than a
         # fixture one: it is what says the previous case passes because the
         # figures are read, not because nothing was read at all.
+        # The wrong figures are built from the census rather than typed, so
+        # the case does not move when the census does.
         counts = ccc.census()[2]
-        self.assertEqual(counts["main-ec-002"]["size"], 92)
-        self.assertEqual(counts["main-ec-002"]["refs"], 1130)
-        self.assertEqual(counts["main-ec-002"]["named"], 35)
-        wrong = ('| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 93 | '
-                 '`1,131` | `0x0456`-`0x1809` | 36 | prose |\n')
+        facts = counts["main-ec-002"]
+        wrong = (f'| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | '
+                 f'{facts["size"] + 1} | `{facts["refs"] + 1:,}` | '
+                 f'`{facts["addr_range"].replace("-", "`-`")}` | '
+                 f'{facts["named"] + 1} | prose |\n')
         n, what = counted(wrong, counts)
-        self.assertEqual(n, 3)
-        self.assertEqual(what, "92 addresses in the census, 93 in the row")
+        self.assertEqual(n, 2)
+        self.assertEqual(what, f'{facts["size"]} addresses in the census, '
+                               f'{facts["size"] + 1} in the row')
 
 
 if __name__ == '__main__':
