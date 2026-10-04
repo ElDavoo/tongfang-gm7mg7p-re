@@ -143,13 +143,15 @@ high halves repeat it:
   behaviour behind either. They are left out of `registers.yaml` here, and
   the last section says why.
 - **The four high halves are the existing convention, not a new one.**
-  `registers.yaml` already declines to enter the high half of every entered
-  pair on this ground: `BAT_FULL_CAPACITY_1`'s note says of `0x0405` that it
+  `registers.yaml` declines to enter the high half of an entered pair on this
+  ground in three rows: `BAT_FULL_CAPACITY_1`'s note says of `0x0405` that it
   "has no site in any image and is therefore not entered", and
-  `BAT_DESIGN_VOLTAGE_1`, `BAT_STATUS_1` and `XDATA_0436_PAIR` each say the
-  same of theirs. The census disagrees with that sentence for the high
-  halves and agrees with it for the low ones — `0x040B`, `0x040D`, `0x040F`,
-  `0x0411`, `0x0545` and `0x0547` all have rows in
+  `BAT_DESIGN_VOLTAGE_1` and `BAT_STATUS_1` each say the same of theirs.
+  `XDATA_0436_PAIR` is not a fourth: it enters `0x0436` and `0x0437` in one
+  row and counts sites for both, which is the blind spot below rather than an
+  instance of the convention. The census disagrees with that reasoning for
+  the high halves here and agrees with it for the low ones — `0x040B`, `0x040D`,
+  `0x040F`, `0x0411`, `0x0545` and `0x0547` all have rows in
   `ec/annotations/xdata-registers.csv` with `spelled_as` `pair-literal` and a
   non-zero `refs`, because the census resolves the literal first argument of
   the pair accessor and follows its `inc DPTR`. That is the same blind spot
@@ -261,7 +263,7 @@ coincidence of six literals.
 | `0xAE78 chain_probes_update_056a_1_3` | `0x03` | `0x0490` bit 0 set → `0xAED9` | `0xAE5F` vs `0x0544`, then `0xAE92` vs `0x040C` | `1` (via `0xAE24`), then `3` | `0xAE6F` |
 | `0xAEA2 chain_probes_update_056a_2_4` | `0x07` | `0x0490` bit 0 set → `0xAED9` | `0xAE92` vs `0x040C`, then `0xAEBC` vs `1` | `2` (via `0xAE58`), then `4` | `0xAE6F` |
 | `0xAEE2 set_056a_3_or_0496_low5_0f` | `0x0F` | `0x0490` bit 0 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) | `0xAE6F` |
-| `0xAEF3 set_056a_3_or_0496_low5_1f` | `0x1F` | `0x0490` bit 0 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) | `0xAE6F` |
+| `0xAEF3 set_056a_3_or_0496_low5_1f` | `0x1F` | `0x0490` bit 0 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) — *reversed: the no-carry path* | `0xAE6F` |
 
 Read down the `R6` column and it is a thermometer: `0x00`, `0x01`, `0x03`,
 `0x07`, `0x0F`, `0x1F` — each value the previous one with one more bit set,
@@ -279,10 +281,11 @@ is what the shape suggests.
 **The bounds descend, but not by a constant step.** `(V>>4)` and
 `(V>>5)+0x28` are not adjacent for any `V` that is a plausible capacity:
 the gap between them is roughly `(V>>5) - 0x28`, which is most of
-`(V>>5)`. The ladder is therefore coarse at the top and fine at the
-bottom — two bounds within a factor of two of each other, then
-`(V>>5)`, then `1` — and it is that shape, not an even subdivision, that
-the `0x056A` cursor walks.
+`(V>>5)`. The gaps are therefore `(V>>5) - 0x28`, then exactly `0x28`,
+then `(V>>5) - 1`: a wide top band, a narrow middle band of exactly
+`0x28`, and the widest band at the bottom, spanning `(V>>5)` down to
+`1`. It is that shape, not an even subdivision, that the `0x056A`
+cursor walks.
 
 **`0x056A` is a band index, and the routine for a band both reads and
 rewrites it.** `0xAE42` writes `0` and `2`; `0xAE78` writes `1` and `3`;
@@ -438,8 +441,10 @@ the name.
   as `ljmp`. Seeding them as functions is issue #175's shape of work.
 - **How `0xADFD` itself is reached is not established.** Its one forwarder,
   `bank1 0xAD7A forwarder_to_adfd`, is a bare `ljmp` and no committed
-  listing calls or jumps to `0xAD7A` or `0xADFD`. That is "not found by
-  this method", not "unreachable".
+  listing calls or jumps to `0xAD7A` or `0xADFD`, though
+  `ec/annotations/bank-call-targets.csv` does record
+  `0x12D53,bank1,0xAD53,ljmp,0xAD7A` and `0xAD53` is likewise an address no
+  listing exports. That is "not found by this method", not "unreachable".
 - **The `0x040x` and `0x054x` high halves are "not found by this scan".**
   The pair helpers' `inc DPTR` reaches them; `scan_refs.py` counts
   `MOV DPTR,#imm16` and cannot see that.
