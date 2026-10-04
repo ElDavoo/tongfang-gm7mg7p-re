@@ -15,8 +15,10 @@ the same code reads an export taken in a scratch work directory.
     python3 bios/tools/setup_offset_xrefs.py --self-test
 
 A setup offset does not reach code as a literal, which is why this tool exists.
-A search for `0x4F3` over `bios/decompiled/*.c` returns nothing and that is
-not evidence of absence: `gRT->GetVariable` is called with a *stack buffer*,
+A search for `0x4F3` over `bios/decompiled/*.c` turns up no `Setup[0x4F3]`
+literal -- the only matches are substrings of longer constants, such as
+`local_14 = 0x4f3c34b8` in `OemHddHeadParkSmm.c` -- and that is not evidence of
+absence: `gRT->GetVariable` is called with a *stack buffer*,
 and every later access to the byte is a displacement against that buffer's
 base. In `bios/ghidra/listings/OemOcDxe/000007A8.asm` the `Setup` buffer base
 is `[RBP + 0x2e0]` and the store `docs/findings.md` §8 publishes as

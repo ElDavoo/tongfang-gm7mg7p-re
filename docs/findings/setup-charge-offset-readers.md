@@ -40,9 +40,10 @@ is what makes the negative credible rather than merely quiet.
 
 ## Why a grep is the wrong tool, stated as a measurement
 
-A search for `0x4F3` over `bios/decompiled/*.c` returns nothing, and that is
-§4c's blind spot rather than an answer. A setup offset does not reach code as a
-literal. `gRT->GetVariable` is called with a **stack buffer**, and every later
+A search for `0x4F3` over `bios/decompiled/*.c` turns up no `Setup[0x4F3]`
+literal: the only matches are substrings of longer constants, such as
+`local_14 = 0x4f3c34b8` in `OemHddHeadParkSmm.c`. That is §4c's blind spot
+rather than an answer. A setup offset does not reach code as a literal. `gRT->GetVariable` is called with a **stack buffer**, and every later
 access to the byte is a displacement against that buffer's base.
 
 In `bios/ghidra/listings/OemOcDxe/000007A8.asm` the `Setup` buffer base is
@@ -190,8 +191,8 @@ per site.
 
 `OemOcDxe`'s `SyncOcVariables` places one `Setup` offset — the `0x7D7` of §8 —
 and three `CpuSetup` ones, at `0x1BD`, `0x1BF` and `0x1C0`. `OemKbLightDxe`
-places four consecutive `Setup` writes at `0x7D2`, `0x7D4`, `0x7D5`, `0x7D6`,
-immediately below §8's byte. `OemNetworkDxe`'s
+places four `Setup` writes in the frame below §8's, at `0x7D2`, `0x7D4`,
+`0x7D5` and `0x7D6`. `OemNetworkDxe`'s
 `read_modify_write_two_variables` places `Setup[0x742]` as a **read**, which is
 the same neighbourhood as the `Setup[0x741]` question
 `ifr-charge-and-battery-options.md` asks about elsewhere. None of these is a
@@ -220,7 +221,7 @@ piece of work and a human's call.
 
 ## How to extend this
 
-`bios/ghidra/modules/` holds the five TE bodies. Those are the precedent for
+`bios/ghidra/modules/` holds TE module bodies. Those are the precedent for
 committing a module image, and they are what a follow-up that closes the
 `.data` row of the skip breakdown would extend. With the PE32 bodies readable,
 `--check` would hold the tool's `VARIABLES` table to the GUIDs actually in the
@@ -233,10 +234,8 @@ base are both recovered, on the strength of the size alone. Measured over this
 tree, that is 30 sites — and it would report them under the weakest evidence
 the tool has, since several stores share these sizes. The `.data` row is
 larger than that, and no amount of additional frame modelling reaches it,
-because the bytes are simply not in a listing. So the ranking the earlier
-version of this file implied — module images last, after cheaper fixes — is
-backwards: the images are the biggest single lever *and* the only one that
-reaches the largest bucket of it.
+because the bytes are simply not in a listing. The images are the biggest
+single lever *and* the only one that reaches the largest bucket of it.
 
 ## What this does not settle
 
@@ -259,7 +258,7 @@ reaches the largest bucket of it.
   readable?** This is the largest single improvement available to this table,
   and the only one that reaches the largest part of the skipped population —
   the rows of the skip breakdown above say how much each would buy, and they
-  do not all need the same thing. The five TE bodies in
+  do not all need the same thing. The TE bodies in
   `bios/ghidra/modules/` are the existing precedent for committing an image.
 - **Do the sites whose `RDX` is a frame slot pointing at a caller's GUID share
   one wrapper?** That shape is `Setup`'s own wrapper handing a variable pointer
