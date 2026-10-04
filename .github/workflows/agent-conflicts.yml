@@ -197,9 +197,26 @@ jobs:
         if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' }}
         uses: ./.github/actions/project-setup
 
+      # LOCAL CHANGE (2026-10-04): a conflict only in generated files needs no agent. The
+      # census CSVs, the symbol table and the counterpart map are functions of committed
+      # inputs, so regenerating them from the merged inputs is the resolution, and the script
+      # exits 1 without touching anything if any conflicted file is hand-written. An agent run
+      # here costs up to an hour of a runner; this costs a minute.
+      - name: Settle a generated-only conflict mechanically
+        id: regen
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' }}
+        run: |
+          set -euo pipefail
+          if .github/scripts/regenerate-conflicted.sh; then
+            echo "every conflicted file was generated; regenerated without an agent"
+            echo "mechanical=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mechanical=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Resolve
         id: resolve
-        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' }}
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && steps.regen.outputs.mechanical != 'true' }}
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
         env:
@@ -233,19 +250,20 @@ jobs:
               `status:` value that neither side changed.
             - GENERATED files -- never hand-merge these: ec/decompiled/**,
               ec/ghidra/xdata-symbols.csv, ec/ghidra/manifest.csv, ec/decompiled/index.csv and
-              listing-index.csv, ec/annotations/xdata-registers.csv and xdata-clusters.csv. Take
-              main's copy (`git checkout origin/main -- <file>`), resolve the inputs, then
-              regenerate in this order:
-                python3 ec/tools/gen_xdata_symbols.py
+              listing-index.csv, ec/annotations/xdata-registers.csv and xdata-clusters.csv,
+              ec/ghidra/c-asm-counterpart.csv. Resolve the
+              hand-written files first and `git add` them; then
+                .github/scripts/regenerate-conflicted.sh
+              regenerates and stages every remaining conflicted generated file, in dependency
+              order, and names any conflicted file it does not know how to regenerate. If the
+              branch added ghidra-functions.csv rows or main changed registers.yaml names,
+              re-export the decompile too:
                 python3 ec/tools/build_ec_decompile.py --work /tmp/ecb
-                python3 ec/tools/xdata_register_map.py
               (Ghidra is installed; the default build mode re-exports from the committed
               project and does not write it. Never use --mode rebuild-project here.)
-            - Self-test pins: several tools pin counts (annotation record counts in
-              build_ec_decompile.py, the ORACLE dict in xdata_register_map.py). When the
-              merged tree legitimately moves one because both sides added rows or names, set
-              it to the measured value and add a one-line comment saying which change moved
-              it. A pin that moves for a reason you cannot explain is a real failure: say so.
+            - The XDATA census and the function index are not pinned any more: a self-test
+              asserts relations, never a figure. If both sides edited the same assertion,
+              keep the relation; never write a measured count back in.
             - A conflict on a total or count of the repository's own text (how many write-ups,
               suites, tests, pins, rows, lines or files), in prose or in a test: delete the
               total rather than recomputing it, on both sides. CLAUDE.md, "No totals of the
@@ -257,9 +275,15 @@ jobs:
             nothing), run:
 
                 .github/scripts/agent-gates.sh
-                bash tools/run-tests.sh
 
-            and fix what the merge broke. Do not weaken a gate to pass it. If the two sides
+            and the suites that name a file you resolved:
+
+                for f in $(cat /tmp/conflicts.txt); do git grep -l "$(basename "$f")" -- '*/test_*.py' 'test_*.py'; done | sort -u
+
+            Fix what the merge broke in those. Do not run the whole of tools/run-tests.sh: it
+            takes hours, CI runs it on the push, and the fix-CI stage takes what is still red.
+            Your job is a tree with both sides' work in it, not a green full suite. Do not
+            weaken a gate to pass it. If the two sides
             genuinely contradict each other and you cannot write something true of both, stop,
             leave the tree as is, and explain in your final message.
 
@@ -273,7 +297,7 @@ jobs:
             --disallowedTools "Bash(gh:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
 
       - name: Check and push
-        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && steps.resolve.outcome == 'success' }}
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && (steps.resolve.outcome == 'success' || steps.regen.outputs.mechanical == 'true') }}
         env:
           ISSUE: ${{ matrix.item.issue }}
           HEAD_SHA: ${{ matrix.item.head }}
@@ -297,7 +321,7 @@ jobs:
           git push --force-with-lease="agent/issue-${ISSUE}:${HEAD_SHA}" origin "HEAD:agent/issue-${ISSUE}"
 
       - name: Report a failed attempt
-        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && (steps.resolve.outcome != 'success' || failure()) }}
+        if: ${{ !matrix.item.giveup && steps.prep.outputs.skip == 'false' && ((steps.resolve.outcome != 'success' && steps.regen.outputs.mechanical != 'true') || failure()) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ matrix.item.pr }}

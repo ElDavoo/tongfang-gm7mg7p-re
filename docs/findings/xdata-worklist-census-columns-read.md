@@ -74,18 +74,18 @@ all three were right.
 
 | cluster | size | refs | range | named | census agrees |
 |---|---|---|---|---|---|
-| `main-ec-001` | 152 | 873 | `0x0300`-`0x097B` | 11 | yes |
-| `main-ec-002` | 92 | 1,130 | `0x0456`-`0x1809` | 35 | yes |
-| `main-ec-003` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | yes |
-| `main-ec-004` | 28 | 181 | `0x045C`-`0x1C3A` | 15 | yes |
-| `main-ec-005` | 16 | 94 | `0x043E`-`0x300E` | `0x043E` (a listing, not a count) | yes |
-| `main-ec-006` | 15 | 68 | `0x0388`-`0x03C9` | none | yes |
-| `main-ec-007` | 12 | 280 | `0x0045`-`0x1504` | none | yes |
-| `main-ec-008` | 12 | 107 | `0x0A43`-`0x0FC3` | none | yes |
-| `main-ec-009` | 12 | 37 | `0x049A`-`0x05C3` | none | yes |
-| `main-ec-010` | 12 | 35 | `0x00C0`-`0x2275` | none | yes |
-| `main-ec-011` | 12 | 26 | `0x040A`-`0x0547` | 4 | yes |
-| `main-ec-012` | 11 | 43 | `0x045E`-`0x1F07` | 4 | yes |
+| `main-ec-0300` | 152 | 873 | `0x0300`-`0x097B` | 11 | yes |
+| `main-ec-0456` | 92 | 1,130 | `0x0456`-`0x1809` | 35 | yes |
+| `main-ec-0460` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | yes |
+| `main-ec-045C` | 28 | 181 | `0x045C`-`0x1C3A` | 15 | yes |
+| `main-ec-043E` | 16 | 94 | `0x043E`-`0x300E` | `0x043E` (a listing, not a count) | yes |
+| `main-ec-0388` | 15 | 68 | `0x0388`-`0x03C9` | none | yes |
+| `main-ec-0045` | 12 | 280 | `0x0045`-`0x1504` | none | yes |
+| `main-ec-0A43` | 12 | 107 | `0x0A43`-`0x0FC3` | none | yes |
+| `main-ec-049A` | 12 | 37 | `0x049A`-`0x05C3` | none | yes |
+| `main-ec-00C0` | 12 | 35 | `0x00C0`-`0x2275` | none | yes |
+| `main-ec-040A` | 12 | 26 | `0x040A`-`0x0547` | 4 | yes |
+| `main-ec-045E` | 11 | 43 | `0x045E`-`0x1F07` | 4 | yes |
 
 **This is the finding, not a null result.** The figures in §5 are hand-typed
 prose about a generated CSV, and until now two of the four were checked by

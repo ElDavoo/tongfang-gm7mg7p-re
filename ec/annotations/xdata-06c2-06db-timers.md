@@ -245,7 +245,7 @@ to — 93%**.
 >   **16** one-instruction listings. §2's three checkable facts and the census
 >   now agree by construction rather than by two people counting.
 > - **4,642 of the cluster's 4,966 is a published column.**
->   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-003` row
+>   `xdata-clusters.csv`'s `co_reading_refs` is 4,642 on the `main-ec-0460` row
 >   and `co_reading_dominant` is `yes`, so "93% of the references are the 42
 >   exports" is a cell a reader can check rather than a sentence they have to
 >   trust. (`co_reading_refs` is measured against the cluster row's own 4,966;
@@ -1310,9 +1310,9 @@ touching it, not the EC's sweep.
    wherever a reader looks and measurable against a committed map, it is still
    there, and removing it would not tidy the clustering up — it would merge
    this block into a larger one.** The flip is its own PR once the boundaries
-   land: measured, it re-keys 35 of 430 `cluster_key`s, breaks 5 of the 10 hand
-   names and adds 2 clusters (`xdata-export-ownership.md` §5,
-   `xdata-register-map.md` §4.6). Until then the `refs` columns are an upper
+   land: measured, it moves `cluster_key`s, breaks most of the hand names and
+   adds a cluster (`xdata-export-ownership.md` §5, `xdata-register-map.md`
+   §4.6). Until then the `refs` columns are an upper
    bound on *distinct* references, which `ec/README.md` says at the bullet.
 6. ~~**`0x1664` is read as a gate by the block and has no `registers.yaml`
    row.** One site, one bit, one caller — but the caller is the only countdown

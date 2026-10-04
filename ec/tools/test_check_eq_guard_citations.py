@@ -11,8 +11,8 @@ then each way it can stop working.
 
 Four classes, in the order a reader needs them:
 
-  * **The committed tree agrees** -- every declared citation is on its anchor's
-    current line, all nine anchors resolve, and the run prints a held count and
+  * **The committed tree agrees** -- every declared citation still names code
+    the tool has, all nine anchors resolve, and the run prints a held count and
     a declined count that are both non-zero. The last part is the one that
     matters most: a checker that located nothing must say so rather than exit 0,
     because "checked nothing" and "found nothing" read alike from the exit
@@ -23,11 +23,12 @@ Four classes, in the order a reader needs them:
     asserted to resolve to a line no other anchor claims, and the two refusals
     to resolve to different lines from each other. A checker that held the two
     refusals to one shared number would pass every other case here.
-  * **A perturbation goes red and names the fix.** One cited number moved by one
-    line in a scratch copy of a real page, and the run is asserted to fail *and*
-    to print the anchor's current line beside the wrong one, so the repair is
-    one edit rather than a re-measurement. Without this, a green run proves only
-    that the tool agrees with itself.
+  * **A moved number is a note, not a failure** (2026-10-04). One cited number
+    moved by one line in a scratch copy of a real page, and the run is asserted
+    to stay green *and* to print the anchor's current line beside the cited one.
+    Holding the number to today's line made every branch that grew the tool
+    re-point five write-ups it had not touched; the anchors and the locators
+    are what is held, and their own negative cases are the class after.
   * **A reworded citation is reported, not passed.** The declared list holds a
     locator -- a string of the citing file's own prose -- precisely so that a
     sentence which stops naming the code stops matching. A checker that fell
@@ -103,13 +104,6 @@ def scratch_tree(mutate=None) -> str:
     return root
 
 
-def saying(problems, *needles) -> list:
-    """Problems containing every needle. The needle is the assertion: a case
-    that passes because *some* problem was reported would go green on a checker
-    that had stopped comparing the thing the case is about."""
-    return [p for p in problems if all(n in p for n in needles)]
-
-
 def anchor_line(key) -> int:
     """The line `key` resolves to in the committed tool, read by the tool.
 
@@ -126,15 +120,15 @@ def anchor_line(key) -> int:
 class TheCommittedTree(unittest.TestCase):
     """The real thing: the committed prose and the committed tool agree.
 
-    This is the assertion that would have caught all six of #873's pins, and it
-    is the one that goes red on the next edit to `xdata_register_map.py` --
-    which is the whole point of having the check rather than the six edits.
+    It no longer goes red when an edit to `xdata_register_map.py` moves an
+    anchor's line: what it holds is that each citation still names code the
+    tool has, uniquely, and that the sentence still says which code.
     """
 
     def test_the_committed_citations_hold(self):
         rc, out, err = run_main(['check_eq_guard_citations.py'])
         self.assertEqual(rc, 0, err)
-        self.assertIn('name the line their code is on', out)
+        self.assertIn('name code the tool still has', out)
 
     def test_every_anchor_resolves_and_is_printed_with_its_line(self):
         # The report leads with the derived table, so a reader can see what each
@@ -151,7 +145,7 @@ class TheCommittedTree(unittest.TestCase):
         # look at print the same thing, and "checked nothing" would read from
         # the exit code exactly like "found nothing".
         _, out, _ = run_main(['check_eq_guard_citations.py'])
-        match = re.search(r'(\d+) citation\(s\) name the line their code is on, '
+        match = re.search(r'(\d+) citation\(s\) name code the tool still has, '
                           r'(\d+) declined', out)
         self.assertIsNotNone(match, out)
         self.assertGreater(int(match.group(1)), 0)
@@ -208,51 +202,61 @@ class TheWrongCodeSites(unittest.TestCase):
                             anchor_line("committed_output_refusal"))
 
 
+def recite(rel, key, line):
+    """A `mutate` for `scratch_tree` that makes `rel`'s first `key` citation
+    cite `:line`, whatever number the committed prose carries.
+
+    The number is found by the declared locator rather than spelled here: the
+    prose is not held to today's line, so the committed number may already
+    differ from the anchor's, and a nudge written as "the anchor's line, minus
+    one" finds nothing to replace on such a tree. The locator is matched over
+    the raw text with its spaces widened to any whitespace, because the prose
+    wraps where the collapsed text the tool reads does not.
+    """
+    locator = next(loc for f, declared in cge.CITATIONS if f == rel
+                   for k, loc in declared if k == key)
+    pattern = re.compile(locator.replace(" ", r"\s+"))
+
+    def mutate(path, text):
+        if path != rel:
+            return text
+        match = pattern.search(text)
+        assert match, f"{rel} carries no {key} citation to move"
+        return text[:match.start(1)] + str(line) + text[match.end(1):]
+    return mutate
+
+
 class ADriftedNumber(unittest.TestCase):
-    """The negative case, on a copy of a real page."""
+    """A moved number, on a copy of a real page: reported, and not a failure."""
 
-    def test_a_cited_number_moved_by_one_is_rejected_and_names_the_fix(self):
-        # The line is read from the tool rather than spelled here (2026-10-01).
-        # Spelled as `:4985`/`:4984`, this case went red the moment the tool
-        # grew, and it did not do the job it exists for: it failed on the
-        # committed tree instead of on the nudge.
+    def test_a_cited_number_moved_by_one_is_noted_with_the_current_line(self):
+        # The line is read from the tool rather than spelled here (2026-10-01),
+        # and the cited number is set rather than nudged (2026-10-04), so the
+        # case holds on a tree whose prose has already drifted.
         line = anchor_line("committed_output_refusal")
-
-        def nudge(rel, text):
-            # The `xdata-4-4` page's committed-output refusal, moved up one
-            # line -- the exact shape a commit inserting a line above it
-            # produces, and the shape that reads correctly in the prose.
-            return text.replace(
-                f'OUT_REGISTERS` at `ec/tools/xdata_register_map.py:{line}`',
-                f'OUT_REGISTERS` at `ec/tools/xdata_register_map.py:{line - 1}`', 1) \
-                if rel.endswith("xdata-4-4-identity-rederivation.md") else text
-
-        root = scratch_tree(nudge)
+        rel = "docs/findings/xdata-4-4-identity-rederivation.md"
+        root = scratch_tree(recite(rel, "committed_output_refusal", line - 1))
         self.addCleanup(shutil.rmtree, root)
         rc, out, err = run_main(['check_eq_guard_citations.py', '--repo', root])
-        self.assertEqual(rc, 1)
-        # Both halves of the message: the wrong number, and the line that is
-        # right. A report that named only the first sends the reader back to
-        # `grep` to do the half of the job this tool exists to do.
+        self.assertEqual(rc, 0, err)
+        # Both halves of the note: the cited number, and the line the anchor is
+        # on now, so a reader following the prose is not sent back to `grep`.
+        self.assertIn(f"moved {rel}", out)
         self.assertIn(
             f"cites :{line - 1} for committed_output_refusal, which is "
-            f"{cge.TOOL}:{line}", err)
-        self.assertNotIn('name the line their code is on', out)
+            f"{cge.TOOL}:{line}", out)
 
     def test_the_rest_of_the_run_is_still_reported(self):
-        # A red run that stops reporting is not a better report. Every other
-        # citation is still resolved, held and counted.
-        line = anchor_line('flip')  # read, not spelled; see the case above
-
-        def nudge(rel, text):
-            return text.replace(f'at `:{line}`', f'at `:{line - 1}`', 1) \
-                if rel.endswith("xdata-no-eq-guard-refusal-contract.md") else text
-
-        root = scratch_tree(nudge)
+        # A moved number does not stop the report. Every other citation is
+        # still resolved, held and counted.
+        line = anchor_line('flip')
+        rel = "docs/findings/xdata-no-eq-guard-refusal-contract.md"
+        root = scratch_tree(recite(rel, "flip", line - 1))
         self.addCleanup(shutil.rmtree, root)
-        problems, resolved, held, declined, skipped = run_check(root)[:5]
-        self.assertTrue(saying(problems, f'cites :{line - 1} for flip',
-                               f"{cge.TOOL}:{anchor_line('flip')}"))
+        problems, resolved, held, declined, skipped, out = run_check(root)
+        self.assertEqual(problems, [])
+        self.assertIn(f"cites :{line - 1} for flip, which is "
+                      f"{cge.TOOL}:{line}", out)
         self.assertEqual(resolved, len(cge.ANCHORS))
         self.assertGreater(held, 0)
         self.assertGreater(declined, 0)

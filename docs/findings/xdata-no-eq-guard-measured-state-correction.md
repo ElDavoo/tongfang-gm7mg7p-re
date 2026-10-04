@@ -389,8 +389,8 @@ PY
 
 Two facts, and the disagreement resolves into neither being wrong:
 
-- **The surviving `main-ec-086` claim is true.** The committed
-  `xdata-clusters.csv` row for `main-ec-086` reads `0x07FD 0x07FE 0x07FF` — the
+- **The surviving `main-ec-07FD` claim is true.** The committed
+  `xdata-clusters.csv` row for `main-ec-07FD` reads `0x07FD 0x07FE 0x07FF` — the
   three bytes §26 says the routine steps over, which is what the sentence
   claims. Nothing in §26 needs correcting, which is why #564's finding was
   never filed and why this issue leaves that page alone.

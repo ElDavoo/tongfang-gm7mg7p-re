@@ -95,9 +95,17 @@ def one_cluster_with_a_both_member(rows):
     next re-derivation for a reason that says nothing about the rule.
     """
     _fields, registers = rows_of(REGISTERS)
-    both = {r["addr"] for r in registers if r["program"] == "both"}
+    by_addr = {r["addr"]: r for r in registers}
+    both = {a for a, r in by_addr.items() if r["program"] == "both"}
     for row in rows:
-        if both & set(row["addrs"].split()):
+        members = row["addrs"].split()
+        # One whose two program columns sum differently, so that projecting
+        # it onto the other program is a change the rule can see: a cluster
+        # whose `refs_main_ec` and `refs_pd` happen to agree would accept the
+        # flip for a reason that says nothing about the rule.
+        if both & set(members) and (
+                sum(int(by_addr[a]["refs_main_ec"]) for a in members)
+                != sum(int(by_addr[a]["refs_pd"]) for a in members)):
             return row["cluster_id"]
     raise AssertionError("no committed cluster holds a `program=both` address")
 
