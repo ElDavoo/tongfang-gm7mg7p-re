@@ -50,7 +50,7 @@ spec.loader.exec_module(ccc)
 COUNTS = {
     'main-ec-001': {'size': 152, 'refs': 873, 'named': 11,
                     'addr_range': '0x0300-0x097B'},
-    'main-ec-002': {'size': 92, 'refs': 1130, 'named': 34,
+    'main-ec-002': {'size': 92, 'refs': 1130, 'named': 35,
                     'addr_range': '0x0456-0x1809'},
 }
 
@@ -130,7 +130,7 @@ class ReadsEachFigureFromItsOwnColumn(unittest.TestCase):
         # have to be equal for the row to be right. Comparing the text would
         # flag every comma in the column for good.
         text = ('| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 92 | '
-                '`1,130` | `0x0456`-`0x1809` | 34 | prose |')
+                '`1,130` | `0x0456`-`0x1809` | 35 | prose |')
         self.assertEqual(counted(text), (0, None))
 
     def test_a_wrong_named_count_is_reported(self):
@@ -277,9 +277,9 @@ class TheCommittedWorklistIsHeldToTheCsv(unittest.TestCase):
         counts = ccc.census()[2]
         self.assertEqual(counts["main-ec-002"]["size"], 92)
         self.assertEqual(counts["main-ec-002"]["refs"], 1130)
-        self.assertEqual(counts["main-ec-002"]["named"], 34)
+        self.assertEqual(counts["main-ec-002"]["named"], 35)
         wrong = ('| `main-ec-002` | `kefb63d82f8c7` | `mode-oem-init` | 93 | '
-                 '`1,131` | `0x0456`-`0x1809` | 35 | prose |\n')
+                 '`1,131` | `0x0456`-`0x1809` | 36 | prose |\n')
         n, what = counted(wrong, counts)
         self.assertEqual(n, 3)
         self.assertEqual(what, "92 addresses in the census, 93 in the row")

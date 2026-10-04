@@ -75,9 +75,9 @@ all three were right.
 | cluster | size | refs | range | named | census agrees |
 |---|---|---|---|---|---|
 | `main-ec-001` | 152 | 873 | `0x0300`-`0x097B` | 11 | yes |
-| `main-ec-002` | 92 | 1,130 | `0x0456`-`0x1809` | 34 | yes |
+| `main-ec-002` | 92 | 1,130 | `0x0456`-`0x1809` | 35 | yes |
 | `main-ec-003` | 43 | 4,966 | `0x0460`-`0x09CE` | 43 | yes |
-| `main-ec-004` | 28 | 181 | `0x045C`-`0x1C3A` | 14 | yes |
+| `main-ec-004` | 28 | 181 | `0x045C`-`0x1C3A` | 15 | yes |
 | `main-ec-005` | 16 | 94 | `0x043E`-`0x300E` | `0x043E` (a listing, not a count) | yes |
 | `main-ec-006` | 15 | 68 | `0x0388`-`0x03C9` | none | yes |
 | `main-ec-007` | 12 | 280 | `0x0045`-`0x1504` | none | yes |
@@ -171,7 +171,7 @@ restoring the fixed-index reader and re-running):
 | `test_an_alternate_census_without_a_range_column_still_holds_two_figures` | a `--clusters` CSV with no `addr_range` still holds `size` and `refs` — moving the read to the anchor did not take them into the `addr_range` guard |
 | `test_a_listing_in_the_named_column_is_still_not_a_count` | §5's `` `0x043E` `` cell is not read as a count of one |
 | `test_only_the_first_span_anchors` | a second span in the named column is not a second anchor |
-| `test_every_committed_worklist_agrees_with_the_committed_census` | every §5 row read **out of the committed file**, not from fixtures |
+| `test_every_committed_worklist_row_agrees_with_the_committed_census` | every §5 row read **out of the committed file**, not from fixtures |
 | `test_a_perturbed_committed_row_is_reported` | the negative of that, on the committed census — what says the case above passes because the figures are read |
 
 That last pair is the one that would have caught this. It reads the rows out of
