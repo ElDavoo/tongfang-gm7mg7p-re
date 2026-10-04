@@ -13,12 +13,16 @@ sweeps a given hold happens to buy. Every value here is reachable: the
 `unexplained` rows are the ones the model cannot place, which is the state the
 committed capture is entirely in.
 """
+import ast
 import contextlib
 import importlib.util
+import inspect
 import io
 from pathlib import Path
+import re
 import sys
 import tempfile
+import textwrap
 import threading
 import unittest
 from unittest.mock import patch
@@ -560,6 +564,310 @@ class NoWriteTests(unittest.TestCase):
         # tool-level helpers would take if this tool had one.
         self.assertFalse(hasattr(probe, 'write'))
         self.assertFalse(hasattr(probe, 'do_write'))
+
+
+class LinesStdin:
+    """Several labels in a row, rather than `FakeStdin`'s one.
+
+    `FakeStdin` waits on `at_last`, hands over its single line, and releases
+    the sweep loop on the read after that -- one mark, and the read that proves
+    it was committed. The blank-press cases need a *sequence*, because what is
+    being asked is what a rejected press does to the presses beside it: a
+    rejected press records nothing, and the mark after it still takes the
+    number it would have taken. One line cannot ask that.
+
+    The read that finds the list empty is what sets `marked`, so the sweep
+    loop is released only once every line has been consumed and committed --
+    the same ordering guarantee `FakeStdin` gives, held back until the last
+    line rather than the second read.
+    """
+
+    def __init__(self, ec, lines):
+        self._ec = ec
+        self._lines = list(lines)
+        self._at_last = threading.Event()
+
+    def readline(self):
+        self._at_last.set()
+        self._ec.at_last.wait(5)
+        if not self._lines:
+            self._ec.marked.set()
+            return ""
+        return self._lines.pop(0)
+
+
+# `LinesStdin` sits here rather than beside `FakeStdin` because
+# `docs/findings/test-line-pin-census.md` carries pins that cite lines *into*
+# this file (`0751-mark-provenance-column.md` and `0751-mark-provenance-shapes.md`
+# both do), and inserting a class between `FakeStdin` and `RunTests` would put
+# every one of them below the edit and re-register them for a shift of a few
+# hundred lines rather than a few. Same for the two classes below.
+#
+# Placing them at the end is not the same as the pins not moving, and an earlier
+# version of this comment said it was. The imports the new cases need are
+# module-level, so they went to the top of this file and shifted everything below
+# them by that many lines: the targets the table registers no longer land where
+# it records them. Those rows are left stale deliberately, by the same rule that
+# already leaves pins stale on `origin/main` -- see the "No totals of the
+# repository's own text" bullet in `CLAUDE.md`, and
+# `docs/findings/test-line-pin-census.md`'s own statement that it records the tree
+# it was measured on. So: the placement keeps the shift small and keeps it below
+# the code that is being extended, not at zero.
+
+
+class BlankMarkTests(unittest.TestCase):
+    """A blank press is not a mark, and the prompt says so rather than naming it.
+
+    The prompt used to substitute `mark N` for an empty label, which wrote a
+    `ts,MARK,,mark N` row -- the 0751 capture shape -- describing nothing, and
+    read at the console as a mark somebody meant to place. It was also a mark
+    nobody described, which is the one kind no reader can recover. Same
+    substitution, same row shape and same cost as `ec_watch.py`'s, which
+    stopped on 2026-09-25 (#474); the cases below mirror `test_ec_watch.py`'s
+    `BlankMarkTests` one for one. The reasoning is
+    `docs/findings/system-id-probe-mark-labels.md`.
+
+    `FakeEc`'s read gate is what keeps the interleaving fixed, so the marks
+    still land between the same two sample rows `RunTests` puts them between
+    and "did the MARK row land between two samples" is not a race.
+    """
+
+    def run_probe(self, lines):
+        ec = FakeEc()
+        with tempfile.TemporaryDirectory() as tmp:
+            csv = Path(tmp) / 'capture.csv'
+            out = io.StringIO()
+            with patch.object(probe, 'Ec', lambda: ec), \
+                 patch.object(probe.sys, 'stdin', LinesStdin(ec, lines)), \
+                 contextlib.redirect_stdout(out):
+                rc = probe.main(['--interval', '0', '--mark',
+                                 '--csv', str(csv)])
+                rows = csv.read_text().splitlines()
+        return rc, rows, out.getvalue()
+
+    def marks_summary(self, text):
+        """The probe's own closing marks list, which is what §3 reads.
+
+        The runbook's completeness check is "the last label in the list the
+        probe printed is the last mark the capture has", so the summary is
+        asserted directly rather than inferred from the CSV: a substitute in
+        one and not the other would be the confusion the guard exists to stop.
+        """
+        if '\nmarks:\n' not in text:
+            return []
+        out = []
+        for line in text.split('\nmarks:\n', 1)[1].splitlines():
+            if not line:
+                break
+            out.append(line)
+        return out
+
+    def test_a_blank_press_writes_no_row_and_leaves_the_real_mark_alone(self):
+        rc, rows, _ = self.run_probe(['\n', 'block start\n'])
+        self.assertEqual(rc, 0)
+        # The whole capture rather than the row counted above: the shape the
+        # 0751 grader refuses is a substituted mark anywhere in the file, and
+        # that is a property of the file rather than of where the press fell.
+        self.assertNotIn(',MARK,,mark', '\n'.join(rows))
+        self.assertEqual([r.split(',', 1)[1] for r in rows if ',MARK,' in r],
+                         ['MARK,,block start,'])
+        # And it still landed between two samples, so the blank press did not
+        # push the real mark out of the capture.
+        at = [i for i, r in enumerate(rows) if ',MARK,' in r]
+        self.assertEqual(rows[at[0] - 1].split(",")[1], "4")
+        self.assertEqual(rows[at[0] + 1].split(",")[1], "5")
+
+    def test_the_console_says_the_press_was_not_recorded(self):
+        _, _, text = self.run_probe(['\n', 'block start\n'])
+        notices = [ln for ln in text.splitlines() if 'nothing recorded' in ln]
+        self.assertEqual(len(notices), 1)
+        # Not framed as a mark: a notice that reads like one is the same
+        # confusion the substitution existed to create, and it would read the
+        # same way at a console where the CSV is not in view.
+        self.assertNotIn('MARK:', notices[0])
+        # And the run's own count agrees with the file -- one mark, and no
+        # substitute standing in for the press.
+        summary = self.marks_summary(text)
+        self.assertEqual(len(summary), 1)
+        self.assertIn('block start', summary[0])
+
+    def test_a_whitespace_only_press_is_the_same_as_an_empty_one(self):
+        rc, rows, _ = self.run_probe(['   \n', 'block start\n'])
+        self.assertEqual(rc, 0)
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['block start'])
+
+    def test_a_padded_real_label_is_still_taken_and_stripped(self):
+        # The other half of the guard: refuse the blank press, not the
+        # whitespace. A label typed with a stray leading space is a label,
+        # and §3's labels are prose an operator types by hand.
+        rc, rows, text = self.run_probe(['  block start  \n'])
+        self.assertEqual(rc, 0)
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['block start'])
+        self.assertNotIn('nothing recorded', text)
+
+    def test_a_rejected_press_does_not_take_a_mark_number(self):
+        _, rows, text = self.run_probe(['\n', 'block start\n', '\n'])
+        # Each notice names the number the press would have taken, and `_n`
+        # counts marks recorded: the first blank would have been mark 1 and
+        # was not, so the typed mark took 1 and the second blank would have
+        # been mark 2. With the counter incremented first, the first notice
+        # would have read "mark 2" and the capture would have held a `mark 2`
+        # row sitting between two real labels.
+        self.assertEqual(text.count('nothing recorded, no mark 1 taken'), 1)
+        self.assertEqual(text.count('nothing recorded, no mark 2 taken'), 1)
+        self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],
+                         ['block start'])
+
+    def test_the_substitution_cannot_come_back(self):
+        # The guard against a re-introduction in a form the cases above would
+        # miss. Those hold for whatever the prompt does with a blank line;
+        # this one holds the shape of the line itself, which is the thing that
+        # was there before and could be pasted back. It has to be asserted on
+        # the source, because an output assertion cannot see a default these
+        # inputs never reach.
+        #
+        # On the AST rather than on the text, for a reason worth writing down
+        # because the obvious version of this case silently cannot fire. An
+        # f-string parses as a `JoinedStr` whose constant parts are only the
+        # fragments between the holes, so re-inserting the exact deleted line
+        # (`label = label.strip() or f"mark {self._n}"`) puts `'mark '` in
+        # the literal list and never the substring `'mark {'` -- the check
+        # would go on passing against the substitution itself. Matching the
+        # source text instead does not work either: the blank-press notice
+        # ends `no mark {self._n + 1}`, so `'mark {'` is in the unparsed
+        # source of *correct* code too. Hence the node test, and hence the
+        # liveness check below it.
+        #
+        # What it asserts is the structural form rather than the old
+        # spelling: the loop has no `or` fallback, so there is no default to
+        # substitute. That catches every spelling rather than the one that was
+        # deleted. It is also blind to the comment above the guard, which
+        # quotes the old line -- `ast.parse` drops comments -- so the record
+        # of what this used to do is free to stay.
+        loop = textwrap.dedent(inspect.getsource(probe.Marker._loop))
+        self.assertEqual(self.or_fallbacks(loop), [],
+                         'Marker._loop has an `or` fallback again, so a blank '
+                         'label can be substituted for once more')
+        # And this case is required to be able to fail. A guard that cannot is
+        # worse than no guard: it tells the next reader a re-introduction
+        # would be caught, and it would not be. Run the same check against the
+        # two spellings of the line that was there.
+        for gone in ('label = label.strip() or f"mark {self._n}"\n',
+                     "label = label.strip() or 'mark ' + str(self._n)\n"):
+            with self.subTest(spelling=gone):
+                self.assertTrue(self.or_fallbacks(gone),
+                                'this guard no longer detects the substitution '
+                                'it is here to detect')
+
+    @staticmethod
+    def or_fallbacks(source):
+        """The `x or y` expressions in `source`, by node rather than by text."""
+        tree = ast.parse(textwrap.dedent(source))
+        return [n.lineno for n in ast.walk(tree)
+                if isinstance(n, ast.BoolOp) and isinstance(n.op, ast.Or)]
+
+
+class FreeFormLabelTests(unittest.TestCase):
+    """The mark labels are free-form prose by design, and there is no vocabulary.
+
+    `ec_watch.py` takes `--label-vocab 0751` and refuses a label the 0751
+    grader's `parse_mark` cannot read. This probe deliberately does not, and
+    the case that makes the decision testable rather than a comment is the one
+    below: every label the procedure tells the operator to type is one that
+    check would refuse.
+
+    **This class is a tripwire that goes red in the useful direction**, and the
+    case that fires is `test_there_is_no_vocabulary_to_hold`: it asks the parser
+    for `--label-vocab` and expects argparse's exit 2, so a flag added here
+    fails it outright. That is the change re-opening this decision, not a defect
+    in the probe, and the next reader should read the red as the question this
+    file already answers.
+
+    The other two cases are *not* that tripwire, and the distinction is worth
+    keeping straight rather than rounding off into "the class detects it". They
+    read the runbook and the grader, and neither touches this probe's parser:
+    adding `--label-vocab` here would not change `parse_mark`, so both stay
+    green. What they hold is the *consequence* the decision rests on -- every
+    label the procedure mandates is one that check would refuse -- which is why
+    they are worth having, and why a flag added alongside them would be refusing
+    the procedure's own labels at the first mark. That is an argument, not a
+    detector; the detector is the third case.
+
+    What none of it establishes is that an operator's marks are *good*.
+    `parse_mark` returning `(None, None)` for a runbook label is the design,
+    and it says nothing about whether a capture is usable; §4 of the procedure
+    is read by a person against the `0x0456` bit-7 trajectory.
+    """
+
+    # The labels §3 and §3b mandate, read out of the procedure rather than
+    # copied from it, so a procedure that stopped asking for one of them makes
+    # this case fail instead of quietly passing over a smaller set. The
+    # extraction is deliberately narrow: a backticked label after the word
+    # `mark`, plus the last column of §3b's "mark label if you do it" table.
+    def mandated_labels(self):
+        text = (Path(__file__).resolve().parents[2] / 'docs' / 'hardware-tests'
+                / 'system-id-0456-bit6-divisor.md').read_text()
+        try:
+            body = text.split('### 3a.', 1)[1].split('### 3c.', 1)[0]
+        except IndexError:
+            self.fail('the procedure no longer has the 3a/3b blocks this '
+                      'reads its labels out of')
+        labels = []
+        for m in re.finditer(r'mark `([^`]+)`', body, re.IGNORECASE):
+            if m.group(1) not in labels:
+                labels.append(m.group(1))
+        for line in body.splitlines():
+            m = re.match(r'^\|[^|]*\|[^|]*\|\s*`([^`]+)`\s*\|\s*$', line)
+            if m and m.group(1) not in labels:
+                labels.append(m.group(1))
+        return labels
+
+    def test_every_label_the_procedure_mandates_is_free_form_deliberately(self):
+        labels = self.mandated_labels()
+        # A vacuous pass is the failure mode here: a regex that stopped
+        # matching would leave `labels` empty and assert nothing. So the
+        # labels the decision rests on are named and required to be among
+        # what the extraction found -- which fails loudly and by name if §3
+        # stops asking for one, where a floor on the count would only say
+        # that some number of them went.
+        for named in ('block start', 'control arm end', 'steady window end',
+                      'block end', 'GPU mode -> discrete', 'suspend/resume',
+                      'driver reload', 'power mode -> N'):
+            with self.subTest(label=named):
+                self.assertIn(named, labels)
+        for label in labels:
+            with self.subTest(label=label):
+                # (None, None) is the design and is correct for this run: no
+                # §3 form leads any of these, so a `--label-vocab 0751` here
+                # would refuse every label the procedure tells the operator to
+                # type, at the first mark. Asserting a role for one instead
+                # would be the calibration error in the other direction --
+                # claiming a placement this run never makes.
+                self.assertEqual(grader.parse_mark(label), (None, None))
+
+    def test_a_0751_label_is_still_read_by_the_same_reader(self):
+        # The other side of the case above, so `parse_mark` returning
+        # (None, None) cannot be a broken reader being asserted into
+        # agreement: a §3 form the *other* procedure mandates does place, by
+        # the same call, in the same suite.
+        self.assertEqual(grader.parse_mark('wrote 0x0751=0xA0'),
+                         ('write', 0xA0))
+
+    def test_there_is_no_vocabulary_to_hold(self):
+        # `main`'s parser, asked for the flag rather than the module's
+        # attributes: an operator reaching for `--label-vocab` on this tool
+        # gets argparse's exit 2, which is the shape of the answer. The
+        # parser is reached through `main` because it is built there.
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as cm:
+                probe.main(['--label-vocab', '0751'])
+        self.assertEqual(cm.exception.code, 2)
+        # And nothing on the class either, so the vocabulary cannot be passed
+        # in by a caller that did not go through the parser.
+        self.assertFalse(hasattr(probe.Marker(sink=None), '_check'))
+        self.assertFalse(hasattr(probe.Marker(sink=None), '_forms'))
 
 
 if __name__ == '__main__':
