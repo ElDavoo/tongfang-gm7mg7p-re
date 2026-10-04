@@ -143,15 +143,21 @@ rem  --- 2. the run. --interval 0.5 is a starting point, not a
 rem  ---    validated-safe one; see the pacing note above before leaving it
 rem  ---    there. --seconds 30 is the per-arm hold. Two runs and two files:
 rem  ---    the first with 0x0743 as the machine is standing, the second with
-rem  ---    it at 0x00. §6 names both, spelled the same way.
+rem  ---    it at 0x00. §6 names both, spelled the same way: the --csv path is
+rem  ---    resolved against whatever directory this runs in, so run these from
+rem  ---    the repository root and no capture needs renaming into its §6 name.
 python windows\tools\ctgp_dben_probe.py --seconds 30 --interval 0.5 ^
-       --csv <date>-ctgp-dben-07c4-bit3-ac.csv --i-mean-it
+       --csv evidence\ec-watch\<date>-ctgp-dben-07c4-bit3-ac.csv --i-mean-it
 
 rem  --- 3. the same command again, once with 0x0743 at 0x00. Its banner says
 rem  ---    `bit 0 was clear`; it goes in its own CSV, never appended to the
-rem  ---    first.
+rem  ---    first -- the tool opens --csv for append rather than refusing an
+rem  ---    existing file, so a repeated name stacks the runs instead of
+rem  ---    failing, and a stacked file shows a t_s restarting near 0 and a
+rem  ---    second `arm A` block.
 python windows\tools\ctgp_dben_probe.py --seconds 30 --interval 0.5 ^
-       --csv <date>-ctgp-dben-07c4-bit3-gate-closed.csv --i-mean-it
+       --csv evidence\ec-watch\<date>-ctgp-dben-07c4-bit3-gate-closed.csv ^
+       --i-mean-it
 ```
 
 The tool writes arm A, samples for 30 s, writes arm B, samples for 30 s, and
@@ -259,6 +265,25 @@ they are the same question asked with the gate starting open and starting
 closed, and a single capture cannot hold both start states. A third run on a
 different battery state gets a third file — do not append into an existing one,
 and do not merge two files and read the union.
+
+**"Starting closed" is the byte the second run begins from, not a window with
+the gate held off.** `ctgp_dben_probe.py`'s `arm_bytes()` sets `0x0743` bit 0 in
+both arms, so the gate is open for every sample in either file.
+
+**The starting byte is not in either capture.** `sample()` re-reads `0x0743` on
+every sweep, after the arm byte has been written, so every `ctrl_read` row is an
+arm byte — `0x03` across arm A and `0x01` across arm B from either start. The
+arms preserve bits 2-7, but §2's two starts (`0x03` on AC, `0x00` on battery)
+have those zero, so the two runs are **indistinguishable by their `0x0743`
+columns** — not necessarily by the whole file, since a battery-state run could
+differ in `0x07C4`/`0x07D4`/`0x07D5`, and that would be a real observation. What
+tells the two apart is the **filename** and the **console banner**:
+`baseline: 0x0743 = 0x00 (bit 0 CLEAR, ...)` and the closing
+`restored 0x0743 -> 0x00`. A `-gate-closed.csv` capture whose `ctrl_read` never
+shows the starting byte is therefore the expected shape of a run, not a bad one;
+§4's first two reads are what a capture is read for, and neither is the starting
+byte. The tool says the same thing when it runs, and §2's arm A on battery is
+this run rather than the first.
 
 Add each capture to `evidence/README.md`, which is the index every findings
 claim cites through.
