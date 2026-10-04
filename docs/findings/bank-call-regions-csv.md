@@ -84,21 +84,37 @@ and say why" for `common-0656-address-table`. The rule here keys on the YAML's
   `common-6e65-repeat-bytes`'s 6-byte pattern — which is what being a misframed
   read of a repeating byte pattern looks like.
 - **`inferred`** → the extent was extended by pattern.
-  `common-0656-address-table`'s own `note` says the stride is not uniform: 121
-  of its 176 words are `0x032F + 3k` and the rest are not on that progression.
-  A modulo test there answers a question the file does not pose, so the cell is
-  **empty** and `region_confidence` says why in the row itself. This is not
-  hypothetical: **all 24 undefined cells in the file are
-  `common-0656-address-table` sites** — 2 bucket-C, 22 paged.
+  `common-0656-address-table`'s `note` **used to** say the stride is not
+  uniform, and this bullet quoted it. That was wrong and is corrected in the
+  YAML: reading the 176 words edge by edge (issue #1144,
+  [`0656-directory-words.md`](0656-directory-words.md)) shows the stride *is*
+  uniform and the **content** is mixed — the span is a directory of five `ljmp`
+  tables plus 36 ordinary code addresses. The rule here does not rest on that,
+  though: it rests on the `confidence` tier, which is about how the extent was
+  chosen. A modulo test on a `stride: 2` span whose grid was picked by pattern
+  answers a question the file does not pose, so the cell is **empty** and
+  `region_confidence` says why in the row itself. This is not hypothetical:
+  **every undefined cell in the file is a `common-0656-address-table` site**,
+  and they are split between bucket-C and paged. The split is a count of rows
+  in a generated table that any merge touching a `confidence` tier moves, so it
+  is left to the command rather than the prose:
+
+```console
+$ python3 -c "import csv,collections
+rows=[r for r in csv.DictReader(l for l in open('ec/annotations/bank-call-regions.csv')
+      if not l.startswith('#')) if r['region_name'] and not r['entry_aligned'].strip()]
+print(sorted(set(r['region_name'] for r in rows)), dict(collections.Counter(r['family'] for r in rows)))"
+['common-0656-address-table'] {'paged': 22, 'bucket-c': 2}
+```
 
   **This supersedes a `yes`, it does not reverse one.** `ec-data-regions.md`
   §"The payoff" records `0x00686` and `0x0067E` as entry-aligned `yes` in this
   same region, and this file leaves both cells empty. The two answers are not in
   conflict: the table's `yes` is the answer to `entry_offset % 2 == 0` for a
-  region whose `note` declines to claim a stride of 2, and the entry offsets
-  happen to be even (48 and 40). The cell here is undefined because the grid is
-  not a claim, so this file answers nothing rather than the weaker thing — and
-  the table carries the same note beside those two rows.
+  region whose `note` declines to claim a grid, and the entry offsets happen to
+  be even (48 and 40). The cell here is undefined because the grid is not a
+  claim, so this file answers nothing rather than the weaker thing — and the
+  table carries the same note beside those two rows.
 - **`inferred-unchecked`** → empty for the same reason, with no new list: it is
   the tier `--check` cannot reach, so the grid is not a claim either. No entry
   carries it today.
