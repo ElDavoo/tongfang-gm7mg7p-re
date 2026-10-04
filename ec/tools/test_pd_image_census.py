@@ -302,13 +302,12 @@ class StringPool(unittest.TestCase):
         """The most plausible remaining route from a literal to a string, and
         the reason it is measured rather than only listed.
 
-        `0x119C` and `0x11C2` pop the return address into DPTR and read the
+        All three dispatchers pop the return address into DPTR and read the
         caller's inline argument bytes with `movc`, so every table in the
-        program is a literal in the image. If any of those 25 tables began with
-        a NUL-terminated printable run, the pool would be referenced by a
-        literal after all -- and the §3.1 null would be narrower than the page
-        says. It is 0, and the count of sites is what makes the 0 mean
-        something.
+        program is a literal in the image. If any of those tables began with a
+        NUL-terminated printable run, the pool would be referenced by a literal
+        after all -- and the §3.1 null would be narrower than the page says. It
+        is 0, and the count of sites is what makes the 0 mean something.
         """
         tables = pdic.code_table_inline_tables(REGION)
         self.assertEqual(sorted({t[0] for t in tables}),
@@ -316,49 +315,98 @@ class StringPool(unittest.TestCase):
         by_target = collections.Counter(t[0] for t in tables)
         self.assertEqual(by_target[0x119C], 9)
         self.assertEqual(by_target[0x11C2], 16)
+        self.assertEqual(by_target[0x11EF], 3)
+        self.assertEqual(len(tables), 28)
         self.assertEqual([t for t in tables if t[3]], [],
                          "a CODE-table call site opens a string, so the "
                          "string-pool null has to be re-measured")
 
+    def test_each_dispatcher_is_read_at_its_own_entry_width(self):
+        """The case that fails if the width is ever hoisted back to one value.
+
+        A dispatcher's stride is how far its loop advances DPTR *between*
+        entries, so a row's quoted bytes are its own entry and nobody else's.
+        `pd_index_tables.py --self-test` reads those strides off each reader's
+        own `inc dptr` loop and checks them against this table, so a width here
+        is not a second derivation of nothing.
+        """
+        self.assertEqual(pdic.CODE_TABLE_ENTRY_WIDTHS,
+                         {0x119C: 3, 0x11C2: 4, 0x11EF: 6})
+        self.assertEqual(set(pdic.CODE_TABLE_ENTRY_WIDTHS),
+                         set(pdic.CODE_TABLE_DISPATCHERS),
+                         "a dispatcher with no declared width would be read "
+                         "at whatever the default happened to be")
+        for target, site, tail, _ in pdic.code_table_inline_tables(REGION):
+            self.assertEqual(
+                len(tail), pdic.CODE_TABLE_ENTRY_WIDTHS[target],
+                f"0x{site:05X} is quoted at {len(tail)} bytes, which is not "
+                f"0x{target:04X}'s entry width")
+
     def test_a_planted_code_table_string_is_found(self):
         """The same non-vacuity the `movc` census gets, for this measurement.
 
-        A synthetic region with a string placed immediately after an
-        `lcall 0x11C2` has to be reported: without this case, a
-        `code_table_inline_tables()` that always returned `False` would leave
-        the 0/9 and 0/16 above green for the wrong reason.
+        A synthetic region with a string placed immediately after an `lcall`
+        has to be reported, for every dispatcher this census names: without
+        this case, a `code_table_inline_tables()` that always returned `False`
+        would leave the nulls above green for the wrong reason, and a third
+        dispatcher added with the wrong width or a scan that never looked at it
+        would not be caught by the site counts either.
 
         "Immediately after" is the whole of the fixture, because the dispatcher
         reads from `site + 3` — the return address it popped points at the
         byte after the `lcall`. A string planted anywhere else would not be a
-        table at all.
+        table at all. Each dispatcher is given its own fixture rather than one
+        region holding all three, so a case that passed for two of them and
+        missed the third shows which.
+
+        The expected tails are spelled out rather than sliced out of the width
+        table, so a width that stopped matching its dispatcher fails here too
+        instead of the case agreeing with whatever the tool did.
         """
-        call = 0x0200
-        at = call + 3
-        region = region_with_patch({
-            at: b"SRC Negotiate done\x00",
-            call: bytes([pdic.LCALL, 0x11C2 >> 8, 0x11C2 & 0xFF]),
-        })
-        rows = [r for r in pdic.code_table_inline_tables(region)
-                if r[0] == 0x11C2]
-        self.assertEqual(len(rows), 1)
-        self.assertTrue(rows[0][3],
-                        "a table that opens a pool entry was not reported")
-        self.assertEqual(rows[0][1] + 3, at)
-        self.assertEqual(rows[0][2], b"SRC ")
+        for target, want in ((0x119C, b"SRC"), (0x11C2, b"SRC "),
+                             (0x11EF, b"SRC Ne")):
+            with self.subTest(dispatcher=f"0x{target:04X}"):
+                call = 0x0200
+                at = call + 3
+                region = region_with_patch({
+                    at: b"SRC Negotiate done\x00",
+                    call: bytes([pdic.LCALL, target >> 8, target & 0xFF]),
+                })
+                rows = [r for r in pdic.code_table_inline_tables(region)
+                        if r[0] == target]
+                self.assertEqual(len(rows), 1)
+                self.assertTrue(rows[0][3],
+                                "a table that opens a pool entry was not "
+                                "reported")
+                self.assertEqual(rows[0][1] + 3, at)
+                self.assertEqual(rows[0][2], want)
 
     def test_a_wider_inline_window_is_a_different_measurement(self):
-        """`INLINE_TABLE_BYTES` is a parameter, and the width is quoted.
+        """The width is a parameter, and forcing one width is its own question.
 
         A table that opens a string four bytes *after* the call is a shape
-        this width cannot see, so the case pins that widening the window does
-        not change the answer on this image -- which is what lets the page say
-        "these 25 sites and these 4 bytes" rather than "this route".
+        this measurement cannot see, so the case pins that forcing one width on
+        every dispatcher does not change the answer on this image -- which is
+        what lets the page scope its null to "these 28 sites and each
+        dispatcher's own entry width" rather than to "this route".
+
+        Neither forced width is uniformly the wider one, and the split runs in
+        both directions: `width=4` over-reads `0x119C`, whose entries are 3
+        bytes, and truncates `0x11EF`, whose are 6 -- the same over-read and
+        truncation `pd_image_census.py`'s own docstring describes. So an
+        override is a different question rather than a conservative one, and
+        the committed figure stays the per-dispatcher width, which
+        `test_each_dispatcher_is_read_at_its_own_entry_width` pins case by case.
         """
         narrow = pdic.code_table_inline_tables(REGION, width=4)
         wide = pdic.code_table_inline_tables(REGION, width=8)
         self.assertEqual([t[3] for t in narrow if t[3]], [])
         self.assertEqual([t[3] for t in wide if t[3]], [])
+        # The override forces one width on every dispatcher, which is what
+        # makes it the other measurement rather than a slower way to take this
+        # one -- so each of its rows is that width, whatever the dispatcher.
+        self.assertEqual({len(t[2]) for t in narrow}, {4})
+        self.assertEqual({len(t[2]) for t in wide}, {8})
 
 
 class ReferrerAttribution(unittest.TestCase):
@@ -659,6 +707,10 @@ class FiguresAndCheck(unittest.TestCase):
         self.assertEqual(FIGURES["erased_tail"], "0xF7B8-0xFFFF")
         self.assertEqual(FIGURES["pool_candidates"], "43")
         self.assertEqual(FIGURES["pool_referrers"], "0")
+        self.assertEqual(
+            FIGURES["code_table_inline"],
+            "0x119C=9site/0open_a_string 0x11C2=16site/0open_a_string "
+            "0x11EF=3site/0open_a_string")
         self.assertEqual(FIGURES["pd_listings"], "541")
         self.assertEqual(FIGURES["pd_listing_overlaps"], "0")
         self.assertEqual(FIGURES["pd_annotation_rows"], "541")

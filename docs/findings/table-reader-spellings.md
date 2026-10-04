@@ -197,11 +197,17 @@ $ python3 ec/tools/pd_index_tables.py
 | `0x11C2` `dispatch_code_table_2byte_key` | `pop-dph-dpl-selector-r0` | **4** | 16 | 2 of 16 |
 | `0x11EF` *(unnamed)* | `pop-dph-dpl` | **6** | 3 | 0 of 3 |
 
-The 9 and 16 are the committed figures: `pd_image_census.py`'s
-`CODE_TABLE_DISPATCHERS` already counts them, and this tool reconciles its own
-per-dispatcher site counts against that function so the two cannot disagree
-silently. **322 bytes of the PD image are read as table data by this method**,
-and the full 28-row census — every candidate site, failures included — is
+The three site counts are the committed figures:
+`pd_image_census.py`'s `CODE_TABLE_DISPATCHERS` counts all three — `0x11EF`
+included, at its own 6-byte entry width rather than at the single window the
+census used to apply to the other two (see
+[`pd-code-table-inline-width.md`](pd-code-table-inline-width.md)) — and this
+tool reconciles its own per-dispatcher site counts and entry widths against
+that function, over every reader it derives rather than over the ones the
+census already named, so a dispatcher either tool has and the other lacks is a
+failure rather than a silent omission. **322 bytes of the PD image are read as
+table data by this method**, and the full 28-row census — every candidate site,
+failures included — is
 [`pd-index-table-spans.csv`](../../ec/annotations/pd-index-table-spans.csv).
 
 ### `0x11EF` is new, and is only findable by the widened search
@@ -329,9 +335,8 @@ under one weakened check plus two unchanged ones.
   the data this PR adds, and *changing* `pd-xdata-span-sites.csv` to subtract
   them is #36's change, not this one's.
 - **#26** (characterising the PD image as an RE target) is fed a result: its
-  dispatch surface has three entry points, not the two the committed census
-  names, and two of the three walk tables of a different layout than the main
-  EC's. Not attempted here beyond that.
+  dispatch surface has three entry points, and two of the three walk tables of
+  a different layout than the main EC's. Not attempted here beyond that.
 - **`jmp @a+dptr` at `0x11B6`, `0x11DC` and `0x1208`** — the computed dispatch
   at the end of each PD reader, and `0x716B` in the main EC — is what no byte
   scan in this tree resolves an edge out of, so none of these tables' handlers
