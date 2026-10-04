@@ -1686,12 +1686,16 @@ registers:
       0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F are a thermometer in the low five
       bits of 0x0496, each the previous with one more bit set; and 0xAEF3
       loads its R6 only on the borrow path, so the top bit is set on a
-      different condition from the other five. XDATA 0x0490 bit 7 is a gate
+      different condition from the other five. XDATA 0x0490 bit 0 is a gate
       rather than a band: it sends 0xAE42, 0xAE78, 0xAEA2, 0xAEE2 and 0xAEF3
       to bank1 0xAED9 store_0_to_056a, forcing the cursor to the bottom.
-      0x0490 bit 7 is written by bank1 0xC11C
-      latch_0490_bit3_or_bit7, which sets bit 3 or bit 7 and clears the
-      other. 0x056A and 0x0496 have no row in this file and none is added
+      All six test it as jb/jnb 0xe0, and 0xe0 is the base address of ACC,
+      so the operand names bit 0. bank1 0x9817
+      enter_state_0480_05f1_06d9 sets that bit, rewriting the byte as
+      (old OR 1) AND 0x77 -- the orl sets bit 0 and the mask preserves it
+      while clearing bits 3 and 7. bank1 0xC11C latch_0490_bit3_or_bit7
+      does not write it; it alternates bits 3 and 7. 0x056A and 0x0496 have
+      no row in this file and none is added
       here; boot-xdata-sites.csv records 0x056A cleared to 0x00, which is
       the 0xAE16 entry.
       WHAT THIS DOES NOT SETTLE. The name stays declined and status stays

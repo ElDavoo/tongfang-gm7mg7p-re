@@ -183,7 +183,7 @@ with carry still set, and the non-borrow paths clear it. So carry means
 `0x0436` is **below** the bound, and every caller branches on exactly that.
 
 A fourth comparator, `0xAEBC cmp_0436_0437_against_1_or_test_0514`, closes
-the ladder. On the `0x0497` bit-7-clear path it loads `0x0436` into `R3:R4`,
+the ladder. On the `0x0497` bit-0-clear path it loads `0x0436` into `R3:R4`,
 puts `R2 = 0x00` and `R1 = 0x01`, and calls `0x8863` — the bound is the
 literal `1`. On the other path it reads `0x0514` and does `clr CY` /
 `subb A,#0x1`, which is the same comparison against the same literal without
@@ -256,12 +256,12 @@ coincidence of six literals.
 
 | routine | `R6` | gate | compares, in order | writes `0x056A` | else |
 |---|---|---|---|---|---|
-| `0xAE16 set_056a_1_on_carry_from_ae2b` | `0x00` | `0x0490` bit 7 set → skip | `0xAE2B` vs `0x040A` | `1` | `0xAE6F` |
-| `0xAE42 chain_probes_update_056a_0_1_2` | `0x01` | `0x0490` bit 7 set → `0xAED9` | `0xAE2B` vs `0x040A`, then `0xAE5F` vs `0x0544` | `0`, then `2` | `0xAE6F` |
-| `0xAE78 chain_probes_update_056a_1_3` | `0x03` | `0x0490` bit 7 set → `0xAED9` | `0xAE5F` vs `0x0544`, then `0xAE92` vs `0x040C` | `1` (via `0xAE24`), then `3` | `0xAE6F` |
-| `0xAEA2 chain_probes_update_056a_2_4` | `0x07` | `0x0490` bit 7 set → `0xAED9` | `0xAE92` vs `0x040C`, then `0xAEBC` vs `1` | `2` (via `0xAE58`), then `4` | `0xAE6F` |
-| `0xAEE2 set_056a_3_or_0496_low5_0f` | `0x0F` | `0x0490` bit 7 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) | `0xAE6F` |
-| `0xAEF3 set_056a_3_or_0496_low5_1f` | `0x1F` | `0x0490` bit 7 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) | `0xAE6F` |
+| `0xAE16 set_056a_1_on_carry_from_ae2b` | `0x00` | `0x0490` bit 0 set → skip | `0xAE2B` vs `0x040A` | `1` | `0xAE6F` |
+| `0xAE42 chain_probes_update_056a_0_1_2` | `0x01` | `0x0490` bit 0 set → `0xAED9` | `0xAE2B` vs `0x040A`, then `0xAE5F` vs `0x0544` | `0`, then `2` | `0xAE6F` |
+| `0xAE78 chain_probes_update_056a_1_3` | `0x03` | `0x0490` bit 0 set → `0xAED9` | `0xAE5F` vs `0x0544`, then `0xAE92` vs `0x040C` | `1` (via `0xAE24`), then `3` | `0xAE6F` |
+| `0xAEA2 chain_probes_update_056a_2_4` | `0x07` | `0x0490` bit 0 set → `0xAED9` | `0xAE92` vs `0x040C`, then `0xAEBC` vs `1` | `2` (via `0xAE58`), then `4` | `0xAE6F` |
+| `0xAEE2 set_056a_3_or_0496_low5_0f` | `0x0F` | `0x0490` bit 0 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) | `0xAE6F` |
+| `0xAEF3 set_056a_3_or_0496_low5_1f` | `0x1F` | `0x0490` bit 0 set → `0xAED9` | `0xAEBC` vs `1` | `3` (via `0xAE8B`) | `0xAE6F` |
 
 Read down the `R6` column and it is a thermometer: `0x00`, `0x01`, `0x03`,
 `0x07`, `0x0F`, `0x1F` — each value the previous one with one more bit set,
@@ -303,14 +303,19 @@ the instruction order, and it is worth recording because the `0xAE6F`
 annotation calls the six-`R6` pattern an inference: on this routine the
 pattern holds only one of the two ways through.
 
-**One gate is not about `0x0436` at all.** `0x0490` bit 7 sends `0xAE42`
+**One gate is not about `0x0436` at all.** `0x0490` bit 0 sends `0xAE42`
 through `0xAEA2` and `0xAEF3` to `0xAED9 store_0_to_056a`, which stores zero
 to `0x056A` — so the bit forces the cursor to the bottom rather than
 selecting a band. `0xAE16` treats the same bit as a skip (`jb 0xe0, 0xae6f`),
-which lands on `0xAE6F` with `R6` still `0x00`. `0x0490` bit 7 is written by
-`bank1 0xC11C latch_0490_bit3_or_bit7`, which sets bit 3 or bit 7 and clears
-the other, and by `bank1 0x9817 enter_state_0480_05f1_06d9`, which rewrites
-the byte as `(old OR 1) AND 0x77` and so clears bit 7 as well as bit 3.
+which lands on `0xAE6F` with `R6` still `0x00`. All six test it as
+`jb`/`jnb 0xe0`, and `0xe0` is the base address of ACC, so the operand names
+bit 0 of the byte just read — the same `0xeN`-is-bit-N reading the committed
+rows for these six already carry. `bank1 0x9817 enter_state_0480_05f1_06d9`
+*sets* it, rewriting `0x0490` as `(old OR 1) AND 0x77`: the `orl` sets bit
+0, and the mask preserves it while clearing bits 3 and 7. `0xC11C
+latch_0490_bit3_or_bit7` is not a writer of this bit — it alternates bits 3
+and 7, and its own `anl A,#0x77` clears those two while leaving bit 0 — so
+it is not named as one here.
 `0x056A` and `0x0496` have no `registers.yaml` row and none is added here;
 `0x0496`'s low five bits are read at `0x8D3A` and `0x8E71` and stored at
 `0xB940`, and `bank1 0x8DE4 dispatch_on_0490_0495_0496_0498` tests `0x0496`
@@ -423,9 +428,9 @@ the name.
   but what a band *is* — a state of charge, a fan or power mode, a timer
   phase — is not established, and the routine names (`chain_probes_*`)
   suggest rather than demonstrate one.
-- **What `0x0490` bit 7 means is not decoded.** That it gates the ladder,
-  and that `0xC11C` and `0x9817` both write it, is established; what sets it
-  in the first place is not.
+- **What `0x0490` bit 0 means is not decoded.** That it gates the ladder,
+  and that `0x9817` sets it, is established; what it means, and what reaches
+  `0x9817` in the first place, is not.
 - **The table's bytes are read from the image, not from a listing.** No
   committed `.asm` covers `0xADE2`-`0xADF9`, so the eight targets are read
   out of `ec/firmware/GMxMGxx_11.800` and cross-checked against

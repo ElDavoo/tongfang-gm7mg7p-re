@@ -86,11 +86,15 @@ TABLE_BASE = 0xADE2
 TABLE_ENTRIES = 8
 CURSOR = 0x056A                # the band cursor 0xADFD dispatches on
 MASK_BYTE = 0x0496             # where or_r6_into_0496_low5 writes the thermometer
-GATE_BYTE = 0x0490             # whose bit 7 gates the whole ladder
-# Named rather than written inline inside an asserting call, for the reason
-# `MASK_CEILING` below gives: `check_doc_figure_pins.py` credits any int in
-# one as pinning that figure elsewhere in the repository.
-GATE_BIT_MASK = 1 << 7          # the bit of `0x0490` the ladder tests
+GATE_BYTE = 0x0490             # whose bit 0 gates the whole ladder
+# The gate bit is derived from the listings rather than written down here.
+# `0xe0` is the base address of ACC, which is bit-addressable, so a `jb`/
+# `jnb` on `0xeN` tests bit N of the byte just read -- the reading the
+# committed annotation rows for the six ladder routines already apply. An
+# earlier draft of this file transcribed `1 << 7` beside that operand and
+# disagreed with both the listings and the note; `gate_bit_mask()` reads the
+# bit out of the operand so the number here cannot drift from them again.
+ACC_BIT_BASE = 0xE0
 
 # The widest mask `0xAE6F` can hold, being five bits. Named rather than
 # written inline because `check_doc_figure_pins.py` credits any int inside an
@@ -213,6 +217,51 @@ def _branch(insn):
     caller that does not want it.
     """
     return int(insn.operand.split(',')[-1].strip(), 16)
+
+
+def _gate_branch(bank, addr):
+    """The `jb`/`jnb` a ladder routine uses to test the gate byte, or None.
+
+    Found by the read it follows rather than by its own address: the routine
+    loads DPTR with the gate byte, reads it into A, and branches on one bit
+    of that A. The operand is therefore an ACC address and not a bit number.
+    """
+    insns = bank.routine(addr)
+    for i in insns.values():
+        if i.mnemonic != 'mov' or i.operand != 'DPTR, #0x%x' % GATE_BYTE:
+            continue
+        read = insns.get(i.next_addr)
+        if read is None or read.mnemonic != 'movx':
+            continue
+        follow = insns.get(read.next_addr)
+        if follow is not None and follow.mnemonic in ('jb', 'jnb'):
+            return follow
+    return None
+
+
+def gate_bit_mask(bank):
+    """The mask for the bit of `GATE_BYTE` that gates the ladder.
+
+    Derived from the operand the six `jb`/`jnb` instructions actually carry
+    rather than written down here, so the listing is what the number comes
+    from and a change to it fails here instead of this file quietly agreeing
+    with itself. All six naming the same bit is what makes it one gate rather
+    than six, so that is required rather than assumed.
+    """
+    masks = set()
+    for addr in LADDER:
+        branch = _gate_branch(bank, addr)
+        if branch is None:
+            raise AssertionError('0x%04X has no gate branch' % addr)
+        operand = int(branch.operand.split(',')[0].strip(), 16)
+        if not ACC_BIT_BASE <= operand < ACC_BIT_BASE + 8:
+            raise AssertionError('0x%04X branches on 0x%02X, which is not an '
+                                 'ACC bit' % (addr, operand))
+        masks.add(1 << (operand - ACC_BIT_BASE))
+    if len(masks) != 1:
+        raise AssertionError('the ladder gates on more than one bit: %r'
+                             % sorted(masks))
+    return masks.pop()
 
 
 def _rotate16(value, count):
@@ -942,11 +991,16 @@ class CapacityLadder(unittest.TestCase):
                              '0x%04X loads R6 first' % addr)
 
     def test_the_gate_bit_forces_the_cursor_to_the_bottom(self):
-        """`0x0490` bit 7 sends five of the six to `0xAED9`, which stores 0.
+        """`0x0490` bit 0 sends five of the six to `0xAED9`, which stores 0.
 
         `0xAE16` treats the same bit as a skip instead, so the gate is not
         uniform across the ladder and a reading that called it one early-out
         would be wrong about the routine that starts the walk.
+
+        The bit is read out of the `jb`/`jnb` operand rather than written
+        down: `0xe0` is the base address of ACC, so `0xeN` is bit N, and all
+        six branches carry `0xe0`. Taking the number from the operand is what
+        keeps it from drifting away from the listing a second time.
         """
         target = self.bank.routine(0xAED9)
         self.assertEqual(target[0xAED9].operand, 'DPTR, #0x%x' % CURSOR)
@@ -966,6 +1020,17 @@ class CapacityLadder(unittest.TestCase):
                         to_gate.append((addr, follow.mnemonic, follow.target))
                         self._gate_branch[addr] = follow.addr
         self.assertEqual(len(to_gate), len(LADDER), 'each routine reads the gate')
+
+        # The operand is an ACC address, so it is read as one: `0xe0` is the
+        # base of the bit-addressable accumulator and `0xeN` is its bit N.
+        operands = set()
+        for addr in LADDER:
+            branch = _gate_branch(self.bank, addr)
+            operands.add(int(branch.operand.split(',')[0].strip(), 16))
+        self.assertEqual(operands, {ACC_BIT_BASE},
+                         'every routine branches on the same ACC bit')
+        self.assertEqual(gate_bit_mask(self.bank), 1 << 0,
+                         'and ACC bit 0 is what that operand names')
         for addr, mnemonic, dest in to_gate:
             if addr == 0xAE16:
                 self.assertEqual((mnemonic, dest), ('jb', 0xAE6F),
@@ -986,12 +1051,14 @@ class CapacityLadder(unittest.TestCase):
             self.assertEqual(fallthrough.target, 0xAED9,
                              '0x%04X falls through to the zero store' % addr)
 
-    def test_the_gate_bit_has_a_writer_that_alternates_it_with_another(self):
+    def test_the_gate_bit_is_not_written_by_the_latch_that_alternates_bit3_bit7(self):
         """`0xC11C` sets bit 3 or bit 7 of `0x0490` and clears the other.
 
-        So the bit that gates the whole ladder is not a constant, and the
-        routine that moves it is named. What *sets* it in normal operation is
-        not established here and the write-up says so.
+        Neither is the bit the ladder gates on, so this routine is not a
+        writer of the gate bit and the write-up does not name it as one --
+        an earlier draft did, on the strength of the routine's name. Its
+        fallback `anl A,#0x77` is the other place it rewrites the byte, and
+        `0x77` is `0111_0111`, which keeps the gate bit set as well.
         """
         latch = self.bank.routine(0xC11C)
         # Each rule sets one bit and clears the other, so the pair of
@@ -1012,14 +1079,33 @@ class CapacityLadder(unittest.TestCase):
         self.assertEqual({r[1] for r in rules}, {'0xe3', '0xe7'},
                          'and each is cleared by exactly one')
 
-    def test_a_second_writer_clears_the_gate_bit(self):
+        # Neither rule and no whole-byte rewrite touches the gate bit, which
+        # is what makes this routine not a writer of it. The setb/clr operands
+        # are ACC bit addresses and are read as such; the mask is read from
+        # the listing, and only where it reaches a store, because the earlier
+        # `anl A,#0x22` picks a rule and never writes the byte back.
+        gate = gate_bit_mask(self.bank)
+        for operand in ('0xe3', '0xe7'):
+            self.assertNotEqual(1 << (int(operand, 16) - ACC_BIT_BASE), gate,
+                                '0xC11C alternates a bit other than the gate')
+        stored_masks = [i for _, i in sorted(latch.items())
+                        if i.mnemonic == 'anl' and i.operand.startswith('A, #')
+                        and latch[i.next_addr].operand == '@DPTR, A']
+        self.assertEqual(len(stored_masks), 1,
+                         '0xC11C rewrites the byte whole exactly once')
+        self.assertNotEqual(int(stored_masks[0].operand.split('#')[1], 16) & gate,
+                            0, 'and that mask keeps the gate bit')
+
+    def test_the_writer_sets_the_gate_bit_rather_than_clearing_it(self):
         """`0x9817` rewrites `0x0490` as (old OR 1) AND 0x77.
 
-        So the gate bit is not written by `0xC11C` alone, which is why the
-        write-up names this second writer rather than claiming `0xC11C` is
-        the only one: a second writer that *clears* the bit is the shape of
-        evidence that makes a uniqueness claim worth checking, and the one
-        this suite checked. The mask is read from the listing rather than
+        That *sets* the bit the ladder gates on and preserves it through the
+        mask -- `0x77` is `0111_0111`, so bit 0 survives while bits 3 and 7
+        are cleared -- rather than clearing it, which is what an earlier
+        draft of this case said. So `0x9817` is a writer that asserts the
+        gate, and the write-up says that rather than naming `0xC11C` as a
+        second one: that routine alternates bits 3 and 7 and never writes the
+        gate bit. Both immediates are read from the listing rather than
         transcribed, so a firmware change moves the answer.
         """
         insns = self.bank.routine(0x9817)
@@ -1043,7 +1129,8 @@ class CapacityLadder(unittest.TestCase):
         # landing on the next one's address. That is what distinguishes this
         # rewrite from the `anl` earlier in the routine, which masks an
         # unrelated operand, and from the read of the same byte that only
-        # tests bit 0; the write-up's literal is never compared against.
+        # tests the gate bit; the write-up's literal is never compared
+        # against.
         store = gate_stores[0]
         window = [i for _, i in sorted(insns.items())
                   if i.addr < store.addr][-5:]
@@ -1064,8 +1151,14 @@ class CapacityLadder(unittest.TestCase):
                          'and masks the accumulator')
         self.assertEqual(mask.operand.split('#')[0].strip().rstrip(','), 'A',
                          'the mask is applied to that accumulator')
-        self.assertEqual(int(mask.operand.split('#')[1], 16) & GATE_BIT_MASK, 0,
-                         'and it clears the bit the ladder gates on')
+        # Both halves of the rewrite are checked against the gate bit the
+        # listings carry: the `orl` must raise it and the `anl` must keep it,
+        # which together make this a writer that asserts the gate.
+        gate = gate_bit_mask(self.bank)
+        self.assertNotEqual(int(set_bits.operand.split('#')[1], 16) & gate, 0,
+                            'the orl sets the bit the ladder gates on')
+        self.assertNotEqual(int(mask.operand.split('#')[1], 16) & gate, 0,
+                            'and the mask preserves it rather than clearing it')
         self.assertEqual((reload_.mnemonic, reload_.operand),
                          ('mov', 'DPTR, #0x%x' % GATE_BYTE),
                          'before storing back to the same byte')
