@@ -65,11 +65,21 @@ them. So the work is a census over a population §9 and §10 already committed, 
 a new decoder.
 
 Route 2 was **left open and is not answered here.** It asks for the ITE core's
-documented `LCALL` push order, and no ITE datasheet or core manual is committed;
-the single EC image is the only firmware input, so there is no second image and
-no second call site whose argument bytes are known independently. A datasheet
-line fetched from the web is not reproducible from committed inputs, which is
-the bar CLAUDE.md sets for evidence an upstream maintainer can check.
+documented `LCALL` push order, and the datasheet committed at
+[`ec/datasheets/IT5570_A_V0.3.1.pdf`](../../ec/datasheets/IT5570_A_V0.3.1.pdf) does
+not carry it. That is a fact about the file rather than an absence: its text has
+no `LCALL` or `ACALL` in it anywhere, and the only mention of the registers this
+question turns on is §7.1.5.2–7.1.5.4, which lists `SPR`, `DPLR` and `DPHR` as
+SFRs with a bit range and a default and no push order among them. It is a
+peripheral and register specification rather than a core manual, and
+[`ec/datasheets/README.md`](../../ec/datasheets/README.md) records both what the
+part is and what it was used for here. That README also records that the IT5570
+is a sibling and not this machine's `EC-V14.6`, so even a push-order line there
+would be a reference to confirm rather than one to settle. The single EC image is
+the only firmware input, so there is no second image and no second call site whose
+argument bytes are known independently, and a datasheet line fetched from the web
+is not reproducible from committed inputs, which is the bar CLAUDE.md sets for
+evidence an upstream maintainer can check.
 
 One thing to say about route 2 plainly, because §7 of the PD write-up had it
 backwards: the question as originally posed assumed a *discrepancy* between this
