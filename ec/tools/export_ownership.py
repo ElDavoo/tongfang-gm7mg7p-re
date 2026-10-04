@@ -34,10 +34,10 @@ strictly larger. The committed map is the strict-subset derivation.
 
 **`MIN_BODY_STMTS` is not a tuning knob, it is the false-positive guard.** At
 0.90 a one-statement body is contained by any larger body that happens to
-spell that one statement, and `OWNERSHIP_ORACLE["tiny_bodies"]` of the tree's
-bodies are two statements or fewer -- most of them a single statement, and most
-of *those* naming `return`. Left unguarded those fragments chain a whole
-program together: on this tree a floor of 1 produces a **562-member** class of
+spell that one statement, and the tree's bodies two statements or fewer are
+what `--self-test` counts against the floor. Left unguarded those fragments
+chain a whole program together: on this tree a floor of 1 produces a
+**562-member** class of
 `bank1` files, 155 of them the fragments above, whose two largest members --
 78 and 67 statements -- hold a containment score of **1.5%** of the smaller,
 and folding it would silently drop 561 routines out of the census. At 3 the
@@ -103,10 +103,10 @@ the `lost` set pinned in `xdata_register_map.py`'s `OWNERSHIP` oracle is empty.
 That set is a measurement, not an absence -- the plan stage's detector did
 lose 0x05E0, by folding that same file into a larger body
 (annotations/xdata-export-ownership.md 4). The default stays off for the
-measured reason instead: the flip re-keys a large share of the clusters and
-breaks most of the hand names, which `annotations/xdata-export-ownership.md` 5
-carries with the run beside it. Nothing here says a byte is absent, and a row
-this pass leaves alone is "not found by this method".
+measured reason instead: the flip moves `cluster_key`s and breaks most of the
+hand names, which `annotations/xdata-export-ownership.md` 5 carries with the run
+beside them. Nothing here says a byte is absent, and a row this pass leaves
+alone is "not found by this method".
 
 **The `body_lines` column counts statements, not lines.** It is the cardinality
 of the set the containment score divides by, which is the only figure the rule
@@ -393,25 +393,8 @@ def check(args) -> int:
 # replace all three rather than reconciling them. Re-derive any of them with
 # --map --threshold, or read the class shape with --self-test.
 OWNERSHIP_ORACLE = {
-    # 2,710 -> 2,714, and 1,272 -> 1,276, both moved by issue #267 alone: its
-    # four `bank0`-scoped rows seed 0xC278, 0xC2C2, 0xC33C and 0xC4E7, and all
-    # four are short enough to be counted as tiny bodies, so the second figure
-    # moves by the same four.
-    # 2,714 -> 2,720, and 1,276 -> 1,282, both moved by issue #1101 alone for
-    # the same reason: its six `pd 0x07D0` accessor stubs are 7-byte bodies,
-    # so every one of the six lands in the tiny count. None of the other eight
-    # figures moved, and that is the point worth recording -- a `pd` row cannot
-    # reach a class figure, because a class is a set of bodies that contain one
-    # another and six identical forwarders make a class of seven, not a
-    # re-partition of an existing one.
-    # 2,720 -> 2,721 with issue #337's one bank0 seed 0xC118, and 1,282 did not
-    # move: that seed is a three-statement body, so it is above the floor rather
-    # than in the tiny count. It sat in the run between 0xC0E7 and 0xC124 that
-    # bank1's 0x19A8 names, so nothing split or absorbed and it is one more row
-    # rather than a re-partition. `build_ec_decompile.py`'s own row count says
-    # the same thing for the same seed; #337 moved this pin and not that one.
-    # Write-up: docs/findings/bank0-c118-3202-bit0-thunk.md.
-    "rows": 2721,
+    # No row total: it is index.csv's length, every seeded routine moved it,
+    # and the self-test asserts one row per index.csv row instead.
     "classes": 56,
     "shared_rows": 146,
     "largest_class": 42,
@@ -446,12 +429,6 @@ OWNERSHIP_ORACLE = {
     # table above measures them and pinned.
     "classes_no_floor": 29,
     "flood_no_floor": 562,
-    # The body-size floor's own justification, as a count so a reader does not
-    # have to take "half the tree's smallest exports are `return`" on trust.
-    # 1,276 -> 1,282 with issue #1101's six 7-byte `pd` accessor stubs, all six
-    # of them below the floor -- which is what makes this figure the one that
-    # moves alongside `rows` and a reader should not treat it as independent.
-    "tiny_bodies": 1282,
 }
 
 # What `--min-share` would cost, measured at CANDIDATE_MIN_SHARE and pinned the
@@ -638,7 +615,7 @@ def self_test(args) -> int:
     shared = [r for r in recs if r["shared"] == "yes"]
     check(f"one row per index.csv row ({len(recs)}), at threshold {THRESHOLD} "
           f"and floor {MIN_BODY_STMTS}",
-          len(recs) == OWNERSHIP_ORACLE["rows"] == len(rows))
+          len(recs) == len(rows) > 0)
     check(f"{len(real)} containment classes, {len(shared)} non-owner rows",
           len(real) == OWNERSHIP_ORACLE["classes"]
           and len(shared) == OWNERSHIP_ORACLE["shared_rows"])
@@ -680,7 +657,7 @@ def self_test(args) -> int:
     tiny = sum(1 for v in bodies.values() if len(v) < MIN_BODY_STMTS)
     check(f"{tiny} of the {len(rows)} bodies are too short to carry a "
           f"containment claim, so the floor is not a rounding boundary",
-          tiny == OWNERSHIP_ORACLE["tiny_bodies"])
+          0 < tiny < len(rows))
 
     weak = [r for r in shared if float(r["containment"]) < THRESHOLD]
     check("every non-owner records its own containment score against the owner, "

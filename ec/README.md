@@ -467,7 +467,8 @@ into `r2 -a 8051` with no stitching needed.
   fixtures plus the tree-wide figures. `xdata_register_map.py
   --export-ownership` reads each routine once, from its owner; the default is
   **off**, because the pass is a text heuristic rather than a function boundary
-  and flipping it re-keys most of the clusters (`xdata-export-ownership.md` §5).
+  and flipping it moves `cluster_key`s and breaks most of the hand names
+  (`xdata-export-ownership.md` §5 carries the run beside them).
   The root cause needs a project rebuild — see `xdata-06c2-06db-timers.md` §8
   item 7 — so this is the measurement, not the fix.
 - **`tools/xdata_register_map.py --map OLD.csv`** — one row per cluster of an

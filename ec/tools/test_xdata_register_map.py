@@ -728,9 +728,9 @@ class Refusals(unittest.TestCase):
     def test_it_is_refused_bare_with_the_default_outputs(self):
         # The hazard: run bare, it writes a census the committed CSVs do not
         # match -- the pre-#178 one for `--no-eq-guard`, the de-duplicated one
-        # for `--export-ownership`, which re-keys most of the clusters and
-        # breaks most of the hand names. That is caught, but only afterwards
-        # and by other tools -- `--check` is refused with the flag, so it
+        # for `--export-ownership`, which moves `cluster_key`s and breaks most
+        # of the hand names. That is caught, but only afterwards and by other
+        # tools -- `--check` is refused with the flag, so it
         # regenerates default and goes red, and so do the citations. The
         # guard's job is to stop the write, not to leave the repository to be
         # noticed afterwards. This is the issue's third combination verbatim,
