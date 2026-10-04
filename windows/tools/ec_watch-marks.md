@@ -84,6 +84,21 @@ its own of the same shape, still carrying the `strip() or` default at `:257`
 (#483, #484, named there as still open). So the check is a flag, and §3's
 three commands are where the operator turns it on.
 
+**CORRECTION (issue #1329, 2026-10-04), beside the paragraph above rather
+than under it.** The two line numbers were already stale, and *still carrying
+the `strip() or` default* is no longer true — that prompt now records nothing
+for a blank press, says so, and asks again, with this file's own notice and
+counting rule. The conclusion above is unaffected and still holds for a
+stronger reason than the one it was given: the labels
+`system-id-0456-bit6-divisor.md` §3 and §3b mandate are free-form prose, none
+of which leads with a form in `MARK_FORMS`, so a check there would refuse every
+label that procedure tells the operator to type — and that procedure's capture
+is not graded by a script at all, so there is no grader for a mistyped label to
+be caught by before a day of hardware time. That is the same reason
+`gpu_block_watch.py` gives, arrived at from the labels rather than from the
+shared class. See
+[system-id-probe-mark-labels.md](../../docs/findings/system-id-probe-mark-labels.md).
+
 With it on, a label `grade_0751_isolation.py`'s own `parse_mark` cannot place is
 refused exactly as a blank press is — no row, nothing appended, the counter held
 back, the same notice shape:
@@ -684,6 +699,21 @@ for a blank press, and both are follow-ups.
   `resumed` label rather than §3's forms, so the consequence there is a
   misleading row rather than a withheld run — a smaller cost, not a smaller
   bug.
+
+**Addendum (issue #1329, 2026-10-04): one of the two has been settled.** The
+section above and both its bullets stand as written; this says which of the two
+they now describe. `system_id_probe.py` no longer carries the `strip() or`
+default — its blank press records nothing, says so, and asks again, on the
+notice and counting rule this file's own section above specifies, and the
+guard is held by cases in `test_system_id_probe.py`'s `BlankMarkTests`.
+`ec_timer_capture.py` still does, and is deliberately left: the sentence above
+is right that its cost is smaller (a misleading row rather than a withheld run),
+and settling it is a change in the directory where parallel branches collide
+most — a new suite for a capture tool that has none, and three more writer pins
+in `measure_mark_provenance.py` to re-anchor.
+[system-id-probe-mark-labels.md](../../docs/findings/system-id-probe-mark-labels.md)
+records what settling it takes, so it can be opened as its own issue rather
+than lost here.
 
 ## Addendum (issue #749, 2026-09-25): the notice reads the file once
 
