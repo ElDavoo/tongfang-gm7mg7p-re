@@ -22,6 +22,19 @@ rather than in the name. That is deliberate: `ec-0x07d0-sites.md` §3 and
 `pd-xdata-overlap.md` §3 are hand decodes at one level, and a shared label
 makes the cross-check below a like-for-like comparison instead of a rename.
 
+**Correction (issue #1103, 2026-10-04): the shared-label decision above is
+reversed, and the paragraph is left as it was written.** The class is
+depth-dependent at `--callee-depth 2`: a cell the first hop settled keeps
+`handoff->read`, and a cell only the second hop settled is `handed to
+lcall/ljmp -> second callee reads`, in a column of its own beside that one and
+spliced ahead of `handoff->unresolved`. One column carrying both said two
+different strengths of claim were equal — a verdict about the call the site
+makes, and a verdict about a longer chain than that — and they are not equal.
+`two-hop-dptr-handoff.md` is the write-up for the split. The reasoning the
+paragraph gave still holds for the column that kept its name: the depth-1
+columns are untouched, so every transcript pasted at depth 1 before this
+change still reproduces, which is what the cross-check needs.
+
 ## 1. The two named sites, asserted against the committed `r2` transcript
 
 `ec/tools/test_callee_depth.py` asserts these from the committed image. The
@@ -45,18 +58,35 @@ import csv, sys
 for r in csv.DictReader(sys.stdin):
     if r['addr'].startswith('0x07E') and ' -> ' in r['chain']:
         print(r['addr'], r['runtime'], '|', r['class'], '| chain:', r['chain'])"
-0x07E2 0x04F9 | handed to lcall/ljmp -> callee reads | chain: 0xB1F2 -> 0x10C8
-0x07E5 0x662D | handed to lcall/ljmp -> callee reads | chain: 0x383A -> 0x0FCB
+0x07E2 0x04F9 | handed to lcall/ljmp -> second callee reads | chain: 0xB1F2 -> 0x10C8
+0x07E5 0x662D | handed to lcall/ljmp -> second callee reads | chain: 0x383A -> 0x0FCB
 ```
 
-The `LIGHTBAR_BAT_*` rows at depth 2, against the same rows at depth 1:
+**Correction (issue #1103, 2026-10-04): the two rows above read `-> callee
+reads` where they now read `-> second callee reads`.** The chains are
+unchanged — the two addresses in each are the ones this document already
+claimed — and only the label and the column it belongs to moved, for the
+reason given in the correction to the design decision above. A transcript
+taken at `--callee-depth 2` before this change no longer reproduces; one
+taken at depth 1 does, unchanged.
 
-| addr | depth 1 (`read` / `write` / `handoff->read` / `handoff->write` / `handoff->unresolved`) | depth 2 |
+The `LIGHTBAR_BAT_*` rows at depth 2, against the same rows at depth 1. The
+depth-2 column names its own column set, because at that depth a second hop
+has columns of its own:
+
+| addr | depth 1 (`read` / `write` / `handoff->read` / `handoff->write` / `handoff->unresolved`) | depth 2 (`read` / `write` / `handoff->read` / `handoff->write` / `handoff->callee->read` / `handoff->unresolved`) |
 |---|---|---|
-| `0x07E2` | 7 / 4 / 2 / 1 / 1 | 7 / 4 / **3** / 1 / **0** |
+| `0x07E2` | 7 / 4 / 2 / 1 / 1 | 7 / 4 / 2 / 1 / **1** / **0** |
 | `0x07E3` | 2 / 2 / 1 / 4 / 0 | unchanged |
 | `0x07E4` | 3 / 1 / 0 / 0 / 0 | unchanged |
-| `0x07E5` | 5 / 3 / 0 / 1 / 1 | 5 / 3 / **1** / 1 / **0** |
+| `0x07E5` | 5 / 3 / 0 / 1 / 1 | 5 / 3 / 0 / 1 / **1** / **0** |
+
+**Correction (issue #1103, 2026-10-04): the two bolded depth-2 figures above
+were the one-hop `handoff->read` counts, and read `3` and `1`.** They are
+separate numbers now: `0x07E2`'s is `2`, with the cell the second hop settled
+sitting beside it in `handoff->callee->read`. The aggregate below is
+unaffected, because that cell moved columns rather than changing what it
+settled.
 
 So the 38 PD sites behind the four addresses are 20 read / 16 write / 2
 unresolved at depth 1 and **22 / 16 / 0** at depth 2, where before the

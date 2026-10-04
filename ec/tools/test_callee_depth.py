@@ -44,18 +44,21 @@ FIRMWARE = str(HERE.parent / 'firmware' / 'GMxMGxx_11.800')
 # The two sites the issue names, and the four the run moves with them. The
 # file offsets are the sites; the runtime addresses and the chains are
 # transcribed from lightbar-bat-flow.md 3.5's `r2` listing of each callee,
-# not from the tool.
+# not from the tool. The label each cell carries is the depth-2 one, because a
+# cell only the *second* hop settled is a weaker claim than a `handoff->read`
+# and register_ref_table.py keeps the two in columns apart for that reason --
+# see `two-hop-dptr-handoff.md`.
 NAMED = {
-    0x07E2: (0x204F9, 0xB1F2, 0x10C8, "handed to lcall/ljmp -> callee reads"),
-    0x07E5: (0x2662D, 0x383A, 0x0FCB, "handed to lcall/ljmp -> callee reads"),
+    0x07E2: (0x204F9, 0xB1F2, 0x10C8, "handed to lcall/ljmp -> second callee reads"),
+    0x07E5: (0x2662D, 0x383A, 0x0FCB, "handed to lcall/ljmp -> second callee reads"),
 }
 # The three more the run moves that the issue does not name. Same shape: the
 # chain's first link is the callee depth 1 already reported, the second is
 # what depth 2 reaches and depth 1 could not.
 ALSO_MOVING = {
-    0x089E: (0x0B6E8, (0xBADE, 0x70E4), "handed to lcall/ljmp -> callee reads+writes"),
-    0x0811: (0x2B5F9, (0x9A48, 0x10C8), "handed to lcall/ljmp -> callee reads"),
-    0x07D6: (0x2951B, (0xB2F7, 0x10C8), "handed to lcall/ljmp -> callee reads"),
+    0x089E: (0x0B6E8, (0xBADE, 0x70E4), "handed to lcall/ljmp -> second callee reads+writes"),
+    0x0811: (0x2B5F9, (0x9A48, 0x10C8), "handed to lcall/ljmp -> second callee reads"),
+    0x07D6: (0x2951B, (0xB2F7, 0x10C8), "handed to lcall/ljmp -> second callee reads"),
 }
 
 # `lightbar-bat-flow.md` 3.5's own `r2 -a 8051 -c 's <addr>; pd N'` heads.
@@ -401,11 +404,24 @@ class GuardTests(unittest.TestCase):
         # and would still partition the sites, and would read as a clean run
         # if reconcile() only checked arithmetic.
         classes = rrt.classes_for(2)
-        # The unresolved bucket keeps the depth-0 HANDOFF label by design --
-        # it is the same verdict reached further in -- so what has to hold is
-        # that depth 2's class set is depth 1's, unchanged, which is what
-        # makes a depth-N cross-check a like-for-like comparison.
-        self.assertEqual(classes, rrt.classes_for(1))
+        # Depth 2 is depth 1's set with the three weaker columns a second hop
+        # lands in spliced in ahead of the unresolved bucket, so that a cell
+        # reached through two calls cannot print in the same column as one
+        # reached through a single call. Every depth-1 label keeps its own cell
+        # and its own position relative to the columns before it, which is what
+        # keeps a depth-N cross-check comparable -- a like-for-like comparison
+        # of the columns they share -- rather than identical.
+        depth1 = rrt.classes_for(1)
+        resolved1 = [l for l, _ in depth1
+                     if l in {c[0] for c in rrt.HANDOFF_CLASSES[:3]}]
+        self.assertEqual([l for l, _ in classes if l in resolved1], resolved1)
+        weaker = [s for _, s in rrt.HANDOFF_DEPTH2_CLASSES[3:6]]
+        self.assertEqual([s for _, s in classes if s in weaker], weaker)
+        # The unresolved bucket closes the handoff columns and `none` still
+        # closes the table, so the split did not move either.
+        shorts = [s for _, s in classes]
+        self.assertEqual(shorts[-5:],
+                         weaker + ["handoff->unresolved", "none"])
         # Each of the three ways reconcile() can fail, one call each: a
         # bucket that does not sum to the site count, a main + PD that does
         # not sum to the file-wide total, and a class no column is named for.
