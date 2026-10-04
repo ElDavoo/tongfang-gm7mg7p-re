@@ -395,6 +395,7 @@ though seven calls happened.
 | `grade_0751_isolation.py:2990` | zero — `f"{path}: {len(m)} mark(s), {len(c)} change row(s)"` counts and never spells the row | zero, same reason |
 | `check_capture_claims.py:514` | zero — it calls the same `read_capture` over committed captures | zero, same reason |
 | `grade_timer_sweep.py:153` | zero — `r[1] == "MARK"` then `"resumed" in r[3]` at `:154`; both index, `r[4]` is never read | zero — `:130` drops every `#` line before the CSV parse and only three phrase regexes survive it |
+| `ec/tools/grade_pd_index_block.py` (`load`) | zero — it reads `r[1]` and `r[3]` for the mark's label and indexes `r[2]`/`r[3]` for a change row, so `r[4]` is never read on either path | zero — `load` drops every `#` line before the CSV parse, for the header figures it reports (`# interval`, `# baseline`, `# ended`) rather than through `skippable_row`, and its one phrase regex is the `# interval ... addresses:` line |
 
 **The preflight returning the same list under both shapes is the real limit of
 this measurement, and it is a limit on the notice, not on the format.** It is

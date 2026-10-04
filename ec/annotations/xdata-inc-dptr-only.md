@@ -81,7 +81,7 @@ would shrink `S1 - S` and the summary would say so.
 | population | count | what makes it that one |
 |---|---:|---|
 | no `MOV DPTR` site in any image | **71** | the §3 rule has nothing to admit on, and the byte scan found nothing anywhere |
-| pd-image sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
+| pd-image `MOV DPTR` sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
 | **= the 73** | **73** | no main-EC `MOV DPTR` site; §3 declines them |
 | main-EC `MOV DPTR` site, entered in `registers.yaml` | **8** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A3 0x04A7 0x0523` |
 | main-EC `MOV DPTR` site, **not** entered | **26** | the shape §6's rule admits; §5 |
@@ -185,6 +185,37 @@ the byte scan's.** Those are two different claims and this page keeps them
 apart. What the accessor establishes is a static access; what it does not
 establish is that the byte is a register, that the EC acts on it, or that any
 two sites agree about what the value means.
+
+**One of them has since been entered, and the rule above is why that is
+worth stating rather than leaving to the CSV's `entered` column** (issue #1202,
+2026-10-04). `0x04A5` — the `inc DPTR` half of the `0x04A4` pair, all three of
+whose `MOV DPTR` sites are pd-image — now carries `XDATA_04A5` in
+`registers.yaml`, so its row reads `entered=yes` where it read `no`. **It was
+not entered on the accessor.** The rule's warrant is a direct `MOV DPTR,#addr`
+site in the EC image, and `0x04A5` has none; what it was entered on is a
+*different* kind of evidence, a committed capture in which the byte takes more
+than one value and tracks the row's own `current_now / 1000` as the high half
+of the `0x04A4` pair, plus the main EC's own writer for that pair at bank1
+`0xB4B6` (`docs/findings/battery-page-first-decoding.md`). So the `if and only
+if` above still describes what admits a byte on **static** evidence, and this
+is not a counterexample to it — it is the first entry in this population made
+on a committed observation instead, which is the distinction the page's own §2
+draws between a static access and a behaviour. Its status is
+`unknown-not-absent` rather than `present-untested`, because every site the
+byte scan finds belongs to the PD image; that grade is the rule-2 outcome
+`check_status_vocabulary.py` assigns such a row and is unchanged by entering
+it.
+
+**That grade is about the byte scan, and `census_refs` on the same row is not a
+contradiction of it.** The row's `census_refs=7` are all `census_write=7` in the
+main EC and none pd-image, because they are the seven `MOV DPTR,#0x04A4` sites
+reaching this byte through `write_r1r2_to_xdata_pair`'s own `inc DPTR` — the
+same encoding `mov_dptr_main_ec=0` above is blind to by construction.
+`static_refs_main_ec` is a direct-`MOV DPTR` count in `registers.yaml`'s own
+header, so rule 2 grades on that and it is zero; the byte is not unwritten, and
+nothing in the grade should be read as saying it is. The two columns answer two
+different questions, which is the §2 distinction between a static access and a
+behaviour applied to the warrant rather than to the byte.
 
 **The reason is about method roles, not about what either method found.** "The
 byte scan finds no site" is a statement about a method, and `docs/findings.md`
