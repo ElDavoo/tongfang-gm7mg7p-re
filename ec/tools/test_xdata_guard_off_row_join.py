@@ -343,22 +343,6 @@ class TheRowLevelJoin(unittest.TestCase):
             "a second per-program cluster id would make a `both` row say which "
             "cluster each program put the address in")
 
-    def test_the_both_bucket_moves_faster_than_main_ec(self):
-        # The page's one rate comparison -- `both` against `main-ec` -- is
-        # arithmetic over two cells of the same split, and a multiplier is the
-        # one figure on the page no other line prints, so nothing re-derives
-        # it: a draft of that sentence put it at four times, which the two
-        # cells made 1.7 on the tree it was measured on. Held as the
-        # direction the sentence claims rather than as the figures, which
-        # move with the census. What the `both` rate is a rate
-        # *over* is the case above's, not this one's: these are two cells of a
-        # split, and the split's `both` column is the main-EC clustering of the
-        # 49 addresses rather than a count over both programs.
-        split = self.report.split("rows whose cluster_id differs")
-        both = split["both"][0] / split["both"][1]
-        main_ec = split["main-ec"][0] / split["main-ec"][1]
-        self.assertGreater(both, main_ec)
-
     def test_the_cluster_id_and_key_counts_reconcile_with_the_cross_tab(self):
         # `rows whose cluster_id differs` counts a rank and
         # `rows whose cluster_key differs` counts a content hash, and neither

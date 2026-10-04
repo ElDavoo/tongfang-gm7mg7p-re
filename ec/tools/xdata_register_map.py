@@ -2403,6 +2403,20 @@ def resolve_callee(name, caller_program, funcs):
     return f"{chosen[0][0]}:0x{chosen[0][1]} (also {' '.join(k[0] + ':0x' + k[1] for k in chosen[1:])})"
 
 
+def cluster_id_of(group, members):
+    """`<program>-<lowest address, 4 hex digits>`: the cluster's id.
+
+    Not a rank (2026-10-04). Ids used to be numbered by size, then references,
+    then lowest address, so one seeded routine renumbered clusters it never
+    touched: regenerating for #1849 rewrote 461 rows of `xdata-registers.csv`
+    for their `cluster_id` alone, and every branch that regenerated the census
+    conflicted with every other on both CSVs. The lowest member is unique per
+    program, since clusters partition the addresses, and it moves only when the
+    cluster's own membership does.
+    """
+    return f"{group}-{min(members):04X}"
+
+
 def build(funcs, names, symbols, census, calls, threshold,
           group_of=None):
     """The two row sets the CSVs render, plus the summary the modes print.
@@ -2439,10 +2453,9 @@ def build(funcs, names, symbols, census, calls, threshold,
     cluster_key_of = {}
     cluster_rows = []
     for g in GROUPS:
-        ordered = sorted(clusters[g].values(),
-                         key=lambda v: (-len(v), -sum(groups[g][a]["refs"] for a in v), v[0]))
-        for n, members in enumerate(ordered, 1):
-            cid = f"{g}-{n:03d}"
+        ordered = sorted(clusters[g].values(), key=min)
+        for members in ordered:
+            cid = cluster_id_of(g, members)
             key = cluster_key(g, members)
             for a in members:
                 cluster_id[(g, a)] = cid

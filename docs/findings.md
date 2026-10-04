@@ -7017,7 +7017,7 @@ why no call-target census row and no byte scan ever named them. Both were
 seeded through `ghidra-functions.csv` and read. **`0xD89F` is a single `ret`
 byte, and `0xD96C` is a real routine that clears XDATA `0x0100`–`0x0FFF` except
 it steps over `0x07FD`, `0x07FE` and `0x07FF`** — 3,837 of 3,840 bytes, and
-those three are the whole of the `main-ec-086` cluster. The `setb c` at
+those three are the whole of the `main-ec-07FD` cluster. The `setb c` at
 `0xD982` is what makes the second bound `0x0800` rather than the `0x07FF` its
 own immediates spell out. Both score 24 of 24 on `disasm8051.py --converge`, so
 neither is an operand byte. This corrects the issue's expectation of a real

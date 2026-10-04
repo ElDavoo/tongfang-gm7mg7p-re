@@ -447,13 +447,26 @@ class TheGuardOffRegeneration(unittest.TestCase):
                     for p in ("main-ec", "pd")}
         self.assertNotEqual(per_program(self.off), per_program(self.committed))
 
-    def test_the_regeneration_really_moves_the_ranks(self):
-        # If this ever stops holding, the rest of the class is testing nothing:
-        # a regeneration that renumbers nothing is not the case the identity
-        # columns exist for.
-        moved = [cid for cid, row in self.committed.items()
-                 if cid in self.off and row["addrs"] != self.off[cid]["addrs"]]
-        self.assertGreater(len(moved), 300)
+    def test_an_id_moves_only_with_its_lowest_member(self):
+        # Ids are `<program>-<lowest address>` since 2026-10-04, not ranks, so
+        # the regeneration that renumbered more than 300 of them as ranks moves
+        # an id only where the cluster's own lowest member moved. That is the
+        # property, over every cluster: an id names its lowest member in both
+        # censuses, and a cluster whose membership survived intact keeps it.
+        for census in (self.committed, self.off):
+            for cid, row in census.items():
+                low = min(int(a, 16) for a in row["addrs"].split())
+                self.assertEqual(cid, f"{row['program']}-{low:04X}")
+        # Keyed by program too: the two programs have separate XDATA maps, so
+        # a main-EC and a pd cluster can hold the same address numbers.
+        def members(r):
+            return (r["program"], frozenset(r["addrs"].split()))
+        off_by_members = {members(r): cid for cid, r in self.off.items()}
+        intact = [(cid, off_by_members[members(r)])
+                  for cid, r in self.committed.items()
+                  if members(r) in off_by_members]
+        self.assertTrue(intact, "no cluster survived the regeneration intact")
+        self.assertEqual([p for p in intact if p[0] != p[1]], [])
         self.assertNotEqual(len(self.off), len(self.committed))
 
     def test_the_counter_sweep_name_still_resolves_to_the_swept_block(self):
@@ -465,68 +478,23 @@ class TheGuardOffRegeneration(unittest.TestCase):
                         f"the {row['cluster_id']} that carries counter-sweep is "
                         f"missing {sorted(SWEPT_43 - set(row['addrs'].split()))}")
 
-    def test_and_the_tool_says_what_moved_about_it(self):
-        # Not "nothing moved": under this regeneration a named cluster keeps
-        # its membership and its key and only its *rank* changes, which is the
-        # sharpest possible statement of why the rank is not the identity. The
-        # assertion is that the two identities and the rank each moved the way
-        # the map says they did — over the named clusters rather than over one
-        # of them, because *which* name demonstrates it is a property of the
-        # ranking and not of the design. `counter-sweep` was the exhibit when
-        # this was written (it was `main-ec-003` in the census then, and moved);
-        # the 2026-09-24 re-derivation had already put it at `main-ec-002`,
-        # which is where the guard-off census leaves it, so it no longer moves
-        # and is a weaker exhibit rather than a wrong one. If a future
-        # regeneration leaves every named rank standing, this fails, which is
-        # the same guard `test_the_regeneration_really_moves_the_ranks` puts on
-        # the whole census.
-        #
-        # The margin, since "weaker" is doing a lot of work in that sentence:
-        # **three** of the nine names move rank with key and membership intact
-        # — `countdown-06c6`, `fan-step-08a0`, `flag-pair-0442` — and
-        # `counter-sweep` is not one of them, which the derivation settles
-        # without a count of anything:
-        # `docs/findings/xdata-cluster-names-guard-off-recipe.md:258-268` reads
-        # `counter-sweep` `main-ec-003` in the committed column and in the
-        # guard-off one with `same same same`, and closes with `movers: 3 of 9`
-        # naming the three. It is at `main-ec-003` in both censuses now; the
-        # `main-ec-002` the paragraph above leaves it at is itself a superseded
-        # reading, kept here rather than edited out for the same reason. What
-        # the cluster *is* is a question a file answers and a tally does not:
-        # `main-ec-003` is `counter-sweep` in the committed census —
-        # `ec/annotations/xdata-clusters.csv`, `cluster_name=counter-sweep` at
-        # `cluster_key=k733222e83898`, 43 addresses — and
-        # `ec/annotations/xdata-06c2-06db-timers.md` is the page that makes a
-        # membership claim about that block, §1 sweeping exactly those 43. A
-        # most-cited-cluster count stood in this comment until 2026-09-28: it
-        # quoted one `grep` and two figures the `grep` does not give, taken
-        # over two different file sets, and neither figure survives the next
-        # merge. The retraction and the measurement are in
-        # `docs/findings/xdata-most-cited-cluster-count.md`. So the exhibit
-        # this case fell back on is the one the ranking happens to spare. The
-        # assertion stays `assertTrue(movers, …)`
-        # on purpose: pinning the count would be the hazard this class's own
-        # docstring exists to record — a total pasted into a file is a snapshot
-        # of the merge it was measured on — and it would go red on any
-        # re-derivation for a reason that says nothing about the design being
-        # argued here. The mover set is derived in
-        # `docs/findings/xdata-cluster-names-guard-off-recipe.md`, which prints
-        # both the script and the transcript; the floor this case does hold is
-        # the census-wide one in `test_the_regeneration_really_moves_the_ranks`.
+    def test_and_a_named_cluster_that_kept_its_membership_kept_its_id(self):
+        # This case used to require a named cluster whose rank moved while its
+        # key and membership held, as the exhibit that a rank is not an
+        # identity. With ids derived from the lowest member (2026-10-04) that
+        # exhibit is gone by design, and the claim is its converse: a named
+        # cluster whose key and membership survive the regeneration keeps its
+        # id as well.
         old_by_name = {r["cluster_name"]: r for r in self.committed.values()
                        if r["cluster_name"]}
-        movers = sorted(
-            name for name, new in self.off_named.items()
-            if name in old_by_name
-            and new["cluster_key"] == old_by_name[name]["cluster_key"]
-            and set(new["addrs"].split()) == set(old_by_name[name]["addrs"].split())
-            and new["cluster_id"] != old_by_name[name]["cluster_id"])
-        self.assertTrue(
-            movers,
-            "no named cluster kept its membership and its key while its rank "
-            "moved, so nothing here shows that a rank is not an identity: "
-            f"committed names {sorted(old_by_name)}, guard-off names "
-            f"{sorted(self.off_named)}")
+        kept = [name for name, new in self.off_named.items()
+                if name in old_by_name
+                and new["cluster_key"] == old_by_name[name]["cluster_key"]]
+        self.assertTrue(kept, "no named cluster kept its key")
+        for name in kept:
+            with self.subTest(name=name):
+                self.assertEqual(self.off_named[name]["cluster_id"],
+                                 old_by_name[name]["cluster_id"])
 
     def test_every_name_the_key_cannot_find_is_carried_by_overlap(self):
         # The case that rules a key-only design out, over every name the key

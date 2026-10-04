@@ -114,6 +114,12 @@ def main(argv=None):
         sys.stdout.write(render(args.repo))
         return 0
 
+    committed = os.path.join(args.repo, FINDINGS_DIR, INDEX)
+    if os.path.exists(committed):
+        print("docs/findings/INDEX.md is committed again; it is this tool's "
+              "output and is not kept in the tree (every write-up added a line "
+              "to it, so it conflicted on nearly every pull request). Delete it.")
+        return 1
     untitled = [name for name, title in entries(args.repo, titled_only=True)
                 if title is None]
     if untitled:

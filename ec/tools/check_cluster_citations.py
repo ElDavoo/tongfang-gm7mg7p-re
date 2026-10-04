@@ -20,11 +20,11 @@ to 0.45 gives 425 clusters, where 59 of the 427 ids are intact, 366 name a
 different membership, 2 have no cluster at that number, and 413 of the 427
 keys still name a cluster.
 
-Because that is the weak handle, three citation forms are accepted, in this
-order of durability:
+Because that is the weak handle, the id stopped being a rank (2026-10-04,
+below), and three citation forms are accepted:
 
-  * `main-ec-NNN` — the rank. Resolved, and checked only under `--ranks`
-    (2026-10-04, below).
+  * `main-ec-0300` / `pd-FF10` — the id, `<program>-<lowest address>`. An
+    identity for as long as the cluster's lowest member is that address.
   * `k<12 hex>` — the `cluster_key` column, a content hash over the program
     and the sorted membership. An identity for as long as the membership is
     that membership.
@@ -36,23 +36,18 @@ order of durability:
 All three resolve to a cluster id before anything is checked, so a sentence
 citing one is held to exactly what a `main-ec-NNN` sentence was.
 
-**A rank is not held on the committed tree** (2026-10-04). Seeding a routine
-moves the references the ranking sorts on, so one seeding branch renumbers
-clusters it never touched: #1849 seeded routines and the rule went red across
-write-ups it had not edited, every failure a rank that had moved and none a
-membership that had changed. Re-pointing them would make every
-seeding branch edit the same shared write-ups, which is the merge-conflict
-shape CLAUDE.md's "No totals of the repository's own text" is about. So the
-committed-tree run holds the two durable forms, and a unit that cites a rank
-is passed over under its own counted reason -- a unit that mixes a rank with
-a key or a name too, since its addresses may be claimed for the rank and the
-rule cannot tell which: its ranks are what the
-prose measured on the census it was written against. Across #1849 nearly
-every `cluster_key` survived the seeding and most ranks did not. `--ranks`
-holds ranks as
-well, for checking prose against the census it was just written for, and
-`check()` holds them by default, because a fixture census is the census its
-fixture was written against. New prose cites a cluster by name or key. `--clusters`
+**Ids are not ranks any more** (2026-10-04). They were numbered by size, then
+references, then lowest address, so one seeded routine renumbered clusters it
+never touched: #1849's regeneration rewrote 461 rows of `xdata-registers.csv`
+for their `cluster_id` alone, every seeding branch conflicted with every other
+on both census CSVs, and this rule went red across write-ups nobody had edited.
+`xdata_register_map.cluster_id_of` now names a cluster by its program and lowest
+address, and the clusters CSV is sorted by it. Prose that cited a rank the
+committed census validated was rewritten to the new id in the same change; a
+legacy `main-ec-NNN` left anywhere else is what the prose measured on an older
+census, resolves to nothing in this one, and a unit citing one is passed over
+under its own counted reason. `check()` still reads ranks by default, for the
+fixture censuses that number their clusters that way. `--clusters`
 and `--registers` take an alternate census, which is what lets the same
 sentences be run against a regeneration (`xdata_register_map.py --map` is what
 says which clusters moved, and this is what says whether a sentence still
@@ -216,7 +211,13 @@ ROOTS = ("ec", "docs", "evidence")
 CLUSTERS = os.path.join(EC, "annotations", "xdata-clusters.csv")
 REGISTERS = os.path.join(EC, "annotations", "xdata-registers.csv")
 
-CLUSTER_ID = re.compile(r"main-ec-\d{3}")
+# A cluster id: `<program>-<lowest address>` since 2026-10-04, which is an
+# identity (`xdata_register_map.cluster_id_of`), or the legacy `main-ec-NNN`
+# rank every id was before then. `RANK` is the legacy form alone: the committed
+# census carries none, so on the committed tree a rank resolves to nothing and
+# a unit citing one is passed over rather than read.
+CLUSTER_ID = re.compile(r"\b(?:main-ec|pd)-[0-9A-F]{4}\b|main-ec-\d{3}\b")
+RANK = re.compile(r"\bmain-ec-\d{3}\b")
 CLUSTER_KEY = re.compile(r"\bk[0-9a-f]{12}\b")
 ADDRESS = re.compile(r"0x([0-9A-Fa-f]{4})\b")
 
@@ -695,10 +696,10 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
           ranks=True):
     """(problems, lines read, skip reasons) for one file.
 
-    `ranks=False` is the committed-tree run: a `main-ec-NNN` is neither paired
-    nor held, the census-row rule (which reads a rank in a row's first cell)
-    does not run, and a unit naming any rank is skipped as `RANK_ONLY`. The
-    default holds ranks, for a fixture census.
+    `ranks=False` is the committed-tree run: a unit naming a legacy
+    `main-ec-NNN` rank is skipped as `RANK_ONLY`, since the committed census
+    has no ranks to resolve it against. The default reads ranks, for a fixture
+    census that still numbers its clusters that way.
 
     The skip reasons come back rather than being counted here, so `main()` can
     print one figure for the whole corpus instead of one per file. They are the
@@ -723,8 +724,7 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         ids = cited_clusters(unit, by_key, by_name, names)
         if not ids:
             continue
-        if ranks:
-            problems += census_row(path, lineno, unit, counts)
+        problems += census_row(path, lineno, unit, counts)
         addresses = sorted({"0x" + a.upper() for a in ADDRESS.findall(unit)
                             if "0x" + a.upper() in known})
         if not addresses:
@@ -736,7 +736,7 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         # second one is.
         reason = skip_reason(lineno, unit, transcripts)
         if not reason and not ranks:
-            if CLUSTER_ID.search(unit):
+            if RANK.search(unit):
                 reason = RANK_ONLY
         if reason:
             skipped.append(reason)
@@ -747,7 +747,7 @@ def check(path, members, counts, known, by_key=None, by_name=None, verbose=False
         # rule reached first would read "a size-1 cluster of its own" as an
         # attribution. The fallback is per address, not per unit, so a unit
         # that pairs one byte still has its other addresses checked.
-        pairs = pairings(unit, addresses) if ranks and len(ids) > 1 else {}
+        pairs = pairings(unit, addresses) if len(ids) > 1 else {}
         for address in addresses:
             expected = [pairs[address]] if address in pairs else ids
             if not any(address in members.get(cid, ()) for cid in expected):
@@ -769,11 +769,6 @@ def main() -> int:
     ap.add_argument("--registers", default=REGISTERS,
                     help=f"registers CSV whose address column bounds what is an "
                          f"XDATA address (default: {REGISTERS})")
-    ap.add_argument("--ranks", action="store_true",
-                    help="hold `main-ec-NNN` ranks and census rows too, for "
-                         "prose written against the census being checked; "
-                         "the committed-tree run holds only cluster keys and "
-                         "names, since seeding renumbers the ranks")
     args = ap.parse_args()
 
     members, known, counts, by_key, by_name = census(args.clusters, args.registers)
@@ -790,7 +785,7 @@ def main() -> int:
     skipped = []
     for path in paths:
         found, lines, reasons = check(path, members, counts, known, by_key,
-                                      by_name, args.verbose, ranks=args.ranks)
+                                      by_name, args.verbose, ranks=False)
         problems += found
         read += lines
         skipped += reasons
@@ -820,12 +815,10 @@ def main() -> int:
         print(f"{len(problems)} citation(s) disagree with "
               f"{os.path.relpath(args.clusters, REPO)}", file=sys.stderr)
         return 1
-    held = ("`main-ec-NNN`, `cluster_key` or `cluster_name`" if args.ranks
-            else "`cluster_key` or `cluster_name`")
     print(f"{len(paths)} files / {read} lines: every checked cluster citation "
-          f"({held}) resolves to the membership it names"
-          + (", and every census row's range agrees" if args.ranks else "")
-          + f" with {os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
+          f"(id, `cluster_key` or `cluster_name`) resolves to the membership it "
+          f"names, and every census row's range agrees with "
+          f"{os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
           f"passed over under the {len(SKIPS)} reasons above, each of them: "
           f"not checked, not absent")
     return 0
