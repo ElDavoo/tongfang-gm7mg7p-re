@@ -455,10 +455,10 @@ into `r2 -a 8051` with no stitching needed.
   exporter cut `bank1:0x8001`-`0x8189` into 42 of them whose `.c` files all
   decompile the same body, which is where the 42× above comes from. This
   derives a containment class per group of exports and one owner per class, in
-  `annotations/xdata-export-ownership.csv` — 2,714 rows, 56 classes, 146
-  non-owner rows, the 42-file class owned by `bank1/8001.c`. The map carries
-  `owner_body_lines` and `member_share` beside `containment`, because
-  containment runs one way and a fragment scores `1.00` against a copy;
+  `annotations/xdata-export-ownership.csv` — one row per `index.csv` row, 56
+  classes, 146 non-owner rows, the 42-file class owned by `bank1/8001.c`. The
+  map carries `owner_body_lines` and `member_share` beside `containment`,
+  because containment runs one way and a fragment scores `1.00` against a copy;
   `--min-share` is that ratio as a switch and ships off.
   `annotations/xdata-export-ownership-verdicts.csv` records a verdict per row
   for the ones a relative check has to spare, checked both ways by
@@ -467,7 +467,8 @@ into `r2 -a 8051` with no stitching needed.
   fixtures plus the tree-wide figures. `xdata_register_map.py
   --export-ownership` reads each routine once, from its owner; the default is
   **off**, because the pass is a text heuristic rather than a function boundary
-  and flipping it re-keys 35 of 430 clusters (`xdata-export-ownership.md` §5).
+  and flipping it moves `cluster_key`s and breaks most of the hand names
+  (`xdata-export-ownership.md` §5 carries the run beside them).
   The root cause needs a project rebuild — see `xdata-06c2-06db-timers.md` §8
   item 7 — so this is the measurement, not the fix.
 - **`tools/xdata_register_map.py --map OLD.csv`** — one row per cluster of an
@@ -489,10 +490,11 @@ into `r2 -a 8051` with no stitching needed.
   hand, and this must not be added to the generated list in
   `.github/workflows/agent-conflicts.yml` for exactly that reason. Adding a
   name is a one-row edit; the `note` column records the evidence for it, the
-  same rule `ghidra-functions.csv` follows. Ten of the 427 clusters have one,
-  and they are the ten the committed prose already makes a membership claim
-  about; the rest have a key and no name, which is not coverage. A name is
-  carried across a regeneration *in changed form* by membership overlap, and
+  same rule `ghidra-functions.csv` follows. Only a few of the clusters have
+  one, and they are the ones the committed prose already makes a membership
+  claim about; the rest have a key and no name, which is not coverage
+  (`xdata-cluster-names.csv` is the list). A name is carried across a
+  regeneration *in changed form* by membership overlap, and
   how a given name was carried is reported by the tool rather than recorded in
   the cell — a name that clears 0.50 on Jaccard is a guess about which cluster
   it is, and a cluster nothing matched is **not carried by this method**,

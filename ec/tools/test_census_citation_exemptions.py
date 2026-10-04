@@ -99,7 +99,8 @@ def census_of(text, clusters=None, registers=None):
             handle.write(clusters or CLUSTERS_CSV)
         with open(registers_csv, "w") as handle:
             handle.write(registers or REGISTERS_CSV)
-        found, skipped = cce.census_of(scratch, clusters_csv, registers_csv)
+        found, skipped = cce.census_of(scratch, clusters_csv, registers_csv,
+                                              ranks=True)
     return found, skipped
 
 
@@ -445,10 +446,14 @@ class Perturbation(unittest.TestCase):
     the committed-tree case is paired with ones that must move.
     """
 
-    def test_the_committed_tree_has_nothing_failing_to_report(self):
+    def test_the_committed_tree_has_nothing_failing_but_a_moved_rank(self):
+        # A failing address in a unit that cites a rank can be a rank that
+        # seeding renumbered, which the checker's committed-tree run no longer
+        # holds (2026-10-04). A failure in a unit citing only by key or name is
+        # one it does hold, so that set has to be empty.
         found, _skipped = cce.census_of()
         self.assertEqual([(u[0], u[1], a.token) for u in found for a in u[5]
-                          if a.fails], [])
+                          if a.fails and not ccc.CLUSTER_ID.search(u[2])], [])
 
     def test_the_tool_exits_zero_on_the_committed_tree(self):
         # The census convention: it changes no rule, so there is nothing for it
@@ -486,7 +491,8 @@ class Perturbation(unittest.TestCase):
                 handle.write(CLUSTERS_CSV)
             with open(registers_csv, "w") as handle:
                 handle.write(REGISTERS_CSV)
-            found, _skipped = cce.census_of(scratch, clusters_csv, registers_csv)
+            found, _skipped = cce.census_of(scratch, clusters_csv, registers_csv,
+                                                ranks=True)
         self.assertEqual(found, [])
 
 

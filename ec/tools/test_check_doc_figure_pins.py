@@ -125,34 +125,18 @@ class ClassifiesTheRealTree(unittest.TestCase):
         self.assertIsNotNone(read, "SHARE_ORACLE['classes'] is read by nothing")
         self.assertFalse(lo <= read[1] <= hi)
 
-    def test_the_sixa_subset_sums_are_held_by_the_census_suite(self):
-        # The four §6a rows whose per-subset sums are computed inline in the
-        # heredoc, on either side of the guard-off split. Held the same way
-        # since #850, for the same reason: the expectation is a literal at each
-        # assertion.
-        for value in (3949, 3206, 7189, 7936, 193, 142, 279, 239):
-            self.assertVerdict(value, cdfp.BY_LITERAL)
-
-    def test_the_guard_off_pd_cluster_count_is_pinned_beside_the_394(self):
-        # The one figure §2b's prose named beside its tables as held by nothing.
-        # It needed a case here for a structural reason rather than a personal
-        # one: §6a does not print it, so it is not in §2b's tables, so
-        # `check_doc_figure_pins.py --section 2b` never audits it and the §2b
-        # audit's own all-held column says nothing about it either way. #918
-        # asserted it in `test_xdata_cluster_names.py`, beside the `394` that is
-        # the main-EC arm of the same pair, and this is the watch on it: delete
-        # that assertion and the figure goes back to `unheld` and this case
-        # fails. Before #918 the watch ran the other way, in
-        # `test_a_small_figure_is_not_pinned_by_an_unrelated_cell`, which used
-        # this figure as its real-tree witness for the over-match rule.
-        verdict, detail = cdfp.measure(51, [], FOUND)
-        self.assertEqual(verdict, cdfp.BY_LITERAL, detail)
-        # Held by the census suite's own assertion rather than by an oracle key
-        # or a cited CSV cell, which is the strongest thing a figure can be held
-        # by and the reason naming the file is worth a second assertion: a `51`
-        # that some later constant happened to equal would be a promise, and
-        # this case is what tells the two apart.
-        self.assertIn("test_xdata_cluster_names.py", detail)
+    def test_the_sixa_guard_off_figures_are_held_by_nothing(self):
+        # The four §6a per-arm sums and the guard-off pd cluster count were
+        # literals in `test_xdata_cluster_names.py` until 2026-10-04, when that
+        # case went over to relations: seeding a routine moves every one of
+        # them, and CLAUDE.md's rule for the XDATA census is that no figure of
+        # it goes back into a test. So the polarity of this watch flipped too:
+        # a figure written back into an assertion would measure `held` again,
+        # and that is what fails here. `193` and `239` are left out: each is
+        # also an unrelated literal in another suite, which this checker
+        # credits by value.
+        for value in (3949, 3206, 7189, 7936, 142, 279, 51):
+            self.assertVerdict(value, cdfp.UNHELD)
 
     def test_the_cluster_refs_cell_is_held_through_the_line_the_row_cites(self):
         # `4,966` is the `refs` cell of `main-ec-003`, and `--check` compares

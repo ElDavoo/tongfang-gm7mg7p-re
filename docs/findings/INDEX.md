@@ -60,6 +60,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`a73f-09f1-mailbox-payload.md`](a73f-09f1-mailbox-payload.md) — `0xA73F` pushes a payload into an eight-slot ring, and there was never a command-code table to look it up in (issue #1444)
 - [`a73f-notify-path.md`](a73f-notify-path.md) — The `0xA73F` notify path, decoded end to end
 - [`a7c8-dispatch-slot-and-pl-race.md`](a7c8-dispatch-slot-and-pl-race.md) — What calls `0xA7C8`, and whether the host-writes-PLs / EC-zeroes-PLs race is real
+- [`acpi-eval-argument-datalength.md`](acpi-eval-argument-datalength.md) — The `0x00040000` in `ACPIDriver.sys`'s argument headers is `DataLength = 4`, and it survives
 - [`acpi-interpreter-region-access.md`](acpi-interpreter-region-access.md) — What the ACPI interpreter does with an unaligned `MMRD`, and what it still does not establish (issue #1337)
 - [`addc-dph-residual-six.md`](addc-dph-residual-six.md) — All six residual `addc A,#imm ; mov DPH,A` sites close: four build page `0x0D`/`0x0E`, two build page `0x2A` and read CODE (issue #519)
 - [`annotation-evidence-both-directions.md`](annotation-evidence-both-directions.md) — The `evidence` column, read in both directions, and what the reverse one is for (issue #1004)
@@ -146,6 +147,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`emit-csv-flag-honesty.md`](emit-csv-flag-honesty.md) — `--emit-csv` refused the three modes it knew about, and honoured nothing on the fourth
 - [`entry-namespace-two-copies.md`](entry-namespace-two-copies.md) — `isPlaceholderName()` had two definitions and they had drifted (issue #626)
 - [`erased-band-fill-claim.md`](erased-band-fill-claim.md) — The image map's `all 0xFF` rows are measured, and the `0x90` count makes an unreachable branch a reading
+- [`export-fold-identity-probes.md`](export-fold-identity-probes.md) — Two more mechanical criteria for the fold, and neither separates a re-export from a fragment
 - [`export-ownership-relative-containment.md`](export-ownership-relative-containment.md) — `containment` at 1.00 cannot tell a copy from a fragment, so the size now
 - [`fan-duty-channel-075b-075c.md`](fan-duty-channel-075b-075c.md) — The 0x14 between 0x075B and 0x075C is the EC's own constant, and the committed captures cannot name either fan (issue #247)
 - [`fan-tachometer-addresses.md`](fan-tachometer-addresses.md) — The four §2 features resolve to five EC addresses, and one of them is not the byte the Windows service reads
@@ -195,6 +197,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`pd-07d2-index-or-word-half.md`](pd-07d2-index-or-word-half.md) — `0x07D2` is an index in some routines and a 16-bit window's low byte in others, and choosing between them is the wrong question
 - [`pd-11c2-dispatch-key-selector.md`](pd-11c2-dispatch-key-selector.md) — The `pd 0x11C2` dispatch key is `0x0424 + 0x260 * R7`, and only three key pairs ever leave the default record (issue #647)
 - [`pd-call-site-table-framing.md`](pd-call-site-table-framing.md) — Five `pd` dispatch call sites whose tables the annotation rows read as instructions (issue #643)
+- [`pd-call-target-census.md`](pd-call-target-census.md) — The PD call-target census: sixteen sites get sixteen verdicts, and two of them are calls
 - [`pd-callers-status-intersection.md`](pd-callers-status-intersection.md) — A caller's literals are not index-register loads unless the site indexes on those registers
 - [`pd-code-table-inline-width.md`](pd-code-table-inline-width.md) — Per-dispatcher inline width, and the PD image's third CODE-table dispatcher
 - [`pd-common-address-attribution.md`](pd-common-address-attribution.md) — A `pd` caller's edge was attributed to a `common` row it never reached (issue #471)

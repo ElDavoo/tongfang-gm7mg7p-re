@@ -2603,7 +2603,7 @@ def cluster_rows_build(g, cid, key, members, group, names, funcs, calls, symbols
         "cluster_key": key,
         # Filled in by name_clusters(), which is where a name carried forward
         # from the committed census lands. Empty is "no name", which is the
-        # state of 417 of the 427 clusters and is not a claim about them.
+        # state of most clusters and is not a claim about them.
         "cluster_name": "",
         "co_reading": sum(1 for f in touching if f in group_of),
         "co_reading_refs": top_group_refs,

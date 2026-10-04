@@ -233,19 +233,20 @@ jobs:
               `status:` value that neither side changed.
             - GENERATED files -- never hand-merge these: ec/decompiled/**,
               ec/ghidra/xdata-symbols.csv, ec/ghidra/manifest.csv, ec/decompiled/index.csv and
-              listing-index.csv, ec/annotations/xdata-registers.csv and xdata-clusters.csv. Take
-              main's copy (`git checkout origin/main -- <file>`), resolve the inputs, then
-              regenerate in this order:
-                python3 ec/tools/gen_xdata_symbols.py
+              listing-index.csv, ec/annotations/xdata-registers.csv and xdata-clusters.csv,
+              ec/ghidra/c-asm-counterpart.csv, docs/findings/INDEX.md. Resolve the
+              hand-written files first and `git add` them; then
+                .github/scripts/regenerate-conflicted.sh
+              regenerates and stages every remaining conflicted generated file, in dependency
+              order, and names any conflicted file it does not know how to regenerate. If the
+              branch added ghidra-functions.csv rows or main changed registers.yaml names,
+              re-export the decompile too:
                 python3 ec/tools/build_ec_decompile.py --work /tmp/ecb
-                python3 ec/tools/xdata_register_map.py
               (Ghidra is installed; the default build mode re-exports from the committed
               project and does not write it. Never use --mode rebuild-project here.)
-            - Self-test pins: several tools pin counts (annotation record counts in
-              build_ec_decompile.py, the ORACLE dict in xdata_register_map.py). When the
-              merged tree legitimately moves one because both sides added rows or names, set
-              it to the measured value and add a one-line comment saying which change moved
-              it. A pin that moves for a reason you cannot explain is a real failure: say so.
+            - The XDATA census and the function index are not pinned any more: a self-test
+              asserts relations, never a figure. If both sides edited the same assertion,
+              keep the relation; never write a measured count back in.
             - A conflict on a total or count of the repository's own text (how many write-ups,
               suites, tests, pins, rows, lines or files), in prose or in a test: delete the
               total rather than recomputing it, on both sides. CLAUDE.md, "No totals of the
@@ -257,9 +258,15 @@ jobs:
             nothing), run:
 
                 .github/scripts/agent-gates.sh
-                bash tools/run-tests.sh
 
-            and fix what the merge broke. Do not weaken a gate to pass it. If the two sides
+            and the suites that name a file you resolved:
+
+                for f in $(cat /tmp/conflicts.txt); do git grep -l "$(basename "$f")" -- '*/test_*.py' 'test_*.py'; done | sort -u
+
+            Fix what the merge broke in those. Do not run the whole of tools/run-tests.sh: it
+            takes hours, CI runs it on the push, and the fix-CI stage takes what is still red.
+            Your job is a tree with both sides' work in it, not a green full suite. Do not
+            weaken a gate to pass it. If the two sides
             genuinely contradict each other and you cannot write something true of both, stop,
             leave the tree as is, and explain in your final message.
 

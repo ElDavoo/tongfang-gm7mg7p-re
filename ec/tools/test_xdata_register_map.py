@@ -735,9 +735,9 @@ class Refusals(unittest.TestCase):
     def test_it_is_refused_bare_with_the_default_outputs(self):
         # The hazard: run bare, it writes a census the committed CSVs do not
         # match -- the pre-#178 one for `--no-eq-guard`, the de-duplicated one
-        # for `--export-ownership`, which re-keys 35 of the 430 clusters and
-        # breaks 5 of the 10 hand names. That is caught, but only afterwards and
-        # by other tools -- `--check` is refused with the flag, so it
+        # for `--export-ownership`, which moves `cluster_key`s and breaks most
+        # of the hand names. That is caught, but only afterwards and by other
+        # tools -- `--check` is refused with the flag, so it
         # regenerates default and goes red, and so do the citations. The
         # guard's job is to stop the write, not to leave the repository to be
         # noticed afterwards. This is the issue's third combination verbatim,
@@ -940,11 +940,12 @@ class AcceptedExportOwnershipWrite(unittest.TestCase):
 
     def test_cluster_keys_are_renumbered_rather_than_rekeyed(self):
         # Two-sided on purpose, and both halves are load-bearing. A committed
-        # key that survives says the pass re-keyed 35 clusters rather than
+        # key that survives says the pass re-keyed some clusters rather than
         # every one of them; a committed key that goes missing says the flip
-        # is a tree-wide renumbering and not a no-op. The 35 of 430 that break
-        # and the 37 that are new are `xdata-export-ownership.md` §5's figures
-        # and `OWNERSHIP`'s, and they stay there.
+        # is a tree-wide renumbering and not a no-op. How many of each is
+        # `xdata-export-ownership.md` §5's figure and `OWNERSHIP`'s, and it
+        # stays there rather than in a comment that moves with every seeded
+        # routine -- which is what this assertion is for.
         scratch, committed = cluster_keys(self.clusters), cluster_keys(xrm.OUT_CLUSTERS)
         self.assertTrue(committed - scratch,
                         "every committed cluster_key survives, so this run did "
@@ -954,9 +955,9 @@ class AcceptedExportOwnershipWrite(unittest.TestCase):
                         "the census wholesale rather than renumbering it")
 
     def test_some_hand_cluster_names_break_and_some_survive(self):
-        # The same two-sided relation over the ten hand names, read through the
-        # tool's own `load_cluster_names()` rather than a spelled-out path. Five
-        # of the ten break, and which five is not pinned: §5 names
+        # The same two-sided relation over the hand names, read through the
+        # tool's own `load_cluster_names()` rather than a spelled-out path. Most
+        # of them break, and which is not pinned: §5 names
         # `counter-sweep` (`k733222e83898`) as `main-ec-002`'s own key and one
         # that does not survive as a single cluster at all, but a membership
         # claim would make this suite red for an unrelated re-derivation -- the
