@@ -43,10 +43,11 @@ describes one).
 **Counts.** `xdata-register-map.md` §5 is a hand-typed copy of twelve rows of
 that CSV, and nothing held its numbers: four of the twelve rows disagreed with
 the census beside them before issue #272. A *census row* — a markdown table row
-whose first cell is one `main-ec-NNN` id — has its size, reference count
-and address range held to the same CSV. Its named count is not held: that
-column counts the addresses `registers.yaml` names, which every branch that
-names a register moves, so it is a census of this repository's own text. It is a second gate rather
+whose first cell is one `main-ec-NNN` id — has its address range held to the
+same CSV. Its size, reference count and named count are not held (2026-10-04):
+they are figures of the census, which seeding a routine or naming a register
+moves, and CLAUDE.md's rule for those in prose is not to hold them; the CSV,
+which `--check` regenerates, is where they are current. It is a second gate rather
 than an extension of the membership one and inherits none of its conditions:
 a §5 row carries a range and a title but never the word "member", so the
 membership rule skips every one of them, and this rule reads cells the
@@ -279,13 +280,7 @@ CLAUSE_BREAK = re.compile(r"[;:.()]")
 # on into the next item's and drags its addresses along with it.
 TERMINATOR = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*_|-])")
 
-# The shapes a census row's cells can be read in. A count is a bare decimal
-# integer -- thousands commas the way this corpus writes them, so `1,136` and
-# `4,965` both read and `1,,,2` does not. Everything else in a table cell is
-# left unread, and the docstring names the committed prose each of those
-# shapes is.
-BARE_NUMBER = re.compile(r"[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+")
-# A range, which is what anchors the size and reference columns. §5 writes it
+# A range, which is what anchors a census row's columns. §5 writes it
 # `` `0x030E`-`0x1809` ``, one backtick per address, so it is only recognisable
 # as a span once `clean` has taken the backticks out.
 SPAN = re.compile(r"0x[0-9A-Fa-f]{4}-0x[0-9A-Fa-f]{4}")
@@ -322,35 +317,11 @@ def clean(cell):
     return MARKUP.sub("", cell).strip()
 
 
-def number(cell):
-    """The cell read as a plain number, or None if it is not one.
-
-    Deliberately narrow: a bare decimal integer, thousands commas the way this
-    corpus writes them. A listing, a span and a run of free text are all `None`
-    here, and every one of those shapes is real committed prose -- see the
-    docstring. An em dash is `None` too, and that is the point: in a size or
-    reference column a dash means the figure does not apply to that row, which
-    is not the same claim as zero.
-    """
-    text = clean(cell)
-    if BARE_NUMBER.fullmatch(text):
-        return int(text.replace(",", ""))
-    return None
-
-
 def cells(unit):
     """(the cells of a markdown table row) or () if the unit is not one."""
     if not (unit.startswith("|") and unit.endswith("|")):
         return ()
     return [c.strip() for c in unit[1:-1].split("|")]
-
-
-def plural(n, noun):
-    """`1 named address`, `43 named addresses` — a one is a real case here."""
-    head, _, word = noun.rpartition(" ")
-    if n != 1:
-        word += "es" if word.endswith(("s", "x", "z", "ch", "sh")) else "s"
-    return f"{n} {head} {word}" if head else f"{n} {word}"
 
 
 def census(clusters_csv=None, registers_csv=None):
@@ -576,7 +547,15 @@ def pairings(unit, addresses):
 
 
 def census_row(path, lineno, unit, counts):
-    """(problems) for a census row's hand-typed counts.
+    """(problems) for a census row's hand-typed range.
+
+    Only the range is held (2026-10-04). The size, the reference count and the
+    named count beside it are figures of the census, and seeding one routine
+    moves them: #1849 seeded 23 and went red on five §5 rows of
+    `xdata-register-map.md`, a shared file every such branch would then have
+    to edit. CLAUDE.md's rule for a census figure in prose is to stop holding
+    it; `xdata-clusters.csv`, which `--check` regenerates, is where they are
+    current. The range is the cell that says which cluster the row is about.
 
     Independent of the membership rule and run before it, because a §5 row
     never reaches the membership rule: it has an address range and a title,
@@ -598,9 +577,8 @@ def census_row(path, lineno, unit, counts):
 
     problems = []
     # The range cell is what says which columns are which, so it is found
-    # first and the two counts are positioned against it rather than against
-    # fixed indices: the two cells before it are the size and the reference
-    # count. A fixed index does not work
+    # by content rather than at a fixed index: the two cells before it are the
+    # size and the reference count. A fixed index does not work
     # on §5's own header -- `cluster | key | name | size | refs | range |
     # named inside | co-reading | functions` -- where `row[1]` is a
     # `cluster_key` and `row[2]` a `cluster_name`, so both `number()` reads
@@ -625,27 +603,16 @@ def census_row(path, lineno, unit, counts):
     if anchor is None or anchor < 3:
         return problems
 
-    # Both counts quote the cell as the table writes it rather than as the
-    # number parsed out of it, so a reader can find the figure in the row
-    # without converting it first. A census problem has no paired id: the
+    # The size and the reference count, the two cells before the range, are
+    # not held; see the docstring. A census problem has no paired id: the
     # `kind` says which rule raised it, and only a membership one names a
     # cluster for the unit's own wording to have paired the address with.
-    for cell, column, noun in ((row[anchor - 2], "size", "address"),
-                               (row[anchor - 1], "refs", "reference")):
-        stated = number(cell)
-        if stated is not None and stated != facts[column]:
-            problems.append((path, lineno, ids,
-                             f"{plural(facts[column], noun)} in the census, "
-                             f"{clean(cell)} in the row", "census count", None))
-    # The range itself is held to the row's own `addr_range` -- nearly free
-    # once the cell has been parsed to find its neighbours -- and the named
-    # count is the cell after it. Only the first span is an anchor, which is
-    # what keeps a span written in the named column from being read as a
-    # range. An `--clusters` CSV with no `addr_range` column has nothing to
-    # hold the row to, so the range and the count anchored on it are left
-    # alone rather than checked against an empty string; the two counts
-    # beside it are still checked, because that CSV does carry `size` and
-    # `refs`.
+    #
+    # The range is held to the row's own `addr_range`. Only the first span is
+    # an anchor, which is what keeps a span written in the named column from
+    # being read as a range. An `--clusters` CSV with no `addr_range` column has
+    # nothing to hold the row to, so the range is left alone rather than
+    # checked against an empty string.
     stated = clean(row[anchor])
     if facts["addr_range"]:
         if stated.upper() != facts["addr_range"].upper():
@@ -822,7 +789,7 @@ def main() -> int:
         return 1
     print(f"{len(paths)} files / {read} lines: every checked cluster citation "
           f"(`main-ec-NNN`, `cluster_key` or `cluster_name`) resolves to the "
-          f"membership it names, and every hand-typed census count agrees "
+          f"membership it names, and every census row's range agrees "
           f"with {os.path.relpath(args.clusters, REPO)}; {len(skipped)} unit(s) "
           f"passed over under the {len(SKIPS)} reasons above, each of them: "
           f"not checked, not absent")

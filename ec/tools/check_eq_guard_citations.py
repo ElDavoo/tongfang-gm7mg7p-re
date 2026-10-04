@@ -10,16 +10,22 @@ pin for `--no-eq-guard` that resolved to the tail of `--reconcile`'s help, and
 a pin for the committed-output refusal that resolved to the `--check` refusal —
 and four more that were low by 134 to 1358 lines, by eight different offsets.
 
-**The principle: hold the code, and let the number follow.** A bare `:NNN` is a
-rank into a file that keeps growing, and `check_citation_lines.py` already
-argues the general case for generated CSVs. Here the population is nine named
-anchors in one file, so the rule is the same one made concrete: each anchor is
-a **string of the tool's own source**, resolved by reading the tool, and each
-declared citation is a **string of the citing file's own prose** whose `:NNN`
-must be the line that anchor is on today. A citation that has been reworded out
-of the shape the declared list expects is reported, not passed; a citation that
-drifts is reported with the anchor's current line beside it, so the fix is one
-edit rather than a re-measurement.
+**The principle: hold the code, not the number.** A bare `:NNN` is a rank
+into a file that keeps growing, and `check_citation_lines.py` already argues the
+general case for generated CSVs. Here the population is nine named anchors in
+one file: each anchor is a **string of the tool's own source**, resolved by
+reading the tool, and each declared citation is a **string of the citing file's
+own prose** that names it. An anchor that is gone or no longer unique fails, and
+so does a citation reworded out of the shape the declared list expects.
+
+**The `:NNN` itself is not held to today's line** (2026-10-04). It used to be,
+and every branch that grew `xdata_register_map.py` above an anchor then had to
+re-point five write-ups it had not otherwise touched -- #1849 went red on seven
+of them for seeding routines. That is the lock CLAUDE.md's "Cite code by name"
+and the unheld pin census are about: the numbers are what the prose measured on
+the tree it names, and a citation whose line has since moved is printed as a
+note with the anchor's current line beside it, so a reader can follow it, and
+the run stays green.
 
 **What it is deliberately not.** This is *not* the general `.py:NNN` pointer
 checker: it reads no file outside these five plus the tool, it does not walk the
@@ -336,14 +342,12 @@ def check(repo, stream=None):
                 if key not in resolved:
                     continue  # already reported against the tool
                 want = resolved[key]
-                if cited == want:
-                    held += 1
-                else:
-                    problems.append(
-                        f"{rel}:{at}: cites :{cited} for {key}, which is "
-                        f"{TOOL}:{want} on this tree -- hold the code, not the "
-                        f"number, or the next growth of the tool is a sentence "
-                        f"that reads correctly")
+                held += 1
+                if cited != want:
+                    print(f"  moved {rel}:{at}: cites :{cited} for {key}, which "
+                          f"is {TOOL}:{want} on this tree -- the anchor is held, "
+                          f"the number is what the prose measured",
+                          file=stream)
         unclaimed = pointer_sites(collapsed, starts, lines, seen)
         declined += len(unclaimed)
         for at, cited in unclaimed:
@@ -404,7 +408,7 @@ def main() -> int:
         print("check_eq_guard_citations.py: read no citation at all, which is a "
               "broken check rather than a clean tree", file=sys.stderr)
         return 1
-    print(f"{held} citation(s) name the line their code is on, {declined} "
+    print(f"{held} citation(s) name code the tool still has, {declined} "
           f"declined as not this tool's, {skipped} skipped as superseded -- "
           f"{resolved} of {len(ANCHORS)} anchors resolved, over "
           f"{len(CITATIONS)} declaring file(s). A run that checks nothing is a "

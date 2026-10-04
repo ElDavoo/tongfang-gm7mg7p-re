@@ -637,11 +637,13 @@ class Transcripts(unittest.TestCase):
 
 
 class CensusCounts(unittest.TestCase):
-    """The figures issue #272 put a hand-typed census table behind.
+    """The census rows issue #272 put a hand-typed table behind.
 
     Four of §5's twelve rows disagreed with `xdata-clusters.csv` while nothing
-    held them there, and these are the shapes they took. The fixtures are §5's
-    own rows with one cell moved, so a case reads as the table it is about.
+    held them there, and these are the shapes they took. Only the range is held
+    now (2026-10-04); the counts beside it move with every seeded routine. The
+    fixtures are §5's own rows with one cell moved, so a case reads as the
+    table it is about.
     """
 
     def test_a_census_row_that_agrees_is_silent(self):
@@ -649,21 +651,14 @@ class CensusCounts(unittest.TestCase):
                 '`0x06E6`/`0x0860` gate block |\n')
         self.assertEqual(counted(text), (0, None))
 
-    def test_a_wrong_size_is_reported(self):
-        # main-ec-004's row read 30 for a cluster the census sizes at 26.
-        text = ('| `main-ec-003` | 42 | 4,965 | `0x0460`-`0x09CE` | 43 | one '
+    def test_the_size_and_the_reference_count_are_not_held(self):
+        # main-ec-004's row once read 30 and 312 for a cluster the census put at
+        # 26 and 278. Both are figures of the census, which seeding a routine
+        # moves: #1849 seeded 23 and five §5 rows went red. So the rule leaves
+        # them alone, the way it leaves the named count.
+        text = ('| `main-ec-003` | 42 | 4,900 | `0x0460`-`0x09CE` | 43 | one '
                 'loop walking a block of counters |\n')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '43 addresses in the census, 42 in the row')
-
-    def test_a_wrong_reference_count_is_reported(self):
-        # main-ec-004's row read 312 for a cluster the census puts at 278.
-        text = ('| `main-ec-003` | 43 | 4,900 | `0x0460`-`0x09CE` | 43 | one '
-                'loop walking a block of counters |\n')
-        n, what = counted(text)
-        self.assertEqual(n, 1)
-        self.assertEqual(what, '4965 references in the census, 4,900 in the row')
+        self.assertEqual(counted(text), (0, None))
 
     def test_the_named_count_is_not_held(self):
         # main-ec-002's row read 4 for a cluster the census names 19 in. The
@@ -687,7 +682,7 @@ class CensusCounts(unittest.TestCase):
         # be: a §5 row carries a range and a title and never the word
         # "member", so the membership rule skips every one of them and this
         # is the only rule that reads it.
-        text = '| `main-ec-002` | 4 | 248 | `0x044C`-`0x1F07` | 19 | the block |\n'
+        text = '| `main-ec-002` | 44 | 248 | `0x044C`-`0x1F08` | 19 | the block |\n'
         self.assertIsNone(ccc.MEMBERSHIP.search(text))
         self.assertEqual(counted(text)[0], 1)
 
