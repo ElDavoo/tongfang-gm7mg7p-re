@@ -490,7 +490,7 @@ class TheRowLevelJoin(unittest.TestCase):
         # than as the two counts the report prints. The counts cannot disagree:
         # `touched` is a subset of the moved keys by construction, because
         # `cluster_key` is a content hash of program plus sorted members
-        # (`xdata_register_map.py:2600-2610`) -- a committed key that still
+        # (`xdata_register_map.py:1997-2007`) -- a committed key that still
         # existed guard-off would carry the same membership, so its rows would
         # carry the same key and would not be in `touched` at all. Comparing
         # the two counts would be comparing a number with itself. The sets can
@@ -500,6 +500,12 @@ class TheRowLevelJoin(unittest.TestCase):
         # not report. So the set equality is the claim, and it is the one that
         # makes the 15 the row count's own population rather than a number
         # that happens to match.
+
+        # CORRECTION (#1128, 2026-10-04): the hash citation read
+        # `xdata_register_map.py:2600`, a `"shared_functions": ...` cell in
+        # `cluster_rows_build()` -- near the right key, and not the hash. It is
+        # `cluster_key()` itself at `:1997`. Held by
+        # `ec/tools/check_py_citations.py`.
         below = self.report.below("cluster_key that moves")
         reported = {k: v for _i, k, v in below}
         self.assertEqual(

@@ -229,6 +229,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`probe-log-capture-conversion.md`](probe-log-capture-conversion.md) — The one real 0751 capture converts to a capture the grader reads (issue #124)
 - [`prose-line-citations-held.md`](prose-line-citations-held.md) — The prose's line citations, and what now holds them (issue #801)
 - [`provenance-clone-depth-behaviour.md`](provenance-clone-depth-behaviour.md) — Both clone depths run: `--verify-provenance` measured rather than asserted (issue #421)
+- [`py-source-citations.md`](py-source-citations.md) — The committed Python sources' line citations into one tool, and a checker that holds them
 - [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md) — What a re-encode row's own columns say, and the ceiling they support
 - [`reassembly-gap-composition.md`](reassembly-gap-composition.md) — What is in the instructions sdas8051 declines, derived rather than recalled
 - [`reassembly-name-column.md`](reassembly-name-column.md) — `reassembly.csv`'s `name` column describes the listing, so it is compared and not trusted

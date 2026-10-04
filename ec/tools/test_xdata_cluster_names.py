@@ -84,7 +84,7 @@ def guard_off():
 
     Built the way §6a builds it: the committed tool run with `--no-eq-guard`,
     which is the switch that "re-runs the census with the `==` rejection turned
-    off" (`xdata_register_map.py:263`) and the mechanism that page re-runs its
+    off" (`xdata_register_map.py:4481`) and the mechanism that page re-runs its
     figures from. The flag refuses to be given the committed output paths, so
     both CSVs go to a scratch directory the tool is pointed at by name and the
     run reads the committed decompile and writes nothing into it. ~2 s, and the
@@ -95,6 +95,14 @@ def guard_off():
     gives: a count of this file's own cases is a value every merge that adds
     one has to edit, so the total is deleted rather than updated and the
     classes are named in its place.
+
+    Correction, 2026-10-04 (issue #1128): the `--no-eq-guard` citation read
+    `xdata_register_map.py:263`, which is `--map`'s docstring on `cluster_id`,
+    so the sentence pointed a re-deriver of §6a at a paragraph that never
+    declared the flag. It is `ap.add_argument("--no-eq-guard", ...)` at `:4481`;
+    the quoted phrase is the tool's own module docstring at `:289`, which is
+    where the wording comes from and not what the citation is for. Held by
+    `ec/tools/check_py_citations.py`.
     """
     tmp = tempfile.mkdtemp(prefix="xdata-guard-off-")
     out_clusters = os.path.join(tmp, "clusters.csv")
@@ -872,7 +880,7 @@ class TheExportOwnershipClusters(unittest.TestCase):
 
     `OWNERSHIP["clusters"]` held the 440 that `--export-ownership` produces
     and `--self-test` asserts it against an after-census built in-process
-    (`xdata_register_map.py:4347-4354`), so five clusters moving from one program
+    (`xdata_register_map.py:3794-3797`), so five clusters moving from one program
     to the other left every assertion in the tree green and both lines of
     §6b's console block wrong at once. A *separate* class rather than another
     case in `TheGuardOffRegeneration`, for two reasons: it is a different
@@ -880,6 +888,13 @@ class TheExportOwnershipClusters(unittest.TestCase):
     one class would read as though they were; and `docs/findings.md` §50 calls
     the other class's seventh case "a seventh case", so an eighth there would
     falsify a sentence this change did not set out to touch.
+
+    Correction, 2026-10-04 (issue #1128): this citation read
+    `xdata_register_map.py:4347`, which was the after-census build then and is
+    now `print_carry()`'s stderr tail -- a right citation that decayed like any
+    other, which is why it is held rather than merely re-pointed. It is
+    `own_map = load_ownership()` at `:3794` and the `scan()` call under it. Held
+    by `ec/tools/check_py_citations.py`.
     """
 
     @classmethod

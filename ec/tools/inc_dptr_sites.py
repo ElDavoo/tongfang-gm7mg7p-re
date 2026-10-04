@@ -6,11 +6,20 @@ accounted for all 107, and whether each has a `MOV DPTR` site of its own.
 §4.7) resolves 437 accessor call sites into 214 distinct addresses, and
 `scan()` folds each call into one `pair-literal` row per *pair* -- it adds
 `addr` and `addr + 1` under the same spelling
-(`xdata_register_map.py:2241-2249`), so the census CSV cannot say which of the
+(`xdata_register_map.py:1861-1869`), so the census CSV cannot say which of the
 214 is the seed and which is the byte the accessor's `inc DPTR` walks onto. That
 distinction lives only inside `pair_sites()`, which is why the question §4.7
 left open ("73 of the 107 have no `MOV DPTR,#addr` encoding") is not a query
 against a committed artifact and this tool exists to answer it.
+
+**Correction, 2026-10-04 (issue #1128).** The paragraph above is left as
+written and its citation is now right: it read `xdata_register_map.py:2241`, the
+`parent[x] = parent[parent[x]]` line of the union-find `find()` inside
+`components()` that never held this fold. The fold is `scan()`'s
+`for addr, direction in pair_sites(...)` at `:1861`, whose inner
+`for byte in (addr, addr + 1)` at `:1862` is the line that adds both halves
+under one spelling. `ec/tools/check_py_citations.py` holds the citation, so the
+next edit to the tool is a red row rather than a sentence that reads correctly.
 
 **Correction, 2026-10-02 (issue #734).** The paragraph above is left as written
 and its first claim no longer holds: `xdata-registers.csv` now carries a

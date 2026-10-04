@@ -270,12 +270,19 @@ def dispatch_names(source):
     A call is recorded on the way in and the walk does not descend past it into
     its arguments, so a call that is only *another call's* argument is that
     callee's business and not `main()`'s dispatch. That is what keeps the two
-    `list(...)` defaults at `xdata_register_map.py:3634` and `:3637` out: they
+    `list(...)` defaults at `xdata_register_map.py:4472` and `:4475` out: they
     are real, they are bare names, and a reader collecting every one of them
     records `list` twice on top of the nine. The attribute calls fall out for
     free under the `ast.Name` restriction, with no exclusion list to maintain --
     and a name-based list is what the issue proposed, and it is wrong the first
     time it is written down for exactly those two calls.
+
+    Correction, 2026-10-04 (issue #1128): the two defaults were cited at
+    `xdata_register_map.py:3634` and `:3637`, which are a `--self-test`
+    counter-sweep block, not `main()`'s argparse. They are the `--thresholds`
+    and `--floors` `default=list(...)` at `:4472` and `:4475`.
+    `ec/tools/check_py_citations.py` holds both, so the next growth of the tool
+    is a red row rather than this sentence quietly meaning something else.
 
     A NodeVisitor walks the fields in order, so this is pre-order, which is
     source order for the flat `if args.*` chain the committed dispatch is. A
@@ -768,8 +775,16 @@ class Refusals(unittest.TestCase):
         # one case here that is not per-flag. If the defaults move, the
         # refusals above keep passing while meaning something else -- a bare
         # run of either flag would no longer be a threat to these two files, and
-        # both guards' reasons at xdata_register_map.py:3677-3680 and
-        # :3687-3697 would be stale.
+        # both guards' reasons at xdata_register_map.py:4521-4524 and
+        # :4541-4544 would be stale.
+
+        # CORRECTION (#1128, 2026-10-04): read `xdata_register_map.py:3677` and
+        # `:3687`, which are a `counter-sweep` f-string record and the
+        # `direction_invariant(...)` call in `--self-test` -- the wrong code
+        # twice over, for the two refusals this case is about. They are the
+        # `ap.error(...)` reasons of `--no-eq-guard`'s and
+        # `--export-ownership`'s committed-output refusals, held by
+        # `ec/tools/check_py_citations.py`.
         self.assertEqual(Path(xrm.OUT_REGISTERS).parent, EC / "annotations")
         self.assertEqual(Path(xrm.OUT_CLUSTERS).parent, EC / "annotations")
 
