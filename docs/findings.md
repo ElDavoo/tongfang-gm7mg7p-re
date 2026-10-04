@@ -194,6 +194,22 @@ Two knock-on notes, since the same conflation reaches other entries:
   include features (`PRIMARY_FAN`/`SECONDARY_FAN`, `TOUCHPAD_TOGGLE`,
   `USB_POWERSHARE`) whose EC addresses are nowhere in this repo, so they
   could not be checked either way.
+
+  *(Corrected 2026-10-04, issue #29; the clause above is left as it was
+  written.) "Nowhere in this repo" was false before the issue was opened. The
+  driver defines are committed at the rev `linux/patches/BASE_COMMIT` pins, in
+  `linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt`: the first fan's RPM
+  pair at `0x0464`/`0x0465`, the second's at `0x046C`/`0x046D`, the
+  powershare bit as bit 4 of `0x0767` and the touchpad bit as bit 6 of
+  `0x07A6`, each with `feature-map.csv` mapping the §2 feature to its address
+  and `tools/check_dmi_descriptor.py` rule 7 holding the two together byte for
+  byte. The two fan pairs now carry `registers.yaml` entries and the two bit
+  features are aliases on entries that already existed; the write-up is
+  [`findings/fan-tachometer-addresses.md`](findings/fan-tachometer-addresses.md).
+  What is genuinely not re-derivable offline is narrower than the sentence
+  implied: the excerpt quotes no function body, so the driver's *use* of the
+  defines — the reads and the read-modify-write — is a claim from a clone and
+  is marked as one.)*
 - `0x07D8`-`0x07DA` (`MODE_TCC_OFFSET_DEFAULTS`) is 34/16/53 references, one
   EC-side each and 33/15/52 PD-side, and the one EC-side site is real — a
   straight-line block in `seed_tcc_defaults_from_ba36` writing all three from a
@@ -793,6 +809,20 @@ powershare) have no EC address anywhere in this repo, so they are named in the
 audit as unresolvable rather than guessed at. "The scan predicted all 20
 correctly" therefore still rests on the original testing notes; what is
 re-derivable from committed files is the 14.)*
+
+  *(Corrected 2026-10-04, issue #29; the sentences above are left as they were
+  written.) The clause "have no EC address anywhere in this repo" is false:
+  the addresses are in `linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt`
+  at the pinned rev and in that directory's `feature-map.csv`, and the two fan
+  pairs carry `registers.yaml` entries now. The `14` is not restated here as a
+  larger number, for the reason the paragraph itself gives: §4d's 20 were
+  never enumerated register by register, so growing the re-derivable subset
+  does not license "the scan predicted all 20 correctly" any further than it
+  already stood. The audit's §3 table stays the subset that audit resolved
+  rather than a census of the file: which live-graded entries it leaves without
+  a row is a question about `registers.yaml` and that table together, so it is
+  answered by reading both rather than by a list in one of them.
+  [`findings/fan-tachometer-addresses.md`](findings/fan-tachometer-addresses.md).)*
 
 *(One class of correction this section covers has a machine check behind it in
 one place, which is a stronger guarantee than the convention alone: §6a's
