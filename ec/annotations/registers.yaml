@@ -361,7 +361,23 @@ registers:
     static_refs_main_ec: 10
     static_refs_pd_image: 0
     status: confirmed-working
-    note: "TRIGGER_SUPER_KEY_LOCK bit flips SWITCH_STATUS; used for super-key toggle test"
+    note: >
+      TRIGGER_SUPER_KEY_LOCK bit flips SWITCH_STATUS; used for super-key toggle
+      test. Bit 4 of 0x0767 is a second named feature of this byte and gets no
+      status of its own, for the reason its absence is deliberate: upstream
+      calls it TRIGGER_USB_CHARGING (BIT(4), uniwill-acpi.c:215) at the rev
+      linux/patches/BASE_COMMIT pins, quoted verbatim in
+      linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt, and the vendor
+      service sets the same bit of the same byte from its own side --
+      USB_Charger_ON/_OFF read 1895, set or clear bitArray[4] and write it
+      back (windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/
+      MySettingManager.cs). docs/findings.md 2 records USB_POWERSHARE as "EC
+      bit flips on write; real-world effect untested": an accepted write is
+      evidence the byte is writable, not that the EC acts on it, which is the
+      same distinction OEM_9's note records as a downgrade out of
+      confirmed-inert. So the bit is recorded here as an alias and the entry's
+      own status above, which is for bit 0, is not extended to it.
+      docs/findings/fan-tachometer-addresses.md 2.
 
   - name: SWITCH_STATUS (SUPER_KEY_LOCK_STATUS)
     addr: 0x0768
@@ -500,6 +516,22 @@ registers:
       this method", never "absent" (see the xdata-refs and absent notes
       at the top of this file; 0x07B0-0x07BE is a documented blind spot
       of the scan this census comes from).
+      Bit 6 of 0x07A6 is a second named feature of this byte and gets no
+      status of its own, and the absence is deliberate. Upstream calls it
+      TOUCHPAD_TOGGLE_OFF (BIT(6), uniwill-acpi.c:292) at the rev
+      linux/patches/BASE_COMMIT pins, quoted verbatim in
+      linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt, and the vendor
+      service masks the same bit of the same byte from its own side:
+      TouchpadToggle_ON writes Data & 0xBF and _OFF writes 64 + (Data & 0xBF)
+      on 1958 (windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/
+      MySettingManager.cs) -- bit 6 set means disabled, so the "toggle on"
+      path clears it. The live evidence is not about this byte at all:
+      docs/findings.md 2 records TOUCHPAD_TOGGLE as "fails -- Fn+F5 emits no
+      WMI event at all", and a hotkey that never raises the event never
+      reaches the handler that would write it, so the byte was never touched
+      and no verdict about it exists either way. The entry's status above is
+      for the charge-profile bits and is not extended to bit 6.
+      docs/findings/fan-tachometer-addresses.md 2.
 
   - name: CHARGE_CTRL (numeric threshold)
     addr: 0x07B9
@@ -2186,6 +2218,127 @@ registers:
       CODE. static_refs stays 10 and no source tag is added: those keys are MOV
       DPTR site counts recomputed from the image by check_register_counts.py,
       and a record is not one. docs/findings/code-table-record-writers.md.
+
+  - name: MAIN_FAN_RPM
+    addr: [0x0464, 0x0465]
+    sources: [uniwill-laptop(EC_ADDR_MAIN_FAN_RPM_1/2), ecspec-3.1.6.0(ADDR_EC_MAIN_FAN_RPM_BYTE1/BYTE2), xdata-refs, live]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: confirmed-working
+    note: >
+      First tachometer, as one 16-bit value: 0x0464 high, 0x0465 low.
+      Read verdict, not a write one -- docs/findings.md 2 records the RPM
+      sysfs matching the sound of the fan, which is a live read
+      cross-checked against a physical observation, and nothing here writes
+      these bytes or shows a host write changing anything. Entry and write-up:
+      docs/findings/fan-tachometer-addresses.md.
+      Addresses from upstream EC_ADDR_MAIN_FAN_RPM_1/_2 (0x0464/0x0465,
+      uniwill-acpi.c:94,96) at the rev linux/patches/BASE_COMMIT pins, quoted
+      verbatim in linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt and
+      mapped in that directory's feature-map.csv, which
+      tools/check_dmi_descriptor.py rule 7 holds to the excerpt byte for byte.
+      ECSpec agrees: ADDR_EC_MAIN_FAN_RPM_BYTE1/BYTE2 are 1124/1125
+      (windows/decompiled/v3.1.6.0/ECSpec.cs:221-225), byte-identical across
+      the three service versions in the tree. FanInfo.GetEcCpuFanRpm reads
+      1124 then 1125 and returns (num << 8) | b
+      (windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/FanInfo.cs),
+      so the byte order above is the vendor's own, not an inference.
+      The EC agrees from its own side: be16_0464_0465_minus_100 (bank0 0xBD5D)
+      takes the constant off 0x0465 and lets the borrow land in 0x0464, and
+      gate_06e6_then_store_0464 (bank0 0xDFDF) stores R6/R7 across the two at
+      an inc DPTR -- a 16-bit subtract takes its constant from the low byte,
+      which is what makes 0x0465 the low one. xdata-clusters.csv agrees
+      independently: main-ec-145 holds 0x0464 0x0465.
+      All 4 sites are bank0, no PD-image site, so this pair is wholly EC-side.
+      3 direct MOV DPTR sites for 0x0464 and 1 for 0x0465: a read at 0x8778, a
+      read at 0xBD64 and the two-byte write at 0xDFF3 for the first, and the
+      low-byte read at 0xBD5E for the second. A count of 3 is 3 direct sites,
+      not 3 register accesses -- the 0x07B9 blind spot in the header applies
+      unchanged.
+      Not the fan's duty: that is 0x075B/0x075C (MAIN_FAN_L_DUTY /
+      MAIN_FAN_R_DUTY), which FanInfo reads and halves and never writes. The
+      upstream fan-curve constants at 0x0786 and 0x078E are a separate
+      question and are recorded at those addresses.
+      Byte order is deliberately not in the symbol name: gen_xdata_symbols.py
+      spells a two-address entry _0/_1 by address order, as it does for every
+      other 16-bit entry in ec/ghidra/xdata-overrides.csv, so the big-endian
+      fact lives here where a correction can be made in place.
+
+  - name: SECOND_FAN_RPM
+    addr: [0x046C, 0x046D]
+    sources: [uniwill-laptop(EC_ADDR_SECOND_FAN_RPM_1/2), xdata-refs, live]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: confirmed-working
+    note: >
+      Second tachometer, as one 16-bit value: 0x046C high, 0x046D low. Read
+      verdict, on the same terms as the MAIN_FAN_RPM entry: docs/findings.md
+      2 records the RPM sysfs matching the sound, and nothing here writes
+      these bytes. Entry and write-up:
+      docs/findings/fan-tachometer-addresses.md.
+      Addresses from upstream EC_ADDR_SECOND_FAN_RPM_1/_2 (0x046C/0x046D,
+      uniwill-acpi.c:101,103) at the rev linux/patches/BASE_COMMIT pins,
+      quoted verbatim in linux/patches/gm7mg7p-dmi-entry/upstream-excerpt.txt
+      and mapped in that directory's feature-map.csv, held to the excerpt by
+      tools/check_dmi_descriptor.py rule 7.
+      The vendor names only the high half of this pair correctly. ECSpec has
+      ADDR_EC_SECOND_FAN_RPM_BYTE1 = 1132 (0x046C) and
+      ADDR_EC_SECOND_FAN_RPM_BYTE2 = 1131 (0x046B), and FanInfo.GetEcGpuFanRpm
+      reads those two as (num << 8) | b
+      (windows/decompiled/v3.1.39.0/GCUService/MyControlCenter/FanInfo.cs),
+      so the service's low byte is 0x046B and not 0x046D, and 0x046D has no
+      constant in any of the three ECSpec.cs versions in the tree. The EC
+      disagrees with the service and agrees with upstream:
+      store_r6_r7_to_046c_046d (bank0 0xE024) writes one value across both at
+      an inc DPTR, and be16_046c_046d_minus_100 (bank0 0xBD6B) reads them
+      back as one, taking the constant off 0x046D into 0x046C through the
+      borrow. xdata-clusters.csv agrees: main-ec-138 holds 0x046C 0x046D
+      across six routines and no member of the first pair. The divergence is
+      a fact about the vendor's code, not a verdict on the hardware -- see the
+      XDATA_046B entry below and docs/findings/fan-duty-channel-075b-075c.md 4.
+      All 4 sites are bank0, no PD-image site. 0x046C: a read at 0x8793, a
+      read at 0xBD72 and the two-byte write at 0xE024; 0x046D: the low-byte
+      read at 0xBD6C. Byte order out of the symbol name, as in the entry above.
+
+  - name: XDATA_046B
+    addr: 0x046B
+    sources: [xdata-refs, ecspec-3.1.6.0(ADDR_EC_SECOND_FAN_RPM_BYTE2)]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      NOT the second fan's low byte, though ECSpec calls it so: the EC puts
+      the low half of the second tachometer at 0x046D. See the SECOND_FAN_RPM
+      entry above for the four sources that disagree and the committed
+      capture that sides with the EC. Graded present-untested
+      because the EC demonstrably reads and writes this byte -- not for the
+      vendor's fan reading, which the EC's own code contradicts, and not
+      confirmed-inert, which would assert the service's read is wrong at
+      runtime when no live test here says so. docs/findings/fan-tachometer-addresses.md
+      4; the lead and its caveats are docs/findings/fan-duty-channel-075b-075c.md 4.
+      What the EC does with it: all 4 direct MOV DPTR sites sit inside one
+      routine, gate_06e6_442_then_sync_046a_from_086b (bank0 0x9CA6). Two of
+      them -- the read at 0x9D22 and the write at 0x9D4D -- are in that
+      routine's single four-byte sync of 0x046A/0x046B/0x046E/0x046F from
+      0x086B-0x086E: read, xrl against R7, and copy the whole quartet when any
+      member differs (ec/decompiled/bank0/9CA6.asm, the compare chain at
+      0x9D1A-0x9D3E and the store run at 0x9D41-0x9D60). A third, the read at
+      0x9D69, is downstream of the sync rather than in it: it sits past the end
+      of the store run, in the tail that stages 0x046A/0x046B/0x046F into R7
+      for the 0xDF1E/0xDF35/0xDF78 calls, and never reads 0x046E. The fourth,
+      the write at 0x9CEB, is neither: it is on an earlier path in the same
+      routine that stores 0x08C1 into 0x046B beside 0x046A and 0x046F and sjmps
+      into the store run, a three-byte write that never touches 0x046E. The
+      routine is named for the byte it syncs, 0x046A; this one is that quartet's
+      second member, and the quartet does not read as a fan pair -- ECSpec names
+      its first member
+      ADDR_EC_BIOS_INFO5 (1126), a different register, and its last two members
+      0x046E/0x046F carry no name in ECSpec.cs or in this file. Only the second
+      member is named as a fan, and that is the name the EC contradicts. All
+      bank0, no PD-image site.
 
   - name: BAT_CYCLE_COUNT
     addr: [0x04A6, 0x04A7]
