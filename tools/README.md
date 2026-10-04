@@ -71,6 +71,18 @@ above are read off a run rather than kept by hand. A run that finds no suite
 at all is a failure too, not a silent pass — the vacuous check is the same
 defect the gate's listing parse had in `docs/findings.md` §14b.
 
+A suite that runs other suites is the one case the per-file line has more to
+say than a count. `unittest` prints a summary per *run*, so such a suite's
+transcript carries several and only one of them is its own — which one is a
+decision the runner records per suite (`ran_line_for` in `run-tests.sh`) and
+names in the output on every run. A suite that prints several and has no
+record is refused, with its own clause in the last line rather than the
+`FAILED` one: it is a shape defect, not a red suite. Adding an ordinary suite
+needs nothing; only a suite that starts running other suites does.
+[`tools/test_run_tests_ran_lines.py`](test_run_tests_ran_lines.py) holds that,
+and [`docs/findings/run-tests-ran-lines.md`](../docs/findings/run-tests-ran-lines.md)
+is the write-up.
+
 ## One interpreter per file, and why that is not a preference
 
 The `windows/tools` suites used to install a fake `ecrw` into `sys.modules`

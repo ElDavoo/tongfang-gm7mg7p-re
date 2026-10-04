@@ -31,6 +31,36 @@ fi
 suites=0
 tests=0
 failed=0
+unrecorded=0
+
+# Which `Ran N tests` line is the suite's own, for a suite that runs others.
+#
+# A suite that *runs* other suites prints their summaries on the same stream,
+# so its transcript carries one line per run rather than one per suite. Which
+# of those lines is the suite's own run is not a property of the transcript:
+# `ec/tools/test_pd_image_census.py` is last because the suites it drives run
+# inside its own cases, and a suite that drove them *after* its own summary
+# would be first, and nothing in the output would tell the two apart. So the
+# choice is recorded per suite, here, and said out loud on every run -- which
+# is the whole difference between a decision and a guess. A suite with one
+# summary line has nothing to decide and does not come here.
+#
+# Adding an ordinary suite changes nothing here. Only a suite that starts
+# running other suites has to add a row, which is the point: the table is a
+# list of decisions, not a census of suites.
+ran_line_for() {
+  case "$1" in
+    ec/tools/test_pd_image_census.py)
+      # Its own case calls pd_image_census.self_test() twice, over two
+      # throwaway one-case suites the case writes into a TemporaryDirectory,
+      # and self_test() runs each with subprocess.call -- so each one's summary
+      # lands on this stream inside the case, before the outer run prints its
+      # own. Two lines ahead, then its own.
+      printf 'last\n' ;;
+    *)
+      return 1 ;;
+  esac
+}
 
 # One interpreter per FILE -- not per directory, and not one for the lot.
 #
@@ -73,20 +103,68 @@ while IFS= read -r -d '' path; do
                        -p "$(basename -- "$path")" 2>&1)
   rc=$?
   suites=$((suites + 1))
-  # `tail -1` because a suite that *runs* other suites prints their summaries
-  # too: `ec/tools/test_pd_image_census.py` drives `disasm8051.py --self-test`
-  # and a stub, so its output carries three `Ran N tests` lines -- 1, 1 and its
-  # own 55. Without it `n` is three numbers, `$((tests + ${n:-0}))` dies on a
-  # syntax error, and the runner stops partway through printing no total at all
-  # -- the §14b failure mode one level up, a run that has stopped counting
-  # rather than one reporting a wrong count. The last line is the suite's own
-  # summary, and that is the one this tally wants.
-  n=$(printf '%s\n' "$out" | sed -nE 's/^Ran ([0-9]+) tests? .*/\1/p' | tail -1)
+  # Every `Ran N tests` line the suite printed, not only the last one: a suite
+  # that runs other suites prints their summaries here too, so "the last line"
+  # is a choice about which run is the suite's own and has to be made where it
+  # can be seen. `sed` on `$out` rather than on the transcript twice, because
+  # the second reading is the one that could disagree with the first.
+  rands=$(printf '%s\n' "$out" | sed -nE 's/^Ran ([0-9]+) tests? .*/\1/p')
+  # `wc -l` counts the numbers, not the lines of $out, so an empty transcript is
+  # zero rather than one. Guarded because `printf '%s' ''` is a single empty
+  # line and would otherwise read as one summary line printed.
+  ran_lines=0
+  if [ -n "$rands" ]; then
+    ran_lines=$(printf '%s\n' "$rands" | wc -l)
+  fi
+
+  n=''
+  nests=''
+  if [ "$ran_lines" -gt 1 ]; then
+    # More than one summary line, so this suite is running other suites and
+    # only its own run's count belongs in the tally. Which one that is comes
+    # from the record above; the message says so on every run, because the
+    # figure below is read off this output and a reader has to be able to see
+    # that a total came from a chosen line rather than assume it.
+    which=$(ran_line_for "$shown") || which=''
+    case "$which" in
+      last)  n=$(printf '%s\n' "$rands" | tail -1) ;;
+      first) n=$(printf '%s\n' "$rands" | head -1) ;;
+      # An answer this loop does not recognise is treated as no answer, rather
+      # than as a count of nothing: a record nobody can act on is the same
+      # problem as a missing one, and quietly dropping the suite would make
+      # the two indistinguishable in the output.
+      *) which='' ;;
+    esac
+    if [ -n "$which" ]; then
+      nests="; counted the $which of $ran_lines summary lines"
+    else
+      # No record, so no guess. Before this loop read every summary line, the
+      # count came from one of them by position and the arithmetic died on a
+      # multi-line `n`; the `tail -1` that replaced it chose in silence, and
+      # the suite's own count went missing from a total nobody could check.
+      # A refusal says which suite and what to do; a wrong number says neither.
+      unrecorded=$((unrecorded + 1))
+      n=''
+      nests='; NOT counted'
+      printf 'run-tests.sh: %s printed %d summary lines and has no recorded choice of which one is its own.\n' "$shown" "$ran_lines" >&2
+      printf '  A summary line is unittest'"'"'s own "Ran N tests"; more than one means the suite ran other\n' >&2
+      printf '  suites, so its count is not the number of tests it ran. Add a case to ran_line_for()\n' >&2
+      printf '  in tools/run-tests.sh saying whether its own run is the first or the last summary\n' >&2
+      printf '  line, and what makes it so.\n' >&2
+    fi
+  else
+    # One line or none, and the one that is there is the suite's own run by
+    # the ordinary reading. Nothing extra printed: a suite that did not need
+    # a decision should not look like it got one.
+    n=$(printf '%s\n' "$rands" | tail -1)
+  fi
+
   # Counted here rather than in the pass branch, and a failing suite
   # included rather than skipped, because the figure this builds is *tests
   # run*: a failure changes the verdict, not how much of the suite ran. The
   # ${n:-0} is for the branch below where there is no n at all -- a unittest
-  # that changed its summary line, or never printed one.
+  # that changed its summary line, never printed one, or a suite with no
+  # recorded choice, which contributes nothing and is refused above.
   tests=$((tests + ${n:-0}))
 
   # The exit code decides pass or fail; the count only decorates it, so a
@@ -96,12 +174,12 @@ while IFS= read -r -d '' path; do
   # That is why the total below is there to be read off a run, and not a gate.
   if [ "$rc" -ne 0 ]; then
     failed=1
-    printf '%s: FAILED\n' "$shown"
+    printf '%s: FAILED%s\n' "$shown" "$nests"
     printf '%s\n' "$out"
   elif [ -n "$n" ]; then
-    printf '%s: %s tests, passed\n' "$shown" "$n"
+    printf '%s: %s tests, passed%s\n' "$shown" "$n" "$nests"
   else
-    printf '%s: passed\n' "$shown"
+    printf '%s: passed%s\n' "$shown" "$nests"
   fi
 # `.claude/` is pruned for the same reason `.git/` always was, and the reason is
 # not tidiness: `git worktree add` under `.claude/worktrees/` puts a whole second
@@ -142,8 +220,18 @@ printf '      discovery, file opening and ioctls against hand-built fixtures:\n'
 printf '      no EC is opened, no register is read back, and no HID node is\n'
 printf '      touched. See linux/lightbar/README.md and the per-tool headers.\n'
 
-if [ "$failed" -ne 0 ]; then
-  printf '\n%d suite(s) run, %d tests; one or more FAILED.\n' "$suites" "$tests"
+if [ "$failed" -ne 0 ] || [ "$unrecorded" -ne 0 ]; then
+  printf '\n%d suite(s) run, %d tests' "$suites" "$tests"
+  # Two clauses, and never folded into one. `unrecorded` is a shape defect --
+  # a total missing a suite -- and reporting it as "one or more FAILED" would
+  # be a claim about the red set that is not this run's red set:
+  # docs/findings/runner-red-suite-set.md is a write-up about a figure of that
+  # kind being misread, and a runner that commits it is one nobody can trust.
+  # Each clause names its own tally so either can be read without the other.
+  [ "$unrecorded" -ne 0 ] && \
+    printf '; %d suite(s) not counted, no recorded choice of summary line' "$unrecorded"
+  [ "$failed" -ne 0 ] && printf '; one or more FAILED'
+  printf '.\n'
   exit 1
 fi
 

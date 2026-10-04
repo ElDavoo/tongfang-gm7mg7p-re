@@ -217,6 +217,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`rel8-displacement-bound.md`](rel8-displacement-bound.md) — What holds the rel8 displacement read in range: a constant in another module, and a marker check three frames away
 - [`remain-capacity-probe-offline-hold.md`](remain-capacity-probe-offline-hold.md) — The 0x0436 Linux probe: an unchecked column mapping, a path that missed §7, and a summary that aborted on `unknown` (issue #216)
 - [`reset-vector-dptr-targets.md`](reset-vector-dptr-targets.md) — The reset vector's two DPTR-only bank-0 targets, `0xD89F` and `0xD96C` (issue #559)
+- [`run-tests-ran-lines.md`](run-tests-ran-lines.md) — A suite that runs other suites, and which of its summary lines is its own (issue #1072)
 - [`runner-red-suite-set.md`](runner-red-suite-set.md) — The runner's red set, and the third of #162's blocker that was a missing table row (issue #751)
 - [`scheduler-divide-down-cycle.md`](scheduler-divide-down-cycle.md) — How many entries to the divide-down scheduler is one case-`0x0A` turn (issue #1183)
 - [`scheduler-run-8518-entries.md`](scheduler-run-8518-entries.md) — The `0x8518` block decoded: seven entry points, not one, and half of it is invisible to the host (issue #1185)
