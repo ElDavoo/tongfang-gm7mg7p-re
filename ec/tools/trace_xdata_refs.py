@@ -36,7 +36,7 @@ before it means anything:
      `../docs/findings/dptr-rebuild-walk-guard.md` is the census of what
      widening the reload guard did to committed rows.
   4. *What does the C-level census say about the same site?* `--census-column`
-     appends a `census` column to the `--csv` table carrying the per-site
+appends a `census` column to the `--csv` table carrying the per-site
      correspondence from `../annotations/xdata-*-census-sites.csv` -- one file
      per address, found by the address rather than listed here: the bucket and
      occurrence count of the decompiled C's references at that site, or the
@@ -49,6 +49,31 @@ before it means anything:
      this function renders against the committed column, so the two cannot
      drift apart. A blank cell would read as "the two agree", so there are
      none: `not recorded` is the explicit "not done by this method" token.
+  5. *What about a `movx` whose DPTR no `MOV DPTR` in this function set?*
+     `--callee-column` adds those sites, and like point 4's column the input is
+     **a committed table this tool never derives**
+     (`../annotations/xdata-0860-callee-dptr-sites.csv`, written by
+     `callee_dptr_sites.py --csv` from the `.asm` listings, which knows the
+     `movx` is there because it resolved the DPTR behind it). A callee that
+     loads DPTR and returns leaves the caller's next `movx` pointing at an
+     address the caller never named, and `sites_for()` -- a byte scan for
+     `MOV DPTR,#imm16` -- has nothing to find at such a site. The rows carry
+     the spelling `access` cell `DPTR from` names, and everything else in
+     them -- the region, the runtime address, the framing scores, the window
+     -- is computed here from the image as for any other site. The flag is off
+     by default so the other committed tables keep reproducing byte for byte,
+     and `--check` re-cuts with it automatically when the committed table has
+     the column.
+
+     Only the `callee` rows become sites. A `predecessor` row is a different
+     shape: the listing holding the `movx` begins where the listing holding
+     the `MOV DPTR` ends, so the load *is* a site in its own right at an
+     address this tool already books, and whether the 8-instruction window
+     reaches across the boundary between the two is `walk_why()`'s question and
+     not this one's. Promoting it here would book one store twice; it is in
+     `callee_dptr_sites.py`'s table, and
+     `../docs/findings/callee-set-dptr-census-blindspot.md` records it as a
+     window question the sweep has not been widened for.
 
 The decode is a linear best-effort walk, not a disassembler: it stops at
 the first control-flow instruction and cannot follow branches (disasm8051.py
@@ -68,7 +93,7 @@ Usage:
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x07D0 --csv > sites.csv
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column
     python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0751 --csv --terminator-column | diff - ../annotations/manual-fan-ctrl-0751-sites.csv
-    python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column --check
+    python3 trace_xdata_refs.py ../firmware/GMxMGxx_11.800 0x0860 --csv --census-column --callee-column --check
 """
 import argparse
 import collections
@@ -277,7 +302,22 @@ SITES_CSV = os.path.join(ANNOT, "xdata-086x-dispatch-sites.csv")
 # C-level reader has no line for.
 CENSUS_TOKENS = {"no-occurrence": "no census occurrence",
                  "other-program": "other program",
-                 "census-blind": "census blind at a decoded access"}
+"census-blind": "census blind at a decoded access",
+                 "dptr-from-callee": "dptr from callee"}
+
+# The committed resolver table --callee-column reads. Held here rather than
+# imported, because callee_dptr_sites.py imports this module for the region
+# map, the file-offset inversion and check_table(), and a module-level import
+# back would be a cycle. The tool is named so that a reader who wants to know
+# what is in the file is told what puts it there.
+CALLEE_CSV = os.path.join(ANNOT, "xdata-0860-callee-dptr-sites.csv")
+CALLEE_TOOL = "callee_dptr_sites.py --csv"
+
+# The `access` spelling for a `movx` reached through a callee. Kept as a
+# constant rather than written into the string because check_site_census.py
+# matches on it and a table and a checker agreeing by accident is the failure
+# this whole arrangement exists to prevent.
+DPTR_FROM = "DPTR from "
 
 
 def repo_path(path: str) -> str:
@@ -340,6 +380,34 @@ def load_census_map(paths=None, directory: str = ANNOT) -> dict:
                         f"{state!r}, which is not one of 'mapped', "
                         f"{', '.join(repr(s) for s in CENSUS_TOKENS)}")
     return {offset: " + ".join(cells) for offset, cells in out.items()}
+
+
+def load_callee_map(path: str = CALLEE_CSV) -> dict:
+    """`(addr, file_offset)` -> the `access` cell to print for that site.
+
+    One entry per `callee` row of `callee_dptr_sites.py`'s table -- see the
+    module docstring's fifth point for why those rows become sites here and
+    the `predecessor` ones do not. The cell is **read, not derived**: it is
+    the direction the callee's own `movx` operands give, and the resolver is
+    what resolved the DPTR behind them. Everything else about the row --
+    region, runtime, framing, window -- is computed from the image in
+    `csv_table()`, so a wrong address here cannot move a site to the wrong
+    place in the file.
+
+    A row whose `movx` cell is empty is not a site: those are the committed
+    call sites no listing covers, and there is no `movx` here to decode. They
+    are skipped rather than rendered as a site with no direction, because an
+    `access` cell with no verb in it is a cell nothing can check.
+    """
+    try:
+        with open(path, newline="") as f:
+            rows = list(csv.DictReader(f))
+    except OSError:
+        return {}
+    return {(row["xdata_addr"], row["file_offset"]):
+            f"{row['movx']} x1, {DPTR_FROM}{row['helper']}"
+            for row in rows
+            if row["dptr_source"] == "callee" and row["movx"]}
 
 
 def region_of(off: int, pd_verified: bool):
@@ -558,7 +626,7 @@ def sites_for(d: bytes, addr: int):
 
 
 def csv_table(d: bytes, addrs, pd_verified: bool, census=None,
-              terminator: bool = False):
+              terminator: bool = False, callee=None):
     """(the `--csv` table, per-address counts of the sites the map does not
     cover), for a reader who wants to re-derive a table without re-running
     anything. `frame_onto`/`frame_over` are disasm8051's anchor sweep -- see
@@ -573,7 +641,18 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None,
     after it, and is off by default for the same reason: the 0x086x table's
     own `--check` is the regression test that no `access` or `window` cell
     moved when the other six tables gained one, and it can only stay that
-    while the default output has no column in it.
+    while the default output has no column in it. `callee` is
+    load_callee_map()'s, and its rows are merged into the address's own sites
+    in file-offset order rather than appended after them -- a reader looking
+    for `0x0D191` should find it beside `0x0D144`, and an offset is the only
+    order both populations have in common.
+
+    **A `callee` site is decoded from the image like any other.** The window
+    is `walk_why(d, off)` with `skip=0`, so it starts at the `movx` itself and
+    the transfer the cell names is the resolver's, not this decode's; what
+    this decode contributes is the instructions around the access and the two
+    framing scores, which are the only columns in a row that have to be
+    reproducible from the image alone.
 
     **The `access` cell goes through `access_cell_corrections.corrected()`
     and not straight out of `classify()`.** For every row but a handful that
@@ -596,22 +675,31 @@ def csv_table(d: bytes, addrs, pd_verified: bool, census=None,
         columns.append("terminator")
     w.writerow(columns)
     unmapped = collections.Counter()
+    callee = callee or {}
     for text in addrs:
-        addr = int(text, 16)
-        for o in sites_for(d, addr):
+        addr = f"0x{int(text, 16):04X}"
+        found = sites_for(d, int(text, 16))
+        extra = {int(off, 16) for (a, off) in callee if a == addr}
+        for o in sorted(set(found) | extra):
+            key = f"0x{o:05X}"
+            # A byte-scan site is a `MOV DPTR` whose window starts after it; a
+            # callee site *is* the access, so its window starts on it.
+            skip = 0 if o in extra and o not in found else 1
             name, _, _, _ = region_of(o, pd_verified)
             rt = runtime_addr(o, pd_verified)
             onto, over = converges_from(d, o)
             insns, why = walk_why(d, o)
-            row = [f"0x{addr:04X}", f"0x{o:05X}", name,
+            row = [addr, key, name,
                    f"0x{rt:04X}" if rt is not None else "",
-                   onto, over, corrected(o, classify(insns)),
-                   " ; ".join(" ".join(mn.split()) for _, _, mn in insns[1:])]
+                   onto, over,
+                   callee[(addr, key)] if (addr, key) in callee
+                   else corrected(o, classify(insns)),
+                   " ; ".join(" ".join(mn.split()) for _, _, mn in insns[skip:])]
             if census is not None:
-                cell = census.get(row[1])
+                cell = census.get(key)
                 if cell is None:
                     cell = "not recorded"
-                    unmapped[f"0x{addr:04X}"] += 1
+                    unmapped[addr] += 1
                 row.append(cell)
             if terminator:
                 row.append(why)
@@ -662,6 +750,27 @@ def committed_columns(path: str):
     except OSError:
         return None
     return header
+
+
+def committed_text(path: str) -> str:
+    """The committed table's bytes, or "" when it cannot be read.
+
+    For the one question a header cannot answer: whether the table was
+    re-cut with `--callee-column`, which adds no column and so leaves the
+    header identical to the table without it. `check_table()` is what reports
+    an unreadable path, once, and this returns "" so that a `--check` against
+    a missing file is that same report rather than a second one.
+
+    Read as text and searched for a substring rather than parsed, because the
+    substring has no comma in it and every `access` cell that carries it is
+    quoted -- which a `csv` round-trip would have to un-quote before the
+    search could see it, for no gain over the file's own bytes.
+    """
+    try:
+        with open(path, newline="") as f:
+            return f.read()
+    except OSError:
+        return ""
 
 
 def committed_terminator_tables(directory: str, addrs) -> list:
@@ -744,15 +853,19 @@ def main() -> int:
                          "the five walk_why() terminators ended this row's "
                          "window, so a window cut by the instruction budget is "
                          "not in the same shape as one cut by a real terminator")
+    ap.add_argument("--callee-column", action="store_true",
+                    help="with --csv, add the sites whose DPTR a callee left "
+                         f"behind, read from {repo_path(CALLEE_CSV)} "
+                         f"(written by {CALLEE_TOOL}) -- not derived here")
     ap.add_argument("--check", nargs="?", const=SITES_CSV, metavar="PATH",
                     help="with --csv, diff this run against a committed table and "
                          "exit non-zero on any difference (default: the 0x086x page's)")
     args = ap.parse_args()
 
-    if (args.census_column or args.terminator_column
+    if (args.census_column or args.terminator_column or args.callee_column
             or args.check is not None) and not args.csv:
-        ap.error("--census-column, --terminator-column and --check are about "
-                 "the --csv table; they need --csv")
+        ap.error("--census-column, --terminator-column, --callee-column and "
+                 "--check are about the --csv table; they need --csv")
 
     d = open(args.firmware, "rb").read()
     off, magic = PD_MARKER
@@ -771,8 +884,16 @@ def main() -> int:
             except (OSError, ValueError) as e:
                 print(f"note: {e}", file=sys.stderr)
                 return 1
+        callee = {}
+        # Off by default and never inferred from the committed header: a table
+        # that gained the column without the flag reaching it is a red --check
+        # the reader can see, and this is the flag they add.
+        if args.callee_column or (args.check is not None
+                                  and "DPTR from" in committed_text(args.check)):
+            callee = load_callee_map()
         table, unmapped = csv_table(d, args.addrs, pd_verified, census,
-                                    terminator=args.terminator_column)
+                                    terminator=args.terminator_column,
+                                    callee=callee)
         if unmapped:
             by_addr = ", ".join(f"{a} x{n}" for a, n in sorted(unmapped.items()))
             named = ", ".join(repo_path(census_map_path(a))

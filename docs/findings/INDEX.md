@@ -73,6 +73,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`call-graph-unresolved.md`](call-graph-unresolved.md) — The call-graph tranche's twelve `unresolved` rows, retyped from their bytes (issue #456)
 - [`call-site-framing-census.md`](call-site-framing-census.md) — Every bucket-A and bucket-C scan site against the committed listings: `anchored` predicts a real opcode across bucket A, and fails to in bucket C and in the fill band (issue #594)
 - [`callee-depth-n.md`](callee-depth-n.md) — `--callee-depth` follows a chain of handoffs, and the two `LIGHTBAR_BAT_*` sites that were unresolved at depth 1 are reads at depth 2
+- [`callee-set-dptr-census-blindspot.md`](callee-set-dptr-census-blindspot.md) — The two committed XDATA methods were blind at the same two bytes, and `agree` was the wrong word for it
 - [`capture-claim-denials-are-checks.md`](capture-claim-denials-are-checks.md) — A denial is the only shape a retraction takes, so `check_capture_claims.py` checks it instead of skipping it (issue #328)
 - [`capture-claims-docstring-surface.md`](capture-claims-docstring-surface.md) — The capture-claims docstring quotes its own run, so a test now holds it to the run (issue #991)
 - [`capture-filename-date-prefix.md`](capture-filename-date-prefix.md) — The capture root's date prefix and its flatness are measured, and a name breaking either is refused (issue #973)
