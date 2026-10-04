@@ -40,7 +40,7 @@ re-derives it from the committed image:
 
 ```console
 $ python3 ec/tools/two_hop_census.py --check
-ec/annotations/two-hop-dptr-handoffs.csv: this run reproduces it byte for byte (14 lines)
+ec/annotations/two-hop-dptr-handoffs.csv: this run reproduces it byte for byte
 ```
 
 The selection is **definitional, not hand-picked**: a row is emitted when the
@@ -60,20 +60,24 @@ implement, since those rows cannot be regenerated at all.
 
 ### Shape 1 — the branch, then the call
 
-Every cell here was `other->flow` before and is `other->flow->read` now.
-The `via` column is the branch the follow took and the `callee` column the
-call it then resolved, so the row names both hops:
+Every cell here was `other->flow` before; what it is now is whatever the
+callee does with DPTR, so the population is **not** all reads. The `via`
+column is the branch the follow took and the `callee` column the call it then
+resolved, so the row names both hops:
 
-| site | via | callee | `r2` at the callee |
-|---|---|---|---|
-| `0x24B40` (rt `0x4B40`) | `fall-through past jnz +0x12 at 0x4B43` | `0x34A5` | `movx a,@dptr` |
-| `0x26757` | `fall-through past cjne a,#0x02,+0x08 at 0x675A` | `0x37DE` | `movx a,@dptr ; …` |
-| `0x2233C` | `fall-through past jnz +0x12 at 0x233F` | `0x34A5` | `movx a,@dptr` |
-| `0x2AE73` | `sjmp target 0xAE7D` | `0xAE91` | `movx a,@dptr ; mov r7,a ; inc dptr ; …` |
-| `0x26DAA` | `fall-through past cjne r5,#0x03,+0x0f at 0x6DAD` | `0x0FAF` | `movx a,@dptr ; mov r4,a ; inc dptr ; …` |
-| `0x2D01D` | `fall-through past jnz +0x27 at 0xD020` | `0x714F` | `movx a,@dptr ; mov 0xf0,#0x17 ; …` |
-| `0x2BB50` | `fall-through past jnz +0x0f at 0xBB53` | `0xB293` | `movx a,@dptr ; mov 0xf0,#0x5e ; …` |
-| `0x2BD80` | `fall-through past jnz +0x0f at 0xBD83` | `0xB293` | `movx a,@dptr ; mov 0xf0,#0x5e ; …` |
+| site | via | callee | verdict | `r2` at the callee |
+|---|---|---|---|---|
+| `0x24B40` (rt `0x4B40`) | `fall-through past jnz +0x12 at 0x4B43` | `0x34A5` | read | `movx a,@dptr` |
+| `0x26757` | `fall-through past cjne a,#0x02,+0x08 at 0x675A` | `0x37DE` | read | `movx a,@dptr ; …` |
+| `0x2233C` | `fall-through past jnz +0x12 at 0x233F` | `0x34A5` | read | `movx a,@dptr` |
+| `0x2AE73` | `sjmp target 0xAE7D` | `0xAE91` | read | `movx a,@dptr ; mov r7,a ; inc dptr ; …` |
+| `0x26DAA` | `fall-through past cjne r5,#0x03,+0x0f at 0x6DAD` | `0x0FAF` | read | `movx a,@dptr ; mov r4,a ; inc dptr ; …` |
+| `0x2D01D` | `fall-through past jnz +0x27 at 0xD020` | `0x714F` | read | `movx a,@dptr ; mov 0xf0,#0x17 ; …` |
+| `0x2BB50` | `fall-through past jnz +0x0f at 0xBB53` | `0xB293` | read | `movx a,@dptr ; mov 0xf0,#0x5e ; …` |
+| `0x2BD80` | `fall-through past jnz +0x0f at 0xBD83` | `0xB293` | read | `movx a,@dptr ; mov 0xf0,#0x5e ; …` |
+| `0x0B4F4` (rt `0x0A47`) | `fall-through past jz +0x05 at 0xB4F7` | `0xBE42` | **write** | `mov a,#0x64 ; movx @dptr,a ; inc dptr ; …` |
+| `0x0B64E` (rt `0x0A47`) | `fall-through past jz +0x05 at 0xB651` | `0xBE42` | **write** | as above |
+| `0x0B7AE` (rt `0x0A47`) | `fall-through past jz +0x05 at 0xB7B1` | `0xBE42` | **write** | as above |
 
 The transcripts are against the flat PD image (`dd if=ec/firmware/GMxMGxx_11.800
 of=/tmp/pd.bin bs=64k skip=2 count=1`), so the oracle is an independent
@@ -90,7 +94,25 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0x0faf; pd 4' /tmp/pd.bin
             0x00000fb2      e0             movx a, @dptr
 ```
 
-Two of the eight are worth naming beyond the table. `0x24B40` is the cell the
+The three `write` rows are `0x0A47`'s, and they are what makes the
+`other->flow->write` arm a row rather than a shape the column reserves.
+`0xBE42` is in bank0, so it is read on the committed image rather than on that
+extraction, and it stores two bytes and loads none:
+
+```console
+$ r2 -a 8051 -e scr.color=0 -q -c 's 0xbe42; pd 7' ec/firmware/GMxMGxx_11.800
+            0x0000be42      7464           mov a, #0x64
+            0x0000be44      f0             movx @dptr, a
+            0x0000be45      a3             inc dptr
+            0x0000be46      74b5           mov a, #0xb5
+            0x0000be48      f0             movx @dptr, a
+            0x0000be49      22             ret
+```
+
+That is a store on a path this method chose, and **not** evidence the EC acts
+on the value: nothing here is measured on hardware.
+
+Two rows are worth naming beyond the table. `0x24B40` is the cell the
 issue is about, and `0x2AE73` is reached by an **`sjmp`** rather than a
 conditional fall-through — the follow treats an unconditional transfer the
 same way, because at that point there is no branch to fall through, and the
@@ -116,9 +138,9 @@ stating rather than leaving to be found later: `0x204F9`, `0x2B5F9` and
 `0x2951B` all reach a first callee that is a one-instruction trampoline onto
 `0x10C8`. They resolve as a family because they are one.
 
-`0x089E` is the only cell in either shape that is not a read, and it is `r+w`
-for a reason the window shows rather than the bucket asserting — `0x70E4`
-reads, adds and writes the same DPTR:
+`0x089E` is the only cell in this shape that is `r+w`, for a reason the window
+shows rather than the bucket asserting — `0x70E4` reads, adds and writes the
+same DPTR:
 
 ```console
 $ r2 -a 8051 -e scr.color=0 -q -c 's 0x70e4; pd 7' ec/firmware/GMxMGxx_11.800
@@ -155,9 +177,14 @@ handoffs, and there is no callee to resolve. Giving them a `->callee` column
 would claim a call that is not there. **That column is empty on this image** —
 every cell the follow reached was a handoff — so it is there for the shape
 rather than for a row, and the suite builds the `movc` case rather than reading
-it. The same is true of the negative arms of `other->flow->`: every flow
-callee that settles at all settles as a read on this image, so a callee that
-writes, reads-and-writes, or hands DPTR on again is a fixture and not a row.
+it.
+
+Of `other->flow->`'s own arms, `->write` has rows — the three `0x0A47` cells
+above, reaching `0xBE42` — and `->unresolved` has the two cells named above,
+which the census leaves out because it records the *resolved* members only.
+`->read+writes` is the one arm this image does not exercise: no flow callee
+both loads and stores the same DPTR, so the suite builds that case as a byte
+fixture rather than reading it.
 
 ## What this does not settle
 

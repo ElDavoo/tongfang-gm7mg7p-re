@@ -18,12 +18,20 @@ in the image change.
 
 The fixtures are for the load-bearing part. The committed image's `other->flow`
 population settles at its first callee for every cell that settles at all, and
-its longest handoff chain is two links, so **neither** new column's *negative*
-shape is exercised by the image: no flow cell's callee writes or reads+writes,
-and no flow row takes two hops *at depth 1*. A `FLOW_CALLEE_CLASSES` that
-resolved writes into `->read`, or a second-pass `classes_for()` that dropped a
+its longest handoff chain is two links, so most of each new column's *negative*
+shape is not exercised by the image: no flow cell's callee reads+writes, and no
+flow row takes two hops *at depth 1*. A `FLOW_CALLEE_CLASSES` that resolved a
+read+writes into `->read`, or a second-pass `classes_for()` that dropped a
 label, would pass every image-derived case here and be wrong. That is why the
-write / r+w / two-hop / unreachable cases are built rather than read.
+r+w / two-hop / unreachable cases are built rather than read.
+
+The `->write` arm is the exception: `0x0A47`'s three cells reach `0xBE42`,
+which stores two bytes and loads none, so the image-derived cases below cover
+that arm too. Which arms the image happens to reach moves as `registers.yaml`
+grows -- that is the selection working as
+`../../docs/findings/two-hop-dptr-handoff.md` describes it -- so the r+w case
+stays a fixture rather than becoming an assertion that no image cell reaches
+it, which is a claim about one image and not about the tool.
 
 The composed mode -- depth 2 *and* --follow-flow -- is the one this suite
 reaches through named cases rather than through the census, because
@@ -114,21 +122,52 @@ class ImageTwoHopTests(unittest.TestCase):
         # committed --follow-flow tables carry that spelling.
         self.assertEqual(win2, "jnz +0x12")
 
-    def test_every_flow_row_is_read_and_says_so_in_its_own_column(self):
+    def test_every_flow_row_still_resolves_the_way_the_census_records_it(self):
         # The census of shape 1, checked against the image rather than against
-        # the census file: each cell named by the committed table must still be
-        # a read, at the address that file records.
+        # the census file: each cell named by the committed table must still
+        # resolve at the address that file records, down the branch it records
+        # and into the callee it records.
+        #
+        # The class is asserted as the file's own rather than as one fixed
+        # label. The population is not all reads -- `0x0A47`'s three cells
+        # reach `0xBE42`, which stores, so they carry `->write` -- and pinning
+        # the label here would have been a claim about the image that a
+        # `registers.yaml` addition could falsify, in a test whose subject is
+        # whether the census reproduces. What is load-bearing is that the class
+        # is one of the three *resolved* members, so a row can never claim a
+        # verdict this mode does not make.
         with open(CENSUS, newline="") as f:
             rows = [r for r in csv.DictReader(f) if r["mode"] == "flow"]
         self.assertTrue(rows, "no flow rows in the committed census")
-        want = rrt.FLOW_CALLEE_CLASSES[0][0]
+        resolved = {label for label, _ in rrt.FLOW_CALLEE_CLASSES[:3]}
         for r in rows:
+            where = f"{r['addr']} at {r['file_offset']}"
             addr, off = int(r["addr"], 16), int(r["file_offset"], 16)
             row = [x for x in self.rows(addr, 1, True) if x[0] == off]
-            self.assertEqual(len(row), 1, f"{r['addr']} at {r['file_offset']}")
-            self.assertEqual(row[0][3], want, f"{r['addr']} at {r['file_offset']}")
+            self.assertEqual(len(row), 1, where)
+            self.assertEqual(row[0][3], r["class"], where)
+            self.assertIn(row[0][3], resolved, where)
             self.assertEqual(row[0][7], r["via"], "the branch is not the one recorded")
             self.assertEqual(f"0x{row[0][4]:04X}", r["callee"])
+
+    def test_a_flow_callee_that_stores_lands_in_the_write_column(self):
+        # The `->write` arm against the image rather than as a fixture.
+        # `0x0A47`'s cells reach `0xBE42` past the branch, and `r2 -a 8051 -c
+        # 's 0xbe42; pd 7' ec/firmware/GMxMGxx_11.800` reads
+        # `mov a,#0x64 ; movx @dptr,a ; inc dptr ; mov a,#0xb5 ;
+        # movx @dptr,a ; ret` -- two stores and no load, so `->write` and not
+        # `->read`. This is the case a `FLOW_CALLEE_CLASSES` that filed a
+        # store into the read column would get wrong.
+        rows = [r for r in self.rows(0x0A47, 1, True) if r[0] == 0x0B4F4]
+        self.assertEqual(len(rows), 1)
+        _o, _region, rt, label, callee, window, _win2, via, _chain, _stop = rows[0]
+        self.assertEqual(rt, 0xB4F4)
+        self.assertEqual(callee, 0xBE42)
+        self.assertEqual(via, "fall-through past jz +0x05 at 0xB4F7")
+        self.assertEqual(window,
+                         "mov a,#0x64 ; movx @dptr,a ; inc dptr ; mov a,#0xb5 ; "
+                         "movx @dptr,a ; ret")
+        self.assertEqual(label, rrt.FLOW_CALLEE_CLASSES[1][0])
 
     def test_a_flow_row_names_both_hops_and_neither_column_is_the_strong_one(self):
         # The whole point of the columns: the claim is branch-then-call, which
@@ -551,10 +590,17 @@ def site(target: int) -> tuple:
 
 
 class FixtureShapeTests(unittest.TestCase):
-    """The shapes the committed image does not contain: a callee that writes,
-    one that reads and writes, one that hands DPTR on a second time, one that
-    is not reachable, a `movc` past a branch with no callee at all, and a
-    first callee with no call in it -- which must take no second hop."""
+    """The shapes the committed image does not contain: a callee that reads
+    and writes, one that hands DPTR on a second time, one that is not
+    reachable, a `movc` past a branch with no callee at all, and a first
+    callee with no call in it -- which must take no second hop.
+
+    These are about `resolve_handoff()` and the *one-call* handoff column, so
+    the plain write case below is about `handoff->write`, which the image does
+    exercise and `ImageTwoHopTests` covers at the two-hop bound. What the image
+    still does not exercise is the `other->flow->r+w` arm; the write and r+w
+    cases here are what a mis-filed store or a collapsed read+writes would
+    land in."""
 
     def resolve(self, img: bytes, depth=1):
         return rrt.resolve_handoff(img, SITE, txr.walk(img, SITE), True, depth)
