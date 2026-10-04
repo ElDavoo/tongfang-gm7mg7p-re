@@ -117,12 +117,18 @@ class ClassifiesTheRealTree(unittest.TestCase):
             self.assertVerdict(value, cdfp.UNHELD)
 
     def test_the_cluster_refs_cell_is_held_through_the_line_the_row_cites(self):
-        # `4,966` is the `refs` cell of `main-ec-003`, and `--check` compares
+        # `4,966` is the `refs` cell of `main-ec-0460`, and `--check` compares
         # that whole file, so a re-derivation that moved it turns the cheap gate
         # red. It is held only because the row cites the line: searching all
         # 439 rows for "a cell equal to 4966" is not the same claim, and the next
         # case is what shows why that is not a distinction without a difference.
-        pins = [("ec/annotations/xdata-clusters.csv", 4)]
+        # The line is found rather than typed: the row is the 0x0460 cluster,
+        # and where it sits in the file is the CSV's business.
+        with open(cdfp.REPO + "/ec/annotations/xdata-clusters.csv",
+                  encoding="utf-8") as f:
+            line = next(n for n, row in enumerate(f, 1)
+                        if row.startswith("main-ec-0460,"))
+        pins = [("ec/annotations/xdata-clusters.csv", line)]
         self.assertVerdict(4966, cdfp.BY_LITERAL, pins)
         self.assertVerdict(43, cdfp.BY_LITERAL, pins)
 

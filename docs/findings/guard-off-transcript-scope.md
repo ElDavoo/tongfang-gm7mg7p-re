@@ -219,10 +219,10 @@ its own dated correction rather than edited out. Both corrections are in the
 §4a form with the superseded figure left visible, and the sequence is 19 → 43 →
 27 → 31 → 32, with the commits that moved it: `6bf9c234` (#683) set the cell and
 the census to 27 *in the same commit*, so the row was right when written;
-`31147ccc` (#1059, 2026-09-27) named four addresses inside `main-ec-002` —
+`31147ccc` (#1059, 2026-09-27) named four addresses inside `main-ec-0456` —
 `0x074C` `PDIN`, `0x0788` `CTWA`, `0x07A4` `GC6S`, `0x07C5` `WHMS` — taking the
 census to 31 without the table following; and `7245cc0f` (#1438, 2026-09-30)
-added `XDATA_086C` at `0x086C`, which is a member of `main-ec-002`, taking it
+added `XDATA_086C` at `0x086C`, which is a member of `main-ec-0456`, taking it
 to 32 **and correcting the row to 32 in the same commit**. The thing that
 noticed the 27 was the count rule, in a suite that had been red for an
 unrelated reason and so had not been run to green.
