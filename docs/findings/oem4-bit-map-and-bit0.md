@@ -373,11 +373,21 @@ What that channel does contain is tabulated in
 regenerable with `python3 bios/tools/ec_io_census.py --check`. **No row carries
 `(0x07, 0xA6)`** — the pair §1 asks about — and that is the whole of what the
 census says about it: not found by this census over these listings and these
-call sites, with the rows whose base or index the tool could not read named in
-the write-up rather than left out of the table. One of those rows selects base
-`0x04` (`Setup` `0x1B9A0`, no call site for it in the committed listings), so
-`0x04A6` is not excluded by the same census; "indexed by `0xA6`" means nothing
-without the base, and neither does the negative.
+call sites. The write-up names the rows whose base or index the tool could not
+read rather than leaving them out of the table; one of those selects base `0x04`
+(`Setup` `0x1B9A0`, no call site for it in the committed listings), so `0x04A6`
+is not excluded by the same census — "indexed by `0xA6`" means nothing without
+the base, and neither does the negative.
+
+It also names a second boundary, and this is the one to carry here: the channel
+has an encoding the tool's site pattern does not match. `OemI2cDevices` reaches
+the same `0x66`/`0x62` pair by loading the port into `EDX` and issuing
+`out DX, AL` inline, with no `mov DL, <command>` literal anywhere in the
+module, so no row names it at all — invisible rather than unresolved. The bytes
+it sends are its functions' arguments and nothing in the committed listings
+settles them, which is exactly where a write would hide if one existed in that
+encoding rather than the tabulated one. So the negative is bounded by that
+boundary too, not only by the unresolved rows.
 
 ## 7. What this leaves open
 

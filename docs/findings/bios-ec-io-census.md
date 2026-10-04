@@ -10,8 +10,8 @@ listings and these call sites**. It is not "the BIOS does not write
 `0x07A6`", for the reason §1 is about: on this channel an address is a *pair*
 of bytes, so the question "does the BIOS reference `0x07A6`" has no answer to
 give until someone asks about the pair. §5 gives the pair census, §6 the
-verdict, and §7 the rows the census could not read, which is where the
-negative stops.
+verdict, and §7 the two boundaries the negative stops at — the rows the census
+could not read, and an encoding of the same channel it does not read at all.
 
 ## 1. The channel, and why the literal patterns could never match it
 
@@ -44,6 +44,12 @@ base fixed at `0x07`:
 0001BA78 mov  DL, 0xa5
 0001BA7C call 0x0001b8d8
 ```
+
+**That is one encoding of the channel, and the census reads only that one.**
+The committed listings reach `0x62`/`0x66` a second way as well — by loading
+the port into `EDX` and issuing `out DX, AL` inline, with the byte coming from
+a register rather than from a `mov DL, <command>` literal. §7 names where that
+stands alone and says what is and is not known about it.
 
 **That is the whole reason a literal scan misses.** A write to `0x07A6` over
 this channel carries `0xA6` against a `0x07` base. The strings `7A6`, `0x7A6`,
@@ -213,8 +219,13 @@ bytes as arguments — not about the BIOS's behaviour, and not about the
 `0xFE41xxxx` memory window, which this census does not read at all and which
 is a separate survey.
 
-It is also not the last word, for two reasons worth keeping separate:
+It is also not the last word, for three reasons worth keeping separate:
 
+- **The channel has a second encoding the tool's site pattern does not match.**
+  `OemI2cDevices` reaches the same `0x66`/`0x62` pair by `out DX, AL` rather
+  than by a `mov DL, <command>` literal and a helper call, so no row names it
+  at all. §7 has this as its second boundary; it is the one most likely to
+  hide a write, because the byte there is a caller's argument.
 - **One `0xA6` in the tree is a displacement, not a command byte.**
   `Setup 0xD400` contains `test word ptr [RBX + 0xa6], AX`. A scan for the
   byte finds it and it means nothing; the tool's site pattern is
@@ -226,10 +237,14 @@ It is also not the last word, for two reasons worth keeping separate:
 
 ## 7. Where the negative stops
 
-These are the rows whose `base` or `index` the tool could not read. Each is in
-the table with that column empty and the register named, and together they are
-the boundary of §6 — so they are listed here rather than left for a reader to
-discover:
+Two boundaries, and they are not the same kind of thing. The first is the rows
+the tool read but could not resolve; the second is a shape of code the tool
+does not read at all.
+
+### The rows the tool could not read
+
+Each of these is in the table with that column empty and the register named,
+and they are listed here rather than left for a reader to discover:
 
 | module | function | why |
 |---|---|---|
@@ -251,6 +266,43 @@ because a rule that special-cased this window is the rule §3 exists to avoid.
 Rows whose only unreadable byte is the *value* written are not in this table;
 `--unresolved` prints them, and §5's `resolved` column is what separates the
 two.
+
+### The encoding the tool does not read at all
+
+The rows above are unresolved: the tool found the access and named the byte it
+could not follow. What follows is not in the table at all, and that is a
+different claim. The tool's site pattern is `mov DL, <command>` followed by a
+helper call, so a function that reaches the same two ports by loading `EDX`
+with the port and issuing `out DX, AL` produces **no row naming it** — not an
+unresolved row, no row. `OemI2cDevices` is written entirely in that shape: it
+contains no `0xA3`, `0xA2`, `0xA4` or `0xA5` literal anywhere, so the whole
+module is invisible to the census, and `rows()` returns nothing for it.
+
+Two functions there do the writing, and both annotation rows already record the
+mechanism:
+
+- `write_port_66_wait_d1_clear` (`0x5CC`) writes its second argument's low byte
+  to `0x66`: `mov EDX, 0x66` at `0x618`, `mov AL, DIL` at `0x61D`, `out DX, AL`
+  at `0x620`, with `DIL` aliased from `DL` at entry.
+- `write_port_62_between_d1_polls` (`0x6DC`) writes its second argument to
+  `0x66` through the `0x5CC` call and its third to `0x62` inline: `mov EDX,
+  0x62` at `0x745`, `mov AL, SIL` at `0x74A`, `out DX, AL` at `0x74D`, with
+  `SIL` aliased from `R8B` at entry.
+
+What is known, and what is not: the bytes these two send are the **function
+arguments**, so they are the caller's to choose and the committed tree does not
+settle them. `0x5CC` has exactly one caller in the listings — `0x6DC` at
+`0x70D` — and `0x6DC` has none, so nothing resolves either byte. **A byte
+supplied by a caller's argument is exactly what this census cannot read**, and
+that is where a `(0x07, 0xA6)` write would most plausibly hide if one exists in
+this encoding rather than the one §5 tabulates. Whether the pair either reaches
+is a question this file does not answer, and nothing here should be read as
+saying it cannot.
+
+So §6's negative is bounded by the rows the tool could not read **and** by this
+encoding, which the tool does not cross at all. The second boundary is wider
+than the first, and it is stated here rather than left implicit in the tool's
+site pattern.
 
 ## 8. The load-defaults path, and the part that cannot be followed by name
 

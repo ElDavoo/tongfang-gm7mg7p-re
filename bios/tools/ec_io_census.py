@@ -63,6 +63,15 @@ does not decide what the EC does with a byte, it does not cover the `0xFE41xxxx`
 memory window -- that is a separate survey -- and a site the tool cannot read
 is a hole in the table, not an absence of a write.
 
+**The site's shape is an assumption, and a second encoding misses it entirely.**
+A site is `mov DL, <command>` followed by a helper call, and `OemI2cDevices`
+reaches the same two ports without either: it loads `EDX` with the port and
+issues `out DX, AL` inline, so `port_sites()` returns nothing and the module
+contributes no row at all -- invisible rather than unresolved. That is a
+boundary on the negative this tool supports, recorded in
+`docs/findings/bios-ec-io-census.md` section 7; it is not something a wider
+scan here would have caught.
+
 The CSV is derived from committed input, which is what makes `--check` a real
 gate: it re-derives the file and fails on any difference, so a hand-edited
 table cannot survive. This tool is not in `.github/scripts/agent-gates.sh`, and
