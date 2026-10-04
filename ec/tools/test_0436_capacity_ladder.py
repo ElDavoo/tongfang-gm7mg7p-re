@@ -87,6 +87,10 @@ TABLE_ENTRIES = 8
 CURSOR = 0x056A                # the band cursor 0xADFD dispatches on
 MASK_BYTE = 0x0496             # where or_r6_into_0496_low5 writes the thermometer
 GATE_BYTE = 0x0490             # whose bit 7 gates the whole ladder
+# Named rather than written inline inside an asserting call, for the reason
+# `MASK_CEILING` below gives: `check_doc_figure_pins.py` credits any int in
+# one as pinning that figure elsewhere in the repository.
+GATE_BIT_MASK = 1 << 7          # the bit of `0x0490` the ladder tests
 
 # The widest mask `0xAE6F` can hold, being five bits. Named rather than
 # written inline because `check_doc_figure_pins.py` credits any int inside an
@@ -1007,6 +1011,64 @@ class CapacityLadder(unittest.TestCase):
                          'each bit is set by exactly one rule')
         self.assertEqual({r[1] for r in rules}, {'0xe3', '0xe7'},
                          'and each is cleared by exactly one')
+
+    def test_a_second_writer_clears_the_gate_bit(self):
+        """`0x9817` rewrites `0x0490` as (old OR 1) AND 0x77.
+
+        So the gate bit is not written by `0xC11C` alone, which is why the
+        write-up names this second writer rather than claiming `0xC11C` is
+        the only one: a second writer that *clears* the bit is the shape of
+        evidence that makes a uniqueness claim worth checking, and the one
+        this suite checked. The mask is read from the listing rather than
+        transcribed, so a firmware change moves the answer.
+        """
+        insns = self.bank.routine(0x9817)
+        # The rewrite is read as the store it is, with the mask taken from
+        # the `anl` that reaches it -- not as the literal the write-up
+        # spells, so a change to either fails here.
+        stores = [i for _, i in sorted(insns.items())
+                  if i.mnemonic == 'movx' and i.operand == '@DPTR, A']
+        gate_stores = []
+        for store in stores:
+            reloads = insns.get(store.addr - 3)
+            if (reloads is not None and reloads.mnemonic == 'mov'
+                    and reloads.operand == 'DPTR, #0x%x' % GATE_BYTE):
+                gate_stores.append(store)
+        self.assertEqual(len(gate_stores), 1,
+                         '0x9817 stores to the gate byte exactly once')
+
+        # The mask that matters is the one this store is reached through, so the
+        # four instructions before it are taken as a chain and the chain is
+        # required to be contiguous -- each instruction's own `next_addr`
+        # landing on the next one's address. That is what distinguishes this
+        # rewrite from the `anl` earlier in the routine, which masks an
+        # unrelated operand, and from the read of the same byte that only
+        # tests bit 0; the write-up's literal is never compared against.
+        store = gate_stores[0]
+        window = [i for _, i in sorted(insns.items())
+                  if i.addr < store.addr][-5:]
+        self.assertEqual([i.next_addr for i in window],
+                         [window[i].addr for i in (1, 2, 3, 4)] + [store.addr],
+                         'the five instructions before the store are '
+                         'contiguous, so they are one rewrite and not '
+                         'five unrelated ones')
+        load, read, set_bits, mask, reload_ = window
+        self.assertEqual((load.mnemonic, load.operand),
+                         ('mov', 'DPTR, #0x%x' % GATE_BYTE),
+                         'the rewrite starts by loading the gate byte')
+        self.assertEqual((read.mnemonic, read.operand), ('movx', 'A, @DPTR'),
+                         'and reads it')
+        self.assertEqual(set_bits.mnemonic, 'orl',
+                         'then sets a bit of what it read')
+        self.assertEqual(mask.mnemonic, 'anl',
+                         'and masks the accumulator')
+        self.assertEqual(mask.operand.split('#')[0].strip().rstrip(','), 'A',
+                         'the mask is applied to that accumulator')
+        self.assertEqual(int(mask.operand.split('#')[1], 16) & GATE_BIT_MASK, 0,
+                         'and it clears the bit the ladder gates on')
+        self.assertEqual((reload_.mnemonic, reload_.operand),
+                         ('mov', 'DPTR, #0x%x' % GATE_BYTE),
+                         'before storing back to the same byte')
 
     # -- what must not have moved ------------------------------------------
 

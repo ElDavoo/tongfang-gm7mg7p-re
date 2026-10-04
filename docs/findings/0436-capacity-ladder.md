@@ -137,7 +137,7 @@ high halves repeat it:
 
 - **`0x0544` and `0x0546` are the same decision `0x040A` already has.** Each
   has an EC-side image site (`0xAE65` and `0xADCC` besides `0xB53F` and
-  `0xB552`), each resolves to one read and one write in
+  `0xB552`), each resolves to both a read and a write in
   `ec/annotations/xdata-registers.csv`, and each is entered or not entered on
   the same warrant as `0x040A` — a site count and a direction, with no
   behaviour behind either. They are left out of `registers.yaml` here, and
@@ -309,7 +309,8 @@ to `0x056A` — so the bit forces the cursor to the bottom rather than
 selecting a band. `0xAE16` treats the same bit as a skip (`jb 0xe0, 0xae6f`),
 which lands on `0xAE6F` with `R6` still `0x00`. `0x0490` bit 7 is written by
 `bank1 0xC11C latch_0490_bit3_or_bit7`, which sets bit 3 or bit 7 and clears
-the other, and by no other committed listing this suite can reach.
+the other, and by `bank1 0x9817 enter_state_0480_05f1_06d9`, which rewrites
+the byte as `(old OR 1) AND 0x77` and so clears bit 7 as well as bit 3.
 `0x056A` and `0x0496` have no `registers.yaml` row and none is added here;
 `0x0496`'s low five bits are read at `0x8D3A` and `0x8E71` and stored at
 `0xB940`, and `bank1 0x8DE4 dispatch_on_0490_0495_0496_0498` tests `0x0496`
@@ -422,9 +423,9 @@ the name.
   but what a band *is* — a state of charge, a fan or power mode, a timer
   phase — is not established, and the routine names (`chain_probes_*`)
   suggest rather than demonstrate one.
-- **What `0x0490` bit 7 means is not decoded.** That it gates the ladder and
-  is written by `0xC11C` is established; what sets it in the first place,
-  beyond `0xC11C`'s own two-bit alternation, is not.
+- **What `0x0490` bit 7 means is not decoded.** That it gates the ladder,
+  and that `0xC11C` and `0x9817` both write it, is established; what sets it
+  in the first place is not.
 - **The table's bytes are read from the image, not from a listing.** No
   committed `.asm` covers `0xADE2`-`0xADF9`, so the eight targets are read
   out of `ec/firmware/GMxMGxx_11.800` and cross-checked against
@@ -462,7 +463,7 @@ Re-derive anything here with:
 
 ```console
 $ python3 ec/tools/scan_refs.py ec/firmware/GMxMGxx_11.800 0x0544 0x0545 0x0546 0x0547
-$ python3 ec/tools/check_site_resolution.py --check --committed
+$ python3 ec/tools/check_site_resolution.py --check --committed ec/annotations/site-resolution.csv
 $ python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
 $ bash tools/run-tests.sh ec/tools
 ```
