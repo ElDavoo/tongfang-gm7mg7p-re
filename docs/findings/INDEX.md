@@ -128,6 +128,7 @@ the place a finding went; `check_findings_frozen.py` holds that.
 - [`earlier-record-column.md`](earlier-record-column.md) — The call censuses get a framing column, and the tie-break that fills it (issue #1110)
 - [`ec-addr-reach-086x.md`](ec-addr-reach-086x.md) — Does the vendor service write any `0x08xx` byte, and how far did we look (issue #334)
 - [`ec-data-regions.md`](ec-data-regions.md) — The data regions behind the EC's phantoms: six tables, four addresses moved (issue #50)
+- [`ec-default-fan-tables.md`](ec-default-fan-tables.md) — The pointer-pair table at `0x60F2` ends at `0x6162`, and `0x888D` is entered by a branch rather than a call
 - [`ec-fan-table-defaults.md`](ec-fan-table-defaults.md) — The EC's own fan tables: where they live, what they say, and how far they are from the vendor's
 - [`ecmg-asl-references.md`](ecmg-asl-references.md) — Which of the 98 ECMG names the ASL reaches for, and what the two `0x71` arms are (issue #1159)
 - [`ecrw-fake-mirror-surface.md`](ecrw-fake-mirror-surface.md) — The `ecrw` fixture's mirror claim, measured, and narrowed to what it carries (issue #356)
