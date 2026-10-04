@@ -178,14 +178,9 @@ command over the whole of `ec/decompiled/*/*.c`, counting comments:
 same piped through `sort -u` for distinct tokens. Its output is not transcribed
 here, because every re-export that names a register moves it.
 
-```console
-$ python3 ec/tools/xdata_register_map.py --check
-/home/runner/.../ec/annotations/xdata-registers.csv: 1326 rows match a fresh generation from the committed tree at threshold 0.5
-/home/runner/.../ec/annotations/xdata-clusters.csv: 439 rows match a fresh generation from the committed tree at threshold 0.5
-```
-
-Those are the current ones. `python3 ec/tools/check_census_figures.py` derives
-the register count from the committed CSVs and holds this block to it.
+`python3 ec/tools/xdata_register_map.py --check` reports each CSV's row count
+against a fresh generation from the committed tree. Its output is not
+transcribed here either, because every seeded routine moves it.
 
 ### 1b. The transcript this section was written with
 
@@ -329,14 +324,11 @@ against the 41 above, because `.c` files *have* been re-exported since, by
 are unchanged and still pinned. The wrong version is kept above rather than
 deleted.)*
 
-*(Correction, 2026-10-02, issue #342. Two more of that note's figures have moved
-since it was written, so "unchanged and still pinned" now names only the top
-two addresses: the committed census's symbol-spelled main-EC count moves with
-every register named, so it is not written here (`check_census_figures.py
---print` has it), and the census splits `pd_only` / `both` 108 / 49. The top-two pair is
-`xdata_register_map.py`'s `ORACLE_TOP_MAIN` and still holds.
-`python3 ec/tools/check_census_figures.py` derives the split from
-`ec/annotations/xdata-registers.csv` and holds this paragraph to it; the
+*(Correction, 2026-10-02, issue #342. The figures in that note have moved since
+it was written, so "unchanged and still pinned" no longer holds: the
+symbol-spelled main-EC count, the `pd_only` / `both` split and the top
+addresses move with every register named and every routine seeded, so they are
+not written here (`check_census_figures.py --print` has the first two). The
 figures it corrects are kept above.)*
 
 The self-test is the oracle, and it pins the issue's numbers *and* the
@@ -1366,11 +1358,11 @@ re-run over the committed tree, and the recipe is
 `xdata-06c2-06db-timers.md` §6a's with the `==` guard issue #178 added
 **removed** instead — the classifier-and-everything-it-counts regeneration, in
 its cheapest form. That is the `--no-eq-guard` flag
-(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:5561`) with
+(`ap.add_argument("--no-eq-guard"`, `../tools/xdata_register_map.py:4410`) with
 scratch outputs, which is what §6a and this block's transcript now do rather
 than a source edit: the flag is refused with the committed output paths
-(`args.out_registers == OUT_REGISTERS`, `:5599`, not the `--check` refusal at
-`:5590`), so everything below is a report about the committed census and not a
+(`args.out_registers == OUT_REGISTERS`, `:4448`, not the `--check` refusal at
+`:4439`), so everything below is a report about the committed census and not a
 replacement for it. The derivation, with the commands and their output, is
 `../../docs/findings/xdata-4-4-identity-rederivation.md`.
 
@@ -1529,13 +1521,13 @@ tool into `/tmp`, symlinked the inputs back, and deleted the `==` guard from
 the copy's source, because when the block was written nothing else removed it.
 It was a workaround one rename away from silently regenerating the guard-on
 census instead, and the tree has since taken that step: issue #302
-parameterised the guard (`../tools/xdata_register_map.py:2040` is `if eq_guard
+parameterised the guard (`../tools/xdata_register_map.py:1128` is `if eq_guard
 and stripped.startswith("==")`) so `--no-eq-guard` could be a flag. A
 regeneration now writes to a scratch path and reads the committed decompile in
 place, with no copy of the tool and no source edit. The `--out-*` flags are not
 decoration either: the tool refuses `--no-eq-guard` with the committed output
-paths (`args.out_registers == OUT_REGISTERS`, `:5599`, not the `--check`
-refusal at `:5590`), which keeps this transcript from overwriting the census.
+paths (`args.out_registers == OUT_REGISTERS`, `:4448`, not the `--check`
+refusal at `:4439`), which keeps this transcript from overwriting the census.
 
 *(Correction, 2026-09-25, issue #582's re-run. The transcript above is the same
 experiment re-run against the tree as it now stands; the one it supersedes
@@ -1641,7 +1633,7 @@ by key" is not what the committed census would give anyway — `level-block-086x
 is `seeded` there, key and membership both unchanged, and `main-ec-002` is the
 only one of the two carried on overlap (0.97). The suite's own recipe is two
 generations behind: `GUARD` (`../tools/test_xdata_cluster_names.py:54`) is a
-literal the parameterised guard at `../tools/xdata_register_map.py:2040` —
+literal the parameterised guard at `../tools/xdata_register_map.py:1128` —
 `eq_guard and` — no longer contains, and its two-largest case pairs `main-
 ec-001` with `mode-oem-init` and `main-ec-002` with `level-block-086x`, which
 the committed census puts at `main-ec-002` and `main-ec-004`. **The suite is
@@ -2434,10 +2426,10 @@ produces — `--check` exits 0 on this tree, where it exited 1 on both sides of
 this merge.)*
 
 `main-ec-002` is the one that matters most and the one most likely to be
-misread. It is where 35 named registers land, so it looks like "the named
+misread. It is where most named registers land, so it looks like "the named
 registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
-92 addresses reached by one mode tick and one OEM override pass is a statement
+the addresses reached by one mode tick and one OEM override pass are a statement
 about init order, not about the registers' purposes. Reading it is one issue.
 The top ten addresses by reference count (`0x0440` 181, `0x08A8` 170,
 `0x0843` 168, `0x0844` 168, `0x0706` 160, `0x06D6` 148, then `0x080D` 137,

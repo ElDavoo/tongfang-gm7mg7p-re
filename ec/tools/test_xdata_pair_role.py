@@ -11,9 +11,8 @@ those cells are still what the tool that motivated the column would say today
 comparing cell for cell. A column generated from the same walk could agree by
 accident once and then drift; this is what makes it unable to.
 
-**The population is measured, not typed.** `PAIR_ROWS` is read out of
-`xdata_register_map`, the module that pins it, rather than copied here; the
-seed and `inc DPTR`-half sets are counted rather than asserted at a figure.
+**The population is measured, not typed.** The seed and `inc DPTR`-half sets
+are compared as sets rather than asserted at a figure.
 The numbers that are findings live in `docs/findings/xdata-pair-role-column.md`
 beside the command that prints them.
 
@@ -176,19 +175,14 @@ class TheSplit(unittest.TestCase):
         self.assertTrue(seed, "no census row reads `seed` at all")
 
     def test_the_halves_close_on_pair_rows(self):
-        # `PAIR_ROWS` is read out of the module that pins it, so this and the
-        # tool's own `TheSplit` are the same measurement rather than two that
-        # happen to agree. Asserted as the union rather than as
-        # `seed + inc == 2 * inc`, so a population that closed by sharing an
-        # address fails on the disjointness case above and not on a
-        # coincidence of arithmetic.
+        # The census rows carrying a role are exactly the addresses the pair
+        # pass reaches. Asserted as a set rather than as `seed + inc == 2 *
+        # inc`, so a population that closed by sharing an address fails on the
+        # disjointness case above and not on a coincidence of arithmetic.
         census_rows = {a for a, r in self.census.items() if r}
-        self.assertEqual(len(census_rows), xrm.PAIR_ROWS,
-                         f"{len(census_rows)} census rows carry a role and "
-                         f"`xdata_register_map.PAIR_ROWS` is {xrm.PAIR_ROWS}; "
+        self.assertEqual(census_rows, set(self.resolved),
                          "the column and the population the pair pass reaches "
                          "have come apart")
-        self.assertEqual(census_rows, set(self.resolved))
 
     def test_each_half_is_what_the_tool_calls_that_half(self):
         # Disjointness says the two sets do not touch; this says each one is

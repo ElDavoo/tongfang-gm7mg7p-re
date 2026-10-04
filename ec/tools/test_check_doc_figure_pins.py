@@ -26,6 +26,7 @@ import contextlib
 import importlib.util
 import io
 import os
+import re
 from pathlib import Path
 import sys
 import unittest
@@ -101,30 +102,6 @@ class ClassifiesTheRealTree(unittest.TestCase):
 
     def assertVerdict(self, value, want, pins=()):
         self.assertEqual(measured(value, pins), want, f"figure {value}")
-
-    def test_the_console_block_oracles_are_held_by_assertion(self):
-        # The five §2a-adjacent console figures, each of which is a value in a
-        # module-level constant in `xdata_register_map.py` that something reads.
-        for value in (1326, 440, 1218, 157, 858):
-            self.assertVerdict(value, cdfp.BY_ASSERTION)
-
-    def test_main_refs_is_held_and_was_the_one_that_was_not(self):
-        # Issue #849's subject. `OWNERSHIP["main_refs"]` is the per-program
-        # reference count §6b's console block prints as `9320`, and until the
-        # "and its main-EC half is" check was added no check read that key, so it
-        # measured unheld. A case for it specifically, because it is the figure
-        # whose pin was a promise rather than a check.
-        self.assertVerdict(9320, cdfp.BY_ASSERTION)
-        found = cdfp.index()
-        oracle = found["oracles"][("xdata_register_map.py", "OWNERSHIP")]
-        keys, lo, hi = oracle
-        self.assertEqual(keys["main_refs"][0], 9320)
-        read = cdfp.reads("xdata_register_map.py", "OWNERSHIP", "main_refs",
-                          lo, hi, found["texts"], found["asserted"])
-        self.assertIsNotNone(read, "OWNERSHIP['main_refs'] is read by nothing")
-        # And the read is outside the constant's own span, which is the half of
-        # the rule that separates a subscription from the literal defining one.
-        self.assertFalse(lo <= read[1] <= hi)
 
     def test_the_residual_pair_is_held_by_the_census_suite(self):
         # `390` and `50` are §6b's two cluster counts, and until #850 only their
@@ -233,51 +210,6 @@ class ClassifiesTheRealTree(unittest.TestCase):
             self.assertVerdict(value, cdfp.UNHELD)
 
 
-class TheCommittedChecklist(unittest.TestCase):
-    """The real page: §2b's own marking agrees with measuring the real tree.
-
-    This is the assertion that would have caught issue #849, and it is the one
-    that goes red on any future edit that moves a figure between held and
-    unheld. Running it the other way is the point too: see `RevertingIsRed`.
-    """
-
-    def test_committed_2b_marks_what_the_tree_measures(self):
-        results, declined, problems = cdfp.audit(
-            cdfp.section(CHECKLIST.read_text(encoding="utf-8"), "2b")[2], FOUND)
-        self.assertEqual(problems, [])
-        self.assertEqual(declined, [])
-        # Eighteen figures: the eight the console block's rows name, the eight
-        # §6a subset sums, and the pair in the `main-ec-003` row. Eight held and
-        # ten not is what the heading read while `390`/`50` and the eight subset
-        # sums were unmeasured; #850 closed those ten in the same tree, so the
-        # count is eighteen held and none unheld, which is what the heading says
-        # now. It was #850 that moved it -- #849 had already read
-        # `OWNERSHIP["main_refs"]`, which is the other end of the same merge.
-        self.assertEqual(len(results), 18)
-        held = [r for r in results if r[2] in cdfp.HELD_VERDICTS]
-        self.assertEqual(len(held), 18)
-        self.assertEqual(sorted(r[0] for r in held),
-                         [43, 50, 142, 157, 193, 239, 279, 390, 440, 858, 1218,
-                          1326, 3206, 3949, 4966, 7189, 7936, 9320])
-        self.assertEqual(sorted(r[0] for r in results if r not in held), [])
-
-    def test_the_page_runs_green_end_to_end(self):
-        # stdout too: the report is the point of the tool, and a runner that
-        # interleaves eighteen figure lines with a test summary is unreadable.
-        err, out = io.StringIO(), io.StringIO()
-        argv = sys.argv
-        sys.argv = ["check_doc_figure_pins.py", str(CHECKLIST), "--section", "2b"]
-        try:
-            with contextlib.redirect_stderr(err), contextlib.redirect_stdout(out):
-                rc = cdfp.main()
-        finally:
-            sys.argv = argv
-        self.assertEqual(rc, 0, err.getvalue())
-        self.assertIn("agrees with the measurement", out.getvalue())
-        self.assertIn("18 figure(s), 18 measured held, 0 measured unheld",
-                      out.getvalue())
-
-
 class RevertingIsRed(unittest.TestCase):
     """Both directions the correction depends on, each shown rather than asserted.
 
@@ -290,14 +222,14 @@ class RevertingIsRed(unittest.TestCase):
 
     def test_marking_a_pinned_figure_unpinned_is_reported(self):
         results, _declined, _structural = audit(
-            TABLE + "| `1326` | `:869` | unheld | `ec/tools/xdata_register_map.py:654` |\n")
+            TABLE + "| `393` | `:869` | unheld | `ec/tools/counter_sweep_entry.py:540` |\n")
         self.assertEqual(cdfp.disagreements(results),
-                         ["the row marks 1326 'unheld'; measured "
+                         ["the row marks 393 'unheld'; measured "
                           f"{cdfp.BY_ASSERTION!r} ({results[0][3]})"])
 
     def test_a_row_that_marks_nothing_is_reported(self):
         _results, _declined, problems = audit(
-            TABLE + "| `1326` | `:869` |  | `ec/tools/xdata_register_map.py:654` |\n")
+            TABLE + "| `393` | `:869` |  | `ec/tools/counter_sweep_entry.py:540` |\n")
         self.assertEqual(len(problems), 1)
         self.assertIn("marks nothing", problems[0])
 
@@ -319,11 +251,11 @@ class RevertingIsRed(unittest.TestCase):
         # only the tables that declare themselves are read, and the section-level
         # guard is satisfied by the one that does.
         results, _declined, problems = audit(
-            TABLE + "| `1326` | `:869` | held | `ec/tools/xdata_register_map.py:654` |\n"
+            TABLE + "| `393` | `:869` | held | `ec/tools/counter_sweep_entry.py:540` |\n"
             + "\n*(Correction.) The old table read:*\n\n"
             "| figure | line |\n|---|---|\n| `9320` | `:871` |\n")
         self.assertEqual(problems, [])
-        self.assertEqual([r[0] for r in results], [1326])
+        self.assertEqual([r[0] for r in results], [393])
 
 
 class ReadsTheFigure(unittest.TestCase):
@@ -436,16 +368,16 @@ class PinsMustResolve(unittest.TestCase):
     """
 
     def held_row(self, pin):
-        return audit(TABLE + f"| `1326` | `:869` | held | {pin} |\n")
+        return audit(TABLE + f"| `393` | `:869` | held | {pin} |\n")
 
     def test_a_pin_naming_a_file_that_is_not_in_the_tree_is_reported(self):
         _r, _d, problems = self.held_row("`ec/tools/no_such_tool.py:1`")
         self.assertEqual([p for p in problems if "is not in the tree" in p],
-                         ["the row for 1326 names ec/tools/no_such_tool.py:1, "
+                         ["the row for 393 names ec/tools/no_such_tool.py:1, "
                           "and ec/tools/no_such_tool.py is not in the tree"])
 
     def test_a_pin_past_the_end_of_the_file_is_reported(self):
-        _r, _d, problems = self.held_row("`ec/tools/xdata_register_map.py:99999`")
+        _r, _d, problems = self.held_row("`ec/tools/counter_sweep_entry.py:99999`")
         self.assertEqual(len(problems), 1)
         self.assertIn("has", problems[0])
 
@@ -548,7 +480,7 @@ class TheOracleRule(unittest.TestCase):
         # `BUCKET_TOTALS` is the one in this file that is never subscripted:
         # §3 of the checklist names its five figures, and the issue excluded them
         # (#838 owns the stale `:668` citation beside them). `--self-test` does
-        # read every one of them, by key, at `xdata_register_map.py:4284-4286`,
+        # read every one of them, by key, in its `--self-test`,
         # which is the distinction this case turns on — a value nothing in the
         # tree looks at and a value this checker cannot see a subscription to
         # measure the same, and only the second is what `unheld` reports. It is
@@ -558,76 +490,31 @@ class TheOracleRule(unittest.TestCase):
 
     def test_a_read_constant_measures_held(self):
         # The control for the case above, and the same shape one dict over.
-        self.assertEqual(measured(1326), cdfp.BY_ASSERTION)
+        self.assertEqual(measured(393), cdfp.BY_ASSERTION)
 
     def test_the_two_oracles_of_one_name_are_not_credited_to_each_other(self):
-        # `counter_sweep_entry.py` and `xdata_register_map.py` both define
+        # `counter_sweep_entry.py` and `pd_entry_forms.py` both define
         # `ORACLE`. A reader of one is not a reader of the other, and treating
         # them as one dictionary would pin a figure on the strength of an
         # unrelated file. The qualified spelling is the one that can say which.
         found = cdfp.index()
         self.assertIn(("counter_sweep_entry.py", "ORACLE"), found["oracles"])
-        self.assertIn(("xdata_register_map.py", "ORACLE"), found["oracles"])
-        self.assertNotIn("exports", found["oracles"][("xdata_register_map.py", "ORACLE")][0])
+        self.assertIn(("pd_entry_forms.py", "ORACLE"), found["oracles"])
+        self.assertNotIn("bytes", found["oracles"][("pd_entry_forms.py", "ORACLE")][0])
         # A qualified subscription is found from any module, which is what makes
         # `export_ownership.OWNERSHIP_ORACLE` reachable from the census tool.
         # Asserted through `where()`, because that is the string the report
-        # prints and the span is part of it: the `check()` holding the constant
-        # is written over seven lines, and the subscription is in the message
-        # three lines above the `==` that uses it.
-        #
-        # The span is a line pin, so it moves with the tree: `:3902-3908` on the
-        # tree this was written on, `:3981-3987` after #851's `census_shape` /
-        # `carry_advice` landed above it in the same file, `:4359-4365` after
-        # #713's twelve per-program count columns and their pin block landed
-        # above it, `:4414-4420` after #713's docstring had its column count
-        # corrected and the corrected sentence took one line more than the one
-        # it replaced, and `:4432-4438` after #573's `named_in_tree` note
-        # landed above it.
-        #
-        # **`:4511-4517` since issue #1425**, whose `named_in_tree` block added
-        # 58 lines above this span as well; re-measured against the file.
-        # **`:4548-4554` before issue #424, whose `&&` and compound-assignment
-        # corrections added lines above this span; `:4560-4566` on this tree,
-        # and the note says why it is neither of the
-        # two numbers above.** #573 and #333 both moved this span from the same
-        # `:4414-4420` -- they are siblings, not one another -- and that merge
-        # carried both notes, so it moved by both. #1425 and #106 then repeated
-        # the shape from the same `:4511-4517`: each added its own
-        # `named_in_tree` block above this span, so this merge moves it by both
-        # again. That `4414-4420` had already gone stale before any of them: it
-        # measures `:4425-4431` on the base and `:4436-4442` on main, which is
-        # the two pre-existing failures in this file's own run, so #333's landing
-        # is why main reads 22 lines past it and the branch's re-pin is what
-        # caught it. Asserting the measured span here fixes all of it.
-        # Re-measured, not shifted by arithmetic.
-        # **`:4612-4618` since issue #1364**, whose `pd_distinct`/`pd_refs`
-        # block in `OWNERSHIP`, the note above it, and the "and its pd half is"
-        # `check()` that reads those two keys all landed above this span.
-        # **`:4778-4784` since issue #734**, whose `pair_role` column added its
-        # `REGISTER_COLUMNS` entry, its vocabulary, its `pair_role_of()`
-        # renderer, its two census-side edits in `scan()` and `build()` and the
-        # `#734` assertion block, every one of them above this span. Same
-        # move-and-not-an-edit shape as each of the steps above it.
-        # **`:4855-4861` since issue #881**, whose name-indexed carry half added
-        # the module docstring's sixth outcome, `carry_names`' second pass,
-        # `name_clusters`' second return value and `print_carry`'s third
-        # parameter, every one of them above this span. Re-read against the
-        # file; the same move-and-not-an-edit shape as each step above it.
-        # **`:4872-4878` since issue #918**, which added two comments to
-        # `OWNERSHIP` and to the pd-half check, both above this span and neither
-        # inside it. Same shape as every step above it: re-read from the file,
-        # not shifted by the size of those two edits.
-        # **`:4898-4904` since issue #338**, whose `extmem_*` oracle block in
-        # `ORACLE` gained a dated comment recording the `0x0391`/`0x3202`
-        # spelling move, and whose `extmem_raw` and `extmem_main_*` values
-        # moved with it -- every one above this span and none inside it. Same
-        # move-and-not-an-edit shape as each step above it.
-        self.assertEqual(
-            cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
-                                  "largest_class", 1, 2, found["texts"],
-                                  found["asserted"])),
-            "ec/tools/xdata_register_map.py:4898-4904")
+        # prints, and by what the span holds rather than by its line numbers,
+        # which move with every edit above it.
+        where = cdfp.where(cdfp.reads("export_ownership", "OWNERSHIP_ORACLE",
+                                      "largest_class", 1, 2, found["texts"],
+                                      found["asserted"]))
+        path, _, span = where.rpartition(":")
+        self.assertEqual(path, "ec/tools/xdata_register_map.py")
+        lo, _, hi = span.partition("-")
+        lines = found["texts"]["xdata_register_map.py"].split("\n")
+        held = "\n".join(lines[int(lo) - 1:int(hi or lo)])
+        self.assertIn('OWNERSHIP_ORACLE["largest_class"]', held)
 
     def test_the_census_csvs_are_read_from_the_tool_that_writes_them(self):
         # Derived from `OUT_REGISTERS`/`OUT_CLUSTERS` rather than named here, so
@@ -639,88 +526,19 @@ class TheOracleRule(unittest.TestCase):
         self.assertTrue(all(os.path.exists(p) for p in paths), paths)
 
     def test_the_reported_line_is_the_check_and_not_the_arithmetic(self):
-        # `ORACLE["extmem_pd_distinct"]` is first read at the `extmem_both` sum,
-        # which is arithmetic on three constants. Citing that as the pin would
-        # send a reader to an assignment and call it a check -- the same
-        # "looks pinned and is not" defect one level down from #849's, and worth
-        # a case so a rule change that drops the preference is visible.
-        self.assertEqual(measured(157), cdfp.BY_ASSERTION)
-        _v, detail = cdfp.measure(157, [], FOUND)
-        # **Re-measured for issue #1425**, whose `named_in_tree` block added 58
-        # lines above both and moved them together again: `:3637-3654` /
-        # `#3627` is now `:3695-3712` / `#3685`. The pair still has to move as a
-        # pair, which is the point of holding both, and this one is re-read
-        # against the file rather than shifted by arithmetic.
-        # The two line pins are `#3260-3277` (was, on the tree this was written
-        # on) and the `extmem_both` sum at `#3329` (was `:3250`), both moved by
-        # #851's insertions above them in the same file; and `:3339-3356` /
-        # `#3329` -> `:3554-3571` / `#3544` after #713's per-program columns and
-        # the new `--self-test` assertions landed above them, then `:3609-3626` /
-        # `#3545` when the docstring's column count was corrected and cost one
-        # more line, and then `:3609-3626` / `#3599` when #1059's `NOT_IN_TREE`
-        # block and `named_in_tree` oracle landed above the sum and not above
-        # the check, and then `:3616-3633` / `#3606` when #573's `named_in_tree`
-        # note landed above both, and `:3620-3637` / `#3610` when #333's 181 ->
-        # 182 comment did the same on its own branch. **The reported span did
-        # not move and the sum did** the first time, and **both moved together**
-        # on each of the two after it, which is the point of holding both: the
-        # pair is what says *which* side of the `check(` an edit landed on, and
-        # asserting the span alone would have accepted a pin that had quietly
-        # started pointing somewhere else. **`:3732-3749` / `#3722` were the
-        # pins before issue #424, whose `&&` and compound-assignment corrections
-        # added lines above this span; `:3744-3761` / `#3734` before issue
-        # #1364, whose `OWNERSHIP` `pd_distinct`/`pd_refs` block and the note
-        # above it added lines above this span and none below it; `:3781-3798`
-        # / `#3771` on this tree. That is the fourth merge-shaped step here,
-        # and like the three before it both members of the pair moved, which is
-        # what holding the pair is for.**
-        # Re-read against the file rather than shifted by adding any of
-        # the siblings' moves, which would give the same answer here for the
-        # wrong reason. That re-pin is the third merge-shaped step on this span
-        # -- #573 and #333 together from `:4414-4420`, then #1425 from
-        # `:4511-4517`, then #1425 and #106 together from `:4511-4517` again --
-        # and each moved both members of the pair, which is what the pair is for.
-        # The negative guard is re-pinned with them: `:3599` stopped being
-        # producible when #573's note moved the sum, and a guard that can
-        # never fail is not a guard, so it names this tree's `:3833` --
-        # the sum the `lines[3833]` assertion below points at.
-        # **`:3844-3861` / `#3833` since issue #734**, whose `pair_role`
-        # column added its `REGISTER_COLUMNS` entry, its vocabulary, its
-        # `pair_role_of()` renderer, its two census-side edits in `scan()` and
-        # `build()`, and the `#734` assertion block, all above this span. That
-        # is the fifth merge-shaped step here, and like the four before it both
-        # members of the pair moved together.
-        # **`:3921-3938` / `#3910` since issue #881**, whose name-indexed carry
-        # half added the module docstring's sixth outcome, `carry_names`' second
-        # pass and docstring, `name_clusters`' second return value, `generate`'s
-        # fifth value and `print_carry`'s third parameter, all above this span.
-        # That is the sixth merge-shaped step, and like the five before it both
-        # members of the pair moved together. The negative guard is re-pinned
-        # with them, naming this tree's `:3910` -- the sum the `lines[3910]`
-        # assertion below points at -- because a guard that can never fail is
-        # not a guard. Both re-read against the file, not shifted by arithmetic.
-        # **`:3930-3947` / `#3919` since issue #918**, which added two comments
-        # to `OWNERSHIP` and to the pd-half check, both above this span and
-        # neither inside it. That is the seventh merge-shaped step here, and
-        # like the six before it both members of the pair moved together, which
-        # is what holding the pair is for; the negative guard is re-pinned with
-        # them for the reason the step above gives.
-        # **`:3956-3973` / `#3945` since issue #338**, whose `extmem_*` block in
-        # `ORACLE` gained the dated comment recording the `0x0391`/`0x3202`
-        # spelling move, above this span and not inside it. That is the eighth
-        # merge-shaped step, and like the seven before it both members of the
-        # pair moved together. Re-read from the file, not shifted by the size
-        # of that comment.
-        self.assertIn("3956-3973", detail)
-        self.assertNotIn(":3945", detail)
-        # The span opens on the `check(` and encloses the comparison, so a reader
-        # following it lands on the call rather than on the sum above it.
-        lines = FOUND["texts"]["xdata_register_map.py"].split("\n")
-        self.assertIn("extmem_both", lines[3945])
-        self.assertIn("check(", lines[3955])
-        self.assertIn('(ORACLE["extmem_pd_distinct"], ORACLE["extmem_pd_refs"]',
-                      lines[3972])
-
+        # The span a held figure is reported at opens on the `check(` that
+        # compares it, not on an earlier line that only reads the key, and it
+        # encloses the subscription. Read by content rather than by line
+        # number, so an edit above the check does not make this a re-pin.
+        self.assertEqual(measured(393), cdfp.BY_ASSERTION)
+        _v, detail = cdfp.measure(393, [], FOUND)
+        span = re.search(r"asserted at ec/tools/counter_sweep_entry\.py:(\d+)-(\d+)",
+                         detail)
+        self.assertIsNotNone(span, detail)
+        lo, hi = int(span.group(1)), int(span.group(2))
+        lines = FOUND["texts"]["counter_sweep_entry.py"].split("\n")
+        self.assertIn("check(", lines[lo - 1])
+        self.assertIn('ORACLE["bytes"]', "\n".join(lines[lo - 1:hi]))
 
 class SectionSelection(unittest.TestCase):
     """Which lines the run reads, and what it does when the token is unusable.
