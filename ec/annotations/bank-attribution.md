@@ -631,18 +631,25 @@ bank 1 by this closure as well as by that hand decode** — a second, independen
 line of evidence, and it agrees. That is what `0x888C` was the stake of, and it
 is worth having.
 
-**The call site `0xDFD0` is not reached by either closure.** So the caller half
-is unchanged: `0xDFD0` being bank-1 code is still the assumption plus the hand
-decode, and no amount of the target's attribution settles it. §5.2's wording
-stands unedited, and nothing here is a correction to it — there was nothing to
-correct, only an evidence line that did not arrive.
+**The call site `0xDFD0` is reached by bank 1's closure, and by neither closure
+before the dispatch tables were seeded.** The walk reaches it from entry point
+`0xDEE8`, which is itself entered from the `dispatch-inline` edge at site
+`0x98E4` — so the table seeding is what makes the caller half answerable at
+all. The sentence this paragraph replaces ("the call site `0xDFD0` is not
+reached by either closure", with the caller half resting on the assumption plus
+the hand decode alone) is **superseded**, and §5.2's wording still stands
+unedited, because nothing about reaching the site changes what those three call
+bytes settle.
 
 **What this does not do, in the tool's own words:** it does not convert
 "assumed" into "proved". The walk has no function-boundary recovery, so the
 attribution is *attributed by this closure*, and the verdict for the site as a
-whole becomes *assumption + closure (target only) + hand decode* rather than
-proof. And the negative half — `0xDFD0` unreached — is a statement about this
-closure's coverage of bank 1, **not** a statement about `0xDFD0`.
+whole becomes *assumption + closure (target and call site) + hand decode*
+rather than proof. And reaching the call site says those bytes are reachable
+from bank 1's seeds, **not** that bank 1 is the bank selected when the CPU
+arrives — the calibration the negative half carried, unchanged, and the reason
+`static-refs-audit.md` §5.2's caller side is still the assumption plus the hand
+decode.
 
 For contrast, the two banks at that runtime address, which is what the ambiguity
 actually looks like:
