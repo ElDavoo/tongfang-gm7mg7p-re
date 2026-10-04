@@ -720,7 +720,7 @@ def ascii_carries_the_note() -> list:
     to them. Always empty on this tree; returned so the suite can assert the
     premise refutation mechanically rather than as a sentence.
 
-    Both spellings are looked for, because the comments use both: seven files
+    Both spellings are looked for, because the comments use both: most files
     say "call-target byte scan" and `1229.c` alone says "call-target-scan".
     """
     out = []
