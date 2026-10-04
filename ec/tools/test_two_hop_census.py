@@ -717,12 +717,6 @@ class CLITests(unittest.TestCase):
             thc.load_recorded_modes(str(other))
         self.assertIn("no 'mode' column", str(cm.exception))
 
-    def test_a_file_that_is_not_one_of_its_tables_is_refused(self):
-        other = HERE.parent / "annotations" / "site-resolution.csv"
-        with self.assertRaises(ValueError) as cm:
-            thc.load_recorded_modes(str(other))
-        self.assertIn("no 'mode' column", str(cm.exception))
-
     def test_a_doctored_copy_is_red_through_the_diff_path(self):
         # The committed file is never edited to prove this: the copy is
         # doctored, so a --check that went green would be going green on a

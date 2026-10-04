@@ -166,10 +166,15 @@ things:
   they are `other->flow->callee->read`, three hops from the site, so a reader
   who wants the direction asks for the deeper bound *with* the follow rather
   than being told the method gave up.
-* **`handoff->unresolved`** — the residue that reaches the `0x10BC`
+* **`handoff->unresolved`** — two reasons, and the `stop` column says which
+  is which. The dominant one is the residue that reaches the `0x10BC`
   `DPTR += A × B` family, which adds to the pointer and never dereferences
-  it. There is no direction to report at any depth, so a deeper bound would
-  not move them and none is attempted.
+  it: there is no direction to report at any depth, so a deeper bound would
+  not move those cells and none is attempted. The rest reach some other
+  callee whose own decoded window this pass did not settle, so what they have
+  is *not found by this method* rather than *nothing dereferences it* — a
+  claim the second reason does not support and the first one does not reach.
+  A reader who wants to tell them apart reads `stop`, not this bullet.
 
 A `movc` or `jmp` found past a branch is the third shape, and it is why
 `other->flow` survives as a column of its own: those are verdicts, not
