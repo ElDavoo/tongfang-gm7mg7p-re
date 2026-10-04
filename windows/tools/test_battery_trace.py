@@ -24,8 +24,10 @@ them depend on. The pieces that are load-bearing:
     (battery_trace.py:73-74), so a phase that moves inside one file can only
     come from a second run -- so the guard is taken against a pre-existing file
     on every invocation after the first. That is what keeps each of them one
-    header line. The case it cannot handle is the mismatched header, which
-    test 10 records.
+    header line, and it is also why "the file is not empty" is the wrong
+    question to stop at: the header now in the file is compared against `cols`
+    as well, and a file whose header is another shape is refused rather than
+    appended to. Cases 9 and 10 are the two directions.
 
 The other half of the suite is a census: every file in evidence/battery-traces/
 is named, classified, and checked to be on the column set its class claims. A
@@ -35,9 +37,10 @@ eight.
 
 Nothing here is hardware evidence. No EC is opened, no register is read back,
 and every fixture value is either a byte taken from a committed row or a token
-from a canned WMI line. The append-to-a-mismatched-header case asserts today's
-behaviour and says in a comment that the gap is unfixed; it is a record of a
-defect, not a handling of one.
+from a canned WMI line. The refusal in case 10 is a code path rather than a
+measurement: it is asserted against a temp file built from committed text, so
+it shows what the tool does with a foreign header and nothing about what any
+run on the machine recorded.
 
 This suite reads committed inputs, evidence/battery-traces/ in particular, so
 it has to run from inside the repository. tools/run-tests.sh cds to the repo
@@ -71,10 +74,13 @@ def tool_source_tree():
     return ast.parse((TOOLS / 'battery_trace.py').read_text(encoding='utf-8'))
 
 # A run that samples exactly once. --seconds 0 will not do: the tool's break is
-# `if args.seconds and time.time() - t0 >= args.seconds` (battery_trace.py:101),
-# so a zero is falsy and the loop never ends. The charge-target suite can pass 0
-# because that tool tests the comparison without the guard. Clock's step and this
-# budget are the same 0.1, so the first pass's check is already true.
+# `if args.seconds and time.time() - t0 >= args.seconds`, so a zero is falsy and
+# the loop never ends. That expression rather than the line number it used to
+# be cited by, because the append guard sits above it and a bare `file:NNN` here
+# is true only until the next edit -- the rot census_test_line_pins.py names.
+# The charge-target suite can pass 0 because that tool tests the comparison
+# without the guard. Clock's step and this budget are the same 0.1, so the
+# first pass's check is already true.
 #
 # The phase label is the one the committed row below carries, so a row this
 # suite builds can be compared with it field for field.
@@ -147,6 +153,17 @@ WMI_TOKENS = "1 1 0 19152 27992 63"
 # The ACPI rate the committed row records, kept as a name because it is the
 # second current source and the case below asserts it is the *other* one.
 RATE_MW = 27992
+
+# The two lines of battery_trace.py that committed files cite by number, and
+# what each is cited for. Spelled out rather than derived, because the point of
+# case 13 is that these citations resolve -- a line number recomputed from the
+# file would move with the edit that falsified it.
+#
+# They are also the reason the append guard is placed below the opener: a
+# change above either line would leave both citations pointing at text they
+# are not written for, and nothing else in the tree would notice.
+ADDR_CURRENT_LINE = 51     # ec/ghidra/xdata-overrides.csv, for BAT_CURRENT_MA
+CSV_OPEN_LINE = 81         # docs/findings/probe-csv-encoding.md, the opener
 
 
 def rows_of(name):
@@ -455,45 +472,74 @@ class BatteryTraceTests(unittest.TestCase):
             self.assertEqual(rows.count(COLS), 1)
             self.assertEqual(len(rows), 3)          # header, and two samples
 
-    # 10. The gap, pinned as today's behaviour and not as a handling of it.
-    #    main() tests only whether the file is empty and never compares an
-    #    existing header with cols, so appending to a file whose columns are
-    #    something else interleaves this tool's rows into it, silently, with
-    #    exit 0. 2026-09-17-limit-pair.csv is the committed file that would be
-    #    corrupted, and what is asserted is the damage. Nothing here guards
-    #    against it, and the fix -- refusing the append on a mismatched header
-    #    -- changes the one thing no committed run does: append to a file whose
-    #    header differs from cols. No committed file records such an append
-    #    either, so a cloud runner cannot check the refusal against evidence --
-    #    which is why it belongs to its own issue rather than to this suite.
+    # 10. The refusal. main() compares the first line already in the file
+    #    against the columns it is about to write and returns non-zero rather
+    #    than appending, so a file this tool did not write is left
+    #    byte-unchanged. This was test_appending_to_a_foreign_header_
+    #    interleaves_it_anyway, and it asserted the damage: fh.tell() == 0
+    #    asked only whether the file was empty, so appending to
+    #    2026-09-17-limit-pair.csv's shape interleaved this tool's rows into it
+    #    silently with exit 0, and column 4 is `status` in that file's header
+    #    and `charging` in a row this tool writes. Its own comment said to
+    #    rewrite it rather than delete it; the fixture is the same file and the
+    #    coverage survives as the other half of the claim.
     #
-    #    Closing the gap therefore turns this case red. That is the record
-    #    turning over, not a defect in the fix: rewrite it to assert the
-    #    refusal, do not delete it, or the next change re-opens the gap in
-    #    silence.
-    def test_appending_to_a_foreign_header_interleaves_it_anyway(self):
+    #    Two shapes of foreign file, because the compare is on row 0 and that
+    #    row is not always a header. The committed capture opens with a `#`
+    #    annotation, so this tool is refused on the annotation -- which is the
+    #    point of a strict compare, since a rule that skipped annotations could
+    #    be walked past by a file carrying one. And a file whose row 0 *is* a
+    #    header, of another shape entirely, is refused on that. Both are claims
+    #    about battery_trace.py alone, whose compare is on the raw first line:
+    #    limit-pair-test skips `#` rows, because it is the thing that writes
+    #    them, and so matches its own header in that same capture.
+    #
+    #    The refusal is a property of the tool, not of the evidence: no
+    #    committed capture records such an append, which is why it is asserted
+    #    here rather than read off a file. It says nothing about a header that
+    #    *matches* -- case 9 is that direction, and is what the two committed
+    #    multi-invocation captures were written through.
+    def test_appending_to_a_foreign_header_is_refused(self):
         lines = (TRACES / LIMIT_PAIR).read_text(encoding="utf-8").splitlines()
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / 'run.csv'
-            # A copy of the file's first two lines. The committed evidence is
-            # read, never written to.
-            path.write_text("\n".join(lines[:2]) + "\n", encoding="utf-8")
-            rc, _, _, _, _, err = self.run_tool(BASE + ('--csv', str(path)))
-            rows = list(csv.reader(path.read_text(encoding="utf-8").splitlines()))
-            self.assertEqual(rc, 0)
-            self.assertEqual(err, "")
-            # The annotation and the header it annotated are untouched ...
-            self.assertEqual(rows[0], next(csv.reader(lines[:1])))
-            self.assertEqual(rows[1], next(csv.reader(lines[1:2])))
-            # ... and the row appended after them is this tool's, on a
-            # different column set. Column 4 is `status` in the header the
-            # file was written with and `charging` in this row, so a reader
-            # that indexed by that header reads the wrong field out of every
-            # row the append added.
-            self.assertNotEqual(rows[1], rows[2])
-            self.assertEqual(rows[1][3], "status")
-            self.assertEqual(rows[2][3], "1")
-            self.assertEqual(rows[2][1:], rows_of(BIOS_DEFAULTS)[1][1:])
+        # (subtest name, the file's first line, what the message must name)
+        shapes = (
+            ("annotation_first", lines[0], lines[0]),
+            ("foreign_header", header_line(LIMIT_PAIR, 1),
+             header_line(LIMIT_PAIR, 1)),
+        )
+        for name, first, named in shapes:
+            with self.subTest(shape=name):
+                with tempfile.TemporaryDirectory() as tmp:
+                    path = Path(tmp) / 'run.csv'
+                    # Committed evidence is read, never written to.
+                    path.write_text(first + "\n", encoding="utf-8")
+                    before = path.read_bytes()
+                    rc, ec, clock, wmi, out, err = self.run_tool(
+                        BASE + ('--csv', str(path)))
+                    self.assertNotEqual(rc, 0)
+                    self.assertEqual(out, "")
+                    # Byte-unchanged. The refusal happens with the append
+                    # handle open, and "a" does not truncate, so what is
+                    # asserted is that nothing was written rather than that
+                    # nothing was opened.
+                    self.assertEqual(path.read_bytes(), before)
+                    rows = list(csv.reader(
+                        path.read_text(encoding="utf-8").splitlines()))
+                    self.assertEqual(len(rows), 1)   # no row appended
+                    # The message names the file, what it found in it and the
+                    # columns it was about to write, so an operator can tell
+                    # the shape already there from the one coming.
+                    self.assertIn(str(path), err)
+                    self.assertIn(named, err)
+                    self.assertIn(",".join(COLS), err)
+                    self.assertNotIn(",".join(COLS), first)
+                    # And it happens before the run samples: no WMI line was
+                    # asked for, no register was read, no interval elapsed. A
+                    # guard placed after the first sample would also leave the
+                    # file alone, but would have gone to the EC to get there.
+                    self.assertEqual(wmi.calls, 0)
+                    self.assertEqual(ec.reads, 0)
+                    self.assertEqual(clock.slept, [])
 
     # 11. The declaration itself. `args.phase` is operator-supplied free text
     #    and lands in column 1 of every row, so it is the one field of this
@@ -502,6 +548,9 @@ class BatteryTraceTests(unittest.TestCase):
     #    Asserted over the tool's source rather than over a run, because on this
     #    runner the two are indistinguishable: python3's default here *is*
     #    utf-8, so a round-trip with no declaration would land the same bytes.
+    #    Both opens of the path are covered by this, not just the appender: the
+    #    refusal reads the header back, and a header read in the writing
+    #    process's locale is the same defect one step later in the round trip.
     def test_the_capture_opener_declares_its_encoding(self):
         calls = [n for n in ast.walk(tool_source_tree())
                  if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
@@ -548,6 +597,39 @@ class BatteryTraceTests(unittest.TestCase):
                  if b == 0xA7 and (i == 0 or raw[i - 1] != 0xC2)]
         self.assertEqual(alone, [], 'a 0xA7 with no 0xC2 before it: the file '
                                      'carries a one-byte character somewhere')
+
+    # 13. The citations that hold this file by line number. Two committed files
+    #     point at a line in battery_trace.py and say what is there:
+    #     `ec/ghidra/xdata-overrides.csv` cites one for ADDR_CURRENT, and
+    #     `docs/findings/probe-csv-encoding.md` cites one for the `open()` on
+    #     args.csv. Nothing in the tree checks either -- no gate resolves a
+    #     prose `path.py:NNN`, and the checks that do exist anchor on rendered
+    #     calls precisely so they need not depend on one -- so an edit above
+    #     either line falsifies a citation silently. This is what notices.
+    #
+    #     Each is held by what its line *says*, not by what it is numbered. The
+    #     distinction is the whole point: a bare `file:NNN` assertion would only
+    #     notice that the number was still 51, and a mechanical re-point would
+    #     keep it that way while the prose went on citing the wrong line. What
+    #     has to stay true is that the cited line carries the cited text.
+    def test_the_lines_the_citations_name_still_carry_what_they_are_cited_for(self):
+        lines = (TOOLS / 'battery_trace.py').read_text(
+            encoding='utf-8').splitlines()
+        # Cited for BAT_CURRENT_MA, so still the address constant and still
+        # the byte the row's `ec_current_ma` is read from.
+        self.assertRegex(
+            lines[ADDR_CURRENT_LINE - 1], r"^ADDR_CURRENT = 0x0434\b",
+            f"battery_trace.py:{ADDR_CURRENT_LINE} no longer declares "
+            f"ADDR_CURRENT; ec/ghidra/xdata-overrides.csv cites that line for "
+            f"BAT_CURRENT_MA")
+        # Cited for the capture's opener, so still the open() on the --csv
+        # path. The refusal reads that same path back, so which of the two
+        # opens a line has become is not what the citation is about; that the
+        # capture is opened here is.
+        self.assertIn("open(args.csv", lines[CSV_OPEN_LINE - 1],
+                      f"battery_trace.py:{CSV_OPEN_LINE} no longer opens the "
+                      f"--csv path; probe-csv-encoding.md cites that line as "
+                      f"the site declaring encoding=")
 
 
 if __name__ == '__main__':

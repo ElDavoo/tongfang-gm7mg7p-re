@@ -193,6 +193,19 @@ they are reads. The class is the same bucket at both — the depth is in the
 `chain` column, not in the name, so a reader can compare a depth-N row
 against a depth-1 hand decode like for like.
 
+**Correction (issue #1103, 2026-10-04): the class is no longer the same
+bucket at both, and the sentence above is left as it was written.** At
+`--callee-depth 2` a cell the first hop settled keeps `handoff->read`, and a
+cell only the second hop settled is `handoff->callee->read`, a column of its
+own — so the depth is now in the class name as well as the `chain` column,
+and a depth-2 row is compared against a depth-1 hand decode by reading which
+column it is in. The verdicts are unaffected: the two forwarders still
+resolve to reads, and every direction below this paragraph is unchanged.
+`../../docs/findings/two-hop-dptr-handoff.md` is the write-up for the split,
+and it carries the same correction to
+`../../docs/findings/callee-depth-n.md`'s statement of the design decision
+this paragraph repeats.
+
 ```console
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1
 | addr | register | total | main EC | PD | read | write | r+w | movc | jmp | handoff->read | handoff->write | handoff->r+w | handoff->unresolved | none |
@@ -204,12 +217,12 @@ $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-dep
 19 entries / 29 addresses: class buckets sum to the site count and main + PD to the file-wide total for every address
 
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 2
-| addr | register | total | main EC | PD | read | write | r+w | movc | jmp | handoff->read | handoff->write | handoff->r+w | handoff->unresolved | none |
+| addr | register | total | main EC | PD | read | write | r+w | movc | jmp | handoff->read | handoff->write | handoff->r+w | handoff->callee->read | handoff->callee->write | handoff->callee->r+w | handoff->unresolved | none |
 [...25 other rows...]
-| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 3 | 1 | 0 | 0 | 0 |
-| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 |
-| `0x07E4` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 4 | 0 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| `0x07E2` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 15 | 0 | 15 | 7 | 4 | 0 | 0 | 0 | 2 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
+| `0x07E3` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 9 | 0 | 9 | 2 | 2 | 0 | 0 | 0 | 1 | 4 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07E4` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 4 | 0 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| `0x07E5` | `LIGHTBAR_BAT_CTRL / RED / GREEN / BLUE` | 10 | 0 | 10 | 5 | 3 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 0 | 0 |
 19 entries / 29 addresses: class buckets sum to the site count and main + PD to the file-wide total for every address
 
 $ python3 ec/tools/register_ref_table.py ec/firmware/GMxMGxx_11.800 --callee-depth 1 --csv \
@@ -231,6 +244,16 @@ for r in csv.DictReader(sys.stdin):
 0x07E5 0x662D 0x383A | handed to lcall/ljmp (unresolved)
 ```
 
+**Correction (issue #1103, 2026-10-04): the depth-2 table above was
+re-pasted from a run on this branch.** It carried a five-column handoff
+header and a `0x07E2` row reading `3 | 1 | 0 | 0 | 0`; the header now names
+the `handoff->callee->` columns as well, and that cell is in
+`handoff->callee->read` beside a one-hop `handoff->read` of `2`. No direction
+verdict moves — both forwarders still resolve to a read and the write counts
+are unmoved — so the depth-1 block above it is untouched, because depth 1
+kept its columns. The §3.4 byte-span table and the §3.5 per-callee decodes
+need no edit for the same reason.
+
 At depth 2 the two forwarders resolve, and the `chain` column is what says
 how — the first link is the callee depth 1 already reported, the second is
 what depth 2 reaches and depth 1 could not:
@@ -242,9 +265,16 @@ import csv, sys
 for r in csv.DictReader(sys.stdin):
     if r['addr'].startswith('0x07E') and ' -> ' in r['chain']:
         print(r['addr'], r['runtime'], '|', r['class'], '| chain:', r['chain'])"
-0x07E2 0x04F9 | handed to lcall/ljmp -> callee reads | chain: 0xB1F2 -> 0x10C8
-0x07E5 0x662D | handed to lcall/ljmp -> callee reads | chain: 0x383A -> 0x0FCB
+0x07E2 0x04F9 | handed to lcall/ljmp -> second callee reads | chain: 0xB1F2 -> 0x10C8
+0x07E5 0x662D | handed to lcall/ljmp -> second callee reads | chain: 0x383A -> 0x0FCB
 ```
+
+**Correction (issue #1103, 2026-10-04): those two rows printed `-> callee
+reads` where they now print `-> second callee reads`.** The chains are
+unchanged — the same two addresses in each, and the `r2` transcript in §3.5
+that checks them is untouched. Only the label and the column the cell sits in
+moved, for the reason given in the correction to the class-name sentence
+above.
 
 Every one of the eleven sites is a bare `mov dptr,#addr` immediately followed
 by the `lcall` — the `window` column holds nothing else — so no instruction
@@ -467,6 +497,14 @@ reports the chain it walked in a `chain` column. At N=2 the two chains are
 `0xB1F2 -> 0x10C8` and `0x383A -> 0x0FCB`, so the sites in §3.4 are
 `handoff→callee reads` and the two `unresolved` cells above are the depth-1
 reading, still what every transcript pasted before this change reproduces.
+
+**Correction (issue #1103, 2026-10-04): `handoff→callee reads` is no longer
+the class string at N=2, and the sentence above is left as it was written.**
+It is now `handoff->callee->read`, reached through the class label `handed to
+lcall/ljmp -> second callee reads`, because a second hop is a weaker claim than
+a first and gets its own column rather than sharing `handoff->read` with it.
+The depth-1 half of that sentence is unaffected and still reproduces.
+
 The reason this was left to the tool rather than settled by eye is unchanged
 and is now the reason the claim is stronger: the `chain` column is what a
 reader re-checks with `s <addr>; pd N` at each address in it, which the

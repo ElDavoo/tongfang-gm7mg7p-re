@@ -556,6 +556,20 @@ into `r2 -a 8051` with no stitching needed.
   in the block is common-area code, so the stub is the only thing that names it
   — the ordering issue #255's `bank1,19A8` correction is about. The write-up is
   [`../docs/findings/trampoline-target-census.md`](../docs/findings/trampoline-target-census.md).
+- **`tools/trampoline_target_reading.py`** — answers what that census leaves
+  open: whether a decoded target sits in a **run** of identical bytes, and how
+  many call sites reach the entry naming it. §4's three classes cannot carry
+  the first question — `0x22` reads `other` whether it is a one-instruction
+  routine or the 133rd byte of a fill — and the census's `listing` column says
+  nothing about the second. Entries, banks and target bytes are **imported** from
+  the census rather than re-scanned, and the callers come from
+  `bank-call-targets.csv`, so the two tables cannot disagree about a byte;
+  `--check` re-derives the committed `annotations/trampoline-target-reading.csv`
+  and diffs it, and `--self-test` walks every `ret`-run threshold so the one
+  chosen is visibly inside a flat band rather than on its edge. The read-up
+  settles what such a target is from the bank-select stub's own bytes, and
+  traces the route by which the bank pointer reaches the caller:
+  [`../docs/findings/trampoline-target-reading.md`](../docs/findings/trampoline-target-reading.md).
 - **`tools/bucket_c_codemap.py`** — classifies all 140 bucket-C sites against a
   code map of the common area recovered by recursive descent, so
   `audit_call_targets.py`'s unresolvable bucket stops being one undifferentiated
@@ -833,8 +847,9 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   counts come out — plus §7, the paged `ajmp`/`acall` family, and §8, the
   PC-relative branches, neither of which the assumption ever has to carry.
   `annotations/bank-call-targets.csv`,
-  `annotations/bank-paged-call-targets.csv` and
-  `annotations/bank-relative-branch-targets.csv` are the per-site tables.
+  `annotations/bank-paged-call-targets.csv`,
+  `annotations/bank-relative-branch-targets.csv` and
+  `annotations/trampoline-target-reading.csv` are the per-site tables.
 - **`annotations/bank-attribution.md`** — what the 403-trampoline closure does
   with the 1288 pairs §4 of that file leaves to the same-bank assumption: 775
   evidence-decided (568 agreeing, 207 contradicting), 115 attributed to both
