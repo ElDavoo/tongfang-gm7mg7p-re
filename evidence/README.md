@@ -52,18 +52,20 @@ independently checkable rather than taken on faith:
   `windows/vendor-ec-map.md` "Power modes".
 - **`ec-watch/2026-09-18-profile-switch-0700-07ff.csv`**,
   **`ec-watch/2026-09-18-profile-switch-0400-07ff.csv`**: the issue #4 run.
-  Read-only Windows captures over the AC plug-in and all three Control Center
-  battery modes, `0x0700-0x07FF` in the first and `0x0400-0x07FF` in the
-  second, taken after the same cycle was repeated over the wider window. Each
-  is one row per change, `ts,addr,old,new` from line 1. **Neither carries a
-  `MARK` row**, so no row can be placed against a switch by the file: which
-  row belongs to which of the three switches is read from the address and the
-  ordering. Source for `docs/findings.md` §4g, including the
-  `0x0436`/`0x0438` correction recorded there in place.
+  Read-only Windows captures over all three Control Center battery modes,
+  `0x0700-0x07FF` in the first and `0x0400-0x07FF` in the second, taken after
+  the same cycle was repeated over the wider window. Each is one row per
+  change, `ts,addr,old,new` from line 1, and the three mode switches are read
+  from each file's three `0x07A6` rows. **Neither carries a `MARK` row**, so no
+  row can be placed against a switch by the file: which row belongs to which
+  of the three switches is read from the address and the ordering. Source for
+  `docs/findings.md` §4g, including the `0x0436`/`0x0438` correction recorded
+  there in place.
 - **`ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`**: a **derived**
   per-address summary, not a capture: `addr,change_count,first_old,last_new`,
   one row per address over `0x0000-0x07FF` sweeping at 0.4 s across the AC
-  plug-in and the three mode switches on 2026-09-18. Its own `#` header is
+  plug-in and the three mode switches on 2026-09-18 — a window of its own,
+  which neither committed raw log above covers. Its own `#` header is
   authoritative and carries three things worth reading before citing it — the
   32,499-row source log is **not committed**, the `change_count` column sums to
   a different figure and neither can be checked from this tree, and the columns
@@ -182,7 +184,7 @@ silence.
 | `2026-09-23-power-mode-cycle-0f00-0f5f.csv` | 0 | The same, over the `0x0F00-0x0F5F` fan-table half. |
 | `2026-09-24-06c2-06db-perturb-linux.csv` | 6 | — |
 | `2026-09-24-06c2-06db-suspend-linux.csv` | 2 | — |
-| `2026-09-24-06c2-06db-sweep-linux.csv` | 0 | The same, and the two mark-bearing captures in this root are the arms of the same issue #257 run that used `--auto-mark` and `--mark-input`. |
+| `2026-09-24-06c2-06db-sweep-linux.csv` | 0 | A different reason from the captures above: this file's `#` note records the run's own "operator activity on the machine not controlled or recorded", so nothing about what was done to the machine was written down and no mark in it is attributable to an action. |
 | `2026-09-24-06d6-reload-linux.csv` | 0 | The same, the `0x06D6` arm of that run. |
 | `2026-09-24-06d9-hold-linux.csv` | 0 | The same, the `0x06D9` arm. |
 
