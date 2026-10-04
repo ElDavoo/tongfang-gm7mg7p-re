@@ -1,6 +1,6 @@
 module,func,func_addr,site_addr,port_helper,abi,base,index,data,direction,caller,resolved,evidence
-OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x6c,,write,OemApControlDxe@0x000004D4,no:data:R9B,bios/ghidra/listings/OemApControlDxe/00000A14.asm
-OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x6d,,write,OemApControlDxe@0x000004DF,no:data:BL,bios/ghidra/listings/OemApControlDxe/00000A14.asm
+OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x6c,,write,OemApControlDxe@0x000004D4,no:data:AL,bios/ghidra/listings/OemApControlDxe/00000A14.asm
+OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x6d,,write,OemApControlDxe@0x000004DF,no:data:AL,bios/ghidra/listings/OemApControlDxe/00000A14.asm
 OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x6e,,write,OemApControlDxe@0x000004EA,no:data:AL,bios/ghidra/listings/OemApControlDxe/00000A14.asm
 OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x65,,write,OemApControlDxe@0x00000508,no:data:AL,bios/ghidra/listings/OemApControlDxe/00000A14.asm
 OemApControlDxe,write_port_register_byte,0x00000A14,0x00000A26,OemApControlDxe@0x0000094C,x64,0x07,0x66,,write,OemApControlDxe@0x0000051C,no:data:R9B,bios/ghidra/listings/OemApControlDxe/00000A14.asm

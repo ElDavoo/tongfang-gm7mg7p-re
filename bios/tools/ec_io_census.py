@@ -285,6 +285,14 @@ def definitions(insns, lo, hi, family):
     return [j for j in range(lo, hi) if writes(insns[j], family)]
 
 
+# The instructions that name a register first and then leave it holding what
+# it held. `push` saves the old value; `cmp` and `test` compute a comparison
+# and write only the flags. Every other form the tree uses with a register
+# first -- `mov`, `pop`, `setcc`, `cmov`, `lea`, `xor`, the arithmetic -- does
+# give it a new value, and this is not a list of the ones that do not.
+NOT_A_WRITE = frozenset(("push", "cmp", "test"))
+
+
 def writes(insn, family):
     """Whether `insn` gives a register of `family` a new value.
 
@@ -293,8 +301,15 @@ def writes(insn, family):
     `Setup` `0x1BA3C` opens with `push RDI` and closes with `pop RDI`, and
     counting the push would make `mov DIL, R8B` look like the second of two
     writes to `RDI` rather than the only one that gives it a value.
+
+    Nor are `cmp` and `test`, which name their operands only to set flags
+    and leave both as they were. Counting them would make a status guard read
+    as a second, disagreeing write -- `OemServiceDxe` `0xF58`'s caller at
+    `0xD20` has `movzx EDX, BL` and `mov DL, 0x7` around a `cmp EDX, 0x1`
+    that writes nothing, and reading the guard as a write turns a window the
+    tool can partly account for into one it calls ambiguous.
     """
-    if insn["mn"] == "push":
+    if insn["mn"] in NOT_A_WRITE:
         return False
     ops = operands(insn)
     return bool(ops) and reg_family(ops[0]) == family

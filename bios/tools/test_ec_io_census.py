@@ -232,6 +232,35 @@ class ValueTests(unittest.TestCase):
         self.assertEqual(ec_io_census.trace(insns, 2, 5, "R8B"),
                          ("imm", "0x41"))
 
+    def test_a_comparison_of_the_read_register_is_not_a_second_write(self):
+        # `OemApControlDxe 0x438` guards the value it then passes:
+        # `mov R9B, AL` at 0x4A8, `cmp R9B, 0xff` at 0x4C2, and the call at
+        # 0x4D4. The `cmp` sets flags and leaves R9B alone, so the window has
+        # one write and the answer is the chase from AL; counted as a second
+        # write it disagrees with the first and the byte comes back unreadable.
+        insns = self.window_of(
+            ("0000049f", "a0 06 00 43 ff 00 00 00 00", "mov",
+             "AL, [0xff430006]"),
+            ("000004a8", "44 8a c8", "mov", "R9B, AL"),
+            ("000004c2", "41 80 f9 ff", "cmp", "R9B, 0xff"),
+            ("000004c6", "74 27", "jz", "0x000004ef"),
+            ("000004d1", "41 b0 6c", "mov", "R8B, 0x6c"),
+            ("000004d4", "e8 3b 05 00 00", "call", "0x00000a14"))
+        # The chase ends on AL, which came out of memory one line up.
+        self.assertEqual(ec_io_census.trace(insns, 1, 5, "R9B"),
+                         ("unresolved", "AL"))
+
+    def test_a_test_of_the_read_register_is_not_a_write_either(self):
+        # The other flag-setting form, on the same family, for the same reason.
+        insns = self.window_of(
+            ("00000000", "e8 00 00 00 00", "call", "0x000000f0"),
+            ("00000005", "41 b0 41", "mov", "R8B, 0x41"),
+            ("00000008", "45 84 c0", "test", "R8B, R8B"),
+            ("0000000b", "74 05", "jz", "0x0000001b"),
+            ("0000000d", "e8 00 00 00 00", "call", "0x000000f0"))
+        self.assertEqual(ec_io_census.trace(insns, 1, 4, "R8B"),
+                         ("imm", "0x41"))
+
     def test_a_value_read_out_of_memory_is_the_register_that_is_unknown(self):
         insns = self.window_of(
             ("00000000", "a0 34 00 43 ff 00 00 00 00", "mov",

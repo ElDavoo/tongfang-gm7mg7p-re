@@ -250,7 +250,7 @@ and they are listed here rather than left for a reader to discover:
 |---|---|---|
 | `Setup` | `0x1B9A0` | the index is its `DL` argument and **no listing in the committed tree calls it**, so nothing settles the byte. Its base is `0x04`, which is what leaves `0x04A6` open. |
 | `OemGlobalNvsDxe` | `0xCC4` | the base is its `DL` argument; at the call from `0x741` the caller's window writes `DL` twice (`0x725` from memory, `0x73F` to `0x07`), so the byte is path-dependent. |
-| `OemServiceDxe` | `0xF58` | same argument, and the caller at `0xD20` writes `DL` three ways in its window. |
+| `OemServiceDxe` | `0xF58` | same argument, and the caller at `0xD20` writes `DL` twice in its window and the two disagree: `movzx EDX, BL` at `0xCFD` and `mov DL, 0x7` at `0xD1E`. |
 | `OemSWBoardIDDxe` | `0x438` | `R8B` — the base — is written twice between the function's entry and the `0xA3` at `0x4C8`, `0x2` at `0x497` and `0x4` at `0x4C5`, and the two disagree. There is no `call` in that span, so the whole entry-to-`0xA3` range is one window and §3's two-writes rule is what leaves the column empty — not a branch, and not a register name the tool could not follow. |
 
 That last row is worth reading a step further, because the reason it is empty
