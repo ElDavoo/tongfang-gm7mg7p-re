@@ -1,0 +1,138 @@
+# ec/tools/check_eq_guard_citations.py, wired into the cheap gate. Prepared here
+# rather than landed, for the reason docs/ci/agent-gates-capture-claims.patch
+# gives: `.github/scripts/agent-gates.sh` is copied from the agent-pipeline
+# template and the pipeline's push token has no `workflow` scope, so a branch
+# editing it fails at the end of the PR rather than at the start of it.
+# `docs/agent-pipeline.md` carries this one across a re-copy too, as its item
+# 15.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-eq-guard-citations.patch
+#
+# and that is the whole change.
+#
+# Added 2026-10-03 (issue #1129). `docs/findings/eq-guard-citations-gate.md` is
+# the write-up and says what the tool does and, at more length, what it does
+# not.
+#
+# Why the cheap tier: what it reads is the committed tree and the standard
+# library. Five markdown files, one Python file, no firmware image, no Ghidra,
+# no network, no assembler. It measures 0.14 s here (0.14-0.15 s over six runs)
+# on 2026-10-03, against a cheap tier docs/agent-pipeline.md records at 5.9 s.
+# That is one runner's figure and the ratio is the point, as item 6 says of its
+# own.
+#
+# What it buys, and what it does not. It holds the line citations five prose
+# files carry for one mechanism -- the `--no-eq-guard` flag, the `==` guard it
+# turns off, and the two refusals that stop it being combined with `--check`
+# and with the committed-output paths -- to the lines that code is on today,
+# on every agent round rather than only in ci.yml's slow `tests` job.
+# **The check is not unrun today**: ci.yml runs `tools/run-tests.sh` on every
+# push and pull request, that runner discovers this tool's suite, and the
+# suite's committed-tree case runs this tool against the committed tree and
+# asserts it exits 0. So what this adds is the *tier*, not the coverage -- see
+# docs/findings/eq-guard-citations-gate.md, which says so and shows the two
+# perturbations that make the check red today. What the class is, is silent:
+# a `:NNN` that has drifted onto a *different flag's help text* or onto *the
+# other refusal* is not a broken link, it is a sentence that reads exactly as
+# well and means the wrong line, and no reader and no other tool can tell.
+# Nothing catches it by accident, so the check that catches it on purpose has
+# to be run by something. Each anchor is a string of `xdata_register_map.py`'s
+# own source resolved by reading the tool, so a drifted citation is reported
+# with the anchor's current line beside it -- one edit rather than a
+# re-measurement of a file that keeps growing.
+#
+# **It is not the general `.py:NNN` pointer checker.** It reads no file outside
+# its declared five plus the tool, it does not walk the tree for citations, and
+# it holds no pointer in them; #868, #869 and #870 own that class. The pins the
+# same five files carry for *other* claims are counted and named as **declined**
+# on every run, and a run that resolves nothing is a failure rather than a pass,
+# because "checked nothing" and "found nothing" look the same from an exit code
+# alone. Two more boundaries are visible in the tool's own output rather than
+# assumed here: a citation inside a `>` block is skipped rather than read (a
+# quoted correction is a denial of currency), and an undeclared bare `:NNN` is
+# not attributed at all rather than guessed at.
+#
+# It is green as prepared, and that was measured before this patch was cut
+# rather than after: the tool exits 0 on the tree this was cut from, and its
+# suite (`ec/tools/test_check_eq_guard_citations.py`) passes. A patch that lands
+# a red gate is the cheapest way to get a gate switched off, so the figure is
+# here rather than assumed.
+#
+# Its two halves are placed differently and for different reasons, and
+# `docs/findings/prepared-gate-patches.md` records both. The **function** goes
+# after `check_registers_yaml()`, with the other `check_*` functions where a
+# reader expects it: that boundary is free, no other patch in the set carries a
+# pre-image window reaching it. The **`gate` line** goes below the "this tier
+# does not run" note rather than beside its siblings, and that one is
+# composition rather than tidiness -- every position in the `gate` list is
+# another patch's context window, so a line in the tidier spot lands in some
+# orders and not others. That failure is the one
+# `tools/test_agent_gates_patches.py` exists to catch, because **each patch
+# would still apply cleanly alone.** List order is cosmetic -- the `gate` calls
+# are independent and nothing reads the order -- so the cost is a placement that
+# looks wrong, the same trade `agent-gates-findings-frozen.patch` made for the
+# same reason. That suite holds both halves in `REQUIRED` as well, because a
+# re-cut that landed the function and dropped the `gate` line would apply
+# cleanly, compose in every ordered pair, and pass `bash -n` and `shellcheck`
+# while running nothing.
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 16c70c3..c1a062e 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -65,6 +65,30 @@ sys.exit(0 if ok else 1)
+ PY
+ }
+ 
++# The `--no-eq-guard` mechanism's own line citations, held to the code they
++# name. Five prose files cite `:NNN` inside `ec/tools/xdata_register_map.py` for
++# the `==` guard, the flag and its two refusals, and a number that has drifted
++# onto a different flag or a different refusal is not a broken link: the
++# sentence still reads correctly and means the wrong line, and no reader and no
++# other tool can tell. Nothing catches this by accident, so a check that
++# catches it on purpose has to be run by something -- that is what this line is
++# for, and `ci.yml`'s `tests` job already runs the same tool through its suite.
++# What this adds is the tier, not the coverage.
++# Each anchor is a string of the tool's own source rather than a rank into a
++# growing file, so a citation that has drifted is reported with the anchor's
++# current line beside it -- one edit rather than a re-measurement.
++# Cheap tier because of what it reads: five markdown files, one Python file, the
++# standard library, no firmware image, no Ghidra, no network, no assembler.
++#
++# This function sits here, with the other `check_*` functions, because this
++# boundary is free: no other prepared patch in `docs/ci/` carries a pre-image
++# window reaching it, measured by content-matching the set as committed rather
++# than off the `@@` headers. Its `gate` line could not be placed the same way --
++# see the comment at that line.
++check_eq_guard_citations() {
++  python3 ec/tools/check_eq_guard_citations.py
++}
++
+ # Not a style check -- ec/tools/scan_refs.py producing the wrong count
+ # silently would mislead every future reference to it. Cross-checks
+ # against a value docs/findings.md and registers.yaml both cite, so a
+@@ -342,6 +362,23 @@ printf '      listing, and the advisory cross-decoder comparison. Both are in\n'
+ printf '      agent-gates-deep.sh, which AGENT_GATES_DEEP=1\n'
+ printf '      .github/scripts/agent-gates.sh runs after this.\n'
+ 
++# The `gate` line for `check_eq_guard_citations()` reads **below** this note
++# rather than beside its siblings, and that is composition rather than
++# tidiness. Every position in the `gate` list above is another prepared patch's
++# context window in `docs/ci/`, measured against the set as committed, and
++# `docs/findings/prepared-gate-patches.md` records the collision table. A line
++# put in the tidier spot lands in some orders and not others, and the failure is
++# silent in the way that matters: **each patch would still apply cleanly alone.**
++# List order is cosmetic -- the `gate` calls are independent and nothing reads
++# the order -- so the cost is a placement that looks wrong, the same trade
++# `agent-gates-findings-frozen.patch` made for the same reason.
++# `tools/test_agent_gates_patches.py` applies the set in every ordered pair, so
++# the composition is checked rather than claimed here, and holds this line and
++# the function above together in `REQUIRED` because a re-cut that landed one and
++# dropped the other would apply, compose and pass `bash -n` and `shellcheck`
++# while running nothing.
++gate 'eq guard citations'  check_eq_guard_citations
++
+ # The elapsed line is printed, never asserted. A wall-clock budget in a gate is
+ # the flaky check that gets switched off after one bad afternoon on a shared
+ # runner, and deleting the assertion is the only fix anyone reaches for. The

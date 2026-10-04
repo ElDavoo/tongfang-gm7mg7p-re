@@ -76,6 +76,7 @@ PATCHES = [
     'docs/ci/agent-gates-capture-claims.patch',
     'docs/ci/agent-gates-cross-decoder-disagreement.patch',
     'docs/ci/agent-gates-disasm8051-self-test.patch',
+    'docs/ci/agent-gates-eq-guard-citations.patch',
     'docs/ci/agent-gates-findings-frozen.patch',
     'docs/ci/agent-gates-gap-text-check.patch',
     'docs/ci/agent-gates-pin-table-rows.patch',
@@ -764,6 +765,63 @@ class ArmRetentionTests(unittest.TestCase):
                     'patch is already landed, this is saying the landing lost '
                     'it -- the tool would be running the `*)` default, which '
                     'passes `--work "$scratch"` and a flag it does not take.')
+
+
+@unittest.skipUnless(has_git(), 'no git on PATH')
+class GateLineRetentionTests(unittest.TestCase):
+    """A bare check still lands the line that runs it, not just the function.
+
+    Every other patch here is a function *and* the call into it, and every case
+    above checks that the patch **applies**. None checks that it applies whole.
+    For `agent-gates-eq-guard-citations.patch` that gap is the whole failure
+    mode: the function is defined and nothing calls it, or the `gate` line
+    names a function that was never defined. Either way the patch applies
+    cleanly, composes in every ordered pair, and passes `bash -n` and
+    `shellcheck` -- shellcheck does not resolve a function name against its
+    definition -- and the gate reports green while running nothing at all.
+
+    Both mutations were checked rather than assumed, and both were built as
+    real half-patches rather than as a corrupt one: dropping either half leaves
+    it applicable, composable in every ordered pair, and parseable, and
+    `SinglePatchTests`, `CompositionTests`, `FoldTests` and `ArmRetentionTests`
+    all still pass against it. (`PatchSetTests` is the exception and is not part
+    of the claim, and not because it would have missed the loss: it goes red on
+    the half-patch's *identity* -- a scratch path is neither the file on disk nor
+    the file `PATCHES` names -- which is a different assertion from the one
+    under test here.) That is why this exists, and it is why the class asserts
+    a shape rather than a count of how many checks are wired -- a definition and
+    the call to it is something a later patch can keep landing as the set grows.
+    """
+
+    PATCH = 'docs/ci/agent-gates-eq-guard-citations.patch'
+    # The function with its body rather than its opening brace alone, so a
+    # re-cut that emptied the body -- or one that renamed the tool it calls --
+    # fails here instead of landing a check that runs nothing.
+    REQUIRED = [
+        'check_eq_guard_citations() {\n'
+        '  python3 ec/tools/check_eq_guard_citations.py\n'
+        '}',
+        "gate 'eq guard citations'  check_eq_guard_citations",
+    ]
+
+    def test_the_function_and_the_gate_line_both_land(self):
+        with retention_gate(self.PATCH) as (gate, problem):
+            self.assertFalse(problem, problem)
+            landed = gate.read_text()
+        for line in self.REQUIRED:
+            with self.subTest(line=line):
+                # `assertTrue`, not `assertIn` -- see the note in `FoldTests`.
+                self.assertTrue(
+                    line in landed,
+                    f'{self.PATCH} no longer lands {line!r}. Dropping the '
+                    '`gate` line leaves a function nothing calls and dropping '
+                    'the function leaves a call to something undefined; '
+                    'either still applies, still composes in every ordered '
+                    'pair, and still passes `bash -n` and `shellcheck`, so '
+                    'nothing else in this suite would notice. If the patch is '
+                    'already landed, this is saying the landing lost it -- the '
+                    'gate would report the check as passing while running '
+                    'nothing.')
 
 
 class HeaderInstructionTests(unittest.TestCase):

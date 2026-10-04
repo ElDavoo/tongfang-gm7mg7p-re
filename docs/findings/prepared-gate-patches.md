@@ -284,7 +284,19 @@ The collision table from the top of this file, updated:
 | tool list `:123-128` | `agent-gates-0751-self-test.patch` hunk 1 |
 | arms `:162-167` | `agent-gates-gap-text-check.patch` hunk 2 |
 | arms `:189-194` | `agent-gates-0751-self-test.patch` hunk 2 |
-| `check_register_counts` region, `gate` list `:271-277` | capture-claims, testdata-row-claims |
+| `check_register_counts` region, `gate` list `:271-277` | capture-claims, testdata-row-claims, **agent-gates-pin-table-rows.patch** |
+
+**Correction to that last row, 2026-10-03 (issue #1083 records the
+disagreement).** Its `gate` list figure read `:271-277`; measured against the
+committed script the list is `:327-333`, and the `held by` cell omitted
+`agent-gates-pin-table-rows.patch`, which does write a `gate` line into it —
+three patches write into that list, not two. The old figure is left above rather
+than edited away, per §4a-4d. Only this row was re-derived: **the rest of this
+table is a record of what was measured on the commit that measured it**, and
+#1083 owns the general re-derivation. A reader cutting a hunk today should
+content-match the set as committed rather than trust any figure in it, including
+the corrected one — every `@@` header in `docs/ci/` is stale for most of the set,
+which is why `agent-gates-disasm8051-self-test.patch`'s header says so.
 
 The union of the two tool-list windows is `:119-128`, and **`:129` is the only
 line in the list outside every one of them** — which is why the new patch splits
@@ -485,3 +497,58 @@ gate switched off, and `ec/tools/test_reassembly_checked_bound.py` holds the
 strict form red on the committed tree so `--fail-on-overclaim` is not a flag
 nobody can tell works. The census it derives from is
 [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md).
+
+## A patch whose function found a free boundary, and whose gate line did not
+
+**2026-10-03, issue #1129.** `docs/ci/agent-gates-eq-guard-citations.patch` wires
+`ec/tools/check_eq_guard_citations.py` into the cheap tier, and its two halves are
+placed for two different reasons — which is worth separating here, because only
+one of them is the shape this file has been recording since the fifth patch.
+
+**The `gate` list is saturated, and the `gate` line goes below the "this tier does
+not run" note.** Content-matched against the committed script, the region is held
+by `agent-gates-findings-frozen.patch`, `agent-gates-pin-table-rows.patch`,
+`agent-gates-capture-claims.patch` and `agent-gates-testdata-row-claims.patch`,
+with contiguous windows across it. Each candidate position in the list was
+re-cut and tested rather than reasoned about: every one of them still applies
+alone and collides with at least one of those four once either lands first. So
+this is the §"A fifth patch" answer arriving one step further along — the free
+region is not empty, but every position in the list is taken.
+
+**The function boundary is *not* saturated, and the function goes with the other
+`check_*` functions.** This is the correction, and it is worth recording in the
+form it was made in: a first cut of this patch put the function at the tail of
+the file beside its `gate` line, and justified it with the claim that *every*
+boundary between two functions was another patch's context window. **That was
+false.** Content-matching every prepared patch's pre-image against the committed
+script puts the boundary after `check_registers_yaml()`'s closing brace free —
+the nearest occupied window belongs to `agent-gates-testdata-row-claims.patch`,
+well clear of it — and a patch with the function there composes with the whole
+set in every ordered pair. The claim was not merely overstated; it was the thing
+that produced an unnecessary cost, and a future author cutting a patch here
+would have read it and gone to the end of the file for no reason. **Measure the
+boundaries before claiming they are all taken.**
+
+So one half of this patch looks wrong and one does not, and the header says which
+is which. The cost is the same trade the saturated half always costs: a
+placement that looks wrong, where the alternative breaks every-ordered-pair
+landing while the patch still applies on its own.
+
+**A patch that is one function and one `gate` line is a new shape here to be
+half-right in, and that is worth holding.** Every other patch in the set is a
+function and the call into it, and every case in the suite checked that the
+patch *applies*; none checked that it applies whole. A re-cut that landed
+`check_eq_guard_citations()` and dropped its `gate` line would apply cleanly,
+compose in every ordered pair, and pass `bash -n` and `shellcheck` — shellcheck
+does not resolve a function name against its definition — and the gate would
+report the check as passing while running nothing. The same is true of the other
+half dropped, which is why `GateLineRetentionTests` holds both strings rather than
+the function's alone. Both mutations were built and checked rather than assumed,
+and `GateLineRetentionTests` is the only case in the suite that fails against
+either. That is the class `FoldTests` and `ArmRetentionTests` were written for,
+arriving for a bare function rather than a fold.
+
+The write-up is [`eq-guard-citations-gate.md`](eq-guard-citations-gate.md), and
+it carries the before/after anchor table beside the `d330478` figures: the tool
+has grown since that tree and its anchors have moved 21 to 614 lines, by five
+different offsets, which is the argument the gate exists to stop needing by hand.

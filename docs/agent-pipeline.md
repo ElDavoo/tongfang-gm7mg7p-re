@@ -611,6 +611,78 @@ only covers what's specific to *this* copy.
      arm is after `*xdata_register_map.py)`, and tidying either back to where
      a reader expects it breaks every-ordered-pair landing while the patch
      still applies on its own.
+  15. **`check_eq_guard_citations.py` runs in the slow `tests` job and not in
+     the cheap tier, and this moves it** (2026-10-03, issue #1129). It holds the
+     line citations five prose files carry for one mechanism — the
+     `--no-eq-guard` flag, the `==` guard it turns off, and the two refusals that
+     stop it being combined with `--check` and with the committed-output paths —
+     to the lines that code is on today. **The check is not uncaught today**,
+     and this item is not about making it caught: `ci.yml` runs
+     `bash tools/run-tests.sh` as its `tests` job on every push to `main` and
+     every pull request, that runner discovers every `test_*.py` in the
+     repository, and this tool's suite's `TheCommittedTree` case runs the tool
+     against the committed tree and asserts it exits 0, so a drifted citation is
+     already a red run that `agent-fix-ci.yml` escalates. **What this adds is the
+     tier**: the check moves out of the slow leg — a job of its own, behind a
+     full checkout, 45-minute timeout — into the tier the implement and fix
+     rounds run on every round, so it is paid before the push rather than after
+     it. The defect *class* is silent by construction, and that is a different
+     statement about a different thing: a `:NNN` that has drifted onto *a
+     different flag's help text*, or onto *the other refusal*, is not a broken
+     link, it is a sentence that reads exactly as well and means the wrong line,
+     and no reader and no other tool can tell. Nothing catches it by accident,
+     so a check that catches it on purpose has to be run by something — which is
+     what a `gate` line is. This is the same trade items 11 to 14 make for their
+     own tools: their checkers are gated and their suites are already discovered
+     by `tools/run-tests.sh` the same way, so what the prepared set has
+     consistently bought is the tier rather than the first line of coverage.
+     Adding it is a `check_eq_guard_citations()` function and a `gate` line:
+
+     ```sh
+     check_eq_guard_citations() {
+       python3 ec/tools/check_eq_guard_citations.py
+     }
+
+     gate 'eq guard citations'  check_eq_guard_citations
+     ```
+
+     **It is not the general `.py:NNN` pointer checker**, which #868, #869 and
+     #870 own; it reads no file outside its declared five plus the tool and
+     holds no other pointer. A citation inside a `>` block is skipped rather
+     than passed, since a quoted correction is a denial of currency, and a
+     declined count is a count of "checked nothing" rather than "found
+     nothing" — both counted on every run, so a vacuous pass does not read
+     like a clean one. Cheap tier for item 4's reason: five markdown files, one
+     Python file and the standard library — no firmware image, no Ghidra, no
+     network, no assembler. It measures 0.14 s here on 2026-10-03 against the
+     cheap tier the paragraph above records at 5.9 s, on item 6's caveat that
+     the ratio is the point.
+     It is not here for item 4's reason, template-copied file and no
+     `workflow` scope on the token, so it is a prepared patch and a human's
+     `git apply` rather than a landed edit. Its own suite
+     (`ec/tools/test_check_eq_guard_citations.py`) needs no wiring to be run at
+     all, for item 5's reason: `tools/run-tests.sh` discovers every `test_*.py`
+     in the repository, so it is already collected by the runner below — which
+     is the honest reason this item is about the tier and not about coverage.
+     The whole of it is prepared at
+     `docs/ci/agent-gates-eq-guard-citations.patch`, and its two halves are
+     placed for two different reasons. The **function** goes with the other
+     `check_*` functions, after `check_registers_yaml()`, because that boundary
+     is free — no prepared patch carries a pre-image window reaching it, which
+     is item 13's measurement and the reason not to move it to the tail. The
+     **`gate` line** goes below the "this tier does not run" note rather than
+     beside its siblings: every position in the `gate` list is another prepared
+     patch's context window, for item 13's reason, and each candidate was
+     re-cut and tested rather than reasoned about, so tidying that half breaks
+     every-ordered-pair landing while the patch still applies on its own. Both
+     placements are measured in
+     `docs/findings/prepared-gate-patches.md`.
+     `tools/test_agent_gates_patches.py::GateLineRetentionTests`
+     holds both halves, because a re-cut that landed one and dropped the other
+     would apply, compose and pass `bash -n` and `shellcheck` while running
+     nothing. **A re-copy of the template restores the script
+     without either**, and this item, the patch's header and that suite are the
+     things carrying it.
 - **`tools/run-tests.sh`, and the gate line that would call it**
   (2026-09-23, issue #162) — the four offline `unittest` suites
   (`ec/tools/test_grade_0751_isolation.py`, `windows/tools/test_ec_watch.py`,
