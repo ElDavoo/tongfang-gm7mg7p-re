@@ -105,5 +105,5 @@ addr,seed,direction,accessor,census_refs,census_read,census_write,census_read_wr
 0x060D,0x060C,read,read_xdata_pair_to_r1r2,2,1,1,0,0,0,2,0,no
 0x060F,0x060E,read,read_xdata_pair_to_r1r2,3,3,0,0,0,0,2,0,no
 0x0647,0x0646,read+write,read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r1r2_to_xdata_pair,6,4,2,0,0,0,0,0,no
-0x0835,0x0834,read+write,read_xdata_pair_to_b_and_a;read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,48,41,7,0,0,0,2,9,no
-0x0837,0x0836,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,10,5,5,0,0,0,1,7,no
+0x0835,0x0834,read+write,read_xdata_pair_to_b_and_a;read_xdata_pair_to_r1r2;read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,48,41,7,0,0,0,2,9,yes
+0x0837,0x0836,read+write,read_xdata_pair_to_r3r4;write_r3r4_to_xdata_pair,10,5,5,0,0,0,1,7,yes
