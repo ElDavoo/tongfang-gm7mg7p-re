@@ -6967,3 +6967,111 @@ registers:
       records is the one path that ties it to the mailbox, and a count this
       large is a reason to distrust any single claim built on it without a
       per-site table. No PD site. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: XDATA_04A0
+    addr: 0x04A0
+    sources: [static-scan, xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three committed writers, and they do not agree on one source, which is
+      the finding: bank1 0xD0C4 gives it whatever 0x0524 holds and, on its
+      later path, the literal 0x20 in a store list with 0x0524, 0x0526 and
+      0x0492; bank1 0xC778 clears it in the same run that clears 0x0524 and
+      0x0526; bank1 0xB2D5, reached through forwarder_to_b2d5, reaches it by
+      a call to the pair store at 0x888C, which does not settle the value
+      from 0x0524 as the decompile reads -- 0xB6C9 loads four bytes into R3,
+      R4, R1 and R2 and 0x888C stores R1 then R2, so the pair store lands
+      the 0x0526/0x0527 bytes rather than 0x0524/0x0525. Its readers test bit
+      5 (bank1 0xAD8B, 0xB224, 0xB2A0). **No reader is the reason any
+      of the three wrote it**, and the three do not even track one value:
+      0x0526's writers are a strict subset of 0x0524's -- bank1 0xC7A7 and
+      0xCBF3 clear 0x0524 without touching 0x0526 -- so on those two paths
+      0x04A0 keeps a value 0x0524 no longer holds. The bit-5 tests are
+      therefore observations about the byte, not the purpose of a store. A
+      reading that made this a mirror of 0x0524 is withdrawn in
+      docs/findings/xdata-04a0-04ae-04be-words.md, with the listing evidence
+      beside it. Nothing here was observed live and no byte was read back: a
+      register the EC arms and disarms is not thereby one a Linux driver
+      should write. Not established: what the bit-5 test selects.
+
+  - name: XDATA_04A1
+    addr: 0x04A1
+    sources: [static-scan, xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 5
+    static_refs_pd_image: 3
+    status: present-untested
+    note: >
+      **No committed routine has been read setting this non-zero.** Its only
+      direct store is bank1 0xD0C4, with A cleared one instruction earlier;
+      its one helper-written path is bank1 0xB2D5's pair store at 0x888C,
+      which delivers 0x0527, and 0x0527's only committed writer is that same
+      0xD0C4 storing zero. So the bit-6 and `& 0x90` tests at bank1 0xBA43
+      and 0xC11C are tests of a byte no committed writer sets -- which is
+      why they cannot distinguish a mirror of 0x0524 from anything else, and
+      why the mirror reading is withdrawn rather than merely unproven. "Not
+      been read setting" is not "is always zero": a computed DPTR, a
+      register-indirect store and a handed-off pointer are all outside what
+      these listings and the committed decompiles show, so a zero from this
+      method is "not found by this method". Three of the eight sites are in
+      the ITE8850-PD image, a separate program with its own XDATA map, and
+      are counted in `static_refs_pd_image` rather than added to the main-EC
+      column. Nothing was observed live. Not a driver-write target on this
+      evidence, and the byte's role is not established at all.
+
+  - name: XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)
+    addr: [0x04AE, 0x04AF]
+    sources: [static-scan, xdata-refs]
+    static_refs: [6, 1]
+    static_refs_main_ec: [6, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      A 16-bit up-counter, paired structurally rather than by inference: it is
+      zeroed through the pair store at 0x888C and incremented as a word with
+      carry, so the two bytes are one value. bank1 0xB841 rewrites 0x0490 as
+      old AND 0xf9, clearing bits 1 and 2, and three instructions later stores
+      0x0000 here;
+      bank1 0xBFD9 is the same store with a ret and reads no 0x0490 byte; and
+      bank1 0xBFBB's `C01B`-`C031` adds one to 0x04AE and carries into 0x04AF
+      once the byte at 0x04AD reaches 0x3C. That increment is why this entry
+      does not say no committed routine sets the word non-zero -- it does, and
+      the rejected issue text said otherwise. **0x0490 bit 1 is the gate
+      bank0 0xB12C reaches `charge_target_update` on**
+      (`B141 mov DPTR,#0x490`, `B145 jb 0xe1,0xb158`), and it is one of the
+      bits 0xB841 clears in the same breath as the zeroing, which puts the
+      word on the charge-target path. The `* 0x3C` comparison and all three
+      0x0494 accesses are bank1 0xC032's bytes, not 0xBFBB's: 0xBFBB ends at
+      `C031` and has no 0x0494 site, and 0xBFBB.c attributes them here because
+      0xBFBB's first instruction is `lcall 0xc032`. 0x3C is 60 and no unit is
+      claimed, because nothing committed establishes the tick rate of the
+      byte in front of the word; what sets 0x0490 bit 1 is likewise open.
+      Nothing was observed live, and a counter the EC arms and zeroes is not
+      thereby one a Linux driver should write.
+
+  - name: XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)
+    addr: [0x04BE, 0x04BF]
+    sources: [static-scan, xdata-refs]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      The second of the two 16-bit up-counters, one 0x10 column above the
+      0x04AE word and stepped the same way: bank1 0xB8E1 clears bits 5 and 6
+      of 0x0490 and then stores 0x0000 here through 0x888C, bank1 0xBFD9 is
+      the bare zeroing of this word and the 0x04AE one, and bank1 0xC0A8's
+      `C0D9`-`C0EF` adds one to 0x04BE and carries into 0x04BF once the byte
+      at 0x04BD reaches 0x3C. Its gate is 0x0490 bit 5, the bit 0xB8E1 tests
+      before counting 0x05F5 down and clears alongside the zeroing; nothing
+      committed establishes what sets it, and the live 0x0490 reading on the
+      charge-target page does not have it set. 0xC0A8's own `* 0x3C`
+      comparison and its 0x049C update are its bytes, distinct from 0xC032's
+      0x0494 ones. As with the 0x04AE word, no committed routine is what
+      stops the increment and so this entry does not claim the word is never
+      set non-zero; 0x3C is 60 and no unit is claimed. What the word counts,
+      and against what the comparison decides, are not established.
+      Nothing was observed live, and this is not a driver-write target.

@@ -366,9 +366,13 @@ not a statement that the traffic is safe**. The path has never been run against
 the driver on this machine.
 
 **There is no safe interval to hand you from here.** How long one IOCTL takes is
-not measurable without the driver and the machine, issue #94 is the open work to
-make these tools safe by default, and nothing in this repo measures it. If the
-fans audibly change during a run, raise `--interval` and redo the run.
+not measurable without the driver and the machine, and nothing in this repo
+measures it. #94 is no longer wholly open: `ec_watch.py` and `ecrw.py dump`
+now leave the fan-tach page out and sleep `--gap-ms` after every read (default
+6 ms, `../related-projects.md`'s figure for a sibling board rather than one
+measured here), which is a conservative default and not a validated rate.
+`manual_fan_ctrl_probe.py` is still unpaced and #94 is the open work for it. If
+the fans audibly change during a run, raise `--interval` and redo the run.
 
 ## 4. What to read off, and the rule — written down in advance
 
