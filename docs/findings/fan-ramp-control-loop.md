@@ -130,8 +130,11 @@ Below 4 the controller runs the **dwell** arm, which is the interesting one.
 
 `0xBB5E` adds the integrator into the table pointer and reads a CODE byte:
 `add A, DPL` at `0xBB5E`, then — with no `ret` of its own, so the byte-scan
-seeding splits it — `mov DPL,A` / `addc A,DPH` / `mov DPH,A` / `movc A,@A+DPTR`
-/ `ret` at `0xBB60`. That is the whole of "the setpoint is a lookup keyed by the
+seeding splits it — `mov DPL,A` / `clr A` / `addc A,DPH` / `mov DPH,A` /
+`clr A` / `movc A,@A+DPTR` / `ret` at `0xBB60`. Each `clr A` is load-bearing
+rather than incidental: it is what zeroes CY before the `addc`, so the 16-bit
+add carries the low half's overflow into the high half instead of adding the
+same byte twice. That is the whole of "the setpoint is a lookup keyed by the
 integrator", and it is why the answer to the issue's "is `0x043E` the setpoint"
 is no: `0x043E` is the right-hand operand at `0x8B39`, and the left-hand one
 came out of a table. `0xBCE9` is the other half of the same idea one step
@@ -264,8 +267,11 @@ term is built at `0x8ADD` and `0x8AF8` against **two different threshold
 bands**, `0x0F30 + n` and `0x0F40 + n` — the up-threshold and the
 down-threshold — which is a hysteresis band rather than a single comparison.
 The CPU half has the same pair in the other controller: `0xBB5E` against the
-first table (`0x8B32`, `0x8B9D`, `0x8BF1`) and `0xBABF` against the second
-(`0x8B57`, `0x8BB1`).
+first table (`0x8B32`, `0x8B9D`) and `0xBABF` against the second
+(`0x8B57`, `0x8BB1`). `0xBB5E` serves both halves at all three of its sites in
+`0x8B14`: `0x8BF1` belongs to the GPU half, reaching it with `0x0468` in A and
+comparing against `GPU_TEMP` (`8BE9 mov DPTR,#0x468` / `8BEC movx A,@DPTR`
+before it, `8BF5 mov DPTR,#0x44f` after).
 
 Both error terms drive **different integrator bytes** — `0x0460` for CPU,
 `0x0468` for GPU — and both integrators index **different table pages**. That
@@ -276,60 +282,168 @@ shared.
 
 The issue asks whether the CPU and GPU threshold routines are alternatives
 selected by a mode bit. **They are not called from the loop at all.**
-`call-graph-callees.csv` gives `0xBB56` one inbound `lcall` and `0xBBDE` two,
-and `bank-call-targets.csv` names all three sites: `0xB6F7 → 0xBB56`,
-`0xB703 → 0xBBDE`, `0xB51A → 0xBBDE`. **They are not all in one routine.** Two
-are inside `0xB5D3` (`ec/decompiled/index.csv` seeds it at 323 bytes,
-`0xB5D3`–`0xB715`) and the third is inside `0xB4A8` (266 bytes,
-`0xB4A8`–`0xB5B1`), so this write-up reads two chains, not one.
 
-The `0xB5D3` chain is straight-line in code order:
+The caller set has to be read **at the routine, not at the address**, because
+`0xBB55` and `0xBB56` are one routine and `0xBBDD` and `0xBBDE` are another,
+each split by the byte-scan seeding: `0xBB55` is `setb CY` at the byte before
+`0xBB56`'s `movc A,@A+DPTR`, and `0xBBDD` is the same byte before `0xBBDE`.
+The census carries a row per entry byte, so an inbound count taken against
+`0xBB56` and `0xBBDE` alone sees one and two `lcall`s and misses every site
+that entered a byte earlier. Collected over all four entry bytes,
+`bank-call-targets.csv` names ten sites:
+
+```console
+$ awk -F, 'NR>1 && $5 ~ /^0xB(B5[56]|BD[DE])$/ {print $1, $5}' \
+    ec/annotations/bank-call-targets.csv
+0x0B50F 0xBB55
+0x0B51A 0xBBDE
+0x0B56D 0xBB55
+0x0B578 0xBBDD
+0x0B66A 0xBB55
+0x0B678 0xBBDD
+0x0B6F7 0xBB56
+0x0B703 0xBBDE
+0x0B7CA 0xBB55
+0x0B7D5 0xBBDD
+```
+
+**They are not in one routine, or in two.** Resolved against `index.csv`, the
+ten sites are five ladders in **three** seeded routines — two in `0xB4A8`
+(`index.csv` seeds it at 266 bytes, `0xB4A8`–`0xB5B1`), two in `0xB5D3` (323
+bytes, `0xB5D3`–`0xB715`) and one in `0xB737` (247 bytes, `0xB737`–`0xB82D`) —
+and each of the five has the same shape: load the table pointer, CPU test,
+guard, GPU test, guard.
+
+Every one of them is CPU before GPU in code order. The first, in `0xB4A8`:
 
 ```
+B508     90 0a 47 mov      DPTR, #0xa47
+B50B     12 b9 3d lcall    0xb93d          ; DPTR <- the CODE table, R7:R6 kept
+B50E     e4 - -   clr      A
+B50F     12 bb 55 lcall    0xbb55           ; CPU band, index 0
+B512     50 0e -  jnc      0xb522
+B514     8f 82 -  mov      DPL, R7          ;   DPTR <- the same table again
+B516     8e 83 -  mov      DPH, R6
+B518     74 01 -  mov      A, #0x1
+B51A     12 bb de lcall    0xbbde           ; GPU band, index 1
+B51D     50 03 -  jnc      0xb522
+B51F     02 b5 d2 ljmp     0xb5d2           ;   both bands exceeded -> 0xB5D2 is a bare ret
+```
+
+The `mov DPL, R7` / `mov DPH, R6` pair is load-bearing rather than incidental:
+`0xBB55` and `0xBBDE` both leave DPTR at `0x043E` / `0x044F`, so without that
+restore the second `movc A,@A+DPTR` could not index the same table. Every
+ladder below has the same restore, at `0xB6FC`/`0xB6FE`, `0xB572`/`0xB574`,
+`0xB672`/`0xB674` and `0xB7CF`/`0xB7D1`.
+
+The second `0xB4A8` ladder, at indices 2 and 3 — the guard polarity is `jc`
+here, not `jnc`:
+
+```
+B565     90 0a 47 mov      DPTR, #0xa47
+B568     12 b9 3d lcall    0xb93d
+B56B     74 02 -  mov      A, #0x2
+B56D     12 bb 55 lcall    0xbb55           ; CPU band, index 2
+B570     40 2a -  jc       0xb59c
+B572     8f 82 -  mov      DPL, R7
+B574     8e 83 -  mov      DPH, R6
+B576     74 03 -  mov      A, #0x3
+B578     12 bb dd lcall    0xbbdd           ; GPU band, index 3
+B57B     40 1f -  jc       0xb59c
+```
+
+Both `0xB4A8` ladders reach their table the same way, through `0xB93D` on the
+`0x0A47` pointer pair §5 is about, and the second runs on to `0xB57D` past its
+guards rather than leaving the routine.
+
+The first `0xB5D3` ladder, at indices 4 and 5, and the third band at 6:
+
+```
+B662     90 0a 47 mov      DPTR, #0xa47
+B665     12 b9 3d lcall    0xb93d
+B668     74 04 -  mov      A, #0x4
+B66A     12 bb 55 lcall    0xbb55           ; CPU band, index 4
+B66D     50 03 -  jnc      0xb672          ;   carry clear -> fall through to the GPU test
+B66F     02 b7 36 ljmp     0xb736
+B672     8f 82 -  mov      DPL, R7
+B674     8e 83 -  mov      DPH, R6
+B676     74 05 -  mov      A, #0x5
+B678     12 bb dd lcall    0xbbdd           ; GPU band, index 5
+B67B     50 03 -  jnc      0xb680
+B67D     02 b7 36 ljmp     0xb736
+B680     90 0a 47 mov      DPTR, #0xa47
+B683     12 b9 89 lcall    0xb989
+B686     74 06 -  mov      A, #0x6
+B688     12 bd a5 lcall    0xbda5           ; a third band, index 6
+B68B     50 03 -  jnc      0xb690
+B68D     02 b7 36 ljmp     0xb736
+```
+
+and the second, at indices 7, 8 and 9, which is the one the ordering was first
+read from:
+
+```
+B6EE     90 0a 47 mov      DPTR, #0xa47
+B6F1     12 b9 3d lcall    0xb93d
 B6F4     74 07 -  mov      A, #0x7
 B6F6     c3 - -   clr      CY
 B6F7     12 bb 56 lcall    0xbb56           ; CPU band, index 7
 B6FA     50 3a -  jnc      0xb736
+B6FC     8f 82 -  mov      DPL, R7
+B6FE     8e 83 -  mov      DPH, R6
 B700     74 08 -  mov      A, #0x8
 B702     c3 - -   clr      CY
 B703     12 bb de lcall    0xbbde           ; GPU band, index 8
 B706     50 2e -  jnc      0xb736
+B708     90 0a 47 mov      DPTR, #0xa47
+B70B     12 b9 89 lcall    0xb989          ;   the other table, via 0xB989
 B70E     74 09 -  mov      A, #0x9
 B710     c3 - -   clr      CY
 B711     12 bd a6 lcall    0xbda6           ; a third band, index 9
 B714     50 20 -  jnc      0xb736
 ```
 
-**A gate chain, in code order, CPU before GPU, each `jnc`-guarded and each
-jumping to the same `0xB736` exit.** So the ordering is fixed by the fallthrough
-structure, not selected: there is no mode bit choosing between them, and the
-`mov A, #0x7` / `#0x8` / `#0x9` before each call is an **index into the same
-CODE table**, which is a third way the curve is keyed besides the two the loop
-uses. `0xB5D3` reaches this chain from `0xB6C2 jc 0xB6E8`, and `0xB5D3`'s own
-row is `FUN_CODE_b5d3` — unnamed, and not what §6 grouped.
-
-The `0xB4A8` chain has the same shape over a different index pair, which is why
-the answer to issue item 2 does not depend on picking one of them:
+The fifth, in `0xB737` — a routine §6 does not group and this section had not
+reached — at indices `0x0C` and `0x0D`:
 
 ```
-B50E     e4 - -   clr      A
-B50F     12 bb 55 lcall    0xbb55           ; CPU band, index 0 (0xBB55 is 0xBB56's setb CY)
-B512     50 0e -  jnc      0xb522          ;   within band -> carry clear, carry on
-B518     74 01 - -   mov      A, #0x1
-B51A     12 bb de lcall    0xbbde           ; GPU band, index 1
-B51D     50 03 -  jnc      0xb522
-B51F     02 b5 d2 ljmp     0xb5d2           ;   both bands exceeded -> 0xB5D2 is a bare ret
+B7C2     90 0a 47 mov      DPTR, #0xa47
+B7C5     12 b9 3d lcall    0xb93d
+B7C8     74 0c -  mov      A, #0xc
+B7CA     12 bb 55 lcall    0xbb55           ; CPU band, index 0x0C
+B7CD     40 2d -  jc       0xb7fc
+B7CF     8f 82 -  mov      DPL, R7
+B7D1     8e 83 -  mov      DPH, R6
+B7D3     74 0d -  mov      A, #0xd
+B7D5     12 bb dd lcall    0xbbdd           ; GPU band, index 0x0D
+B7D8     40 5b -  jc       0xb835
+B7DA     90 0a 47 mov      DPTR, #0xa47
+B7DD     12 b9 89 lcall    0xb989
+B7E0     74 0e -  mov      A, #0xe
+B7E2     d3 - -   setb     CY
+B7E3     12 bc 37 lcall    0xbc37           ; a third band, index 0x0E
+B7E6     40 4d -  jc       0xb835
 ```
 
-CPU before GPU again, at indices 0 and 1 rather than 7 and 8, and both `jnc`s
-leave to the same `0xB522`. **So `0xBBDE` has a caller the `0xB5D3` ordering
-argument does not account for, and it points the same way:** in both routines the
-CPU test is reached first, and passing it skips the GPU test. What is *not*
-established here is what selects between the two chains, or whether either
-composes with the loop: `0xB4A8`'s exceed-both path returns through the bare
-`ret` at `0xB5D2`, so what reaches that routine — and how it relates to the
-`0xB5D3` chain — is not resolved here. Issue item 2's "compose or are they
-alternatives" is therefore answered for each chain's internal ordering and not
+**So the ordering answer to issue item 2 does not depend on picking a chain:
+in all five ladders the CPU test is reached first and passing it skips the GPU
+test**, and in no ladder does any branch select between them — the guard either
+falls through to the GPU call or leaves, and the choice of which is the ladder's
+own, not a mode bit's. The `mov A, #0x0`/`#0x1` … `#0x0D` before each call is
+an **index into the same CODE table**, a third way the curve is keyed besides
+the two the loop uses, and the five CPU/GPU index pairs ascend and do not
+overlap — `0`/`0x1`, `0x2`/`0x3`, `0x4`/`0x5`, `0x7`/`0x8`, `0x0C`/`0x0D` —
+with the gaps taken by the third-band calls between them. The guard polarity is
+not uniform — `jc` in the `0xB56D` and `0xB7CA` ladders, `jnc` in the other
+three — so which way is "passing" differs per ladder and this write-up does
+not claim a single sense for it.
+
+What is *not* established here is what selects between the five ladders, or
+whether any of them composes with the loop: `0xB4A8`'s first exceed-both path
+returns through the bare `ret` at `0xB5D2`, and `0xB5D3`'s two exit at the bare
+`ret` at `0xB736`, so what reaches these routines — and how they relate to
+each other — is not resolved here. Issue item 2's "compose or are they
+alternatives" is therefore answered for each ladder's internal ordering and not
 for the relationship between them.
 
 This is the §7 handoff, and it is a partial one: the mode bit governs **block
@@ -443,8 +557,8 @@ next `--mode rebuild-project` export picks the corrected row up. The retraction
 itself lives in the annotations CSV and here.
 
 `0x0A47` is `MAILBOX_PUBLISH_VALUE` in `registers.yaml`, and its note is
-unchanged by this: nothing here is a payload, and the byte's 121 sites are
-still far too many to characterise from one write.
+unchanged by this: nothing here is a payload, and that row's `static_refs`
+count is still far too many sites to characterise from one write.
 
 ## 6. What this does not establish
 

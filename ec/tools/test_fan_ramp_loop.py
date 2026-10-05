@@ -26,7 +26,8 @@ and the gate that separates them is the pair of enable bits.
 
 **The image check is scoped to the one claim a listing cannot carry.** The
 `0xBB56`/`0xBBDE` ordering claim rests on `B5D3.asm`, whose own header says the
-function boundary is a byte-scan hypothesis. So that window is additionally
+function boundary is a byte-scan hypothesis. So that window — one of the five
+ladders §3a reads, and the one it decodes from the image — is additionally
 decoded straight out of the committed firmware with `disasm8051.py` and the
 result compared, which is what catches an export that has drifted from the
 image. `--converge` is asked for and its answer printed rather than asserted to
@@ -178,11 +179,16 @@ POINTER_DEREFERENCE = [
 ]
 
 # The ladder that orders 0xBB56 against 0xBBDE, in the listing the write-up
-# cites and, independently, in the image (see the image case below).
+# cites and, independently, in the image (see the image case below). The
+# `mov DPL,R7` / `mov DPH,R6` restore is transcribed rather than elided: both
+# routines leave DPTR at 0x043E / 0x044F, so without it the second
+# `movc A,@A+DPTR` could not index the same table.
 LADDER = [
     (0xB6F4, 'mov', 'A, #0x7'),
     (0xB6F7, 'lcall', '0xbb56'),
     (0xB6FA, 'jnc', '0xb736'),
+    (0xB6FC, 'mov', 'DPL, R7'),
+    (0xB6FE, 'mov', 'DPH, R6'),
     (0xB700, 'mov', 'A, #0x8'),
     (0xB703, 'lcall', '0xbbde'),
     (0xB706, 'jnc', '0xb736'),
@@ -191,19 +197,66 @@ LADDER = [
     (0xB714, 'jnc', '0xb736'),
 ]
 
-# The second of the two ladders, in `0xB4A8`. `0xBBDE` has a caller outside
-# `0xB5D3` -- the inbound-count column alone cannot tell you that, because it
-# counts calls and not which routine made them -- so the claim that the write-up
-# reads *two* chains and not one is held here as the property it is: each site
-# below sits in the listing named beside it, and the two do not share one.
+# The other four ladders §3a reads, each with the listing that owns it.
+#
+# `0xBB55` and `0xBB56` are one routine and `0xBBDD` and `0xBBDE` another, each
+# split by the byte-scan seeding: 0xBB55 is `setb CY` at the byte before
+# 0xBB56's `movc A,@A+DPTR`, and 0xBBDD is the same byte before 0xBBDE. The
+# census carries a row per entry byte, so an inbound count against 0xBB56 and
+# 0xBBDE alone misses every site that entered a byte earlier -- the reason
+# §3a collects its callers over all four entry bytes and finds five ladders in
+# three seeded routines rather than three sites in two.
+#
+# What is held here is the property, not that census: each site below resolves
+# to the listing named beside it, and the five do not share one.
 LADDER_B4A8 = [
+    (0xB50B, 'lcall', '0xb93d'),
     (0xB50E, 'clr', 'A'),
     (0xB50F, 'lcall', '0xbb55'),
     (0xB512, 'jnc', '0xb522'),
+    (0xB514, 'mov', 'DPL, R7'),
+    (0xB516, 'mov', 'DPH, R6'),
     (0xB518, 'mov', 'A, #0x1'),
     (0xB51A, 'lcall', '0xbbde'),
     (0xB51D, 'jnc', '0xb522'),
     (0xB51F, 'ljmp', '0xb5d2'),
+]
+
+LADDER_B4A8_SECOND = [
+    (0xB56B, 'mov', 'A, #0x2'),
+    (0xB56D, 'lcall', '0xbb55'),
+    (0xB570, 'jc', '0xb59c'),
+    (0xB572, 'mov', 'DPL, R7'),
+    (0xB574, 'mov', 'DPH, R6'),
+    (0xB576, 'mov', 'A, #0x3'),
+    (0xB578, 'lcall', '0xbbdd'),
+    (0xB57B, 'jc', '0xb59c'),
+]
+
+LADDER_B5D3_FIRST = [
+    (0xB668, 'mov', 'A, #0x4'),
+    (0xB66A, 'lcall', '0xbb55'),
+    (0xB66D, 'jnc', '0xb672'),
+    (0xB672, 'mov', 'DPL, R7'),
+    (0xB674, 'mov', 'DPH, R6'),
+    (0xB676, 'mov', 'A, #0x5'),
+    (0xB678, 'lcall', '0xbbdd'),
+    (0xB67B, 'jnc', '0xb680'),
+    (0xB686, 'mov', 'A, #0x6'),
+    (0xB688, 'lcall', '0xbda5'),
+]
+
+LADDER_B737 = [
+    (0xB7C8, 'mov', 'A, #0xc'),
+    (0xB7CA, 'lcall', '0xbb55'),
+    (0xB7CD, 'jc', '0xb7fc'),
+    (0xB7CF, 'mov', 'DPL, R7'),
+    (0xB7D1, 'mov', 'DPH, R6'),
+    (0xB7D3, 'mov', 'A, #0xd'),
+    (0xB7D5, 'lcall', '0xbbdd'),
+    (0xB7D8, 'jc', '0xb835'),
+    (0xB7E0, 'mov', 'A, #0xe'),
+    (0xB7E3, 'lcall', '0xbc37'),
 ]
 
 # How many instructions `disasm8051.py` is asked for when the window that
@@ -391,23 +444,76 @@ class FanRampCitations(unittest.TestCase):
             with self.subTest(addr='0x%04X' % addr):
                 cited_insn('B5D3', addr, mnemonic, operand)
 
-    def test_the_second_ladder_sits_in_b4a8_and_not_in_b5d3(self):
-        """`0xBBDE`'s second caller is a fourth routine, not a third site.
+    def test_the_five_ladders_sit_in_three_seeded_routines(self):
+        """The caller set is five ladders, not the three sites a count gives.
 
-        An inbound-call count cannot tell you which routine made a call, so
-        the write-up's claim that the three `bank-call-targets.csv` sites are
-        *two* chains in *two* routines is held here as the property it is:
-        `0xB51A` resolves to `B4A8.asm` and is absent from `B5D3.asm`, which is
-        what stops the two being read as one straight-line chain.
+        An inbound-call count cannot tell you which routine made a call, and
+        counted against `0xBB56`/`0xBBDE` alone it also misses every site that
+        entered at `0xBB55`/`0xBBDD`, the byte before each. So §3a collects its
+        callers over all four entry bytes and gets five ladders in three
+        routines; what is held here is that each one resolves to the listing
+        named beside it and that the five do not share one.
         """
-        for addr, mnemonic, operand in LADDER_B4A8:
-            with self.subTest(addr='0x%04X' % addr):
-                cited_insn('B4A8', addr, mnemonic, operand)
-        self.assertNotIn(0xB51A, LISTINGS.get('B5D3'),
-                         '0xB51A is in B5D3.asm, so the chains are one again')
-        self.assertEqual(BANK0_OWNER[0xB51A], 'bank0/B4A8.asm')
-        self.assertEqual(BANK0_OWNER[0xB6F7], 'bank0/B5D3.asm')
-        self.assertEqual(BANK0_OWNER[0xB703], 'bank0/B5D3.asm')
+        for ladder, (stem, first) in (
+                (LADDER_B4A8, ('B4A8', 0xB50F)),
+                (LADDER_B4A8_SECOND, ('B4A8', 0xB56D)),
+                (LADDER, ('B5D3', 0xB6F7)),
+                (LADDER_B5D3_FIRST, ('B5D3', 0xB66A)),
+                (LADDER_B737, ('B737', 0xB7CA))):
+            for addr, mnemonic, operand in ladder:
+                with self.subTest(listing=stem, addr='0x%04X' % addr):
+                    cited_insn(stem, addr, mnemonic, operand)
+            with self.subTest(site='0x%04X' % first):
+                self.assertEqual(BANK0_OWNER[first], 'bank0/%s.asm' % stem)
+
+    def test_each_entry_byte_is_one_routine_with_its_neighbour(self):
+        """Why the caller set is counted over four addresses, not two.
+
+        `0xBB55` is `setb CY` at the byte before `0xBB56`, and `0xBBDD` the
+        same byte before `0xBBDE`: each pair is one routine the byte-scan
+        seeding split, and the census carries a row per entry byte. If either
+        pairing stopped holding, a caller count against `0xBB56`/`0xBBDE` alone
+        would again be a complete-looking subset of the real one.
+        """
+        for entry, body in ((0xBB55, 0xBB56), (0xBBDD, 0xBBDE)):
+            with self.subTest(entry='0x%04X' % entry):
+                self.assertEqual(LISTINGS.get('%04X' % entry)[entry],
+                                 ('setb', 'CY'))
+                # The body is seeded separately and does not reach back, so the
+                # byte before it is a `setb CY` and not part of that listing.
+                self.assertEqual(min(LISTINGS.get('%04X' % body)), body)
+                self.assertEqual(LISTINGS.get('%04X' % body)[body],
+                                 ('movc', 'A, @A+DPTR'))
+                self.assertEqual(entry + 1, body)
+
+    def test_the_dptr_restore_between_the_two_calls_is_present_in_every_ladder(self):
+        """The elision this section used to hide: the restore is load-bearing.
+
+        `0xBB55` and `0xBBDE` both leave DPTR at `0x043E` / `0x044F`, so the
+        second `movc A,@A+DPTR` can only index the same table if DPTR is put
+        back first. Each ladder is therefore held to a `mov DPL, R7` /
+        `mov DPH, R6` restore *between* its CPU and GPU calls -- the property,
+        not a count of what else the ladder does in between, which is the
+        guard and the next index load and differs per ladder.
+        """
+        for stem, cpu, gpu in (('B5D3', 0xB6F7, 0xB703),
+                               ('B4A8', 0xB50F, 0xB51A),
+                               ('B4A8', 0xB56D, 0xB578),
+                               ('B5D3', 0xB66A, 0xB678),
+                               ('B737', 0xB7CA, 0xB7D5)):
+            insns = LISTINGS.get(stem)
+            with self.subTest(listing=stem, pair='0x%04X/0x%04X' % (cpu, gpu)):
+                restores = sorted(a for a in insns if cpu < a < gpu
+                                  and insns[a] in (('mov', 'DPL, R7'),
+                                                   ('mov', 'DPH, R6')))
+                self.assertEqual(len(restores), 2,
+                                 'expected one DPTR restore pair between the '
+                                 'calls, found %r' % restores)
+                dpl, dph = restores
+                self.assertEqual(insns[dpl], ('mov', 'DPL, R7'))
+                self.assertEqual(insns[dph], ('mov', 'DPH, R6'))
+                self.assertEqual(dph - dpl, 2,
+                                 'the restore halves are not adjacent')
 
     def test_no_arithmetic_is_done_on_either_value_in_bc4f(self):
         """The correction is that 0xBC4F computes no offset, not that it has no `inc`.
@@ -574,6 +680,18 @@ def _bank0_owner():
 BANK0_OWNER = _bank0_owner()
 
 
+# The listings name DPTR's halves by register and `disasm8051.py` by their SFR
+# addresses, so an operand naming one of them is compared in the decoder's
+# spelling. `mov DPL, R7` and `mov 0x82,r7` are the same instruction.
+IMAGE_OPERAND = {'DPL': '0x82', 'DPH': '0x83'}
+
+
+def _image_operand(operand):
+    """The operand's first token as the linear decoder spells it."""
+    first = operand.split(',')[0].strip()
+    return IMAGE_OPERAND.get(first, first).lower()
+
+
 class AgainstTheImage(unittest.TestCase):
     """The one claim a listing cannot carry on its own, re-decoded."""
 
@@ -600,7 +718,7 @@ class AgainstTheImage(unittest.TestCase):
             # displacement in the decoder, and the branch destinations are
             # resolved and compared in the case below rather than matched here.
             if not mnemonic.startswith('j'):
-                self.assertIn(operand.split(',')[0].lower(), line.lower(),
+                self.assertIn(_image_operand(operand), line.lower(),
                               '0x%04X does not name %r in the image: %s'
                               % (addr, operand, line))
 
