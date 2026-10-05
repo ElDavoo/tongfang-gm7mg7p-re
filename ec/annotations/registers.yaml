@@ -2179,7 +2179,24 @@ registers:
       read as though records were in them. Method and table:
       docs/findings/code-table-record-writers.md and
       ec/annotations/xdata-code-table-records.csv. status unchanged; a stored
-      value is not a readback and not a behaviour.
+      value is not a readback and not a behaviour. CORRECTION: "none of them in
+      an exported function" and "seeding the routine would need --mode
+      rebuild-project" are superseded, not deleted -- the four sites are the
+      owners of four seeded exports, one each, and export-only closed them with
+      the project database unchanged (0x818A
+      store_20_to_0472_and_fd_to_0457_then_gate, 0x81C5
+      clear_0457_low3_and_dispatch_0800_bit7, 0x823A
+      store_fb_to_0457_and_set_0472_bit3_keep4, 0x8261
+      store_fd_to_0457_and_set_0472_bit5_keep4_then_gate). See
+      docs/findings/0400-045f-site-owners.md. CORRECTION: "4 EC-side sites,
+      all in bank1 and all read-modify-writes" is superseded on the second
+      clause, not deleted -- each of the four does read, mask and store, but at
+      0x8190, 0x8246 and 0x826A the mask/orl pair is constant (`anl A,#0xf8`
+      then `orl A,#0xfd` or `#0xfb`, whose operands already have bits 3-7 set),
+      so those three store the whole byte `0xFD`/`0xFB`/`0xFD` whatever it held
+      and only 0x81D1 is a true read-modify-write of the low three bits. The
+      site counts, static_refs and status are unchanged; a stored constant is
+      not a behaviour.
 
   - name: XDATA_0458
     addr: 0x0458
@@ -2215,7 +2232,11 @@ registers:
       CODE. The three writers above are still the only direct ones. static_refs
       stays 6 and no source tag is added: those keys are MOV DPTR site counts
       recomputed from the image by check_register_counts.py, and a record is not
-      one. docs/findings/code-table-record-writers.md.
+      one. docs/findings/code-table-record-writers.md. CORRECTION: "which is in
+      no exported function" is superseded, not deleted -- bank1 0x83C0 is inside
+      the seeded export bank1/8354
+      zero_045a_then_reset_0459_bit3_and_0456_low5, which does the `anl A,#0xf7`
+      on this byte. docs/findings/0400-045f-site-owners.md.
 
   - name: XDATA_045A
     addr: 0x045A
@@ -2342,6 +2363,10 @@ registers:
       CODE. static_refs stays 10 and no source tag is added: those keys are MOV
       DPTR site counts recomputed from the image by check_register_counts.py,
       and a record is not one. docs/findings/code-table-record-writers.md.
+      CORRECTION: "in no exported function" is superseded, not deleted -- the
+      0x8609 and 0x8617 writers are the seeded exports
+      store_db_to_045f_and_set_04ff_bit5 and zero_045f.
+      docs/findings/0400-045f-site-owners.md.
 
   - name: MAIN_FAN_RPM
     addr: [0x0464, 0x0465]
