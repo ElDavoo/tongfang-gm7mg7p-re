@@ -247,9 +247,9 @@ worth:
   `DPTR handed to ... -- direction unresolved here` because it stopped at the
   `lcall` without seeing a `movx` to decide read or write, so a site in that
   state is neither a reader nor a non-reader as far as this method is concerned.
-  It is where a reader of `0x0F60` would hide if one exists: three of that
-  address's sites carry the cell, which is why the note on the stamp byte above
-  says no pass run here *resolves* a read rather than that none exists.
+  It is where a reader of `0x0F60` would hide if one exists: sites of that
+  address carry the cell, which is why the note on the stamp byte above says no
+  pass run here *resolves* a read rather than that none exists.
 - **`movx @Ri` needs both halves literal.** All the sites in this image leave
   at least one unresolved, which is why the `indirect` column is empty
   everywhere here rather than because the mode was skipped.
