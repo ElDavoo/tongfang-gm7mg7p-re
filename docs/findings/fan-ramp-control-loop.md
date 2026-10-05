@@ -9,12 +9,12 @@ anchored to a `.asm` address; §8 names the commands that re-derive them, and
 
 ## The claim
 
-`ec/annotations/subsystems.md` §6 groups thirteen routines under "Fan and
-thermal control" and says out loud that the group is a grouping and not a
-decoded loop: *"There is no control loop here: no closed-loop reading, no error
-term, no ordering between the CPU- and GPU-temperature functions."* **Three
-things in that sentence are now settled, and the fourth was a misreading of
-which byte is which.**
+`ec/annotations/subsystems.md` §6 groups the fan and thermal routines under
+"Fan and thermal control" and says out loud that the group is a grouping and
+not a decoded loop: *"There is no control loop here: no closed-loop reading,
+no error term, no ordering between the CPU- and GPU-temperature functions."*
+**Three things in that sentence are now settled, and the fourth was a misreading
+of which byte is which.**
 
 1. **There is a closed loop, and it is bank0 `0x8B14` together with block five
    of `0x8931`** — two routines, not one, that are two instantiations of the
@@ -201,9 +201,11 @@ precisely because it carries the sign, and it is what `jnb 0xe7` at `0x8B76`
 tests to pick `inc` over `dec`.
 
 The two saturations are worth naming because they are what keeps a wrap from
-becoming a direction flip: `0x8B41`–`0x8B46` forces `0x80` when the increment
-has run past `0xFF` back to `0x00`, and `0x8B4B`–`0x8B54` forces `0xFF` when
-the integrator is sitting at exactly 3, which is the top of the dwell arm.
+becoming a direction flip: `0x8B41`–`0x8B46` forces `0x80` whenever bit 7 of
+the value `0xBC5F` returned is clear — `jb 0xe7, 0x8b47` skips the store only
+when it is set, so this is every increment landing below `0x80` and not the
+`0xFF`→`0x00` case alone — and `0x8B4B`–`0x8B54` forces `0xFF` when the
+integrator is sitting at exactly 3, which is the top of the dwell arm.
 
 ### 2b. The plain arm
 
@@ -248,7 +250,9 @@ and then runs the GPU integrator unconditionally after it:
 8B02     f0 - -   movx     @DPTR, A         ; GPU integrator down
 8B03     90 04 68 mov      DPTR, #0x468
 8B07     24 50 -  add      A, #0x50
-8B0B     f5 82 -  mov      DPL, A
+8B09     f5 82 -  mov      DPL, A
+8B0B     e4 - -   clr      A
+8B0C     34 0f -  addc     A, #0x0f
 8B0E     f5 83 -  mov      DPH, A           ; DPTR = 0x0F50 + [0x0468]
 8B10     e0 - -   movx     A, @DPTR
 8B11     02 8c 46 ljmp     0x8c46           ; A <- the GPU duty
@@ -425,6 +429,18 @@ derived `ec/annotations/function-groups.csv`, and regenerating that file
 rewrites a dozen rows belonging to other branches. Both are a separate edit
 for whoever next regenerates it, and neither affects the reading above, which
 rests on the instructions rather than on the annotation's own bookkeeping.
+
+**The generated files still carry the pre-correction text, and that is worth
+saying rather than leaving to be discovered.** `ec/decompiled/index.csv` still
+records the `BC4F` row as `basis` `inferred` with the
+`manual-fan-ctrl-0751.md` evidence, and `ec/decompiled/bank0/BC4F.c` still
+carries the retracted "annotated in the listing as yielding base + 0x00" with
+`basis: inferred` and nothing beside it. Both are generated from
+`ghidra-functions.csv` and hand-editing them is out (CLAUDE.md, "The editable
+surface is a CSV, not the project"), so a reader who opens the `.c` rather than
+the annotations sees the claim this section retracts, standing alone, until the
+next `--mode rebuild-project` export picks the corrected row up. The retraction
+itself lives in the annotations CSV and here.
 
 `0x0A47` is `MAILBOX_PUBLISH_VALUE` in `registers.yaml`, and its note is
 unchanged by this: nothing here is a payload, and the byte's 121 sites are

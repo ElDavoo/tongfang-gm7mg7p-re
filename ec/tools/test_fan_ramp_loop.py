@@ -93,6 +93,15 @@ BLOCK_FIVE = [
     ('8931', 0x8AE6, 'inc', 'A'),
     ('8931', 0x8AF8, 'lcall', '0xbdf2'),
     ('8931', 0x8B01, 'dec', 'A'),
+    # The DPTR half of the publish. `clr A` at 0x8B0B zeroes CY as well as A,
+    # so `addc A,#0xf` at 0x8B0C builds the 0x0F high half rather than carrying
+    # anything in: read without those two, `mov DPH, A` looks like it copies the
+    # same byte into both halves of DPTR, so these are transcribed whole rather
+    # than only at the two `mov`s.
+    ('8931', 0x8B09, 'mov', 'DPL, A'),
+    ('8931', 0x8B0B, 'clr', 'A'),
+    ('8931', 0x8B0E, 'mov', 'DPH, A'),
+    ('8931', 0x8B10, 'movx', 'A, @DPTR'),
     ('8931', 0x8B11, 'ljmp', '0x8c46'),
 ]
 
