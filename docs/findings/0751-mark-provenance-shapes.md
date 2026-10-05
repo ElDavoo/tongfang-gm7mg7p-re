@@ -795,6 +795,7 @@ mark-recognition site in the census — so the table grew:
 | `ec/tools/ec_timer_capture.py:324` | gate: `--auto-mark` |
 | `ec/tools/ec_timer_capture.py:328` | gate: `--mark-input` |
 | `ec/tools/check_capture_marks.py:151` | reader: the index check's own mark count, the rule section 2 shares with `read_capture` |
+| `ec/tools/test_grade_0751_skip_rule.py:136` | reader: the one place the tree writes down that `mark_labels_of`'s skip rule and its `MARK` branch can drop the *same* row, which is what that suite's fixture is built around |
 
 `check_page` requires every cited *file* to be named in one of this tool's two
 pages, which is why `windows/tools/gpu_block_watch.py` is named in "The
@@ -811,9 +812,24 @@ table above names at `:1123`, `:1175`, `:1346`, `:1348`, `:1130`, `:1181`,
 page's #739 correction already freezes its transcripts as taken, and a reader
 told to re-run rather than trust the quotations is told the same about the
 `:NNN` shorthand that ties them to those quotations. **The table is the live
-half and the shorthand is the frozen one**, and only the table is what
-`check_page` reads — which is why a stale `:845` above does not redden the tool
+half and the shorthand is the frozen one** — ~~and only the table is what
+`check_page` reads~~ — which is why a stale `:845` above does not redden the tool
 and a stale table would have.
+
+> **CORRECTION (2026-10-04, issue #769): `check_page` reads no `:NNN` at all.**
+> The struck clause is wrong in its premise, and the sentence after it is right
+> for a reason the clause gets backwards. `check_page` compares a **set of file
+> paths** against the page's text and holds the page at *file* granularity, by a
+> deliberate decision — the reason is at `check_page`'s own comment, where a page
+> held to `path:NNN` had to be edited on every merge that moved the line. So a
+> stale `:845` above does not redden the tool, and a stale *number* in the table
+> would not either: the table's `now` column is what a reader follows, not what
+> anything checks. What the sentence after it should have said is that a cited
+> **file** this page stopped naming would redden the tool, which is the closure
+> the check actually holds and the reason the "The committed fixtures" section
+> names `gpu_block_watch.py`. The claim is otherwise unchanged, and the record
+> of what a citation whose number cannot say which line is meant is
+> [`0769-citation-ambiguity-and-what-a-red-means.md`](0769-citation-ambiguity-and-what-a-red-means.md).
 
 What it does not check: whether either shape is a good idea; what a widened
 shape should mean for `system_id_probe.py`, `ec_timer_capture.py` or

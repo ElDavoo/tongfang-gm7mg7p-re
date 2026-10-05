@@ -630,7 +630,12 @@ would be a corpus-wide loosening made by half-measure against one sentence.
    `xdata-086x-dispatch.md`). **Stripping every `>` in `ec/`, `docs/` and
    `evidence/` and re-running changes no verdict** — 0 disagreements either way
    — so this is a latent limit rather than a live false positive, and the
-   candidate fix is verdict-neutral on today's corpus. Whether a blockquote
-   citation should be split at all is still open, and the direction is not
-   settled: a merged unit carries more addresses into the fallback, while also
-   letting one denial skip a claim that shared the unit.
+   candidate fix is verdict-neutral on today's corpus. **The direction is now
+   settled** (#617): `TERMINATOR`'s lookahead carries `>`, so the wrap no longer
+   decides the unit, and stripping the marker instead was measured and rejected
+   because it drops an attribution the walk holds today — see
+   [`blockquote-terminator-wrap.md`](blockquote-terminator-wrap.md), which
+   records the measurement and keeps both directions as cases. Still open, and
+   a different question: whether a blockquoted correction should be a unit of
+   its own, since a quotation's membership claims arguably belong to the source
+   it quotes.
