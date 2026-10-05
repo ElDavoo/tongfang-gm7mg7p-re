@@ -1,3 +1,41 @@
+# ec/tools/reassembly_checked_bound.py --check, and
+# ec/tools/audit_call_targets.py --self-test over the committed image, wired
+# into the cheap gate as one patch, and the reason is measured in
+# docs/findings/audit-call-targets-gate-arm.md: the free region in
+# `.github/scripts/agent-gates.sh` is the tail of `check_ghidra_tooling()`, and
+# that tail is the one this patch already holds. A second tool cut there was
+# cut and checked before the fold was decided, and each of the two applies
+# cleanly alone while the pair fails in *both* orders:
+#
+#   A alone -> APPLIES      B alone -> APPLIES
+#   A then B -> COLLIDES    B then A -> COLLIDES
+#
+# which is the silent failure shape `docs/findings/prepared-gate-patches.md`
+# records -- each patch still applies on its own, so nothing a human does by
+# hand catches it, and
+# `tools/test_agent_gates_patches.py::CompositionTests` is what does.
+# `tools/test_gate_arm_audit_call_targets.py` holds this fold's own halves,
+# which `ArmRetentionTests` holds for the disasm8051 patch's.
+#
+# The same answer, and the same reason, as the one #1081 needs for
+# `ec/tools/bank_attribution.py`: that tool reads a committed image, takes
+# `<image> --self-test`, needs no Ghidra and no network, and wants this same
+# tail, so it folds here too rather than shipping a third file cut at the same
+# anchor. **The two must serialise on this file and on that retention test**,
+# and both write-ups say so, rather than that being discovered at merge time.
+#
+# The filename is KEPT, and it now names one of the two tools rather than
+# either of them alone, for the reference-count reason
+# `docs/findings/prepared-gate-patches.md` gives for
+# `agent-gates-capture-claims.patch`: the patch is named in prose across many
+# markdown files outside `docs/ci/`, each of which names it as the canonical
+# account of the prepared-not-landed shape, and renaming it would churn exactly
+# the long shared files CLAUDE.md says not to churn. **There is deliberately no
+# count of the tools here** -- a header naming a number is a sentence every
+# later fold has to edit.
+#
+# Original header, for ec/tools/reassembly_checked_bound.py alone:
+#
 # ec/tools/reassembly_checked_bound.py --check, wired into the cheap gate.
 # Prepared here rather than landed, for the reason
 # docs/ci/agent-gates-gap-text-check.patch gives: `.github/scripts/agent-gates.sh`
@@ -40,10 +78,22 @@
 # committed-text check under python3 with no assembler and no Ghidra, and this
 # is one of those.
 #
-# COST. 0.15 s here over three runs on 2026-10-01, against a cheap tier §14e's
-# table records at 5.9 s. One runner's figure; the ratio is the durable part,
-# which is the caveat `docs/agent-pipeline.md` item 6 gives for `call_graph.py`
-# too.
+# COST, and it is re-derived rather than left beside the figure it replaces.
+# `reassembly_checked_bound.py --check` measures 0.30 s here over three runs on
+# 2026-10-04 (0.29 / 0.30 / 0.29) and `audit_call_targets.py <image> --self-test`
+# 3.78 s over three runs on the same day (3.80 / 3.78 / 3.78), against a cheap
+# tier that printed 47 s elapsed on this runner. One runner's figures and they
+# move by roughly a factor of two between runners -- the 0.15 s the earlier cut
+# recorded here and the 5.9 s tier §14e's table carries are both this patch's
+# *own* history and neither re-derives on the runner that reads it -- so the
+# ratio is the durable part, which is the caveat `docs/agent-pipeline.md` item 6
+# gives for `call_graph.py` too. **The second is not the largest arm this gate
+# carries**, which the earlier reasoning here claimed: `xdata_register_map.py
+# --self-test` measures 7.18 s over three runs on the same runner (7.22 / 7.18 /
+# 7.18) against this one's 3.78 s, so it is a material addition and not a record
+# one. What makes it worth re-measuring anyway is that it is the largest
+# *newly proposed* one, and a cost figure that outlives its measurement is a
+# claim nobody re-derives.
 #
 # ONE THING TO KNOW BEFORE LANDING IT, and the comment at the call site says the
 # same thing where the next reader of the gate will see it. `--check` FAILS on
@@ -62,19 +112,76 @@
 # `ec/tools/test_reassembly_checked_bound.py` holds it red on the committed
 # tree, so it is not a flag nobody can tell works.
 #
-# What it buys, and what it does not. It keeps the arithmetic of the corrected
-# claim honest, and it is what fails if a row's columns stop supporting the
-# reading -- which is what makes the correction falsifiable rather than a
+# **That polarity note is about the first tool only, and the second has the
+# opposite one.** `audit_call_targets.py --self-test` FAILS on both checks it
+# adds here; it exits 0 on the committed image today, and a different dump that
+# broke the block's framing or put a relative site outside it would exit 1. So
+# this patch lands one check that prints an overclaim it cannot fail on and one
+# that fails outright, and a reader landing it should know which is which
+# before concluding that a green run means the same thing for both.
+#
+# AND THE DOCSTRINGS MUST NOT CLAIM A PLACE HERE. `check_gate_arm_coverage.py`
+# direction 3 reads a tool docstring that puts its tool *in* the gate and
+# requires a `case` arm to satisfy it. Neither of these two calls is a `case`
+# arm -- they are tail calls -- so a docstring claiming gate membership would go
+# red against an arm that is landed, which is the opposite of what direction 3
+# is for. Both docstrings name no gate path today, and that is what keeps the
+# check green; the claim belongs here and in the write-up, which is where a
+# reader comes to land the arm.
+#
+# What the first buys, and what it does not. It keeps the arithmetic of the
+# corrected claim honest, and it is what fails if a row's columns stop supporting
+# the reading -- which is what makes the correction falsifiable rather than a
 # sentence nobody re-derives. It does not make the 1:1 claim stronger, it does
 # not settle why those rows' listings carried no entry (three candidates, all
 # live, in `docs/findings/reassembly-checked-counts-comparisons.md`), and it
 # reads no capture, opens no EC and reads back no register.
+#
+# What the second buys, and what it does not. **It is not what first notices a
+# different dump, and an earlier cut of this header said it was; that is
+# retracted rather than left standing.** `ec/tools/test_audit_call_targets.py` is
+# committed, is found by `tools/run-tests.sh`'s `test_*.py` sweep, runs in CI,
+# and asserts the status `self_test()` returns over the committed image -- so
+# both checks below are already red on a sweep that breaks either. Measured by
+# mutation on the committed tree, forcing either check's condition false turns
+# that suite red.
+#
+# What this call adds is narrower than the reasoning behind it claimed, and is
+# the reason to land it: it runs the SHIPPED COMMAND as a process, where the
+# suite calls `self_test()` in-process and so never goes through `main()`,
+# `argparse` or the exit status. Two breaks are caught here and by neither other
+# place, and **the transcript assertion is what catches the first of them**:
+# break `--self-test`'s dispatch and the command exits 0 having printed nothing,
+# which an arm reading only `|| rc=1` calls green -- so the call greps the
+# transcript for its `self-test passed` line as well as reading the status.
+# Rename the flag and the command exits 2, which the status alone catches.
+# `test_call_graph_gaps.py` asserts its subprocess's stdout for the same reason
+# and its returncode alongside it; there, as here, the stdout assertion is the
+# half that catches a suppressed transcript.
+#
+# What this call still does not catch, so that a green run is not over-read: a
+# self-test that prints its summary line with a check deleted from it. This arm
+# reads a status and a line, and so does the in-process suite; neither counts
+# the checks.
+#
+# The two checks the transcript carries, for a reader landing this: that the BL51
+# trampoline block's 403 entries are one 6-byte-stride run over `0x1150-0x1AC2`,
+# and that all 170 relative sites resolving onto a trampoline entry have their
+# own address inside the block, so none is a branch reaching it from outside.
+# Both are measured over `ec/firmware/GMxMGxx_11.800` today and both name
+# themselves when they break. **No second image has been tried and none is
+# claimed** -- and the sweep would notice one breaking either, so the honest
+# statement is about the arm's exit status, not about a dump nobody has run. It
+# reads committed text and the committed image and nothing else; it opens no
+# capture, reads back no register and settles nothing about the banking
+# assumption `offset_for_runtime()` rests on, which is the tool's own opening
+# paragraph and is not what these two checks are for.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index ce9f096..109aefc 100755
+index 16c70c3..9e10a91 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -284,6 +284,37 @@ check_ghidra_tooling() {
+@@ -298,6 +298,77 @@ check_ghidra_tooling() {
          ;;
      esac
    done
@@ -108,6 +215,46 @@ index ce9f096..109aefc 100755
 +  # file no prepared patch's hunk reaches.
 +  if [ -f ec/tools/reassembly_checked_bound.py ]; then
 +    python3 ec/tools/reassembly_checked_bound.py --check || rc=1
++  fi
++  # The BL51 trampoline block's framing, and the zero-external-sites answer
++  # that framing licenses: that the block's entries are one 6-byte-stride run
++  # over 0x1150-0x1AC2, and that every relative site resolving onto a
++  # trampoline entry has its own address inside the block, so none of them is a
++  # branch reaching it from outside.
++  #
++  # What this adds, narrowly: it runs the tool AS A COMMAND, which is the only
++  # place main(), argparse and the exit status are exercised. Both checks above
++  # already run on every sweep -- ec/tools/test_audit_call_targets.py is
++  # committed, is found by tools/run-tests.sh, and asserts the status self_test
++  # returns over the committed image, so breaking either one turns that suite
++  # red without this arm. An earlier cut of this comment claimed they "ran in no
++  # gate at all"; that was wrong, and it is retracted here rather than dropped.
++  #
++  # The exit status is not enough on its own, so the transcript is asserted and
++  # not merely printed. Break `--self-test`'s dispatch and the command exits 0
++  # having printed nothing at all: the whole self-test stops running, and an arm
++  # reading only `|| rc=1` stays green on the one failure this call is here for.
++  # ec/tools/test_call_graph_gaps.py asserts its subprocess's stdout for the
++  # same reason, and it is the stdout assertion that does the work there.
++  # What neither this nor the in-process suite can catch is a self-test that
++  # prints its summary line with a check deleted from it -- both read a status
++  # and a line, and neither counts the checks.
++  #
++  # The tool takes a positional firmware path and no --work, so it cannot go in
++  # the tool loop above at all: on the `*)` default that is `--work "$scratch"
++  # --check`, and the tool's argparse exits 2 on those flags. That is
++  # check_gate_arm_coverage.py's direction 1, which runs in this same tier and
++  # would have gone red. ec/tools/audit_call_targets.py is committed text and
++  # the image is committed, so the cheap-tier reason holds either way. No
++  # Ghidra, no network, no assembler.
++  if [ -f ec/tools/audit_call_targets.py ]; then
++    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 \
++      --self-test > "$scratch/audit-call-targets-self-test.txt" || rc=1
++    cat "$scratch/audit-call-targets-self-test.txt"
++    if ! grep -q 'self-test passed' "$scratch/audit-call-targets-self-test.txt"; then
++      echo "audit_call_targets.py --self-test printed no 'self-test passed' line" >&2
++      rc=1
++    fi
 +  fi
    rm -rf "$scratch"
    return "$rc"

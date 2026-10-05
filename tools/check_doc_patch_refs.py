@@ -39,9 +39,9 @@ the `docs/ci/` prefix, and that file is a `.csv` -- never a counterexample to a
 `*.patch` glob. The two `linux/patches/` files above are, and they are what
 the second glob is drawn around.)
 
-**The historical rule, which is the whole design problem here.** Three names
-are in prose and deliberately not on disk, and a naive "every name resolves"
-rule false-positives on every reference to them. **The count of those
+**The historical rule, which is the whole design problem here.** A handful of
+names are in prose and deliberately not on disk, and a naive "every name
+resolves" rule false-positives on every reference to them. **The count of those
 references is a figure of the tree it was counted on and has moved more than
 once** -- it read "all four" when the first two were added, and `--verbose`
 prints the current one, which is the figure to re-derive:
@@ -57,6 +57,13 @@ prints the current one, which is the figure to re-derive:
     declined again: the check went into
     `docs/ci/agent-gates-capture-claims.patch` instead, and the write-up names
     what was asked for beside what was prepared, per `CLAUDE.md` §4a-4d.
+  * `agent-gates-audit-call-targets-self-test.patch` -- the filename issue #1094
+    asked for, declined for the same reason one region further along: the tail
+    of `check_ghidra_tooling()` that the tool wanted was already held by
+    `docs/ci/agent-gates-reassembly-bound-check.patch`, and two patches cut at
+    one anchor collide in both orders while each applies alone. So the call
+    folds into that file and the write-up names what was asked for beside what
+    was prepared, per `CLAUDE.md` §4a-4d.
 
 `HISTORICAL` below is that opt-out, keyed on the patch **name** and enumerated
 here rather than marked in the prose. The alternative the issue offers -- a
@@ -64,11 +71,14 @@ fenced or quoted span at each reference -- was not taken, and the reason is
 recorded in `docs/findings/doc-patch-reference-gate.md`: every one of them is a
 record, and `CLAUDE.md` §4a-4d says a superseded claim stays visible with a
 correction beside it rather than reshaped so a checker can see it. The bound is
-stated rather than hidden: any *new* reference to one of these three names is
-exempt by construction. It is three names wide, and both directions are held --
-each key is still absent from `docs/ci/`, and still cited by at least one
-markdown file -- so neither a patch reappearing under that name nor a reference
-being edited away can leave the exemption quietly true.
+stated rather than hidden: any *new* reference to one of the names above is
+exempt by construction, so the enumeration is as wide as the reasons it carries
+and one entry per reason is the discipline. Both directions are held -- each key
+is still absent from `docs/ci/`, and still cited by at least one markdown file
+-- so neither a patch reappearing under that name nor a reference being edited
+away can leave the exemption quietly true. `--verbose` prints how many keys
+there are; that count is a figure of the tree it was measured on and is not
+written down here.
 
 **The live direction is checked too, mirroring the sibling:** every prepared
 change in `docs/ci/` must be cited by at least one file this check reads -- a
@@ -139,13 +149,15 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 CI = REPO / "docs" / "ci"
 
-# The three names prose names on purpose; see the docstring. The write-up beside
-# this tool records why this is an enumeration rather than a per-reference
-# opt-out, and what the choice costs.
+# The names prose names on purpose; one entry per reason, and the reasons are
+# enumerated in the docstring above rather than here. The write-up beside this
+# tool records why this is an enumeration rather than a per-reference opt-out,
+# and what the choice costs.
 HISTORICAL = {
     "agent-gates-testdata-index.patch",
     "agent-gates-claims-and-testdata.patch",
     "agent-gates-check-history-checkouts.patch",
+    "agent-gates-audit-call-targets-self-test.patch",
 }
 
 # The prepared changes in `docs/ci/` that are not `.patch`. One entry today,

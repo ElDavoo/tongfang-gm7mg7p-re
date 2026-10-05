@@ -503,3 +503,74 @@ gate switched off, and `ec/tools/test_reassembly_checked_bound.py` holds the
 strict form red on the committed tree so `--fail-on-overclaim` is not a flag
 nobody can tell works. The census it derives from is
 [`reassembly-checked-counts-comparisons.md`](reassembly-checked-counts-comparisons.md).
+
+**2026-10-04, issue #1094 — the tail this file called the last free region is
+now held by a fold of two tools, and the table's verdict held a second time.**
+`ec/tools/audit_call_targets.py` was cut as a standalone
+`docs/ci/agent-gates-audit-call-targets-self-test.patch`, measured before the cut
+rather than after, and the measurement says the file cannot exist. Each of the
+two patches applies cleanly on its own and the pair fails in **both** orders:
+
+```
+A alone  -> APPLIES        B alone  -> APPLIES
+A then B -> COLLIDES      B then A -> COLLIDES
+```
+
+A second anchor inside the tail — the new call cut before the `done` rather than
+after it, so the two calls would not share a pre-image window — collides
+identically. So the tail stops being free, `audit_call_targets.py --self-test`
+folds into `agent-gates-reassembly-bound-check.patch`, and the filename is kept
+for the reference-count reason recorded above: the patch is named in prose across
+many markdown files as the canonical account of the prepared-not-landed shape.
+
+**This is the #1146 answer again, one step further along, and planning for it is
+what the table is for.** The paragraph above already said a second tool wanting
+the tool list had no free line left; this is the same saturation arriving at the
+tail, which was the one region §"A patch in the tail" recorded as free. Both were
+found by measuring the anchor first rather than cutting and discovering.
+
+**`tools/test_gate_arm_audit_call_targets.py` is new and is not in the cheap
+tier**, for the reason every suite here is not: `agent-gates.sh` is a
+template-copied file. It holds this fold's two halves, which is the `ArmRetentionTests`
+rationale applied to a tail call instead of a `case` arm, and it is a separate file
+because #1081 is adding a third tool to this same fold and two branches
+appending to one long suite collide at its last line. **The mutation was measured
+on the half-folded patch**: it applies, it composes in every ordered pair, it
+passes `bash -n` and `shellcheck`, `check_gate_arm_coverage.py --check` stays
+green, and `tools/test_agent_gates_patches.py` stays green — so the new suite is
+the only thing in the tree that notices a fold that lost a call, and a gate that
+runs one of its two checks and is green is what that mutation looks like. Its
+second class runs the block the patch lands, against a stub tool, for each row of
+the mutation table in [`audit-call-targets-gate-arm.md`](audit-call-targets-gate-arm.md) —
+so the transcript assertion that arm carries is re-derived rather than asserted.
+
+**Issue #1081's `bank_attribution.py` folds here too, and the two must serialise
+on this patch file and on that retention test.** Same region, same reason, and
+unlike most conflicts in this repository neither side is a line anyone would
+choose to drop — both add a different tool's call at the same place. That is a
+fact to state in both write-ups rather than discover at merge time.
+
+The detail is in
+[`audit-call-targets-gate-arm.md`](audit-call-targets-gate-arm.md), which carries
+the transcript, why the tool cannot go in the tool loop at all (it takes a
+positional image path and no `--work`, so the `*)` default exits 2 — direction 1
+of `check_gate_arm_coverage.py`, in the cheap tier), and the one thing to know
+before landing it: **neither docstring may gain a gate-membership claim**, because
+direction 3 requires a `case` arm to satisfy one and a tail call is not one.
+
+**What this arm buys is narrower than the reasoning that produced it claimed, and
+a re-cut should not repeat the wider claim.** The reasoning was that
+`audit_call_targets.py --self-test` "runs nowhere" and that its block-framing
+checks are the first thing that would notice a different dump. Both were wrong:
+`ec/tools/test_audit_call_targets.py` is committed, is found by
+`tools/run-tests.sh`'s sweep, runs in CI, and asserts the status `self_test()`
+returns over the committed image, so a dump breaking either check turns that
+suite red without this arm — measured by mutation on the committed tree, forcing
+either check's condition false. What the arm adds is that it runs the tool **as
+a command**, which is the only place `main()`, `argparse` and the exit status are
+exercised: breaking `--self-test`'s dispatch leaves the command exiting 0 in
+silence with that suite green. **A re-cut must keep the transcript assertion as
+well as the status** — the call greps the command's stdout for its
+`self-test passed` line, because an exit-status-only arm is green on that
+mutation, which is the one it exists for. The write-up carries the retraction in
+place.
