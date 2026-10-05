@@ -305,6 +305,15 @@ four writes touches. That is a fact about the two halves' instruction streams
 and is not evidence that the service and the firmware mean the same field by
 it.
 
+**Answered on the service side since, and this walk's readings do not move.**
+§9's "the service writes bit 4, not bit 5" was a reading of bit 4's setters
+alone: the service writes bit 5 too, under the name `WHMS`, through
+`GpuFeatures.SetGpuWhisperModeMainSwitch`, and the two are different fields on
+one byte. The mask arithmetic is in
+[`docs/findings/07c5-whms-bit5-vs-bit4.md`](../../docs/findings/07c5-whms-bit5-vs-bit4.md);
+what it adds is which bit the service means, not what this firmware does with
+the one it tests.
+
 ### 3.6 `0xBB81`: bit 0, as the routine's return value
 
 `0xBB81=is_07c5_bit0_clear` is the whole of §2.1's read: it returns `1` when bit
