@@ -372,21 +372,21 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 \
           --callers 0x7421 0x9DEC 0xB5D3 0xE9F5
 PD runtime 0x7421
   byte-scan entry 0x7420: reaches the site with no intervening `ret`; preceded by mov  0xf0,#0x60; 0 jump target(s) in between
-    file 0x2C9DD  runtime 0xC9DD  call      lcall 0x7420     frame 1/24  - [unresolved]
+    file 0x2C9DD  runtime 0xC9DD  call      lcall 0x7420     frame 1/24 (1 insn)  - [frame too short to say]
   containing entry 0x7392: reaches the site with no intervening `ret`; preceded by ret; 1 jump target(s) in between
-    file 0x27CD1  runtime 0x7CD1  call      lcall 0x7392     frame 24/24  - [unresolved]
+    file 0x27CD1  runtime 0x7CD1  call      lcall 0x7392     frame 24/24 (19 insn)  - [unresolved]
 
 PD runtime 0x9DEC
   byte-scan entry 0x9D51: reaches the site with no intervening `ret`; preceded by ret; 1 jump target(s) in between
-    file 0x2B452  runtime 0xB452  call      lcall 0x9d51     frame 24/24  - [unresolved]
+    file 0x2B452  runtime 0xB452  call      lcall 0x9d51     frame 24/24 (16 insn)  - [unresolved]
 
 PD runtime 0xB5D3
   byte-scan entry 0xB59B: reaches the site with no intervening `ret`; preceded by ret; 0 jump target(s) in between
-    file 0x2B838  runtime 0xB838  call      lcall 0xb59b     frame 24/24  - [unresolved]
+    file 0x2B838  runtime 0xB838  call      lcall 0xb59b     frame 24/24 (13 insn)  - [unresolved]
 
 PD runtime 0xE9F5
   byte-scan entry 0xE9E3: reaches the site with no intervening `ret`; preceded by ret; 0 jump target(s) in between
-    file 0x266E4  runtime 0x66E4  call      lcall 0xe9e3     frame 24/24  R1=#0x00, R2=#0x08, R3=#0x01 [literals found, none an index register]
+    file 0x266E4  runtime 0x66E4  call      lcall 0xe9e3     frame 24/24 (16 insn)  R1=#0x00, R2=#0x08, R3=#0x01 [literals found, none an index register]
 ```
 
 Each site gets two entry picks: the nearest preceding call target by byte scan
@@ -471,11 +471,20 @@ caller loading into `R1`/`R2`/`R3` a site that indexes on `R7`/`R6` reads
 three loads and **not** a claim that the index is unbounded. A fourth value,
 `literals found; site index registers unresolved`, covers a site whose terms
 name no index register at all — "not found by this method" is a different claim
-from "a match was sought and none was found", and the vocabulary keeps both. The
-full four-value table, with what each one does not claim, is in
-[`../../docs/findings/pd-callers-status-intersection.md`](../../docs/findings/pd-callers-status-intersection.md),
-and `--self-test` pins every row of the CSV against the values transcribed from
-this section.
+from "a match was sought and none was found", and the vocabulary keeps both. A
+fifth, `frame too short to say`, covers a row whose frame held fewer than
+`MIN_FRAME_INSNS` instructions to search: §4.1's `0xC9DD` byte-scan row is the
+committed instance, and its frame is one instruction long. That value is weaker
+than `unresolved` in every direction — it says nothing at all about the index,
+where `unresolved` at least says a search happened in a frame that existed — so
+it is reached only when the row carries no literals, and never over one that
+does. The table of the four values this section's vocabulary had before that
+one, with what each of those does not claim, is in
+[`../../docs/findings/pd-callers-status-intersection.md`](../../docs/findings/pd-callers-status-intersection.md);
+what the fifth does not claim, and the measurement it is drawn from, are in
+[`../../docs/findings/pd-caller-frame-quality.md`](../../docs/findings/pd-caller-frame-quality.md).
+`--self-test` pins every row of the CSV against the values transcribed from
+this section, `frame_insns` included.
 
 **Net for §4: five caller rows for four sites, four of them a single anchored
 `lcall` each, and not one index register bounded by a literal.** That is the

@@ -6420,13 +6420,16 @@ second path to the int0 forwarder — but it exists because the byte scan found
 `01 03` there, not because the vector table does. Whether either is a genuine
 second copy is not established by the bytes alone.
 
-**Also measured while writing it, and left alone here.** `pd-index-callers.csv`
-has five rows of which **four** are `status: unresolved`, not all five; the fifth
-found literals in a caller's frame, none in a register that site indexes on
-(the status is a function of the intersection, not of the presence of literals —
-corrected in place under
-[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md),
-which carries the vocabulary and what each value does not claim).
+**Also measured while writing it, and left alone here.** No row of
+`pd-index-callers.csv` resolves a caller: the row carrying literals found them
+in a caller's frame, none in a register that site indexes on (the status is a
+function of the intersection, not of the presence of literals), and the rows
+carrying none say `unresolved` or `frame too short to say` — corrected in place
+under
+[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md)
+and
+[`findings/pd-caller-frame-quality.md`](findings/pd-caller-frame-quality.md),
+which carry the vocabulary and what each value does not claim.
 `ec/annotations/bank-call-audit.md`'s own note that
 the BL51 stub at `0x1100` is reached by "350 of the 403 trampolines in
 `0x1150`-`0x1ABC`" is a range-restricted count from the exporter and is not the

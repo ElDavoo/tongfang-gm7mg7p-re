@@ -583,10 +583,14 @@ the jump rather than the callee. And the four *site*
 accessors the issue's phrase points at —
 `0x7421`, `0x9DEC`, `0xB5D3` and `0xE9F5` — **are not exported functions at
 all**: each is a code site inside a larger routine that no `lcall` names.
-[`pd-index-callers.csv`](pd-index-callers.csv) traces all four, and **four of
-its five rows are `status: unresolved`**; the fifth found literals in a caller's
-frame, none of them in a register that site indexes on, and so bounds nothing
-rather than resolving a caller either.
+[`pd-index-callers.csv`](pd-index-callers.csv) traces all four, and **no row of
+it resolves a caller**. The row carrying literals found them in a caller's
+frame, none of them in a register that site indexes on, so it bounds nothing
+rather than resolving a caller either; the rows carrying none are filed either
+`unresolved`, where the frame was long enough to have held a load, or
+`frame too short to say`, where it was not —
+[`pd-index-geometry.md`](pd-index-geometry.md) §4 and
+[`docs/findings/pd-caller-frame-quality.md`](../../docs/findings/pd-caller-frame-quality.md).
 
 **What this group does not establish.** Which entry those four sites belong to,
 and therefore whether the EC has one index-helper routine or several. Making
@@ -660,8 +664,8 @@ Stated as a list, because the limit is the point of the document:
    `bank-call-audit.md` same-bank caveat is carried, not resolved.
 5. **The fan and thermal group is a grouping, not a control loop.** §6.
 6. **Which functions a power mode reaches is not established.** §7.
-7. **The four index-helper site accessors are not functions**, and four of the
-   five `pd-index-callers.csv` rows are unresolved. §9.
+7. **The four index-helper site accessors are not functions**, and no
+   `pd-index-callers.csv` row resolves one. §9.
 8. **No register `status:` moved**, and none could have. §10.
 9. **A single-byte `ret` in a vector slot is a fact about this image, not about
    the part.** §3.
