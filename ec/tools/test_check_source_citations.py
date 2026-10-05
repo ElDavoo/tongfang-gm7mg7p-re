@@ -552,7 +552,7 @@ class TheDeclaredList(unittest.TestCase):
 
 
 class TheCensus(unittest.TestCase):
-    """`--census` prints the class census the write-up records.
+    """`--census` prints the class census, which the write-up does not record.
 
     The point of these is that the census is *printed* rather than written down
     as a figure: a count of the repository's own prose is out of date at the
@@ -586,14 +586,16 @@ class TheCensus(unittest.TestCase):
     def test_a_quoted_citation_is_censused_as_quoted_not_live(self):
         # The dispatch page's #249 predecessors are in blockquotes and meant to
         # stay wrong. A census that counted them as live would send a reader to
-        # repoint figures §4a-4d wants left visible.
+        # repoint figures §4a-4d wants left visible. What "not live" means for
+        # them is a non-zero quoted-superseded count, so that is what is held --
+        # the live figure is not asserted, being a number this repository should
+        # not carry.
         out = self.census_out()
         rel = "ec/annotations/xdata-086x-dispatch.md"
         row = next(line for line in out.splitlines() if line.startswith(f"  {rel}: "))
-        live = re.search(r"(\d+) live", row)
-        self.assertIsNotNone(live, row)
-        self.assertGreaterEqual(int(live.group(1)), 0)
-        self.assertIn("quoted-superseded", row)
+        quoted = re.search(r"(\d+) quoted-superseded", row)
+        self.assertIsNotNone(quoted, row)
+        self.assertGreater(int(quoted.group(1)), 0)
 
     def test_a_target_citation_is_never_also_counted_as_a_bare_one(self):
         # The two walks must partition the sites. The bare pattern's lookbehind
@@ -619,12 +621,12 @@ class TheCensus(unittest.TestCase):
                         f"bare citation: {collapsed[start:end]!r}")
 
     def test_the_census_classes_partition_the_sites(self):
-        # Two readings of one tree, and the relation between them is what makes
-        # the write-up's table mean something: the census is the whole
-        # population, the check is a declared scope inside it. So what the check
-        # holds and declines together must be no larger than what the census
-        # calls live -- a scope that reported more live cells than the tree has
-        # would be describing a different population.
+        # Two readings of one tree, and the relation between them is the point:
+        # the census is the whole population, the check is a declared scope
+        # inside it. So what the check holds and declines together must be no
+        # larger than what the census calls live -- a scope that reported more
+        # live cells than the tree has would be describing a different
+        # population.
         out = self.census_out()
         census_live = int(re.search(r"(?m)^\s+(\d+)\s+live$", out).group(1))
         _, _, held, _, declined, skipped, _ = run_check(REPO)[:7]

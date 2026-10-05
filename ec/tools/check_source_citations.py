@@ -88,14 +88,14 @@ nothing".
     not read at all, which is "not done by this method" and never "there is
     nothing there".
   * *A citation whose subject is a *different* construct that happens to fall
-    inside the anchor's span.* Measured, not hypothetical: one live cell in
-    `xdata-4-4-identity-rederivation.md` cites `:2723` for "a comment carrying
-    'the committed 427 ids'", and that string is in the tool at a line well
-    outside the span its declared anchor opens. A span is a region, not a
-    subject: containment says the number is somewhere in the construct, and
+    inside the anchor's span.* A limitation of the design rather than a
+    measured instance: a span check says the number is somewhere in the
+    construct, so a citation landing inside the right anchor's span while
+    meaning a different construct would pass. A span is a region, not a
+    subject -- containment says the number is somewhere in the construct, and
     nothing here says which line of it the sentence meant. Holding that needs
     the cited line's own text, which is a per-file oracle this tool does not
-    have. It is a false negative, stated here rather than left to be found.
+    have. Stated here rather than left to be found.
   * *A `.c` citation.* `check_citation_lines.py`'s Rule 1 and
     `check_site_census.py` hold the decompile side; this holds pointers into
     source.
@@ -182,10 +182,9 @@ CITATIONS = (
     ("docs/findings/xdata-4-4-identity-rederivation.md", (
         ("map_columns", r"`MAP_COLUMNS` at `xdata_register_map\.py:(\d+)"),
     )),
-    # Declared with no citation, and walked anyway: the census found its
-    # thirteen live cells name subjects the tool no longer holds, and a file
-    # this tool reads and holds nothing for must still say so rather than read
-    # as a file with nothing in it.
+    # Declared with no citation, and walked anyway: a file this tool reads and
+    # holds nothing for must still say what it declined, rather than read as one
+    # with nothing in it.
     ("docs/findings/xdata-census-rederivation-checklist.md", ()),
 )
 
@@ -304,12 +303,12 @@ def read(path):
 def census(repo, stream=None):
     """Print every `<target>:NNN` cell in the tree, classed. -> the site count.
 
-    The census the write-up records is printed here rather than written down as
-    a figure, because a count of the repository's own prose goes stale at the
-    next merge and CLAUDE.md's "no totals of the repository's own text" is the
-    rule that says so. Walking the tree is also what keeps the *scope* honest:
-    a number of the cells this tool holds says nothing about how many there
-    are, and this prints both.
+    The census is printed rather than written down anywhere as a figure, because
+    a count of the repository's own prose goes stale at the next merge and
+    CLAUDE.md's "no totals of the repository's own text" is the rule that says
+    so. Walking the tree is also what keeps the *scope* honest: a number of the
+    cells this tool holds says nothing about how many there are, and this
+    prints both.
 
     Three classes, and the third is the one that decides scope:
 
