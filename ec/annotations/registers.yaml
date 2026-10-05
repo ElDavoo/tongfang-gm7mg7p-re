@@ -3678,6 +3678,41 @@ registers:
       this method finds sets either bit -- a limit of the scan, since a set
       through a run-time DPTR would not appear -- and nothing is read back.
 
+  - name: XDATA_09E9
+    addr: 0x09E9
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three sites, all in the EC and none in the PD image, and TWO writers
+      among them -- where 0x09EA and 0x09EB have one each. The two are the
+      store at 0x974A, in the routine entered at 0x96AD, and the store at
+      0x9C10, in the routine entered at 0x9C00; the third site is the read at
+      0x8428 in the routine entered at 0x83FF. (The sites CSV's runtime column
+      anchors on the MOV DPTR, so it names those two writes 0x9747 and 0x9C0D
+      and the read 0x8425; the access is the next instruction.) Both writers
+      test 0x0743 (CTGP_DB_CTRL) bit 2 in complementary senses -- 0x96AD
+      jnb acc.2 at 0x9718, 0x9C00 jb acc.2 at 0x9C09 -- so they disagree only
+      where bit 2 is clear and 0x0490 bit 0 is set, and there it is a
+      scheduling question the image does not answer. 0x96AD's value is [0x0744]
+      when bit 2 is set, 0 when bit 2 is clear and 0x0490 bit 0 is clear, and
+      a CODE table byte 0x34 or 0x35 otherwise. The reader copies it into
+      0x0788 (CTWA) when the two differ, and the ASL publishes CTWA * 8 as
+      ^^^^NPCF.UOCT in _Q83 -- so this byte reaches the NVIDIA platform
+      controller one hop ahead of the 0x09EA/0x09EB chain. The whole
+      reconciliation, the 0x0788 consumer with its ASL lines, and what the
+      2026-09-23 capture does not settle are in
+      ec/annotations/ec-09e9-writers.md.
+      "Two writers" is two direct MOV DPTR sites, not two places the byte can
+      be written: an indirect movx @Ri, or a DPTR built at run time, is
+      invisible to this scan. The one computed-DPH site aimed at the 0x09 page
+      is 0x83D6 (ring_push_0990), whose DPTR is bounded to 0x0990-0x09BE and
+      so cannot reach this address -- ec/annotations/ec-09e9-09eb-sites.md 3.
+      That is a positive result about one idiom, not a proof that no other
+      writer exists. No hardware was involved and nothing is read back.
+
   - name: XDATA_09EA
     addr: 0x09EA
     sources: [xdata-refs]
@@ -7114,3 +7149,76 @@ registers:
       set non-zero; 0x3C is 60 and no unit is claimed. What the word counts,
       and against what the comparison decides, are not established.
       Nothing was observed live, and this is not a driver-write target.
+
+  - name: CHARGE_STAGE_WORD (16-bit word the charge path stages and compares)
+    addr: [0x0834, 0x0835]
+    sources: [static-scan, xdata-refs]
+    static_refs: [60, 11]
+    static_refs_main_ec: [35, 2]
+    static_refs_pd_image: [25, 9]
+    status: present-untested
+    note: >
+      Four named routines and the unannotated call-target seed
+      `FUN_CODE_bc05` branch on this word being zero, and every one of them
+      agrees on which side writes. `stage_0577_against_0834_0836` (bank1
+      0xBABF) stores the literal 0x0180, in the block its own `jz` at 0xBAE6
+      leaves for at 0xBB40 -- which is outside that routine's own listing, and
+      is seeded on main as `stage_0834_from_0403_threshold_and_0497`
+      (bank1/BB40.asm) -- and
+      `guard_then_store_pair_0834` (bank1 0xBF3A) stores an R5:R6 it has first
+      clamped to 0x0400; both load 0x0836/0x0837 in the same block, before
+      this word. `clear_0834_word_when_nonzero` (bank1 0xBD20) zeroes it,
+      writes 0x02 to 0x08E4 and sets bit 0 of 0x0832;
+      `reload_083e_when_0834_is_zero` (bank1 0xC4AF) reloads 0x083E to 0x3C
+      when the word is zero and lets it count down when it is not. The byte
+      order is the pair helpers' and not a reading of a call site --
+      `write_r3r4_to_xdata_pair` (bank1 0x889E) stores R3, increments DPTR and
+      stores R4 -- so on that path 0x0834 is low and 0x0835 high. **It is not
+      settled for the word as a whole**: `dispatch_0832_event_bits` (bank1
+      0xA750, 0xA787 and 0xA78C) reads the two bytes one at a time into R6 and
+      R7 with no helper, and whether that call takes them high byte first is
+      not established here, which is why the symbol is indexed by address
+      order and never `_LO`/`_HI`.
+      **No unit is claimed.** 0x0180 and 0x0400 are literals in the same
+      routines and nothing committed establishes either as the same quantity
+      as a millivolt target; 0x0400 is a clamp ceiling, not a voltage, and
+      the instruction that builds it takes it from DPTR's own bytes rather
+      than reading the register at that address. CHARGE_TARGET_MV is an
+      operand in two of these routines and the same bit test (bit 0 of 0x0497)
+      selects it as the source of the 0x0836/0x0837 copy, but the association
+      is an association in these listings:
+      `guard_then_store_pair_0834`'s own annotation says nothing in those
+      instructions ties the compares to that meaning, and neither does this
+      entry. Nothing was read back and no byte was watched move, so
+      `present-untested` is the static scan's grade and not a behaviour. The
+      hand-decode is
+      docs/findings/charge-stage-word-0834.md, cited to bank and address
+      throughout.
+
+  - name: CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against)
+    addr: [0x0836, 0x0837]
+    sources: [static-scan, xdata-refs]
+    static_refs: [18, 8]
+    static_refs_main_ec: [7, 1]
+    static_refs_pd_image: [11, 7]
+    status: present-untested
+    note: >
+      The word the second of the two compares runs against, and it is written
+      in the same block that stages CHARGE_STAGE_WORD. At each of the three
+      sites that stage that word from zero -- bank1 0xBB40, 0xBF96 and 0xBC77
+      -- this one is stored first, from CHARGE_TARGET_MV or the literal 0x3138
+      under the bit 0 of 0x0497 test; 0xBF96 has no such test and reads
+      CHARGE_TARGET_MV unconditionally. Then 0x0832 bit 1 is set for this word
+      and bit 0 for CHARGE_STAGE_WORD. The reads that follow put this word in
+      R3:R4 and compare it against the same CHARGE_TARGET_MV or 0x3138, in
+      `stage_0577_against_0834_0836` (0xBB10-0xBB2D),
+      `guard_then_store_pair_0834` (0xBF63-0xBF8F) and `FUN_CODE_bc05`
+      (0xBC53-0xBC70). **That is an ordering the bytes show, not a mechanism**:
+      what the pair is for, whether this word records the charge target as it
+      stood when the other was staged, and whether a difference between the
+      two decides anything downstream, are not established. 0x3138 is 12600 as
+      a literal, which is not the 16400 CHARGE_TARGET_MV has been read live as,
+      so the two sources of this word are not shown to be the same quantity
+      either. Byte order is the pair helpers' as above, and is not settled for
+      the whole word. Nothing was read back; `present-untested` is the static
+      scan's grade.

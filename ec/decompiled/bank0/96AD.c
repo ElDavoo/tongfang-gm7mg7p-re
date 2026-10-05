@@ -17,7 +17,7 @@
    byte the 0xBC67 call returns. ec/annotations/registers.yaml documents 0x0741, 0x0743-0x0746,
    0x0783-0x0785, 0x0782 and 0x049F bit 1; of the destinations named above, 0x09EA and 0x09EB have
    carried entries (XDATA_09EA, XDATA_09EB, both present-untested) since issue #264, and the 0x08xx
-   ones and 0x09E9 still have none.
+   ones still have none.
    type: copy
    evidence: ec/decompiled/bank0/96AD.asm; ec/decompiled/bank0/96AD.c; ec/annotations/registers.yaml
    basis: hand-decoded
@@ -73,7 +73,7 @@ void apply_oem_overrides_then_fill_08xx(undefined1 param_1,char param_2)
     }
   }
   pcVar5 = FUN_CODE_09e9;
-  DAT_EXTMEM_09e9 = uVar1;
+  XDATA_09E9 = uVar1;
   set_dptr_0a51_b93a();
   DAT_EXTMEM_08bd = pcVar5[0x16];
   sVar6 = 0x8be;
