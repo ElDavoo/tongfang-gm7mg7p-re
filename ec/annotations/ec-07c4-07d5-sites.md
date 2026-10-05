@@ -908,7 +908,19 @@ watches, so nothing it captures could say which process wrote the byte on
   are the nearest remaining work of this kind.
 - **`0x07C5` (`WHMS`, bit 5) and `0x07C6` (`WMS0`).** Issues #106 and #101
   own them. The service writes `0x07C5` bit 4, not bit 5, and this file
-  does not answer that.
+  does not answer that. **Superseded 2026-10-05 (issue #1260):** the deferral
+  went to a closed issue and to one that is about a different byte, so the
+  bit-4 question had no owner. It is answered in
+  [`docs/findings/07c5-whms-bit5-vs-bit4.md`](../../docs/findings/07c5-whms-bit5-vs-bit4.md):
+  **bit 4 and bit 5 are different fields on one byte**, not one field seen
+  two ways. Bit 5 is the GPU whisper-mode main switch, written by
+  `GpuFeatures.SetGpuWhisperModeMainSwitch` (mask `0x9F`, addend `0x60` when
+  the argument is 1 and `0x40` otherwise, which puts bit 5 under the argument
+  and bit 6 under both), and bit 4 is the office-mode /
+  fan-safety-abnormal-protection skip, written by `SkipOfficeModeSafetyProtect`
+  and `SkipFanSafetyAbnormalProtection` (mask `0xEF`, addend `0x10`). "Not bit
+  5" was what reading only bit 4's setters looks like. `0x07C6` (`WMS0`) remains
+  #101's and is untouched here.
 - **`0x07D6` (`DBSP`) and `0x07D7` (`CGCT`).** Left to the census pass;
   this walk turned up nothing concrete about either. **Superseded 2026-09-24
   (issue #282):** [`ec-07d6-07d7-sites.md`](ec-07d6-07d7-sites.md) walks both,
