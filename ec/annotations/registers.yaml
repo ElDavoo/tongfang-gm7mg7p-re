@@ -2787,6 +2787,8 @@ registers:
       unrun procedure that would settle it. status: unchanged, because none of
       this is behavioural evidence.
 
+      2026-10-05 (issue #1228): every direct read of these three addresses found by that method is a presence test that skips the store when the value is zero, so a zero here means "no override" and not a limit of zero watts. Method: docs/findings/battery-pl-default-and-zero-semantics.md. status: unchanged.
+
   - name: MANUAL_FAN_CTRL (power mode / fan mode)
     addr: 0x0751
     sources: [uniwill-laptop(EC_ADDR_MANUAL_FAN_CTRL), ecspec-3.1.6.0(ADDR_MAFAN_CONTROL_BYTE),
@@ -3303,6 +3305,8 @@ registers:
       docs/hardware-tests/mode-defaults-variant-read.md, and it has not been
       run. Nothing here changes the status above: a derived value agreeing with
       a recorded one is consistency, not a measurement.
+
+      2026-10-05 (issue #1228): 0x07A7-0x07AA is also the battery PL default block (ECSpec's ADDR_BATTERYSAVER_* group starts at 1959) and there is no fourth ADDR_TURBO_PL*_DEFAULT_VALUE in the tree; the battery PL write consults none of them and writes a literal 0. Method: docs/findings/battery-pl-default-and-zero-semantics.md. status: unchanged.
 
   - name: MODE_TCC_OFFSET_DEFAULTS
     addr: [0x07D8, 0x07D9, 0x07DA]
@@ -6668,6 +6672,8 @@ registers:
       `python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800
       0x0EA8` and `make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000`
       plus `r2 -a 8051 -q -c 's 0x0f335; pd 32' bank0.bin`. ***
+      *** Its destination, 0x0F61-0x0F68, has other writers besides it: see
+      docs/findings/xdata-0exx-page-reachability.md. ***
       The other two sites are separate, and both are inside bank0 0xF221:
       0xF221 reads this byte and compares it with 0x12, and 0xF234 is that
       cjne's own branch target -- mov DPTR,#0x0ea8 / movx A,@DPTR / ret -- so
