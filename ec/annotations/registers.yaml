@@ -5604,6 +5604,8 @@ registers:
       when it is not. 0x07A4 has no entry in this file either, so the
       consequence lands on an undocumented byte; recorded as a follow-up
       rather than expanded into here.
+      Correction, issue #636: worked -- 0x07A4 is `GC6S` in this file, mapped in
+      docs/findings/xdata-07a4-07a5-bit-map.md. The sentence above stands.
       The DSDT does not reach this byte, and that is a fact about the ASL
       rather than a scan result: the ECMG field list is dsdt.dsl:52194-52328
       and its highest Offset is 0x0EA0, over 28 offsets from 0x043E, so
@@ -6553,8 +6555,10 @@ registers:
       docs/findings/uncalled-vendor-setters.md; 0x07A6 bit 1, the fifth setter,
       belongs to issue #93 and is not claimed here. 5 direct MOV DPTR,#0x07A5
       sites, all in the main EC, recounted by
-      ec/tools/check_register_counts.py; a count is not behaviour. No hardware
-      was involved.
+      ec/tools/check_register_counts.py; a count is not behaviour. The sites
+      are mapped one per entry in
+      docs/findings/xdata-07a4-07a5-bit-map.md (issue #636), which also names
+      the two reader sites this note does not. No hardware was involved.
 
   - name: WHMS
     addr: 0x07C5
