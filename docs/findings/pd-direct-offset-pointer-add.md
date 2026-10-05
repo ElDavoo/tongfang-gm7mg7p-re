@@ -532,7 +532,12 @@ shared implementation, and the two issues stay separate.**
 1. **What the running base relocates.** `0x27FF` at reset, advanced by 81
    store-back sites and read by 33. Naming the structure it indexes needs
    either a live trace or a caller-by-caller reading of the 81 sites, which is
-   the work §5 declines.
+   the work §5 declines. **The caller-by-caller reading is done**, in
+   [pd-store-back-relocated-base.md](pd-store-back-relocated-base.md), and its
+   answer is that the base is a displacement base into a record-like structure
+   the firmware walks by small negative offsets rather than a relocated table
+   base. What the record contains, its width and its record count are still
+   open, and that write-up says so.
 2. **The twelve PSW writes whose RS is not fixed, and the computed jump
    `0x1229` ends in.** Together these are what keeps the bank-1 windows open.
    A `pop psw` is the only route by which RS could arrive without a
