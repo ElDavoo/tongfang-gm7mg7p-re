@@ -84,23 +84,31 @@
 # committed-text check under python3 with no assembler and no Ghidra, and this
 # is one of those.
 #
-# COST, and it is re-derived rather than left beside the figure it replaces.
-# `reassembly_checked_bound.py --check` measures 0.30 s here over three runs on
-# 2026-10-04 (0.29 / 0.30 / 0.29), `audit_call_targets.py <image> --self-test`
-# 3.78 s over three runs on the same day (3.80 / 3.78 / 3.78), and
-# `bank_attribution.py <image> --self-test` between 0.91 s and 0.96 s over five
-# runs on 2026-10-05, against a cheap tier that printed 47 s elapsed on this
-# runner. One runner's figures and they move by roughly a factor of two between
-# runners -- the 0.15 s the earlier cut recorded here and the 5.9 s tier §14e's
-# table carries are both this patch's *own* history and neither re-derives on the
-# runner that reads it -- so the ratio is the durable part, which is the caveat
+# COST, and the durable part is how *often* each call runs rather than what it
+# costs. All three are tail calls after the tool loop's `done`, so each runs ONCE
+# per sweep -- not once per entry in the tool list, which is what landing this
+# block inside the loop body would cost, and what a re-cut that moved it above
+# the `done` silently reintroduced.
+# `tools/test_gate_arm_bank_attribution.py::PlacementTests` holds that relation,
+# so a regression here goes red rather than multiplying the tier's cost.
+#
+# The per-call cost is the runner's, and the command that prints it is the one
+# the gate itself runs, so no figure is written here:
+#
+#   time python3 ec/tools/reassembly_checked_bound.py --check
+#   time python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
+#   time python3 ec/tools/bank_attribution.py ec/firmware/GMxMGxx_11.800 --self-test
+#
+# One runner's figures move by roughly a factor of two between runners -- the
+# 0.15 s an earlier cut recorded here and the 5.9 s tier §14e's table carries are
+# both this patch's *own* history and neither re-derives on the runner that reads
+# it -- so the ratio was the durable part, which is the caveat
 # `docs/agent-pipeline.md` item 6 gives for `call_graph.py` too. **None of these
 # is the largest arm this gate carries**, which the earlier reasoning here
-# claimed of `audit_call_targets.py`: `xdata_register_map.py --self-test`
-# measures 7.18 s over three runs on that runner (7.22 / 7.18 / 7.18) against
-# 3.78 s, so it is a material addition and not a record one. What makes the
-# figures worth re-measuring anyway is that a cost figure that outlives its
-# measurement is a claim nobody re-derives.
+# claimed of `audit_call_targets.py`: `xdata_register_map.py --self-test` is the
+# one that costs more, so these are material additions and not record ones. What
+# makes the figures worth re-deriving anyway is that a cost figure that outlives
+# its measurement is a claim nobody re-derives.
 #
 # ONE THING TO KNOW BEFORE LANDING IT, and the comment at the call site says the
 # same thing where the next reader of the gate will see it. `--check` FAILS on
@@ -223,13 +231,13 @@
 # recorded; it does not mean the closure is right about the machine.
 
 diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
-index 16c70c3..d1e78dd 100755
+index 16c70c3..53c3d67 100755
 --- a/.github/scripts/agent-gates.sh
 +++ b/.github/scripts/agent-gates.sh
-@@ -297,6 +297,113 @@ check_ghidra_tooling() {
-         python3 "$tool" --work "$scratch" --self-test || rc=1
+@@ -298,6 +298,113 @@ check_ghidra_tooling() {
          ;;
      esac
+   done
 +  # What the reassembly report says about its own columns: which rows whose
 +  # detail reads `no bytes emitted at <addr>` compared nothing, and the ceiling
 +  # that leaves for the instructions that did. issue #229 made check_one()
@@ -337,6 +345,6 @@ index 16c70c3..d1e78dd 100755
 +      rc=1
 +    fi
 +  fi
-   done
    rm -rf "$scratch"
    return "$rc"
+ }

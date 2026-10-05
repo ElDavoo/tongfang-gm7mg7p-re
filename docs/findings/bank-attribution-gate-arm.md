@@ -60,9 +60,15 @@ This is the non-obvious way to break the fold, because the instinct on landing a
 
 ## Cost
 
-`bank_attribution.py <image> --self-test` measures between **0.91 s and 0.96 s** over five runs here on 2026-10-05, against a cheap tier that printed 40 s elapsed on this runner.
+**Each call in the fold runs once per sweep, because the block is a tail call after the tool loop's `done`** — not once per entry in the tool list, which is what a re-cut that slid it inside the loop would have cost. `tools/test_gate_arm_bank_attribution.py::PlacementTests` holds that relation, so the figure below is the whole addition rather than a multiple of it.
 
-One runner's figures, and they move by roughly a factor of two between runners, so the ratio is the durable part — the caveat `docs/agent-pipeline.md` item 6 gives for `call_graph.py`. Against the calls the same fold already carries, `reassembly_checked_bound.py --check` and `audit_call_targets.py <image> --self-test`, this is the middle one on this runner; and it is **not** the largest arm the gate carries, since `xdata_register_map.py --self-test` measures 7.18 s on the sibling's runner.
+The per-call cost is whatever the runner says, and the command that prints it is the one the gate itself runs:
+
+```
+time python3 ec/tools/bank_attribution.py ec/firmware/GMxMGxx_11.800 --self-test
+```
+
+One runner's figures move by roughly a factor of two between runners, so no per-call figure is written here and none should be: `docs/agent-pipeline.md` item 6 gives the same caveat for `call_graph.py`, and the sibling fold's write-up measures its own two calls the same way. What is durable is the ordering rather than the numbers — this call reads one committed image and no Ghidra, so it sits with `reassembly_checked_bound.py --check` below `audit_call_targets.py --self-test`, and none of the three is the largest arm the gate carries.
 
 ## The test
 
@@ -82,6 +88,8 @@ The case that matters is the mutation, and it is **measured on the half-folded p
 | `tools/test_gate_arm_bank_attribution.py` | **red** | this suite |
 
 The suite builds the half-folded patch itself rather than asserting the property in prose, so the "it would have been silent" claim is re-derived every run. The second thing it holds is the arm's own behaviour: `ArmBehaviourTests` extracts the `if` block the patch lands, runs it under `bash` against a stub `bank_attribution.py` for each row of the mutation table above, and asserts the exit status each one has to produce.
+
+The third is **where the block sits**, which the other two cannot see because `arm_block()` cuts the block out by its own opening line and the first `fi` at that indent — a block cut from inside the tool loop and the same block cut from after it are byte-identical. A re-cut that slid it above the loop's `done` applies, composes, lints, and turns the whole suite green while every call in the fold runs once per entry in the tool list instead of once per sweep. `PlacementTests` asserts the relation — the loop finished before the block starts — rather than a count of blocks or of loop entries.
 
 ## Not claimed
 

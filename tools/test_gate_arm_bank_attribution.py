@@ -58,6 +58,17 @@ that, which is why the block greps the transcript as well.
 `ArmBehaviourTests` runs the landed block against a stub tool, so that claim is
 re-derived rather than asserted in prose here.
 
+**The third thing it holds is where the block sits, which nothing else can see.**
+`arm_block()` cuts the block out by its own opening line and the first `fi` at
+that indent, and a block cut from inside the tool loop and the same block cut
+from after it are byte-identical, so every case above passes either way. `git
+apply` reads the pre-image and not the shape of the result, `bash -n` and
+`shellcheck` accept both, and `check_gate_arm_coverage.py` reads the tool list
+and its `case` arms -- which is neither. So a re-cut that slid the block up past
+the loop's `done` applies, composes, lints, and turns this suite green while
+every call in the fold runs once per entry in the tool list instead of once per
+sweep. `PlacementTests` asserts the relation rather than a count of blocks.
+
 **Not a gate, and not in the cheap tier**, for the reason the sibling suite's
 docstring gives: `.github/scripts/agent-gates.sh` is a template-copied file and
 the pipeline's push token has no `workflow` scope. This runs when
@@ -296,6 +307,82 @@ class FoldRetentionTests(unittest.TestCase):
                 linted.returncode, 0,
                 f'{PATCH} lands a shellcheck failure:\n'
                 f'{linted.stdout.strip()}')
+
+
+class PlacementTests(unittest.TestCase):
+    """The landed block is below the tool loop's `done`, not inside its body.
+
+    Nothing else in this file can see this, which is why it is a case.
+    `arm_block()` cuts the block out by its own opening line and the first `fi`
+    at that indent, and a block cut from inside the loop and the same block cut
+    from after it are byte-identical, so every behaviour case above passes
+    either way. Nor can the gates around it: `git apply` reads the pre-image and
+    says nothing about the shape of the result, `bash -n` and `shellcheck`
+    accept both placements, and `check_gate_arm_coverage.py` reads the tool
+    *list* and its `case` arms, which is neither of them.
+
+    So a re-cut that slid the block up past the loop's `done` applies cleanly,
+    composes in every ordered pair, lints, and turns this suite green -- while
+    every call in it runs once per entry in the tool list rather than once per
+    sweep, re-running the two the fold already carried. The relation is asserted,
+    not a count of blocks or of loop entries: what has to hold is that the loop
+    finished before the block starts.
+    """
+
+    # The scratch cleanup, which closes `check_ghidra_tooling()` and is the one
+    # line present under *either* placement. Anchoring the search here is what
+    # lets the case measure the block's position: a block correctly placed
+    # separates `done` from this line, so a `done`/cleanup pair is adjacent only
+    # in the *wrong* form and cannot be the anchor. Named rather than located by
+    # counting `done`s, so a gate that grows a second loop reads as an anchor
+    # that moved rather than as a number this file would have to keep editing.
+    CLEANUP = '  rm -rf "$scratch"\n'
+
+    # The `done` that closes a `for` loop, at the loop body's own indent. The
+    # last one before the cleanup is the tool loop's under either placement.
+    DONE = '  done\n'
+
+    def setUp(self):
+        if not has_git_repo():
+            self.skipTest('no git, or no .git beside the repository; there is '
+                          'nothing to apply the patch to')
+        landed, done = landed_gate_text()
+        self.assertEqual(
+            done.returncode, 0,
+            f'{PATCH} no longer applies to the committed {GATE}:\n'
+            f'{done.stderr.strip()}')
+        self.landed = landed
+
+    def test_the_block_starts_after_the_loop_finishes(self):
+        # `assertTrue` on membership rather than `assertIn`, for the reason
+        # `FoldRetentionTests` gives: the container is the gate script, and
+        # `assertIn` prints all of it, where the sentence below is what a
+        # reader needs.
+        for anchor, what in ((self.CLEANUP, 'the scratch cleanup'),
+                             (ARM_OPEN, 'this tool\'s `if` block')):
+            self.assertTrue(
+                anchor in self.landed,
+                f'{what} is not in the {GATE} {PATCH} lands, so the relation '
+                'this case is about cannot be measured and the case would pass '
+                f'on a patch that is not placed at all:\n{anchor!r}\n'
+                'Re-cut the patch, or move the anchor here to wherever the '
+                'script now has it.')
+        # The last `done` before the cleanup is the tool loop's, whichever side
+        # of it the block landed.
+        cleanup = self.landed.index(self.CLEANUP)
+        loop_ends = self.landed.rindex(self.DONE, 0, cleanup) + len(self.DONE)
+        self.assertLess(
+            loop_ends, self.landed.index(ARM_OPEN),
+            f'{ARM_OPEN.strip()} is at or above the tool loop\'s `done`, so the '
+            f'block {PATCH} lands is INSIDE the loop body. Every call in the '
+            'fold -- this one and the two it was folded in beside -- then runs '
+            'once per entry in the tool list rather than once per sweep, which '
+            'is a cost the cheap tier pays silently on every run. The block '
+            'belongs after the loop\'s `done` and before `rm -rf "$scratch"`, '
+            'which is where the patch header says it is and where the sibling '
+            'fold puts its own. `git apply`, `bash -n`, `shellcheck` and '
+            '`check_gate_arm_coverage.py` are green either way, which is what '
+            'makes this a case rather than a note.')
 
 
 class MutationTests(unittest.TestCase):
