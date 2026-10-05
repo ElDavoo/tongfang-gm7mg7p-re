@@ -53,8 +53,9 @@ instruction", and settling bucket C is issue #48, untouched here.
 ### The issue's third figure does not reproduce, and is not carried forward
 
 Issue #1280 states three figures. The first two reproduce exactly against the
-committed image — 2,849 distinct seeds, 478 mid-instruction — and the third does
-not, under any denominator tried:
+committed image — 2,849 distinct seeds, of which 478 land one or two bytes inside
+a longer instruction under the predicate — and the third does not, under any
+denominator tried:
 
 > 155 of those have a committed listing, of which 85 carry a `[named]` header and
 > 70 are `FUN_CODE_*`.
