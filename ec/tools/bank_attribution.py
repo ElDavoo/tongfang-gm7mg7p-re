@@ -121,7 +121,8 @@ from audit_call_targets import AUDITED, bucket_of, survey
 from disasm8051 import mnemonic
 from find_banks import find_stubs
 from trace_xdata_refs import PD_MARKER, offset_for_runtime
-from walk_branch_arms import CUTS, descend
+from walk_branch_arms import (CUTS, END_BUDGET, END_DEPTH, END_INDIRECT,
+                               descend)
 
 # Both bank windows are 0x8000-0xFFFF, so a target below this is the common
 # area and no closure can attribute it to a bank. It is also the floor
@@ -138,6 +139,15 @@ BANK_FLOOR = 0x8000
 # they looked better. Section 7 reports which of them fired and where.
 MAX_DEPTH = 16
 MAX_INSNS = 500
+
+# What bounds_delta() multiplies both ceilings above by, and nothing else. The
+# factor is a knob the second arm of section 8 reads, not a default: closure()
+# is written and shipped at 1x and both committed CSVs come from it there, so
+# this cannot move them. It is deliberately past the point where the ceilings
+# stop firing -- an arm run below the threshold would re-walk the same closure
+# and could not tell "the ceiling lifted" from "the ceiling was never in the
+# way", which is the only thing the arm has to show.
+BOUNDS_FACTOR = 8
 
 # The four stub sites ec/annotations/bank-call-audit.md 3 records, re-derived
 # through find_stubs() rather than quoted, because the whole chain rests on it.
@@ -309,6 +319,78 @@ def closure(d: bytes, bank: int, seeds, max_depth: int = MAX_DEPTH,
             break
         pending.extend(fresh)
     return reached, who, entries, cuts, common
+
+
+def bounds_delta(d: bytes, closures, rows, seeded):
+    """Section 8's second arm: is what is left bounds rather than seeds?
+
+    Re-walks both closures at `MAX_DEPTH * BOUNDS_FACTOR` and
+    `MAX_INSNS * BOUNDS_FACTOR`, and returns:
+
+      verdicts   the four-verdict delta over both populations at once, which is
+                 how the rest of the section reports them -- `pair_rows` counts
+                 every bucket-B pair in the image, not one bank's
+      banks      {bank: {added, lost, stops, paths}}
+                   added  banked addresses the raised walk reaches and the
+                          shipped one does not, and lost the reverse. Two keys
+                          rather than one signed figure, because "adds none" and
+                          "adds as much as it loses" are different results and
+                          the same subtraction
+                   stops  {bound: (entry points it stopped at 1x, at
+                          BOUNDS_FACTOR)}, as the entry points themselves rather
+                          than as a count of them -- the relation this arm has
+                          to hold is between two sets of stops, and a count
+                          could agree with the wrong one
+                   paths  addresses whose path count differs between the walks
+                   more   the subset reached by *more* paths than before, so
+                          the direction is measured rather than assumed -- a
+                          print that said "more" from the `paths` key alone
+                          would be asserting it
+
+    `stops` is what makes the arm checkable at all. The address set and the
+    four verdicts print the same whether or not the ceilings were lifted, so an
+    arm that quietly re-walked at 1x would be indistinguishable from one that
+    ran, and "nothing moved" would be what a broken arm looks like. Reporting
+    each bound's own stop count either way is what lets a reader see the
+    ceilings stop firing rather than infer it from an unchanged figure.
+
+    Every ceiling is expected to clear and the indirect jump is not one -- no
+    factor lifts a target the bytes do not name, which is what keeps this a
+    measurement about the budgets rather than a second seeds arm wearing a
+    different label.
+
+    `paths` is the half that moves and is not part of the result. A walk that
+    no longer stops finds callees the truncated one never reached, which
+    reorders the worklist, so an address can be reached by more paths than
+    before without being reached by a path that was missing. The closure is its
+    address set and its verdicts; this returns both, and reports the path
+    movement rather than leaving a reader to assume it away.
+    """
+    raised = {bank: closure(d, bank, seeded[bank],
+                            max_depth=MAX_DEPTH * BOUNDS_FACTOR,
+                            max_insns=MAX_INSNS * BOUNDS_FACTOR)
+              for bank in closures}
+    # One survey for both populations, as the rest of section 8 does: it is the
+    # expensive pass over every call site in the image, and the two closures
+    # differ in what they reached rather than in what was called.
+    before = tally(pair_rows(rows, closures))
+    after = tally(pair_rows(rows, raised))
+    banks = {}
+    for bank, cl in closures.items():
+        up = raised[bank]
+        banks[bank] = {
+            "added": set(up[0]) - set(cl[0]),
+            "lost": set(cl[0]) - set(up[0]),
+            "stops": {why: (set(cl[3].get(why, ())),
+                            set(up[3].get(why, ())))
+                      for why in sorted(set(cl[3]) | set(up[3]))},
+            "paths": {a for a in set(cl[0]) & set(up[0])
+                      if cl[0][a] != up[0][a]},
+            "more": {a for a in set(cl[0]) & set(up[0])
+                     if up[0][a] > cl[0][a]},
+        }
+    return {"verdicts": {v: after[v] - before[v] for v in VERDICTS},
+            "banks": banks}
 
 
 def entry_chain(entries, addr):
@@ -942,6 +1024,79 @@ def print_common(d: bytes, closures, without, handlers, seeds,
     print("  residue from 398 to 89).")
     print()
 
+    # The other half of the same question. §9 asks whether what is left is seeds
+    # or bounds, which is a disjunction, and the rows above answer the first
+    # half of it; this answers the second by running it rather than by
+    # reasoning about it. The factor is deliberately past the point where the
+    # ceilings stop firing, because that is the only thing that makes the arm
+    # worth running: below the threshold it re-walks the same closure, and
+    # "nothing moved" is what a broken arm looks like too. So each bound's own
+    # stop count is printed either way, and a reader can see the ceilings clear
+    # instead of inferring it from a figure that would read the same either way.
+    arms = bounds_delta(d, closures, rows, {b: seeds[b] | handlers[b]
+                                             for b in closures})
+    print("And the second arm of \"seeds or bounds\", measured rather than")
+    print("argued: both closures re-walked with `MAX_DEPTH` and `MAX_INSNS`")
+    print(f"multiplied by {BOUNDS_FACTOR}, so {MAX_DEPTH} -> "
+          f"{MAX_DEPTH * BOUNDS_FACTOR} and")
+    print(f"{MAX_INSNS} -> {MAX_INSNS * BOUNDS_FACTOR}, which is past the point "
+          f"where the ceilings")
+    print("stop firing. Each bound's own stop count either way, so the lifting is")
+    print("shown rather than inferred from a figure that would read the same")
+    print("whether or not it happened.")
+    print()
+    for bank in sorted(arms["banks"]):
+        arm = arms["banks"][bank]
+        fired = ", ".join(f"{why} {len(was)} -> {len(now)}"
+                          for why, (was, now) in sorted(arm["stops"].items()))
+        print(f"  bank{bank}: {len(arm['added'])} banked address(es) gained and "
+              f"{len(arm['lost'])} lost;")
+        print(f"    the bounds that fired: {fired}")
+    cells = " / ".join(f"{arms['verdicts'][v]:+d}" for v in VERDICTS)
+    print(f"  both banks together: {cells} on the four verdicts (agreeing / "
+          f"contradicting / still ambiguous / unreached)")
+    print()
+    moved = {b: arms["banks"][b]["paths"] for b in sorted(arms["banks"])
+             if arms["banks"][b]["paths"]}
+    if moved:
+        print("What does move is which walk reached a byte first, not which bytes")
+        print("are reached. "
+              + "; ".join(f"bank{b}: of the {len(moved[b])} address(es) whose "
+                          f"path count changed, {len(arms['banks'][b]['more'])} "
+                          f"gained paths and "
+                          f"{len(moved[b]) - len(arms['banks'][b]['more'])} "
+                          f"lost some" for b in sorted(moved)) + ".")
+        print("No address is gained or lost. A walk that no longer stops finds")
+        print("callees the truncated one never reached, and the worklist they")
+        print("enter decides which entry point is recorded as the first to reach")
+        print("an address the other walk reached too. That is a fact about the")
+        print("walk rather than the closure, and it is why the address set and")
+        print("the verdicts are what this arm compares.")
+    else:
+        print("No path count moved either, so the two walks are the same walk.")
+    print()
+    # Stated from what the run did rather than asserted, because the point of
+    # the paragraph is that the ceilings are gone and the indirect jump is not
+    # -- a print that said so unconditionally would be the same sentence the
+    # arm replaced, one level down.
+    stuck = [why for bank in sorted(arms["banks"])
+             for why, (was, now) in sorted(arms["banks"][bank]["stops"].items())
+             if was and why in (END_DEPTH, END_BUDGET) and now]
+    if stuck:
+        print("The ceilings that fired at "
+              + ", ".join(f"`{why}`" for why in sorted(set(stuck)))
+              + " did not clear at this factor, so it is not past the threshold")
+        print("the arm needs and the rows above are the same walk printed again.")
+        print("Raise `BOUNDS_FACTOR`; nothing above this line should be read as a")
+        print("result until they clear.")
+    else:
+        print("Every ceiling cleared and the indirect jump did not, which is what")
+        print("makes this a measurement about the budgets rather than a second")
+        print("seeds arm: a target the bytes do not name is not something a larger")
+        print("budget can resolve, so what survives here is not a truncated walk")
+        print("waiting for room to stop.")
+    print()
+
     # The reason, which is the useful part: what a common-area arm actually
     # carries. A DPTR immediate at or above the floor is the linker's route out
     # of the common area, and descend() records it as a code immediate rather
@@ -1023,10 +1178,11 @@ def print_common(d: bytes, closures, without, handlers, seeds,
     print()
     print("**So the answer to \"seeds or bounds\" is neither.** The residue is")
     print("not waiting on more entry points and not waiting on more budget: the")
-    print("worklist has an edge vocabulary, and this edge is not in it. The")
-    print("`bounds` figures section 7 prints are the walks that stopped, and the")
-    print("four verdicts above do not move when those walks are given more room")
-    print("to stop -- so neither the seeds nor the bounds is what is left.")
+    print("worklist has an edge vocabulary, and this edge is not in it. Both")
+    print("halves of that are measured above rather than argued -- the seeds rows")
+    print("add entry points and no banked address, and the bounds arm lifts every")
+    print("ceiling and still reaches no address the shipped walk did not -- so")
+    print("neither the seeds nor the bounds is what is left.")
     print()
     print("Adding the DPTR immediate as an edge is a separate decision with its")
     print("own calibration -- an immediate at or above CODE_FLOOR is a code")
@@ -1045,11 +1201,12 @@ def bounds_for(eps, cuts):
     """The bounds that fired for the walks whose entry points are `eps`.
 
     Filtered by the entry points that cover the run, not the union over
-    `cuts`. `cuts` is every bound that fired *anywhere* in the bank -- three
-    entry points stopped in bank 0, seven in bank 1 -- so a union over its keys
-    labels all 7006 bank-0 runs as bound-limited when only 535 are reached by a
-    walk that stopped. An empty list is a fact about those walks and not about
-    the bank's: it means no walk reaching this run stopped.
+    `cuts`. `cuts` is every bound that fired *anywhere* in the bank, and
+    section 7 prints how many entry points that is in each, so a union over
+    its keys labels every run in the bank as bound-limited when a small
+    minority are reached by a walk that stopped. An empty list is a fact about
+    those walks and not about the bank's: it means no walk reaching this run
+    stopped.
     """
     return sorted(why for why, cut_eps in cuts.items() if eps & cut_eps)
 
@@ -1566,6 +1723,76 @@ def self_test(d: bytes) -> int:
           "including the per-address path counts, so no byte was reached more "
           "often than before -- following the common area added entry points "
           "and no path")
+
+    # The second arm of the same question. "Is the residue seeds or bounds" is
+    # a disjunction and the checks above answer the first half of it; this
+    # answers the second by lifting both ceilings rather than by arguing about
+    # what a bigger budget would find. Held as relations and not as figures,
+    # because every population here moves with the walk's bounds -- what is
+    # held is which stops clear and what stays put, not how many there were.
+    arms = bounds_delta(d, closures, rows, {b: seeds[b] | handlers[b]
+                                             for b in (0, 1)})
+    # A factor lifts a ceiling and nothing else. `MAX_DEPTH` and `MAX_INSNS`
+    # are the two reasons it can lift, named from the module that defines them
+    # rather than spelled out here, so the pair cannot drift apart.
+    for bank in (0, 1):
+        arm = arms["banks"][bank]
+        stops = arm["stops"]
+        cleared = [why for why in (END_DEPTH, END_BUDGET) if stops.get(why, (set(), ()))[0]]
+        others = [why for why in stops if why not in (END_DEPTH, END_BUDGET)]
+        seen = ", ".join(f"{why} {len(stops[why][0])} -> {len(stops[why][1])}"
+                         for why in sorted(stops))
+        check(all(not stops[why][1] for why in cleared)
+              and all(stops[why][1] == stops[why][0] for why in others),
+              f"bank{bank}: at {BOUNDS_FACTOR}x every ceiling that fired stops "
+              f"firing and every other stop reason lands on exactly the same "
+              f"entry points ({seen}) -- so this is a lifted budget and not a "
+              f"second walk at 1x, which is what an unchanged figure alone "
+              f"could not tell a reader"
+              + ("" if cleared else " -- no ceiling fired here, so this bank "
+                                      "is unchanged at any factor; the arm's "
+                                      "evidence is bank0's"))
+    for bank in (0, 1):
+        arm = arms["banks"][bank]
+        check(not arm["added"] and not arm["lost"],
+              f"bank{bank}: the lifted walk attributes no banked address the "
+              f"shipped one does not -- {len(closures[bank][0])} either way, "
+              f"{len(arm['added'])} gained and {len(arm['lost'])} lost -- so "
+              f"the residue is not a walk waiting for budget"
+              + ("" if not arm["added"] and not arm["lost"]
+                 else f" -- {len(arm['added'])} gained, {len(arm['lost'])} lost"))
+    # `pair_rows` counts every bucket-B pair in the image rather than one
+    # bank's, so the four verdicts move once for both closures together --
+    # which is why this is not a loop.
+    check(not any(arms["verdicts"].values()),
+          "and none of the four verdicts moves at the raised ceiling, so the "
+          "residue is the same residue the seeds arm left"
+          + ("" if not any(arms["verdicts"].values())
+             else f" -- {arms['verdicts']}"))
+    # Which entry points stopped for a reason no budget can lift is the same
+    # set either way, asserted directly rather than through its count: an
+    # unresolvable `jmp @a+dptr` target is not something a bigger ceiling
+    # resolves, so a walk that reached a different one under a bigger budget
+    # would mean the budget was reaching code rather than truncating a walk.
+    check(all(arms["banks"][b]["stops"].get(END_INDIRECT,
+                                            (None, None))[1]
+              == arms["banks"][b]["stops"].get(END_INDIRECT, (None, None))[0]
+              for b in (0, 1)),
+          "and the indirect-jump stops are the same entry points under both "
+          "budgets, which is what makes what survives at the raised ceiling a "
+          "computed target rather than a truncated walk")
+    # One ceiling somewhere in the two closures, or the factor never got past
+    # the point the arm needed it past and "nothing moved" would be the answer
+    # to a question nobody asked. Which bank it is in is not held: that moves
+    # with the walk, and what has to hold is that the arm moved at all.
+    check(any(stops[why][0] and not stops[why][1]
+              for b in (0, 1)
+              for stops in [arms["banks"][b]["stops"]]
+              for why in (END_DEPTH, END_BUDGET) if why in stops),
+          f"and at least one ceiling fired at 1x and stopped firing at "
+          f"{BOUNDS_FACTOR}x, so the factor is past the threshold rather than "
+          f"under it -- an arm below the threshold re-walks the same closure "
+          f"and cannot tell a lifted budget from one never in the way")
 
     # The worklist followed them, which is what makes the zero above a
     # measurement rather than a no-op: a change that silently did nothing would

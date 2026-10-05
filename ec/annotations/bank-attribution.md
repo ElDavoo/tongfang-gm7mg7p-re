@@ -419,15 +419,47 @@ What §5's `bounds` column cannot see is the reason.
 
 ## 5. What the closure cannot see, measured
 
-Ten entry points across the two closures stop at a bound, and they are reported
-by where they stopped rather than as a rate — together with how much of each
-closure rests on them, which is the number that decides how much weight the rest
-of this file can carry.
+Twenty-six entry points across the two closures stop at a bound, and they are
+reported by where they stopped rather than as a rate — together with how much of
+each closure rests on them, which is the number that decides how much weight the
+rest of this file can carry.
 
 | bank | entry points that stopped | first at | addresses reached by a stopped walk | of those, by no other | of those, runs |
 |---|---|---|---:|---:|---:|
-| `bank0` | 1 depth limit, 2 instruction budget | `0x8749`, `0x95DD`, `0x96AD` | 849 of 14830 | 637 | 535 of 8244 |
-| `bank1` | 18 indirect jump | `0x8A04` and more | 253 of 12258 | 252 | 135 of 7889 |
+| `bank0` | 1 depth limit, 5 indirect jump, 2 instruction budget | `0x8749`, `0x424A`, `0x95DD`, `0x96AD` | 849 of 14830 | 637 | 535 of 8244 |
+| `bank1` | 23 indirect jump | `0x424A`, then `0x8A04` and more | 253 of 12258 | 252 | 135 of 7889 |
+
+> **Correction, 2026-10-05 (issue #1078): both rows moved and the lead-in moved
+> with them; the versions they replace are left above rather than edited away.**
+> The lead-in read "Ten entry points across the two closures stop at a bound",
+> `bank0` read "1 depth limit, 2 instruction budget" and `bank1` read "18
+> indirect jump". None of the three described the closure the tool prints for
+> the same committed image, and all three now do. The tool's section 7 reads
+> `bank0: 1 depth limit, 5 indirect jump, 2 instruction budget` and
+> `bank1: 23 indirect jump` — **twenty-six distinct entry points across the
+> two closures, against the twenty-one the same tool printed before this
+> change.** Twenty-six rather than thirty-one because the five common-area stops
+> are the same entry points in both rows.
+>
+> **What moved it is the common area.** Following a `callee < BANK_FLOOR` as a
+> same-bank continuation descends five arms that previously stopped short, and
+> each of the five ends at a `jmp @a+dptr`: `0x424A`, `0x700A`, `0x7151`,
+> `0x7177` and `0x717B`. Every one is below `0x8000`, so every one is a
+> common-area entry point both closures now walk — the same structural fact
+> §8b and §9 are about, and the reason `bank0` has indirect-jump stops here at
+> all. `bank1` reads 23 rather than 18 because its eighteen *banked* stops are
+> unchanged and it gains those same five.
+>
+> **The lead-in was already stale before this change,** which is worth saying
+> rather than quietly repairing: `2557630e` (#1991) moved the `bank1` row from
+> seven to eighteen and left "Ten" alone. It reads twenty-six now because the
+> tool says twenty-six, not because the number was recomputed by hand.
+>
+> **What did not move is the weight this table exists to carry.** Both address
+> columns are unchanged: 849 of 14830 in bank0 and 253 of 12258 in bank1, with
+> 637 and 252 of them reached by no other walk. The stopped population grew and
+> the reached weight did not, which is the distinction the two `bounds`-shaped
+> columns are there to draw.
 
 The first five columns are the tool's own printed section 7; the last is a
 group-by over [`bank-attribution-regions.csv`](bank-attribution-regions.csv),
@@ -445,6 +477,20 @@ the two are not the same measurement.
 > separates anything. A consumer should read the per-run `bounds` cell and §2's
 > `min_paths`/`max_paths` instead. The group-by is kept because it is what the
 > command prints, not because its `bytes` column is informative any more.
+
+> **Correction, 2026-10-05 (issue #1078, found while correcting the table above):
+> the two `holding … bytes` figures in the console block are each bank's whole
+> closure, not the bound runs' bytes.** The command as written sums `bytes` only
+> over the rows whose `bounds` cell is non-empty, and against the committed CSV
+> it prints `holding 854 bytes` for bank0 and `holding 282 bytes` for bank1; the
+> figures below read 14830 and 12258, which are `bank0`'s and `bank1`'s entire
+> closures. The two wrong versions are left in place. The `runs` figures on the
+> same two lines are correct and are what the table's last column carries, so
+> only the byte counts are at issue. The paragraph above reasons from that byte
+> count, so it is reasoning from a figure this command does not produce — which
+> is worth a reader's own judgement rather than a rewrite of another issue's
+> correction here. Nothing about the closure moves: this is a group-by over a
+> committed CSV and re-runs in a second.
 
 ```console
 $ python3 -c '
@@ -861,10 +907,15 @@ three rows apart (7, 415 and 429 in bank0): the banked figures are all `+0`, so
 a row that had reused the closure above it would print identical zeros under a
 second label and nothing would catch it.
 
-**That zero is the answer to "seeds or bounds", and it is neither.** The route
-out of the common area is the one the linker writes a cross-bank route in —
-`mov dptr,#imm16 ; ljmp <stub>`, as at common `0x1150`, which is
-`90 bf 1c 02 11 00`. `descend()` records the immediate in `arm.code_immediates`
+**That zero is the answer to "seeds or bounds", and it is neither.** Both arms
+are measured rather than one of them argued: the seeds rows above add entry
+points and no banked address, and the tool's `bounds_delta()` re-walks both
+closures at `BOUNDS_FACTOR` times `MAX_DEPTH` and `MAX_INSNS`, where every
+ceiling that fired stops firing and the address set and the four verdicts stay
+where they were. The route out of the common area is the one the linker writes
+a cross-bank route in — `mov dptr,#imm16 ; ljmp <stub>`, as at common `0x1150`,
+which is `90 bf 1c 02 11 00`. `descend()` records the immediate in
+`arm.code_immediates`
 and never in `arm.callees`, so a worklist keyed on callees cannot see the edge;
 and the stub it lands on ends in `ret` at `0x1113`, so nothing branches onward
 to the DPTR's value either. Two independent reasons the same edge is invisible.
@@ -926,12 +977,13 @@ separate decision, deliberately not taken here.
   both committed CSVs regenerate byte-identically. **What it produced:** an
   answer to this bullet's own question, and it is neither of the two it
   offered. Not seeds — they are seeds now, and adding them changed nothing. Not
-  bounds — the `bounds` column reports the walks that stopped, and the verdicts
-  do not move when those walks are given more room to stop. The residue is the
-  closure's **edge vocabulary**: the common area routes into banked code through
-  a `mov dptr,#imm16 ; ljmp <stub>` pair, `descend()` records the immediate in
-  `code_immediates` and never in `callees`, and the stub ends in `ret`, so a
-  callee-keyed worklist cannot see the edge at all. That edge costs nothing on
+  bounds — both closures re-walked at `BOUNDS_FACTOR` times `MAX_DEPTH` and
+  `MAX_INSNS` clear every ceiling that fired and move no banked address and no
+  verdict, so the residue is the closure's **edge vocabulary**: the common area
+  routes into banked code through a `mov dptr,#imm16 ; ljmp <stub>` pair,
+  `descend()` records the immediate in `code_immediates` and never in `callees`,
+  and the stub ends in `ret`, so a callee-keyed worklist cannot see the edge at
+  all. That edge costs nothing on
   this image because the routes it would carry are **already seeds** — 102 of
   the 103 banked DPTR immediates in bank0's `common`-kind arms (107 of 108 in
   bank1's) are named by a trampoline entry — so following the common area

@@ -113,6 +113,46 @@ a pin that had to be relaxed to accept this change was asserting nothing.
 [`ec/tools/test_bank_attribution_common_follow.py`](../../ec/tools/test_bank_attribution_common_follow.py)
 holds the relations.
 
+**The other horn, run rather than argued.** §9's question is a disjunction, so
+the rows above answer half of it. `bounds_delta()` answers the other half by
+re-walking both closures with `MAX_DEPTH` and `MAX_INSNS` multiplied by
+`BOUNDS_FACTOR`, and it prints each bound's own stop count either way — which is
+the figure a reader needs, because the address set and the four verdicts read
+the same whether or not the ceilings were lifted at all, so "nothing moved" is
+what a broken arm looks like too:
+
+```console
+  bank0: 0 banked address(es) gained and 0 lost;
+    the bounds that fired: depth limit 1 -> 0, indirect jump -- target not resolvable from the bytes 5 -> 5, instruction budget 2 -> 0
+  bank1: 0 banked address(es) gained and 0 lost;
+    the bounds that fired: indirect jump -- target not resolvable from the bytes 23 -> 23
+  both banks together: +0 / +0 / +0 / +0 on the four verdicts (agreeing / contradicting / still ambiguous / unreached)
+```
+
+Both ceilings stop firing in bank0, and the attributed address set and all four
+verdicts are unmoved in both banks. bank1 has no ceiling stop to lift, which is
+a fact about that window rather than about the factor.
+
+**What does move is which walk reached a byte first, not which bytes are
+reached.** Lifting the ceiling lets an arm finish and find callees the truncated
+one never reached, and the worklist they enter decides which entry point is
+recorded as the first to reach an address the other walk reached too. 222 bank0
+addresses change path count — every one of them upward — with the entry-point
+set and the address set identical either way. That is a fact about the walk
+rather than the closure, and it is why the arm compares the address set and the
+verdicts rather than the path counts.
+
+What survives at the raised ceiling is the indirect jump, and no factor lifts
+it: a `jmp @a+dptr` target is not in the bytes, so a larger budget cannot
+resolve one. That is what makes this a measurement about the budgets rather
+than a second seeds arm wearing a different label.
+
+The factor is a knob this measurement reads and nothing else. `closure()` is
+written and shipped at 1x, both committed CSVs come from it there, and what
+`--self-test` holds is the relation — that lifting the ceiling clears the bounds
+that fired and leaves the address set and the four verdicts alone — rather than
+any figure, because every population here moves with the walk's bounds.
+
 ## Why: nothing above the floor is attributed from below it
 
 `closure()` gates attribution on `pc >= BANK_FLOOR`. A common-area arm can only
@@ -214,10 +254,10 @@ whole rather than on an example this image does not contain.
 ## The answer to §9, and what it costs to act on
 
 §9 asked whether what is left is *seeds* or *bounds*. The reset vectors were
-the seeds candidate and they are now seeds; the `bounds` column in the regions
-CSV already reports the walks that stopped, and the four verdicts above do not
-move when those walks are given more room to stop. So the residue is neither. It
-is the closure's edge vocabulary, and this is the edge.
+the seeds candidate and they are now seeds, and the bounds arm above re-walks
+both closures under a raised ceiling: every ceiling that fired stops firing and
+no banked address and none of the four verdicts move. So the residue is neither.
+It is the closure's edge vocabulary, and this is the edge.
 
 What the correction above adds to that answer is *why* the vocabulary gap costs
 nothing here, which is the part a reader deciding on the follow-up needs: the

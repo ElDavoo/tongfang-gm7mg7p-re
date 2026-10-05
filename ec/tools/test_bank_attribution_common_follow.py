@@ -17,6 +17,12 @@ elsewhere in the tree would catch:
     per-address path counts are all unchanged by both changes. That is the
     measured negative the finding rests on, so it is asserted as an identity
     against a second closure rather than as a recorded number.
+  * The bounds arm, which is the other half of the same disjunction. §9 asks
+    whether what is left is *seeds* or *bounds*, and an earlier version of this
+    change asserted "not bounds" in the tool's report and in two write-ups
+    with nothing in the tree computing it -- a measured negative on one horn
+    and an unmeasured assertion on the other. Re-walking both closures at a
+    raised ceiling is what makes the answer two-armed.
   * That the DPTR-immediate census the write-up quotes is a count of how often
     the idiom appears, **not** a count of routes nothing follows -- the
     trampoline census already names nearly all of them, and the one it does not
@@ -299,6 +305,125 @@ class TheDeltaIsZero(unittest.TestCase):
                          f"{len(moved)} pair(s) changed verdict")
 
 
+class TheBoundsArm(unittest.TestCase):
+    """§9's second horn, measured rather than argued: the same two closures
+    under a raised ceiling.
+
+    "Is the residue seeds or bounds" is a disjunction, so both arms have to be
+    run rather than one of them argued. `TheDeltaIsZero` is the seeds arm; this
+    is the bounds one, and it is here because an earlier version of this change
+    put "not bounds" in the tool's own report and in two write-ups with nothing
+    in the tree computing it -- which left a reader with a measured negative on
+    one horn and an unmeasured assertion on the other and no way to tell which
+    was which.
+
+    The factor is read from `ba.BOUNDS_FACTOR` rather than restated, and
+    nothing here holds a population as a figure: every one of them moves with
+    the walk's bounds, and what is held is the relation between the two walks.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        (cls.d, _seeds, _handlers, cls.seeded, cls.shipped,
+         _without) = both()
+        cls.raised = {
+            b: ba.closure(cls.d, b, cls.seeded[b],
+                          max_depth=ba.MAX_DEPTH * ba.BOUNDS_FACTOR,
+                          max_insns=ba.MAX_INSNS * ba.BOUNDS_FACTOR)
+            for b in (0, 1)}
+        rows, _s, _t = survey(cls.d)
+        cls.rows = rows
+        cls.arms = ba.bounds_delta(cls.d, cls.shipped, rows, cls.seeded)
+
+    def test_the_arm_reports_each_bounds_stops_either_way(self):
+        """The stop count is reported for both budgets, not only the raised
+        one. Without that, "nothing moved" is what a broken arm looks like as
+        well as what a lifted one looks like, so the figure cannot be read."""
+        ceilings = {ba.END_DEPTH, ba.END_BUDGET}
+        for bank in (0, 1):
+            for why, pair in self.arms["banks"][bank]["stops"].items():
+                with self.subTest(bank=bank, bound=why):
+                    was, now = pair
+                    self.assertIsInstance(was, set)
+                    self.assertIsInstance(now, set)
+        # The arm has to have something to show: a ceiling that fired at 1x.
+        # Which bank, and how many, moves with the walk -- that at least one
+        # did is the relation.
+        self.assertTrue(
+            any(pair[0] for bank in (0, 1) for why, pair
+                in self.arms["banks"][bank]["stops"].items()
+                if why in ceilings),
+            "no ceiling fired at 1x, so BOUNDS_FACTOR is under the threshold "
+            "the arm needs and it re-walked the same closure")
+
+    def test_every_ceiling_that_fired_clears(self):
+        """A factor lifts `MAX_DEPTH` and `MAX_INSNS` and nothing else, so the
+        relation is between the two reasons those constants control and every
+        other stop reason: the ceilings that fired stop firing, and the rest
+        land on exactly the same entry points."""
+        ceilings = {ba.END_DEPTH, ba.END_BUDGET}
+        for bank in (0, 1):
+            stops = self.arms["banks"][bank]["stops"]
+            for why, (was, now) in sorted(stops.items()):
+                with self.subTest(bank=bank, bound=why):
+                    if why in ceilings:
+                        self.assertFalse(now, f"{why} still stops {len(now)} "
+                                              f"entry point(s) at the raised "
+                                              f"ceiling")
+                    else:
+                        self.assertEqual(now, was,
+                                         f"{why} moved under a budget that "
+                                         f"cannot resolve it")
+
+    def test_the_lifted_walk_attributes_the_same_addresses(self):
+        """The result the arm exists to produce, checked against closures this
+        suite walks itself rather than against `bounds_delta`'s own account of
+        them -- a function that returned two empty sets would satisfy the
+        check above and this one."""
+        for bank in (0, 1):
+            with self.subTest(bank=f"bank{bank}"):
+                self.assertEqual(set(self.raised[bank][0]),
+                                 set(self.shipped[bank][0]))
+                arm = self.arms["banks"][bank]
+                self.assertEqual(arm["added"], set())
+                self.assertEqual(arm["lost"], set())
+
+    def test_none_of_the_four_verdicts_moves(self):
+        for label, pick in (("all bucket-B", lambda ps: ps),
+                            ("both-banks-live", ba.both_live)):
+            with self.subTest(label=label):
+                before = ba.tally(pick(ba.pair_rows(self.rows, self.shipped)))
+                after = ba.tally(pick(ba.pair_rows(self.rows, self.raised)))
+                self.assertEqual([after[v] for v in ba.VERDICTS],
+                                 [before[v] for v in ba.VERDICTS])
+        self.assertEqual(self.arms["verdicts"],
+                         {v: 0 for v in ba.VERDICTS})
+
+    def test_what_moves_is_which_walk_arrived_first_not_the_content(self):
+        """The nuance the report has to carry. A walk that no longer stops
+        finds callees the truncated one never reached, which reorders the
+        worklist, so an address can be reached by more paths than before
+        without being reached by a path that was missing.
+
+        Asserted as a relation and not as a figure: whether anything moved at
+        all is a property of this image and its bounds, but *if* the walk
+        differs then it differs only inside the closure -- same entry points,
+        same addresses -- which is what licenses comparing the address set and
+        the verdicts and calling the result a measurement.
+        """
+        moved = {b for b in (0, 1) if self.arms["banks"][b]["paths"]}
+        for bank in (0, 1):
+            with self.subTest(bank=f"bank{bank}"):
+                self.assertEqual(set(self.raised[bank][2]),
+                                 set(self.shipped[bank][2]))
+                if bank in moved:
+                    self.assertNotEqual(self.raised[bank][0],
+                                        self.shipped[bank][0],
+                                        "the path counts are identical, so "
+                                        "this suite is not seeing the "
+                                        "reordering the arm reports")
+
+
 class TheMissingEdge(unittest.TestCase):
     """Why the delta is zero: the common area's route out is a DPTR immediate,
     which is not an edge a callee-keyed worklist has."""
@@ -552,6 +677,43 @@ class TheReport(unittest.TestCase):
 
     def test_it_answers_seeds_or_bounds_with_neither(self):
         self.assertIn('the answer to "seeds or bounds" is neither', self.flat)
+
+    def test_it_prints_the_bounds_arm_beside_the_seeds_rows(self):
+        """Both halves of the disjunction §9 asks are computed and printed in
+        the same section. Without the second, "neither" is half a measurement."""
+        self.assertIn("And the second arm of \"seeds or bounds\", measured "
+                      "rather than argued", self.flat)
+        self.assertIn("Each bound's own stop count either way", self.flat)
+        self.assertIn(f"multiplied by {ba.BOUNDS_FACTOR}", self.flat)
+
+    def test_the_bounds_arm_shows_the_ceilings_clearing(self):
+        """The stop lines, matched against `bounds_delta()`'s own account.
+
+        The point of the arm is that a reader can see the ceilings stop firing
+        rather than infer it from a figure that reads the same either way, so
+        the `before -> after` transition for each bound is what is asserted --
+        against the populations this suite walks, not against a restatement.
+        """
+        d = firmware()
+        _rows, _stubs, tramp = survey(d)
+        seeded = {b: ba.seeds_for(tramp)[b] | ba.vector_handlers(d, tramp)[b]
+                  for b in (0, 1)}
+        shipped = {b: ba.closure(d, b, seeded[b]) for b in (0, 1)}
+        arms = ba.bounds_delta(d, shipped, _rows, seeded)
+        for bank in (0, 1):
+            for why, (was, now) in sorted(arms["banks"][bank]["stops"].items()):
+                with self.subTest(bank=f"bank{bank}", bound=why):
+                    self.assertIn(f"{why} {len(was)} -> {len(now)}", self.flat)
+
+    def test_the_bounds_arm_says_what_moved_and_what_did_not(self):
+        """The path counts are the honest wrinkle: lifting the ceilings changes
+        which walk reached a byte first, not which bytes are reached. Printed
+        so a reader shown "nothing moved" does not conclude the two walks are
+        the same one."""
+        self.assertIn("What does move is which walk reached a byte first, not "
+                      "which bytes are reached", self.flat)
+        self.assertIn("Every ceiling cleared and the indirect jump did not",
+                      self.flat)
 
     def test_the_negative_is_calibrated(self):
         """CLAUDE.md's rule, and the one a negative result erodes first: the
