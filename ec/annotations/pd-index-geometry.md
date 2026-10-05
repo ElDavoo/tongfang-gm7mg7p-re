@@ -710,6 +710,7 @@ cover, so the row carries both the resolved term and the unmodelled note.
 PD runtime 0xC2FA  (file 0x2C2FA)  MOV DPTR base 0x07D0
   frame 24/24  A=A B=B  -> -
   DPTR ← 0x08F8 + R7×0x5E [chain ends at `jnz  0xc317` at 0xC30D]
+  [listing ends at 16-instruction window ended]
     0xc2fa  9007d0   mov  dptr,#0x07d0
     0xc2fd  ef       mov  a,r7
     0xc2fe  f0       movx @dptr,a
@@ -749,6 +750,7 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0xc2fa; pd 9' /tmp/pd.bin
 PD runtime 0xDA9B  (file 0x2DA9B)  MOV DPTR base 0x07D0
   frame 24/24  A=R5 B=B  -> 0x5950
   DPTR ← 0x0870 + low(R7×0x77) [chain ends at `mov  r7,a` at 0xDAA8]
+  [listing ends at 16-instruction window ended]
     0xda9b  9007d0   mov  dptr,#0x07d0
     0xda9e  ef       mov  a,r7
     0xda9f  f0       movx @dptr,a

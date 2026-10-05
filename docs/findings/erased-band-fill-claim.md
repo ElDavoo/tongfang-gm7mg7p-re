@@ -162,6 +162,33 @@ and does not move with the fill, which
 [`pd-sites-address-range.md`](pd-sites-address-range.md)'s correction 1 now
 records as a correction to the natural reading of it.
 
+### Correction (2026-10-05, issue #1014): nothing in `pd_index_geometry.py` rests on this premise any more
+
+**The assertion named in the two sections above has been deleted, along with
+the floor it existed to hold.** `site_rows()`'s listing loop is now bounded at
+`pd_bounds()`'s region end, so `--sites 0xFFFF` stops at `0x2FFFF` and its stop
+names `0x30000`. The last read comes from the region's extent and no longer
+from the bytes past it, and a check whose stated claim backs nothing is the
+failure the refusals in this corpus are written against. The section above is
+kept as the record of what the premise was and why it was worth asserting
+while something depended on it.
+
+**Where the premise is asserted now: `python3 ec/tools/check_image_map.py
+ec/firmware/GMxMGxx_11.800`**, which is the command this document has always
+named for the measurement. It puts `d[0x30000:0x40000]` to the `all 0xFF` test
+the row itself names, prints the band's size, distinct byte values and `0x90`
+count, and exits non-zero on a band whose bytes do not satisfy the claim.
+`check_image_map.py --self-test` holds the predicate and the `CHECKED`
+vocabulary it selects through, so the measurement has the same negative control
+it had when the assertion lived in the other tool. Nothing was lost by the move:
+the band is a claim about the image map, and this is the tool that owns it.
+
+Measured, so the deletion is a relocation and not a loss: splicing `0x00`,
+`0x74` or `0x90` into `0x30000` of a copy of the committed image moves
+`check_image_map.py`'s verdict from ok to a refusal naming the offset, while
+`pd_index_geometry.py --self-test` stays green — the listing stops at the region
+end in every case. See [`site-rows-window-bound.md`](site-rows-window-bound.md).
+
 ## The self-test, and why no suite was added
 
 **No `test_*.py` suite, no `tools/README.md` row, and the runner's tally is
@@ -233,8 +260,13 @@ python3 ec/tools/check_image_map.py ec/firmware/GMxMGxx_11.800
 # the fixtures, including the negative control; reads no firmware
 python3 ec/tools/check_image_map.py --self-test
 
-# the premise behind the 0x3000E floor is now asserted, and holds
-python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --self-test
+# the premise itself, asserted and holding. Since issue #1014 this is the
+# first command above rather than a check inside pd_index_geometry.py; nothing
+# in that tool rests on the fill any more.
+python3 ec/tools/check_image_map.py ec/firmware/GMxMGxx_11.800
+
+# the --sites listing, bounded at the region end rather than at its window
+python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --sites 0xFFFF
 
 # the comment-only edit changed no behaviour
 python3 ec/tools/check_register_counts.py ec/firmware/GMxMGxx_11.800
