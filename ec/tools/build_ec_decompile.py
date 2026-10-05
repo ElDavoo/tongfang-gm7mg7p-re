@@ -76,6 +76,16 @@ import second_copy_census
 # imports nothing from here, so the four stay independently runnable.
 import c_header_provenance
 
+# The `(program, addr)` derivation behind the index's `seed_basis` column, and
+# the check that every committed row records its own program's row. Imported
+# rather than inlined for the reason the four above are: the exporter is what
+# writes the column, so the thing that decides what the column should say is one
+# implementation, not a reading of it in two places. One-way for the same
+# reason -- it imports nothing from here -- so the five stay independently
+# runnable and this module's `--check` and the projection's own CLI cannot
+# disagree about the derivation.
+import seed_basis_projection
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # The shared Ghidra layer's project-owner helper. Imported rather than restated
@@ -4894,6 +4904,24 @@ def check(work):
              "index row names" % (len(_pres) - 5))
     print("  presence: %d index row(s) paired to the function their .c declares, "
           "across %d distinct file(s)" % (_c_rows, _c_read))
+    # `seed_basis` names how the entry point was found, so it is a reading of the
+    # seed set and it is per PROGRAM: the common area is seeded into both bank
+    # programs on purpose, and the two banks can disagree about one address. The
+    # exporter's readBasis() used to key on the address alone, which made the
+    # column a function of the CSV's row order; seed_basis_projection holds the
+    # derivation and both indexes' mismatches, and the exposure is printed either
+    # way so a green run still shows which addresses a collision could reach.
+    # Asserted immediately above the header check because that check consumes
+    # this column -- it is what decides which .c carry the boundary caveat.
+    _sbp_basis, _sbp_dupes, _sbp = seed_basis_projection.committed_basis(
+        index_rows=rows, listing_rows=listing_rows,
+        census=_read["bank-call-targets.csv"])
+    for problem in _sbp[:5]:
+        fail(problem)
+    if len(_sbp) > 5:
+        fail("... and %d more seed-basis disagreement(s)" % (len(_sbp) - 5))
+    print("  seed basis: %s"
+          % seed_basis_projection.exposure_line(_sbp_basis, _sbp))
     # `_cdig`, not `_cd`: the cross-decoder report below binds that name, and
     # one function's two unrelated locals should not share a spelling.
     _cdig = verify_c_digests()
