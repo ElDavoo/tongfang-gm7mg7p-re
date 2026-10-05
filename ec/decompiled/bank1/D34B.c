@@ -8,7 +8,20 @@
    has, it clears 0x0349, increments the 16-bit big-endian counter at 0x0343 (high byte) and 0x0344
    (low byte) using the carry out of the high byte into the low, and writes those two result bytes
    to 0x0528/0x0529 and to 0x04A6/0x04A7. registers.yaml documents 0x04A6/0x04A7 as BAT_CYCLE_COUNT,
-   so this is where that pair is stepped.
+   so this is where that pair is stepped. *** CORRECTION 2026-10-04 (issue #1202) *** An earlier
+   version of this row called the counter big-endian, with 0x0343 the high byte and the carry
+   running out of the high byte into the low. That is backwards, and the wrong wording is left
+   standing above because the reason is the finding. The carry runs out of 0x0343 and INTO 0x0344,
+   which makes 0x0343 the LOW byte. D358 loads DPTR with 0x0343, D35D adds one to it, D35F skips the
+   R1 load when there was no carry and D361 sets R1 to 1 when there was, and D363 stores the
+   incremented byte back to 0x0343; only after that does D36C read 0x0344 and D371 add the carry
+   into it. The A holding the 0x0343 result is what D367 and D36B store, to 0x0528 and to 0x04A6, so
+   0x04A6 is the LOW half of the published pair and 0x0528 the low half of that one, with
+   0x0344/0x0529/0x04A7 the high halves. ec/annotations/pd-xdata-overlap.md already read it this
+   way, so the tree carried both readings until now. The correction is load-bearing: read
+   little-endian, the committed capture's 0xBD 0x01 at 0x04A6/0x04A7 is the 445 registers.yaml
+   already records, where this row's big-endian reading gives 48385, which is not a cycle count.
+   docs/findings/battery-page-first-decoding.md carries the arithmetic.
    type: writer
    evidence: ec/decompiled/bank1/D34B.asm; ec/decompiled/bank1/D34B.c; ec/annotations/registers.yaml
    basis: hand-decoded

@@ -59,6 +59,22 @@ verified by running it against buffers of five different lengths rather than
 argued (the console block under `## Reproducing it`). The margin between the two
 numbers is `0x2004A - 0x17FFF` = **32843 bytes**.
 
+> **Correction (issue #857), left beside the paragraph above rather than in
+> place of it.** The floor is a property of **that refusal**, not of
+> `PD_MARKER`. The marker is a `(offset, bytes)` pair in
+> `trace_xdata_refs.py` and cannot refuse anything on its own; what
+> `d[0x20040:0x2004A] == b"ITE8850-PD"` certifies is a floor of `0x2004A`
+> bytes **for `audit_call_targets.py`**, whose `main()` is a `return 1` on a
+> failed comparison. It is a statement about this module's call sites and about
+> no other module's. The modules that read the same marker and *continue*
+> rather than refuse establish no floor at all, and a truncated image is walked
+> as far as the code walks it.
+> [`pd-marker-caller-contracts.md`](pd-marker-caller-contracts.md) is the
+> census of which contract each of them implements, and §3 of that file records
+> one of them reaching an `ABSENT` verdict on a found site for want of this
+> floor. Nothing above needs changing: the argument is about
+> `audit_call_targets.py`'s `main()` and was never about the marker.
+
 And it is on every path that can reach the read: `relative_sites` and
 `relative_survey` are imported by nothing outside this file
 (`grep -rn 'relative_sites\|relative_survey' --include=*.py .` returns only

@@ -95,7 +95,7 @@ def sites_in_data_regions(sites, regions) -> int:
     return sum(1 for s in sites if region_at(regions, s) is not None)
 
 
-def main() -> None:
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("firmware", help="raw EC firmware image (e.g. ec/firmware/GMxMGxx_11.800)")
     ap.add_argument("addrs", nargs="*", help="hex addresses, e.g. 0x07A6")
@@ -106,14 +106,24 @@ def main() -> None:
     data = open(args.firmware, "rb").read()
     off, magic = PD_MARKER
     pd_verified = data[off:off + len(magic)] == magic
+    if not pd_verified:
+        # stderr, so `--all-0700` redirected to a file stays a parseable table,
+        # and a non-zero exit rather than a count. Without the marker
+        # `region_of()` has relabelled the whole 0x20000 band `unknown`, so
+        # every site in it lands in neither `ec=` nor `pd=` while the file-wide
+        # `refs=` still stands -- and the verdict below then reaches `ABSENT`
+        # on an address this scan *found* seven sites for. The count was right
+        # and the sentence after it was not, which is the docs/findings.md 4
+        # retraction reached by a different route. `check_pd_marker_contract.py`
+        # is the census of which contract each tool here implements.
+        print(f"note: no {magic.decode()!r} marker at file 0x{off:05X} -- the "
+              "0x20000-0x2FFFF region is unidentified, so its sites are "
+              "counted in neither ec= nor pd=\n", file=sys.stderr)
+        return 1
     hits = scan(data, pd_verified)
     regions = load_data_regions()
 
     print(CAVEAT)
-    if not pd_verified:
-        print(f"note: no {magic.decode()!r} marker at file 0x{off:05X} -- sites in "
-              "0x20000-0x2FFFF belong to an unidentified region and are counted\n"
-              "in neither ec= nor pd=\n")
 
     if args.all_0700:
         for a in range(0x0700, 0x0800):
@@ -122,7 +132,7 @@ def main() -> None:
                 labelled = sites_in_data_regions(sites, regions)
                 print(f"0x{a:04X} : {total:>4} refs   ec={ec:<4} pd={pd}"
                       f"   in_data_region={labelled}")
-        return
+        return 0
 
     targets = []
     for a in args.addrs:
@@ -151,6 +161,7 @@ def main() -> None:
         labelled = sites_in_data_regions(sites, regions)
         print(f"0x{a:04X}  refs={total:<5} ec={ec:<5} pd={pd:<5} {verdict}"
               f"   in_data_region={labelled}   {label}")
+    return 0
 
 
 if __name__ == "__main__":
