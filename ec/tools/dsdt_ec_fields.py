@@ -1044,17 +1044,31 @@ def report(fields: dict, rows: list) -> None:
 #            DBST bit 5)`, whose own note cites the field list at
 #            dsdt.dsl:52238-52242 and records the correction of an earlier
 #            bit-0 reading of the same list.
-#   0x07C5: windows/tools/gpu_block_watch.py's row
-#            `(0x07C5, "WHMS b5", NO_ROW, "dsdt.dsl:52243")` -- the tool the
-#            Windows-side capture watches through, pinning the same byte and
-#            bit from the other end of the stack.
+#   0x07C5: two readings from outside the DSDT, both in committed files this
+#            tool never reads. The service's
+#            GpuFeatures.SetGpuWhisperModeMainSwitch masks the byte 0x9F and
+#            adds 0x60 or 0x40, putting the whisper-mode main switch at bit 5;
+#            and the EC's own `anl a,#0xdf` at 0xAD8C and 0xCC6B clear that
+#            bit position. See docs/findings/07c5-whms-bit5-vs-bit4.md.
 #
-# Two sources, two stacks, one bit index. If the arithmetic in parse_body()
-# moved, both go red.
+# The field list this tool parses is where the bit *index* comes from and is
+# not itself a second reading of it; what makes a row an oracle is the `why`
+# column naming a corroboration from somewhere else, which is why 0x07C5's
+# above is the service and the firmware rather than the ASL the index came
+# from.
+#
+# 0x07C5's `why` used to name `windows/tools/gpu_block_watch.py`, on the claim
+# that the two "agree from opposite ends of the stack". They did not agree, and
+# could not have: the watch table's status column is held against
+# registers.yaml by CitationTableTests.test_every_registers_yaml_status_is_verbatim
+# in windows/tools/test_gpu_block_watch.py, so the cell cited as the other end
+# of the stack was a copy of the file this tool's index came from. Issue #1260
+# retracted that sentence in the note and re-anchored the row here.
 ORACLES = [
     (0x07C4, 3, 1, "DBEN", "registers.yaml: GPU_DYNAMIC_BOOST_STATUS"),
     (0x07C4, 5, 1, "DBST", "registers.yaml: GPU_DYNAMIC_BOOST_STATUS"),
-    (0x07C5, 5, 1, "WHMS", "windows/tools/gpu_block_watch.py: (0x07C5, WHMS b5)"),
+    (0x07C5, 5, 1, "WHMS",
+     "SetGpuWhisperModeMainSwitch's 0x9F mask; EC 0xAD8C/0xCC6B anl a,#0xdf"),
 ]
 
 # The addresses ECMG names that registers.yaml holds under a name it reached

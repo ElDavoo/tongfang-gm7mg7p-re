@@ -6532,10 +6532,22 @@ registers:
     note: >
       From the DSDT ECMG field sweep (issue #30; see
       ec/annotations/dsdt-ecmg-field-sweep.md). Offset (0x7C5), five unnamed
-      bits, then WHMS, one bit (dsdt.dsl:52243-52245), so bit 5. That bit is
-      independently pinned by windows/tools/gpu_block_watch.py, which watches
-      this byte for exactly this field ("WHMS b5", citing dsdt.dsl:52243 and
-      this row), and the two agree from opposite ends of the stack.
+      bits, then WHMS, one bit (dsdt.dsl:52243-52245), so bit 5.
+      RETRACTED 2026-10-05 (issue #1260), the wrong version left visible: this
+      note read "That bit is independently pinned by
+      windows/tools/gpu_block_watch.py, which watches this byte for exactly
+      this field ("WHMS b5", citing dsdt.dsl:52243 and this row), and the two
+      agree from opposite ends of the stack." That was false, and could not
+      have been otherwise -- the watch table's status column is held against
+      this file by CitationTableTests.test_every_registers_yaml_status_is_verbatim
+      in windows/tools/test_gpu_block_watch.py, so the oracle called
+      independent is a copy of the file it was there to corroborate.
+      Independent instead: the field list above, and the service's own mask
+      arithmetic -- GpuFeatures.SetGpuWhisperModeMainSwitch masks 0x9F and adds
+      0x60 (bits 5 and 6) or 0x40 (bit 6 only), which puts the whisper-mode
+      main switch at bit 5 from the other end of the stack.
+      docs/findings/07c5-whms-bit5-vs-bit4.md has the arithmetic, the branch
+      association and the retraction in full.
       The 10 are direct MOV DPTR,#0x07C5 sites in the main EC, recounted by
       ec/tools/check_register_counts.py; the count is per byte and does not
       separate bit 5 from the five below it. A name is not a function and a
