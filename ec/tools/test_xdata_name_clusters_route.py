@@ -3,8 +3,8 @@
 
 `xdata_register_map.py`'s `name_clusters()` is what fills `cluster_name` into
 the generated rows, and no suite ran it: both of its callers inside the tool
-pass `load_cluster_names()` as the seed, and the three nearest suites each cover
-a different half. `TheCarry` exercises
+pass `load_cluster_names()` as the seed, and the nearest suites each cover a
+different half. `TheCarry` exercises
 `carry_names()` on hand-built fixtures, so the `seeded` *precedence* is held but
 only against a key the fixture chose. `TheNamesFile` reads the names file and
 the census as two files and never runs the function that joins them.
@@ -154,10 +154,9 @@ def overlap_records(report, filled, seeded, off_keys):
     **Derived, and that is the whole case.** The population is "the names file
     anchors a key the regeneration no longer has", so nothing here names an id,
     a key or a score: a typed pair goes stale silently, and one did -- the
-    `mode-oem-init` key now reads `kefb63d82f8c7`, the third it has carried and
-    the second re-key, each move recorded on the row itself for a re-derivation
-    that moved the membership, so a case comparing an older pair would have gone
-    on passing. The property is that such a name still arrives, by membership
+    `mode-oem-init` row has been re-keyed, each time by a re-derivation that
+    moved the membership, so a case comparing an older pair would have gone on
+    passing. The property is that such a name still arrives, by membership
     rather than by key, on a row that carries it. A content hash alone hands each
     of these a brand-new identity and loses the name; only the overlap carry
     brings it along.

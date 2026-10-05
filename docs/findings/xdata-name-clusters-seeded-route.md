@@ -24,7 +24,7 @@ inputs and this change touches neither: `--no-eq-guard` is refused against the
 committed output paths, so every run in the new suite writes to a scratch
 directory.
 
-## The gap, and why the three nearest suites did not close it
+## The gap, and why the nearest suites did not close it
 
 | suite | what it holds | what it does not reach |
 |---|---|---|
@@ -47,39 +47,14 @@ coverage, not error.
 `carry_names()` reaches the same names two ways. A key the names file anchors
 is `seeded`; the same key found in a named row of the committed census is
 `exact`. `generate()` and `--self-test()` both pass `load_cluster_names()`, so
-`seeded` is what a real run reports. Run over the same pair:
-
-```console
-$ python3 - <<'PY'
-import collections, csv, importlib.util, os, subprocess, sys, tempfile
-spec = importlib.util.spec_from_file_location(
-    "xrm", "ec/tools/xdata_register_map.py")
-xrm = importlib.util.module_from_spec(spec); spec.loader.exec_module(xrm)
-tmp = tempfile.mkdtemp(); oc = os.path.join(tmp, "c.csv")
-subprocess.run([sys.executable, "ec/tools/xdata_register_map.py",
-                "--no-eq-guard", "--out-clusters", oc,
-                "--out-registers", os.path.join(tmp, "r.csv")], check=True)
-rows = lambda p: list(csv.DictReader(open(p, newline="")))
-committed, off = rows("ec/annotations/xdata-clusters.csv"), rows(oc)
-for what, seed in (("withheld", {}), ("seeded", xrm.load_cluster_names())):
-    fresh = [dict(r) for r in off]
-    report, cov = xrm.name_clusters(fresh, committed, seed)
-    print(what, dict(collections.Counter(r["how"] for r in report)),
-          "coverage records:", len(cov))
-    for r in report:
-        if r["how"] == "overlap":
-            print("   overlap:", r["name"], r["cluster_id"], r["from_key"],
-                  "->", r["cluster_key"], f"{r['jaccard']:.4f}")
-PY
-withheld {'none': 436, 'exact': 8, 'overlap': 1} coverage records: 0
-   overlap: mode-oem-init main-ec-0456 kefb63d82f8c7 -> kc0f2a0be0103 0.9681
-seeded {'none': 436, 'seeded': 8, 'overlap': 1} coverage records: 9
-   overlap: mode-oem-init main-ec-0456 kefb63d82f8c7 -> kc0f2a0be0103 0.9681
-```
+`seeded` is what a real run reports. Both routes run over the committed census
+and a guard-off regeneration in `test_xdata_name_clusters_route.py`, and the
+properties below are what it asserts — none of them a tally, so a re-derivation
+moves the assertion rather than reddening it.
 
 **The coverage half exists only on the seeded route, and that is not incidental.**
 `coverage()` returns one record per row of the **names file**, so a run seeded
-with `{}` returns none at all — the withheld route's nine names are carried into
+with `{}` returns none at all — the withheld route's names are carried into
 rows of the CSV, and no record accounts for any of them as a *name*. That is
 `xdata_name_coverage.py`'s reason for existing in one line, and it is also why
 the coverage case below could not be written against the withheld route at all.
@@ -103,11 +78,10 @@ in the census — and fails here.
 the coverage record for it carries that Jaccard rather than the `None` a
 genuinely unfindable key would. Its exhibit is derived — the names-file keys
 absent from the regeneration, each of which must arrive — so no id, key or
-score is typed anywhere. `mode-oem-init`'s key now reads
-`kefb63d82f8c7`, the third it has carried and the second re-key, and the row's
-own note records each move for a re-derivation that changed the membership; a
-typed pair would have gone stale silently, and #279's pair-accessor pass is what
-that happened to last.
+score is typed anywhere. A typed pair goes stale silently, and this one did —
+the `mode-oem-init` row has been re-keyed, each time by a re-derivation that
+changed the membership, so a case naming a pair would have gone on passing after
+it moved. #279's pair-accessor pass is what that happened to last.
 
 ## A correction to the issue's proposal
 
@@ -167,8 +141,7 @@ assertable while both exist, and is what
 - **No figure of the census is held.** Nothing in the new suite asserts a row
   count, a name count or a `how`-tally figure; every claim is a set relation or
   a per-record property, so a re-derivation moves the assertion rather than
-  reddening it. The figures above are what this tree gave, beside the command
-  that produced them.
+  reddening it.
 - **`test_xdata_cluster_names.py` is untouched.** A new suite file rather than a
   case appended to it: that file carries prose pins into its line numbers, and
   its own `TheNamesShape` docstring records that any line added above an
@@ -185,5 +158,5 @@ assertable while both exist, and is what
   `xdata-clusters.csv` and `xdata-registers.csv` are inputs, and
   `xdata_register_map.py --check` still exits 0.
 - **A static comparison over committed text is not a live observation.** Every
-  claim above is reproducible from the committed CSVs by the command shown, and
+  claim above is reproducible from the committed CSVs by the new suite, and
   none of it says anything about how the EC behaves.
