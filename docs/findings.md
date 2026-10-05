@@ -1483,7 +1483,11 @@ Ctrl-C, are pinned by `windows/tools/test_charge_target_test.py` against a fake
 `powershell` is spawned. Those are the branches no committed artifact
 exercises, because all three live runs below took the write path. The suite is
 coverage of the tool's control flow, and adds nothing to what this section
-measured on the machine.
+measured on the machine. Hold mode's inner re-assert loop, its per-pass
+write-then-immediate-readback sample and its never-sleep-the-interval arm — the
+mode the `--hold` help recommends and two of the runs below were taken in — are
+pinned the same way by `windows/tools/test_charge_target_hold.py`, including an
+`EcError` and a Ctrl-C raised from inside the inner loop.
 
 **A host write to `0x0522` does not persist, in any state tested.**
 
