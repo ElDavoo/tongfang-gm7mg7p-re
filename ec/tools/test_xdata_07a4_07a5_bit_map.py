@@ -80,14 +80,28 @@ DPTR_07A5 = bytes((0x90, (ADDR_07A5 >> 8) & 0xFF, ADDR_07A5 & 0xFF))
 #
 # `0xDA53` is the one site that writes rather than tests, and it is the only one
 # whose deciding instruction is not adjacent to the site: the `jnb` sits between
-# them, so the two arms are named individually.
+# them, so the two arms are named individually. `0xB889` is the one reader whose
+# two arms do opposite things, so it names them too -- `jnb` jumps when the bit
+# is *clear*, which puts the arm it jumps to on the bit-2-clear side and the
+# fall-through on the bit-2-set side.
 BIT_07A4_SITES = {
-    0xB889: {'bank': 'bank0', 'kind': 'read', 'at': 0xB88D, 'bit': 2},
+    0xB889: {'bank': 'bank0', 'kind': 'read', 'at': 0xB88D, 'bit': 2,
+             'target': 0xB89E, 'set_arm': 0xB898, 'clear_arm': 0xB8A6},
     0xDA53: {'bank': 'bank0', 'kind': 'write', 'arms': {0xDA5A: 0x10,
                                                         0xDA60: 0xEF}},
     0x8FE5: {'bank': 'bank1', 'kind': 'read', 'at': 0x8FE9, 'bit': 0},
     0x9638: {'bank': 'bank1', 'kind': 'read', 'at': 0x963C, 'bit': 0},
 }
+
+# What `0xB889`'s two arms move: bit 1 of `0x09EE`, and the countdown byte the
+# clearing arm reloads. Named once because the map's effect column and the
+# assertions below have to agree on them, and the pair is a set-or-clear on one
+# bit -- `0x02` sets it, `0xfd` is its complement in `0xff` and clears it.
+B889_TARGET_BYTE = 0x09EE
+B889_TARGET_BIT = 1
+B889_COUNTDOWN_BYTE = 0x0897
+B889_SET_MASK = 1 << B889_TARGET_BIT
+B889_CLEAR_MASK = B889_SET_MASK ^ 0xFF
 
 # The five `0x07A5` sites, all in one routine, all on bit 3. Three write it --
 # `orl a,#0x08` above the CPU/GPU temperature thresholds, `anl a,#0xf7` below
@@ -302,6 +316,69 @@ class TestBitMap(BitInstructionMixin, unittest.TestCase):
                          "the arm that sets bit 4 does not store the result")
         self.assertEqual(IMAGES['bank0'][clear_arm + 2], 0xF0,
                          "the arm that clears bit 4 does not store the result")
+
+    def test_b889_arms_set_09ee_bit_1_on_the_bit_2_set_side(self):
+        """The polarity of the one reader whose two arms do opposite things.
+
+        `jnb` jumps when the bit is **clear**, so the address it jumps to is the
+        bit-2-clear arm and the fall-through is bit-2-set. The branch target is
+        recomputed here from the instruction's own displacement rather than
+        trusted from the table, because that is the whole claim: an earlier
+        version of the map named only the bit and its effect cell stated the two
+        arms the other way round, which is the order the decompiled C's
+        `if/else` gives and the one the listing contradicts. Pinning the bit
+        alone left the suite green over an inverted row, so the polarity itself
+        is asserted here -- which arm sets, which clears, and that the countdown
+        reload follows the clearing one.
+        """
+        site = BIT_07A4_SITES[0xB889]
+        image = IMAGES[site['bank']]
+        branch, target = site['at'], site['target']
+
+        # An 8051 relative branch adds its displacement to the address *after*
+        # the three-byte instruction, so the stride has to be the instruction's
+        # own width rather than an assumed one.
+        self.assertEqual(branch + 3 + image[branch + 2], target,
+                         "the jnb at 0xB88D no longer jumps to 0xB89E, so which "
+                         "of its two arms is the bit-2-clear one has changed")
+        self._assert_bit_test(site['bank'], branch, site['bit'], '0xB889')
+
+        # Both arms open by reloading the byte they then modify, which is what
+        # makes the masks below land on 0x09EE rather than on whatever DPTR the
+        # site's own mov left behind.
+        for entry in (branch + 3, target):
+            self.assertEqual(image[entry:entry + 3],
+                             bytes((0x90, B889_TARGET_BYTE >> 8,
+                                    B889_TARGET_BYTE & 0xFF)),
+                             f"the arm entering at 0x{entry:04X} does not load "
+                             f"0x{B889_TARGET_BYTE:04X} into DPTR")
+
+        self._assert_mask(site['bank'], site['set_arm'], ORL, B889_SET_MASK,
+                          "0xB889 fall-through (bit 2 set)")
+        self._assert_mask(site['bank'], site['clear_arm'], ANL, B889_CLEAR_MASK,
+                          "0xB889 taken (bit 2 clear)")
+        for arm, how in ((site['set_arm'], 'setting'),
+                         (site['clear_arm'], 'clearing')):
+            self.assertEqual(image[arm + 2], 0xF0,
+                             f"the {how} arm at 0x{arm:04X} does not store the "
+                             "byte it just masked")
+
+        # The ordering is the polarity: `orl` sits on the fall-through, below the
+        # target; `anl` sits on the taken arm, at or above it.
+        self.assertLess(site['set_arm'], target,
+                        "the orl that sets 0x09EE bit 1 is no longer on the "
+                        "bit-2-set fall-through")
+        self.assertGreaterEqual(site['clear_arm'], target,
+                                "the anl that clears 0x09EE bit 1 is no "
+                                "longer on the bit-2-clear arm")
+
+        # And the effect the map's cell claims for the clearing arm: the reload
+        # of the countdown byte immediately follows its store.
+        self.assertEqual(image[site['clear_arm'] + 3:site['clear_arm'] + 6],
+                         bytes((0x90, B889_COUNTDOWN_BYTE >> 8,
+                                B889_COUNTDOWN_BYTE & 0xFF)),
+                         "the clearing arm no longer reloads the countdown byte "
+                         "immediately after storing 0x09EE")
 
     def test_8851_reads_07a5_even_though_dptr_has_moved_on(self):
         """The `0x07A5` reader whose DPTR no longer names `0x07A5` at the branch.

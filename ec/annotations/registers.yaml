@@ -5604,12 +5604,8 @@ registers:
       when it is not. 0x07A4 has no entry in this file either, so the
       consequence lands on an undocumented byte; recorded as a follow-up
       rather than expanded into here.
-      Correction, issue #636: the follow-up above is now worked, and the row
-      this note said was missing exists -- 0x07A4 is `GC6S` in this file
-      (bit 2, present-untested). Its per-site map is in
-      docs/findings/xdata-07a4-07a5-bit-map.md, which reads bit 4 as written
-      and not consumed by any of the four listings that reach the byte. The
-      sentence above is left as written rather than folded into this one.
+      Correction, issue #636: worked -- 0x07A4 is `GC6S` in this file, mapped in
+      docs/findings/xdata-07a4-07a5-bit-map.md. The sentence above stands.
       The DSDT does not reach this byte, and that is a fact about the ASL
       rather than a scan result: the ECMG field list is dsdt.dsl:52194-52328
       and its highest Offset is 0x0EA0, over 28 offsets from 0x043E, so
@@ -6561,10 +6557,8 @@ registers:
       sites, all in the main EC, recounted by
       ec/tools/check_register_counts.py; a count is not behaviour. The sites
       are mapped one per entry in
-      docs/findings/xdata-07a4-07a5-bit-map.md (issue #636), which re-derives
-      the bit-3 claim above from the listings, names the two reader sites this
-      note does not, and reconciles the two committed reference counts for
-      this address. No hardware was involved.
+      docs/findings/xdata-07a4-07a5-bit-map.md (issue #636), which also names
+      the two reader sites this note does not. No hardware was involved.
 
   - name: WHMS
     addr: 0x07C5
