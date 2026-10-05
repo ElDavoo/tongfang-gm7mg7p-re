@@ -53,7 +53,20 @@ public final class TongFang {
         return m;
     }
 
-    /** Seed basis, `program,addr,basis`, header-only. */
+    /**
+     * Seed basis, `program,addr,basis`, header-only, keyed on BOTH halves of
+     * the row.
+     *
+     * The program is part of the key because an address is not an identity
+     * inside a project. The EC's three programs share one 64 KiB space, so the
+     * PD image's `0x0012` is a different function from the common area's
+     * `0x0012` -- two different bytes, in two different images -- and keying on
+     * the address alone recorded whichever program's row the CSV happened to
+     * write last. That made the index a function of the row order rather than
+     * of the program being exported, which is the same address-space confusion
+     * `join_index()` in build_ec_decompile.py had to be defended against from
+     * the other side.
+     */
     public static Map<String, String> readBasis(String path) throws Exception {
         Map<String, String> m = new HashMap<>();
         if (path == null || path.isEmpty() || "-".equals(path)) {
@@ -68,11 +81,24 @@ public final class TongFang {
                 }
                 String[] f = splitCsvLine(line);
                 if (f.length >= 3) {
-                    m.put(f[1].trim().toUpperCase().replace("0X", ""), f[2].trim());
+                    m.put(basisKey(f[0], f[1]), f[2].trim());
                 }
             }
         }
         return m;
+    }
+
+    /**
+     * The seed-basis map's key: the program and the address together.
+     *
+     * Both spellings of the address normalise to the same string, so this is
+     * idempotent and the write side and the lookup side cannot disagree about
+     * the padding -- which matters on the BIOS, where the CSV carries eight
+     * digits because `Address.toString()` zero-pads to the address space's
+     * width, and `0x4F8` would never match `000004F8`.
+     */
+    public static String basisKey(String program, String addr) {
+        return program.trim() + " " + addrKey(addr);
     }
 
     /** `label.<program name>` when the driver supplied one, else the file stem. */

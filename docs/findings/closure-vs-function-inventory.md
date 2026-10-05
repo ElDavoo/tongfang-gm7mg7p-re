@@ -38,8 +38,12 @@ The third is the one §4 needs, and it is not the one the issue proposed.
 ## The population
 
 `ec/decompiled/index.csv` carries `bank0`, `bank1`, `common` and `pd` rows with
-an `addr`, a `size` and a `seed_basis` each. The seed-basis census on this tree
-is `annotation` 1955, `call-target` 725, `auto` 41 — three values, and **no
+an `addr`, a `size` and a `seed_basis` each. The seed-basis census is not
+restated here: `python3 ec/tools/census_closure_functions.py ec/firmware/GMxMGxx_11.800`
+prints it as the third line of its own report, and it moves every time a seed
+row or an annotation does — `seed-basis-program-key.md` is what moved it last.
+What the census establishes, and what the figures below depend on, is that the
+values in the column are `annotation`, `call-target` and `auto`, with **no
 `vector` rows at all**, which corrects the issue's four-way split.
 
 | reading | bank | reached | inside a row | at a row's entry | outside a row | outside runs |

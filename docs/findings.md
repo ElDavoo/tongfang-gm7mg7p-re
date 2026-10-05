@@ -6490,6 +6490,23 @@ address-space confusion as §12, one row wide. **The fix is to key `readBasis()`
 on `(program, addr)`**, and it is not made here because it would restate the
 basis column across the whole index and wants its own verification.
 
+**Correction (2026-10-05, issue #393), and the paragraph above is half right
+for a reason that has since aged out.** The vector walk still returns no
+`0x12`, but "`seed_rows()` builds no PD seed at that address **at all**" stopped
+being true: `seed_rows()` also seeds from `annotation_seeds()`, and a `pd`-scoped
+row at `0x0012` exists (`ff_filler_not_a_function_0012`), so the PD program is
+seeded there on its own row. `pd 0x0012` therefore records `annotation` both
+before and after the fix, and for the first time for a reason belonging to the
+PD image rather than to the EC. The borrow this paragraph describes was real
+when written; what it was borrowed *from* is no longer the whole of it. The fix
+is made — in both copies of `readBasis()`, since `ExportListing.java` calls
+`TongFang`'s — and the per-address verdicts, the corrected population and the
+`--check` assertion are in
+[`findings/seed-basis-program-key.md`](findings/seed-basis-program-key.md).
+Two things this paragraph did not know: the affected set is not the 55 addresses
+the issue that filed it measured, and no row anywhere in the tree has moved for
+the reason given above.
+
 **The shape census is held to a recount now (2026-09-25, issue #630).** §2's
 shape-census paragraph states 160 `type: unresolved` rows and 279 names over six
 prefixes, and until now it stated them in prose no gate could reach — which is
