@@ -47,7 +47,11 @@ stopped part way through is told from one that finished.
 The `--interval` default is ec_watch.py's 0.25 s and is a starting point, not a
 safe one: `ecrw.Ec.read` is one ECRR DeviceIoControl per byte with nothing
 between calls, this is 24 of them per sweep, and issue #94 is the open work on
-that pacing. If the fans audibly change, stop and raise it.
+that pacing. `ec_watch.py` itself now leaves the fan-tach page out and sleeps
+`--gap-ms` after every read (#94) -- a conservative default borrowed from a
+sibling board, not a figure measured here -- and this tool, like
+`manual_fan_ctrl_probe.py`, is one of the ones still unpaced, which is what
+#94 remains open for. If the fans audibly change, stop and raise it.
 
 Usage:
   gpu_block_watch.py --csv out.csv --mark    # both blocks, until Ctrl-C
@@ -205,9 +209,10 @@ def main(argv=None):
                 first_last[a] = (v, v)
             print(f"{now()}  baseline: {len(addrs)} addresses across "
                   f"{len(WINDOWS)} windows, sweeping every {args.interval}s")
-            print("no interval here is validated (#94): one ECRR per byte "
-                  "with nothing between them. If the fans audibly change, "
-                  "stop and raise it.")
+            print("no interval here is validated, and this tool is still "
+                  "unpaced where ec_watch.py is not (#94): one ECRR per byte "
+                  "with nothing between them, as manual_fan_ctrl_probe.py "
+                  "still is. If the fans audibly change, stop and raise it.")
             if args.mark:
                 print("type a label + Enter to stamp a mark; Ctrl-C to stop")
             else:
