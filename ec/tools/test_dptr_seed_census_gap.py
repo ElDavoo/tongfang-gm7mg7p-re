@@ -59,8 +59,13 @@ FINDING = REPO / "docs" / "findings" / "dptr-seed-census-gap.md"
 # against the committed CSV rather than restated from the write-up.
 SEEDED = ("0x0402", "0x0404", "0x0408", "0x040A", "0x040C", "0x040E",
           "0x0410", "0x043A")
-NOT_IN_CENSUS = ("0x0420", "0x0457")
-TEN = SEEDED + NOT_IN_CENSUS
+NOT_IN_CENSUS = ("0x0420",)
+# `0x0457` was the second of the two until #175 seeded the four routines its
+# sites sit in (2026-10-04). It is carried now, by symbol rather than by the seed
+# shape, so it is neither half of the original split; the write-up's §4 carries
+# the correction.
+CARRIED_SINCE_175 = ("0x0457",)
+TEN = SEEDED + NOT_IN_CENSUS + CARRIED_SINCE_175
 
 # The four bank1 pair accessors. Their identity is recorded in
 # `ghidra-functions.csv` and their names are repeated per site in
@@ -190,11 +195,16 @@ class EightCarryTheCensus(unittest.TestCase):
 
     def test_the_partition_is_disjoint_and_exhaustive(self):
         # Every one of the ten has a site row (below, in TenAreAccountedFor);
-        # what splits them is the census row, and it exists for the eight and
-        # only for the eight.
+        # what splits them is the census row, and it exists for every address
+        # but `0x0420`.
         self.assertEqual(set(), set(SEEDED) & set(NOT_IN_CENSUS))
         self.assertEqual(len(TEN), len(set(TEN)))
         table = census()
+        for addr in CARRIED_SINCE_175:
+            with self.subTest(addr=addr):
+                self.assertIn(addr, table,
+                              "%s has lost its census row; #175 is what gave "
+                              "it one, and the write-up's §4 says so" % addr)
         for addr in NOT_IN_CENSUS:
             with self.subTest(addr=addr):
                 self.assertNotIn(addr, table,
@@ -249,7 +259,7 @@ class TenAreAccountedFor(unittest.TestCase):
 
 
 class TheTwoThatAreNotInTheCensus(unittest.TestCase):
-    """`0x0420` and `0x0457`: which method cannot see each, and why."""
+    """`0x0420`, which the census cannot see, and `0x0457`, which it can since #175."""
 
     def test_both_carry_a_not_in_tree_reason(self):
         # Tested against the key set rather than the dict, so a failure names
@@ -298,18 +308,16 @@ class TheTwoThatAreNotInTheCensus(unittest.TestCase):
                                  "0x0420's site reaches no callee, which is "
                                  "what makes it a third mechanism")
 
-    def test_0457_sits_in_no_exported_function(self):
-        # Four sites, all read-modify-writes, none of them inside an export.
-        # The census reads every `.c` in the tree, overlapping exports
-        # included, so a missing export is why no `.c` spells the address --
-        # the one that does (`bank1/8418.c`) names it in a comment, which
-        # `strip_comments()` blanks.
+    def test_0457_sits_in_exported_functions_since_175(self):
+        # Four sites, all read-modify-writes. Until #175 none was inside an
+        # export, which is why the census had no row; #175 seeded the four
+        # routines, and each site now resolves to one of them.
         rows_0457 = ec_side(sites()["0x0457"])
         self.assertTrue(rows_0457)
         for row in rows_0457:
             with self.subTest(site=row["runtime"]):
                 self.assertEqual("read+write", row["resolution"])
-                self.assertEqual("not exported", row["function"])
+                self.assertNotEqual("not exported", row["function"])
                 self.assertEqual("", row["callee"],
                                  "these sites are read-modify-writes, not "
                                  "handoffs")

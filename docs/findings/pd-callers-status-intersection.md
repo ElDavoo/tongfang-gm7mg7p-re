@@ -36,6 +36,16 @@ restated the CSV's value are corrected in place below.
 
 ## What the status is now
 
+> **Corrected after this page was written.** The vocabulary below grew a fifth
+> value, `frame too short to say`, on the frame-length axis this page's
+> "Readings taken" section named as a known limit and declined to grade. The
+> four-value table and the "four values" wording here are left as they stood,
+> with the fifth value carried in
+> [`pd-caller-frame-quality.md`](pd-caller-frame-quality.md), which states it
+> with its measurement and what it does not claim. `unresolved` is now scoped
+> to a frame long enough to have held a load, which is a narrowing of this
+> page's first row below and not a change to it.
+
 Four values, defined once as module-level constants in
 `ec/tools/pd_index_geometry.py` beside the existing `UNRESOLVED_STRIDE` and
 exercised from `--self-test`:
@@ -51,7 +61,7 @@ The fourth value is the one the calibration rule asks for. "Not found by this
 method" needs its own wording, distinct from "a match was sought and none was
 found" — the same distinction `ec/annotations/registers.yaml` draws between
 `absent` and `unknown-not-absent`, and the same one §5 of
-`pd-index-geometry.md` draws for its 3047 unresolved whole-image sites.
+`pd-index-geometry.md` draws for its unresolved whole-image sites.
 
 **Branch order is load-bearing, and that is why `caller_status()` tests the
 index registers before the intersection.** Testing the empty intersection first
@@ -145,7 +155,7 @@ $ python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 \
 ...
 PD runtime 0xE9F5
   byte-scan entry 0xE9E3: reaches the site with no intervening `ret`; preceded by ret; 0 jump target(s) in between
-    file 0x266E4  runtime 0x66E4  call      lcall 0xe9e3     frame 24/24  R1=#0x00, R2=#0x08, R3=#0x01 [literals found, none an index register]
+    file 0x266E4  runtime 0x66E4  call      lcall 0xe9e3     frame 24/24 (16 insn)  R1=#0x00, R2=#0x08, R3=#0x01 [literals found, none an index register]
 ```
 
 `pd-index-geometry.md` §4's console block is re-typed from that run rather than
@@ -201,7 +211,10 @@ It runs two different guards, and this change needed both:
 
    Alongside it: a `caller_status()` block exercising all four values from
    hand-built dicts, including the two no committed row reaches, and an
-   `index_registers()` case over the synthetic `A:R1 ← …` term.
+   `index_registers()` case over the synthetic `A:R1 ← …` term. The frame-length
+   value added later rides in the same block, which now also carries
+   `frame_insns` as a third argument and the `CALLER_STATUSES` tuples carry it
+   as a third element.
 
 Both new guards were falsified before being believed — `caller_status()`
 replaced by the old presence-of-literals predicate, and `index_registers()`
@@ -224,6 +237,14 @@ and name the disagreement.
   about frame quality that this change has no basis for; §4.1 already attributes
   that row, and `frame_onto`/`frame_over` carry the evidence per row. Named here
   as a known limit rather than papered over with a value.
+
+  > **Overtaken.** The basis was the missing measurement, not a reason not to
+  > grade. `ec/tools/pd_caller_frame_quality.py` now measures the frame-length
+  > distribution over every whole-image caller row, `MIN_FRAME_INSNS` draws the
+  > line from it, and the `0xC9DD` row is filed `frame too short to say`. A
+  > `frame_insns` column carries the evidence per row the way `frame_onto` and
+  > `frame_over` could not. See
+  > [`pd-caller-frame-quality.md`](pd-caller-frame-quality.md).
 - **Not done: tracing a literal through the entry.** What the callee leaves in
   the register bank is not followed, and that is the limit the positive status
   value is worded around rather than a gap this change closes.
