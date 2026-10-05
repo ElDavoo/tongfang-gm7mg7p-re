@@ -94,11 +94,12 @@ BLOCK_FIVE = [
     ('8931', 0x8AE6, 'inc', 'A'),
     ('8931', 0x8AF8, 'lcall', '0xbdf2'),
     ('8931', 0x8B01, 'dec', 'A'),
-    # The DPTR half of the publish. `clr A` at 0x8B0B zeroes CY as well as A,
-    # so `addc A,#0xf` at 0x8B0C builds the 0x0F high half rather than carrying
-    # anything in: read without those two, `mov DPH, A` looks like it copies the
-    # same byte into both halves of DPTR, so these are transcribed whole rather
-    # than only at the two `mov`s.
+    # The DPTR half of the publish. `clr A` at 0x8B0B is opcode 0xE4 and clears
+    # only the accumulator, leaving CY as `add A,#0x50` at 0x8B07 set it, so
+    # `addc A,#0xf` at 0x8B0C adds the low half's overflow into the high one.
+    # Read without those two, `mov DPH, A` looks like it copies the same byte
+    # into both halves of DPTR, so these are transcribed whole rather than only
+    # at the two `mov`s.
     ('8931', 0x8B09, 'mov', 'DPL, A'),
     ('8931', 0x8B0B, 'clr', 'A'),
     ('8931', 0x8B0E, 'mov', 'DPH, A'),
@@ -125,10 +126,20 @@ DWELL_ARM = [
     ('8B14', 0x8B44, 'mov', 'A, #0x80'),
     ('8B14', 0x8B4B, 'xrl', 'A, #0x3'),
     ('8B14', 0x8B52, 'mov', 'A, #0xff'),
+    # The two `sjmp`s are what keep the up arm out of the down one: 0x8B55
+    # leaves the integrator-3 force for the gate, and 0x8B7C leaves the `inc`
+    # for the clear. Without either transcribed, the block reads as one arm
+    # falling into the other.
+    ('8B14', 0x8B55, 'sjmp', '0x8b6d'),
     ('8B14', 0x8B6D, 'lcall', '0xbeaa'),
     ('8B14', 0x8B70, 'jc', '0x8bbc'),
     ('8B14', 0x8B76, 'jnb', '0xe7, 0x8b7e'),
     ('8B14', 0x8B7A, 'inc', 'A'),
+    # The up arm does not fall into the down arm. `0x8B7C` jumps over it to the
+    # clear at `0x8B81`; without this row transcribed, a listing that lost the
+    # `sjmp` would still pass while the write-up's block read as `inc`
+    # immediately followed by `dec` back into the same byte.
+    ('8B14', 0x8B7C, 'sjmp', '0x8b81'),
     ('8B14', 0x8B7F, 'dec', 'A'),
     ('8B14', 0x8B85, 'movx', '@DPTR, A'),
 ]
@@ -638,7 +649,7 @@ class ControlLoopShape(unittest.TestCase):
             self.assertEqual(insns[jmp_addr], ('ljmp', '0x8b14'))
 
     def test_the_dwell_gate_is_the_byte_09e4_and_its_top_bit_is_direction(self):
-        """The 51-tick dwell and the direction bit are one byte, read two ways.
+        """The dwell and the direction bit are one byte, read two ways.
 
         `0xBEAA` masks bit 7 off before comparing, and the `jnb 0xe7` that
         picks `inc` over `dec` tests bit 7 of the value `0xBC5F` returned --
@@ -652,6 +663,60 @@ class ControlLoopShape(unittest.TestCase):
         self.assertEqual(insns[0xBEB1], ('subb', 'A, #0x32'))
         # 0xBC5F is what puts the incremented byte in A for that bit test.
         self.assertEqual(LISTINGS.get('BC5F')[0xBC63], ('inc', 'A'))
+
+    def test_the_move_needs_the_low_seven_bits_to_reach_the_threshold(self):
+        """The dwell is the arithmetic, not a transcribed count of ticks.
+
+        The write-up states a pass count, and a figure asserted here would be a
+        second copy of it that goes stale on its own. What is held instead is
+        the relation the count follows from, simulated over the instructions
+        the listings actually hold: `0xBC5F` increments and returns, the
+        `jb 0xe7` at `0x8B41` skips the force-to-`0x80` only when bit 7 is
+        set, and `0xBEAA` opens the gate once the low seven bits reach the
+        value its `subb` compares against. Simulating those from the clear at
+        `0x8B85` is what produces the pass count the write-up quotes, so a
+        listing that changed the threshold or the saturation would move this
+        and leave the prose to be re-measured rather than silently wrong.
+
+        The `mov A, #0x80` and the `subb` operand are read out of the listings
+        rather than written here, so the simulation cannot drift from them.
+        """
+        beaa = LISTINGS.get('BEAA')
+        arm = LISTINGS.get('8B14')
+
+        # The gate: `anl A,#0x7f` / `setb CY` / `subb A,#0xNN` carries iff the
+        # masked byte is below NN+1, so NN+1 is what the low bits must reach.
+        mask = int(beaa[0xBEAE][1].split('#')[1], 16)
+        threshold = int(beaa[0xBEB1][1].split('#')[1], 16) + 1
+        self.assertEqual(mask, 0x7F)
+
+        # The saturation: `mov A,#0x80` stored unless `jb 0xe7` skips it.
+        forced = int(arm[0x8B44][1].split('#')[1], 16)
+        self.assertEqual(arm[0x8B41], ('jb', '0xe7, 0x8b47'))
+
+        value = 0                      # 0x09E4 after the clear -- `clr A` at
+        passes = 0                     # 0x8B81, stored by 0x8B85
+        while True:
+            passes += 1
+            value = (value + 1) & 0xFF        # 0xBC5F
+            if not value & forced:            # bit 7 clear -> the store fires
+                value = forced
+            if (value & mask) >= threshold:   # 0xBEAA: carry clear -> move
+                break
+            self.assertLess(passes, 0x100,
+                            'the counter never reaches the threshold')
+
+        # The first increment is spent on the force-to-`0x80`, whose low seven
+        # bits are zero, so the move lands one pass later than the threshold is
+        # wide. That offset is the whole of the count, and it is a relation
+        # between the two constants above rather than a number of its own.
+        self.assertEqual(value & mask, threshold)
+        self.assertEqual(passes, threshold - (forced & mask) + 1)
+
+        # And the byte the gate opened on is the one the direction bit reads.
+        self.assertTrue(value & 0x80,
+                        'the move must land with bit 7 set, or the jnb at '
+                        '0x8B76 would pick the down arm on the next pass')
 
 
 INDEX = DECOMPILED / 'index.csv'

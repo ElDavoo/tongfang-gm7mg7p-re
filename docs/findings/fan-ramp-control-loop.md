@@ -131,12 +131,17 @@ Below 4 the controller runs the **dwell** arm, which is the interesting one.
 `0xBB5E` adds the integrator into the table pointer and reads a CODE byte:
 `add A, DPL` at `0xBB5E`, then — with no `ret` of its own, so the byte-scan
 seeding splits it — `mov DPL,A` / `clr A` / `addc A,DPH` / `mov DPH,A` /
-`clr A` / `movc A,@A+DPTR` / `ret` at `0xBB60`. Each `clr A` is load-bearing
-rather than incidental: it is what zeroes CY before the `addc`, so the 16-bit
-add carries the low half's overflow into the high half instead of adding the
-same byte twice. That is the whole of "the setpoint is a lookup keyed by the
-integrator", and it is why the answer to the issue's "is `0x043E` the setpoint"
-is no: `0x043E` is the right-hand operand at `0x8B39`, and the left-hand one
+`clr A` / `movc A,@A+DPTR` / `ret` at `0xBB60`. The `clr A` at `0xBB62` is
+load-bearing rather than incidental: `CLR A` is opcode `0xE4` and clears only
+the accumulator, leaving CY as `add A,DPL` left it, which is what lets
+`addc A,DPH` at `0xBB63` carry the low half's overflow into the high half. Had
+something there zeroed CY instead, the `addc` would add `DPH + 0` and discard
+that carry; the instruction that clears carry is `CLR C`, opcode `0xC3`, and
+there is none in the routine. The second `clr A`, at `0xBB67`, is not before an
+`addc` at all — it zeroes the index so `movc A,@A+DPTR` reads at exactly DPTR.
+That is the whole of "the setpoint is a lookup keyed by the integrator", and it
+is why the answer to the issue's "is `0x043E` the setpoint" is no: `0x043E` is
+the right-hand operand at `0x8B39`, and the left-hand one
 came out of a table. `0xBCE9` is the other half of the same idea one step
 earlier — it reads a big-endian CODE pointer out of the table and leaves it in
 DPTR, which is why the pair at `0x0A47` is a pointer to a pointer.
@@ -180,6 +185,7 @@ falls through to `0x8B3E`:
 8B4F     90 09 e4 mov      DPTR, #0x9e4
 8B52     74 ff - -   mov    A, #0xff
 8B54     f0 - -   movx     @DPTR, A         ; at 3, force 0xFF
+8B55     80 16 -  sjmp     0x8b6d
 8B6D     12 be aa lcall    0xbeaa            ; (0x09E4 & 0x7F) - 0x33
 8B70     40 4a -  jc       0x8bbc            ; not yet -> do not move
 8B72     e0 - -   movx     A, @DPTR
@@ -188,6 +194,7 @@ falls through to `0x8B3E`:
 8B79     e0 - -   movx     A, @DPTR
 8B7A     04 - -   inc      A
 8B7B     f0 - -   movx     @DPTR, A         ;   up
+8B7C     80 03 -  sjmp     0x8b81           ;   ... and past the down arm
 8B7E     e0 - -   movx     A, @DPTR
 8B7F     14 - -   dec      A
 8B80     f0 - -   movx     @DPTR, A         ;   down
@@ -198,10 +205,13 @@ falls through to `0x8B3E`:
 
 **`0x09E4` is the rate limit, and bit 7 of it is the direction.** `0xBC5F`
 increments it and returns the new value; the integrator only moves once
-`0xBEAA` reports `(0x09E4 & 0x7F) >= 0x33`, i.e. after 51 ticks in the same
-direction. The counter is then zeroed at `0x8B85`. Bit 7 survives the `& 0x7F`
-precisely because it carries the sign, and it is what `jnb 0xe7` at `0x8B76`
-tests to pick `inc` over `dec`.
+`0xBEAA` reports `(0x09E4 & 0x7F) >= 0x33`. From the clear at `0x8B85` that is
+the **52nd pass**, because the force-to-`0x80` at `0x8B41`–`0x8B46` spends the
+first tick: `jb 0xe7, 0x8b47` skips the store only when bit 7 is set, so the
+first increment lands on 1, is overwritten with `0x80`, and the low seven bits
+only start counting from there. The counter is then zeroed at `0x8B85`. Bit 7
+survives the `& 0x7F` precisely because it carries the sign, and it is what
+`jnb 0xe7` at `0x8B76` tests to pick `inc` over `dec`.
 
 The two saturations are worth naming because they are what keeps a wrap from
 becoming a direction flip: `0x8B41`–`0x8B46` forces `0x80` whenever bit 7 of
@@ -580,8 +590,8 @@ Plainly, and in the order a reader is most likely to over-read it:
   two are for.
 - **`0x09E4` has no entry in `registers.yaml`** and none is added — its use is
   read here, but a use is not a status, and inventing a `status:` value is the
-  thing the vocabulary exists to prevent. The two rules that govern it (51
-  ticks, bit 7 is the direction) are the finding; the byte's identity is not.
+  thing the vocabulary exists to prevent. The two rules that govern it (the
+  dwell, bit 7 is the direction) are the finding; the byte's identity is not.
 - **§7's `0x95DD` and `0x9D9B` stay unreached**, as §3a says.
 
 ## 7. What a driver would need, and does not get here
@@ -590,8 +600,8 @@ The mission's first motivating example for this group was "to change a fan
 curve", and this write-up is the first thing in the tree that says what one
 *is* on the EC side: two integrator bytes, two error terms against
 `CPU_TEMP` and `GPU_TEMP`, a setpoint read from a table indexed by the
-integrator, a 51-tick dwell near the bottom of the range, and a published
-duty at `0x0670`.
+integrator, a dwell near the bottom of the range, and a published duty at
+`0x0670`.
 
 That is enough to say what a Linux fan-curve interface would have to touch,
 and **not enough to write one**, for two reasons that are about evidence and
