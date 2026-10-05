@@ -64,9 +64,10 @@ PL1, PL2, PL4, AP_OEM = 0x0783, 0x0784, 0x0785, 0x0741
 AP_OEM_OPERAND = f'#0x{AP_OEM:x}'
 
 # The EC's own page of level-block destinations, which the write-up says the
-# host cannot read. Its page base is what makes that true. `0x0867` is adjacent
-# rather than PL-fed -- it is written from `0x0872`/`0x087A`/`0x088A` -- and is
-# here because the write-up names it as part of the same dark block.
+# host cannot read. Its page base is what makes that true. `0x0867` is PL-fed as
+# well as doubly written -- seeded unconditionally from `0x08C0`/`0x08C1`/
+# `0x08C3`, then overridden from `0x0872`/`0x087A`/`0x088A` -- and is here
+# because the write-up names it as part of the same dark block.
 LEVEL_PAGE = 0x0800
 DARK_DESTINATIONS = (0x08C0, 0x08C1, 0x08C3, 0x08C4, 0x08C5, 0x08C6,
                      0x0866, 0x0867)
@@ -265,10 +266,18 @@ class TheDestinationPageIsDark(unittest.TestCase):
         # constant, so widening HOST_WINDOW without re-deriving the census
         # fails here.
         source = read(CAPTURE_TOOL)
-        window = re.search(r'HOST_WINDOW = \((.*?)\)', source, re.S)
+        # The whole right-hand side, to the last paren on the line: the
+        # constant is a tuple of pairs, so a non-greedy match stops at the
+        # first `)` and yields only the first window -- which is the one that
+        # cannot swallow `0x0800` anyway. The balance check below is what
+        # says no window was skipped on the way in.
+        window = re.search(r'^HOST_WINDOW = (.*)$', source, re.M)
         self.assertIsNotNone(window)
+        rhs = window.group(1)
+        self.assertEqual(rhs.count('('), rhs.count(')'),
+                         f'the captured window is not the whole tuple: {rhs}')
         for lo, hi in re.findall(r'0x([0-9A-Fa-f]{4}), 0x([0-9A-Fa-f]{4})',
-                                 window.group(1)):
+                                 rhs):
             self.assertFalse(int(lo, 16) <= 0x08C0 <= int(hi, 16))
 
 

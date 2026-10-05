@@ -30,10 +30,18 @@ One question, and it is a yes/no that a driver can act on:
 > written to `0x0783`/`0x0784`/`0x0785` change the sustained clock or package
 > power under a fixed battery load?
 
-The static reading says the path is live: the twelve read sites are
-unconditional reads with a presence test, and nothing in the guards of any of
-them compares an AC-present or battery-present byte. So a non-zero write
-*should* propagate. "Should" is the whole gap, and this run closes it.
+The static reading says the path is live, with one qualifier you have to carry
+into how you read a result. Of the twelve read sites, **nine are gated on
+`AP_OEM` (`0x0741`) bit 0** — each of the three blocks in
+`apply_oem_overrides_then_fill_08xx` opens with a `0x0741` read and a
+`jnb 0xe0`, at `0x96AD`, `0x97D1` and `0x98BD` in
+`ec/decompiled/bank0/96AD.asm` — and **three are not**: the sites in
+`compute_level_blocks_086b_086c_086e` sit in a routine that never reads
+`0x0741`, so a PL override can reach `0x0866` whether or not a host agent has
+announced itself. Nothing in the guards of any of the twelve compares an
+AC-present or battery-present byte. So a non-zero write *should* propagate.
+"Should" is the whole gap, and this run closes it — but which of the two groups
+ran is `0x0741` bit 0 in the capture, so record it (§3a, §7).
 
 **Two verdicts, and both are results:**
 
@@ -169,13 +177,18 @@ Every address in the watch set, and what a change in it means:
 | `0x07A7` `0x07A8` `0x07A9` `0x07AA` | the `MODE_PL_DEFAULTS` block the write-up names | the bytes `MODE_PL_DEFAULTS` is seeded from; a change means the EC's own copy moved |
 | `0x075B` `0x075C` | `MAIN_FAN_L_DUTY` / R, percent | the fan's response to a changed limit — the visible consequence if the limit reached the cooling path |
 | `0x043E` `0x044F` | `CPU_TEMP` / `GPU_TEMP` | the flat-load check (§4) and the confound guard |
-| `0x0741` | `AP_OEM` bit 0 | not written here, but recorded: it is what the EC's own PL clear is gated on, so a clear landing mid-arm is attributable |
+| `0x0741` | `AP_OEM` bit 0 | not written here, but recorded for two reasons: it is what the EC's own PL clear is gated on, so a clear landing mid-arm is attributable, and it is the bit that decides how many of the twelve PL read sites run (§1) |
 
 `0x0741` is in the set because the EC's clear at bank0 `0xA833` is a competing
 writer of exactly the bytes under test, gated on that bit being clear. You are
 not clearing it. If the PLs go to zero on their own during an arm and
 `0x0741` bit 0 reads clear, that is the EC's clear and not your write — see
 §7.
+
+It is in the set for a second reason, which §1's reading depends on: the same
+bit 0 gates nine of the twelve PL read sites. Recording it is what lets you say
+afterwards which of the two groups an arm actually exercised, and §3a and §7
+both turn on that.
 
 ### Step 0 — snapshot, read-only, before anything
 
@@ -304,6 +317,19 @@ If the day only allows two passes, make them the control and the write with
 the service stopped, and leave the service-running pass open — say that in the
 report rather than reporting the two you ran as the whole procedure.
 
+**Record `0x0741` bit 0 for this pass, and read the result through it.**
+Stopping the service removes one writer of that bit, not necessarily both:
+`registers.yaml`'s `AP_OEM` note records the vendor service setting it
+(`MyEcCtrl.Set_APExistToEC`, called true on init and on `ModernOn`, and read
+live as `0x01` with the service running) *and* `uniwill-laptop` setting it in
+`uniwill_ec_init()`. So whether bit 0 reads clear here depends on whether that
+driver is loaded — which is exactly why it is recorded rather than assumed.
+Bit 0 clear does not make the arm void; it changes what a null from it means.
+Clear leaves only the **three ungated sites** live, so a null then says the
+write did not reach the clock *by the level-block path*, and says nothing about
+the nine sites that did not run. A non-null still settles §1, because both
+groups reach `0x0866`. §7 says what each case means.
+
 ### Step 3b — what this single-tool form does not cover
 
 - **It cannot see the copy.** `0x08C0`-`0x08C6` and `0x0866`/`0x0867` are on
@@ -409,6 +435,12 @@ Concretely:
   this window", with the window and the load named. It is **not** evidence the
   EC cannot act on the PLs at all — the copy still cannot be seen (§3b) — so
   this is a driver-facing negative about one route, and it is a real result.
+- **Nothing moved, and `0x0741` bit 0 read clear for the whole arm** → this is
+  a null about the **three ungated sites only**. Nine of the twelve sites sit
+  behind that bit and did not run, so this is not the same negative as a null
+  with the bit set, and reporting it as one overstates the result. Say which
+  sites were live, and that the nine were not exercised. A null with `0x0741`
+  bit 0 **set** carries no such caveat: all twelve ran.
 - **Both arms flat** → you have measured the battery's own ceiling, not the
   EC's behaviour. Inconclusive as to §1, and worth reporting anyway: it sizes
   what any driver could achieve here.

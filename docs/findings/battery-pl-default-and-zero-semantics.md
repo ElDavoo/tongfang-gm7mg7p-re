@@ -145,10 +145,17 @@ battery, which is the whole of what the procedure has to measure.
 
 The destinations are `0x08C0`-`0x08C6` in `apply_oem_overrides_then_fill_08xx`
 (bank0 `0x96AD`) and `0x0866` in `compute_level_blocks_086b_086c_086e` (bank0
-`0x9D9B`) — all three of that routine's PL sites write `0x0866`, and its
-neighbour `0x0867` is written from `0x0872`/`0x087A`/`0x088A` rather than from a
-PL, so it is adjacent rather than fed. Every one of these is on page `0x0800`,
-which reads **0 of 256 bytes non-`0xFF`** in the committed host-window census:
+`0x9D9B`) — all three of that routine's PL sites write `0x0866`. Its
+neighbour `0x0867` is **doubly written**: three unconditional seeds copy from
+the PL-fed `0x08C0`/`0x08C1`/`0x08C3` at `0x9DB4`/`0x9E9D`/`0x9FB7`, alongside
+three `jz`-guarded overrides from `0x0872`/`0x087A`/`0x088A` at
+`0x9DDA`/`0x9EC3`/`0x9FD5`, so it is fed on the seed path and takes a level
+byte on the override path. That is the seeds-then-overrides reading that
+`ghidra-functions.csv`'s `bank0,0x9D9B` row ("seeds 0x0865-0x0869 all from
+0x08C0, then overrides ... 0x0867 from 0x0872") and `registers.yaml`'s
+`XDATA_0867` note ("overridden there from 0x0872, 0x087A or 0x088A") already
+carry. Every one of these is on page `0x0800`, which reads **0 of 256 bytes
+non-`0xFF`** in the committed host-window census:
 
 ```console
 $ grep '^0x0800' evidence/ec-watch/2026-09-24-host-window-page-census.txt
@@ -254,10 +261,12 @@ does zero mean" — for every read site found, that is settled. It is:
 > written to `0x0783`/`0x0784`/`0x0785` reach the sustained clock and package
 > power under a fixed load?
 
-The static answer says the path is live — the sites are unconditional reads
-with a presence test, not gated on any AC byte this method could find — so a
-non-zero write *should* propagate. "Should" is not "does", and the run is
-what separates them.
+The static answer says the path is live — three of the twelve sites are
+ungated, and the other nine are gated on `AP_OEM` (`0x0741`) bit 0 rather than
+on any AC byte this method could find — so a non-zero write *should* propagate.
+"Should" is not "does", and the run is what separates them. Which of the two
+groups a given arm exercised is `0x0741` bit 0 in the capture, and the
+procedure says so where the operator reads it.
 
 [`../hardware-tests/battery-pl-limit-effect.md`](../hardware-tests/battery-pl-limit-effect.md)
 is that run. It watches the PL registers the driver writes, the fan duty
