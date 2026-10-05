@@ -157,7 +157,7 @@ addr,name,type,size,successor,succ_name,succ_size,succ_first,last_insn,self_site
 0x4C12,call_f739_then_return_dptr_07d0_4c12,forwarder,7,0x4C19,call_f739_then_return_dptr_07d0_4c19,7,lcall 0xf739,ret,,,0x496C;0x4989,,no,no
 0x4C19,call_f739_then_return_dptr_07d0_4c19,forwarder,7,0x4C20,call_f739_then_return_dptr_07d0,7,lcall 0xf739,ret,,0x4B1D,0x4AE9;0x4B1D,,no,no
 0x4C20,call_f739_then_return_dptr_07d0,forwarder,7,0x4C27,dispatch_entry,37,"mov  dptr,#0x0832",ret,0x4B1D,0xA451,0xA451,,no,no
-0x4C27,dispatch_entry,dispatch,37,0x4C4C,,0,db   0x06,ajmp     0x4800,0xA451,,,,no,no
+0x4C27,dispatch_entry,dispatch,37,0x4C4C,,0,inc  @r0,ajmp     0x4800,0xA451,,,,no,no
 0x4E84,dispatch_case_09,dispatch,34,0x4EA6,,0,"mov  r4,a",ret,,,,,no,no
 0x52EF,call_f739_then_return_dptr_07d0_52ef,forwarder,7,0x52F6,,0,"mov  dptr,#0x07d0",ret,,,0x514B;0x528B,,no,no
 0x531F,call_f739_then_return_dptr_07d0_531f,forwarder,7,0x5326,,0,"mov  dptr,#0x07da",ret,,,0xE42D,,no,no

@@ -338,8 +338,35 @@ here rather than folded into the count above or left implicit.
 them: **34 are assigned instructions in the MCS-51 map** and **1 is not** —
 `0xa5`, the one value `MCS51_LEN` leaves at 0.
 
+> **Closed, and this is the site that owned it.** `direct-address-opcode-rendering.md`
+> took six of the 35 and left the stale figures here; issue #1153 closed the rest,
+> and this paragraph is corrected in place rather than by a new section. Two
+> figures moved, and both are measurements over committed firmware whose
+> command is below. `mnemonic()` reached the `db` fall-through for **35** values
+> when this was written, **29** after the six `direct`-destination names landed,
+> and reaches it for **1** now: `0xa5` alone. The manual's split is unchanged in
+> shape throughout — assigned values, and one (`0xa5`) it assigns nothing — but
+> it is now **0 and 1** rather than **34 and 1**, because nothing the map
+> assigns is left unnamed. The full per-value set with the oracle each name was
+> decided from is
+> [mnemonic-db-fallthrough-coverage.md](mnemonic-db-fallthrough-coverage.md).
+>
+> **What closing it did not do.** Two other tools still grade windows against a
+> set of four of these bytes — `citation_gap_scan.UNASSIGNED` and
+> `bank_map_score.UNASSIGNED`, both `0x06`/`0x07`/`0x16`/`0x17` — and both used
+> to describe that set as the byte values the MCS-51 map assigns to no
+> instruction. That was wrong: the map assigns all four as `INC`/`DEC @R0`/`@R1`.
+> The sets are deliberately untouched, because they drive a published verdict
+> and a bank ranking rather than a spelling, and their comments are corrected in
+> place instead. The `not-code` verdict is computed from the literal, not from
+> `mnemonic()`, so it did not move. Correcting the sets is the follow-up that
+> finding names.
+
 The full set, all 35, with the manual's own name and length for each. A paired
-row is two opcode values sharing one form.
+row is two opcode values sharing one form. **This table is the set as it stood
+when the text comparison was run** — it is what produced the 2,205 in the row
+above, and the command below regenerates the current set rather than this
+table.
 
 | op | MCS-51 | len | op | MCS-51 | len |
 |---|---|---|---|---|---|
@@ -468,6 +495,12 @@ directions, and that is the shape of the finding:
   0 over 114,953 r2 positions, and 0 of the manual's 255 assigned rows.
 - `mnemonic()` is the one that declines: 35 opcode values reach its `db`
   fall-through, and it will not name any of them.
+  *(Closed. This read "it will not name any of them" when `mnemonic()` named the
+  six `direct`-destination forms, and named the rest of the map's assigned
+  values in issue #1153. It declines `0xa5` alone now, and the two tables agree
+  in the same direction rather than opposite ones. The measurement is in
+  [mnemonic-db-fallthrough-coverage.md](mnemonic-db-fallthrough-coverage.md);
+  the 35 above is what this section measured, and is left as measured.)*
 
 > **Corrected.** The first bullet previously read "all 34 of these opcodes are
 > sized correctly by both routes — each has listing starts whose length agrees,
@@ -498,23 +531,30 @@ a cross-decode can only "agree" with a `db` vacuously. It does not move any
 number in this document, because `db 0x..` is a *name* and framing never reads
 it — the length differential is 0 with or without it.
 
-Both halves, and neither needs the listings. The 35 values first, which is one
+Both halves, and neither needs the listings. The values first, which is one
 line, no image and no r2 — and it is also the command that regenerates the
-enumeration above, so a reader who wants the set rather than the table has it:
+enumeration above, so a reader who wants the set rather than the table has it.
+**Both outputs below are what this command prints now**, after
+`mnemonic()` was brought up to the length table; they read 35 and a 35-value
+list when the text comparison above was run, and the 2,205 in that row's table
+is still the figure that comparison produced:
 
 ```console
 $ python3 -c 'import sys;sys.path.insert(0,"ec/tools");import disasm8051 as D;print(len([o for o in range(256) if D.mnemonic(bytes([o]+[0]*7),0).startswith("db")]))'
-35
+1
 $ echo $?
 0
 $ python3 -c 'import sys;sys.path.insert(0,"ec/tools");import disasm8051 as D,opcode_coverage as C;print(" ".join("%02x%s"%(o,"" if C.MCS51_LEN[o] else "*") for o in range(256) if D.mnemonic(bytes([o]+[0]*7),0).startswith("db")))'
-06 07 16 17 26 27 36 37 42 43 46 47 52 53 56 57 62 63 66 67 72 76 77 82 86 87 96 97 a5* a6 a7 b6 b7 d4 f4
+a5*
 $ echo $?
 0
 ```
 
-`*` marks the one the manual leaves unassigned, which is how the 34/1 split
-above is checked without reading the table.
+`*` marks the one the manual leaves unassigned, which is how the split above is
+checked without reading the table — and it is now the only entry, because the
+table names every value the manual assigns. The measurement and the per-value
+oracle for each new name are in
+[mnemonic-db-fallthrough-coverage.md](mnemonic-db-fallthrough-coverage.md).
 
 and the walk behind 2,214 — the same `pDj` per image `--r2-diff` runs, compared
 on the first token:
@@ -764,9 +804,12 @@ python3 ec/tools/opcode_coverage.py --csv /tmp/opcodes.csv
   framing rests on. The one place a mnemonic difference *is* measured is
   [the text comparison above](#what-a-text-comparison-would-have-found-since-this-one-does-not),
   and what it found there is a gap in the other table, not a dispute about a
-  name: `mnemonic()` renders 34 assigned 8051 instructions as `db 0x..`. Which
-  of two names for a value the walk reached over data is right is a separate
-  question and is not answered here.
+  name: `mnemonic()` renders 34 assigned 8051 instructions as `db 0x..`.
+  *(That gap is now closed — `mnemonic()` names every value the manual assigns,
+  and what reaches `db` is the one value it does not. The separate question
+  stands: which of two names for a value the walk reached over data is right is
+  not answered here, and naming `0xA6`/`0xA7` after the listings did not settle
+  the manual's erratum row.)*
 - **It does not say the framing is right.** That every length agrees means a
   linear walk stays in step, not that a walk starting at the right offset is
   decoding code rather than data. `converges_from()` is the framing evidence and
@@ -816,6 +859,23 @@ it wherever a caller asks.
   against a decoder that has not seen this one. (This bullet said 34; a
   correction below it said 32; it is 34, for the reason given in
   [the section above](#what-a-text-comparison-would-have-found-since-this-one-does-not).)
+
+  > **Done, in two halves — #1153, and the second half is not done.** The six
+  > `direct`-destination forms landed first, in
+  > `direct-address-opcode-rendering.md`; the rest landed in issue #1153, which
+  > named every value the MCS-51 map assigns. `mnemonic()` now reaches `db` for
+  > `0xa5` alone, so the vacuous-agreement hazard above is closed for every
+  > opcode the map assigns, and the two tables in that file no longer disagree
+  > about coverage in opposite directions. Names were decided against the
+  > committed Ghidra listings, which have never seen the table.
+  >
+  > **What that work opened instead** is a smaller and sharper follow-up: two
+  > other tools still hold `{0x06, 0x07, 0x16, 0x17}` as *the byte values the map
+  > assigns to no instruction*, which it does not — those are `INC`/`DEC
+  > @R0`/`@R1`. The sets drive a published verdict and a bank ranking rather
+  > than a spelling, so they were corrected in place and deliberately left
+  > alone. Fixing them is its own issue, named in
+  > [mnemonic-db-fallthrough-coverage.md](mnemonic-db-fallthrough-coverage.md).
 - **`0xA5` is sized by nothing outside `disasm8051.py`, and that is now a
   reported state rather than a silent one.** The manual assigns it no
   instruction, so there is no length to check it against and no evidence that

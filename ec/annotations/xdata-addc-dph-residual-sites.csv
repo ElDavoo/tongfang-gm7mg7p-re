@@ -1,5 +1,5 @@
 addr,region,imm,preceded_by,a_on_entry,dph_set,access,access_detail,reaches_0x08,reaches_0x1c,evidence,window
-0x2266,common,0x0D,`lcall 0x2a7b`,not established by this tool,"{0x0D, 0x0E}","store via `movx @dptr,a`","`movx @dptr,a` at 0x0226C",no,no,ec/firmware/GMxMGxx_11.800,"movx a,@dptr ; db 0xf4 ; mov 0x66,a ; lcall 0x2a7b ; addc a,#0x0d"
+0x2266,common,0x0D,`lcall 0x2a7b`,not established by this tool,"{0x0D, 0x0E}","store via `movx @dptr,a`","`movx @dptr,a` at 0x0226C",no,no,ec/firmware/GMxMGxx_11.800,"movx a,@dptr ; cpl a ; mov 0x66,a ; lcall 0x2a7b ; addc a,#0x0d"
 0x2270,common,0x0D,`lcall 0x2a7b`,not established by this tool,"{0x0D, 0x0E}","read via `movx a,@dptr`","`movx a,@dptr` at 0x02274",no,no,ec/firmware/GMxMGxx_11.800,"mov 0x83,a ; mov a,0x66 ; movx @dptr,a ; lcall 0x2a7b ; addc a,#0x0d"
 0x2278,common,0x0D,`lcall 0x2a8f`,not established by this tool,"{0x0D, 0x0E}","read via `movx a,@dptr`","`movx a,@dptr` at 0x0227C",no,no,ec/firmware/GMxMGxx_11.800,"addc a,#0x0d ; mov 0x83,a ; movx a,@dptr ; lcall 0x2a8f ; addc a,#0x0d"
 0x22DF,common,0x0D,`lcall 0x2a7d`,not established by this tool,"{0x0D, 0x0E}","read via `movx a,@dptr`","`movx a,@dptr` at 0x022E3",no,no,ec/firmware/GMxMGxx_11.800,"subb a,#0x01 ; jc +0x17 ; mov a,#0x80 ; lcall 0x2a7d ; addc a,#0x0d"
