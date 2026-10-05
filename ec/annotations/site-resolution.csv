@@ -1104,3 +1104,28 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0A47,MAILBOX_PUBLISH_VALUE,0x0EB2A,bank0,0xEB2A,read,read,0xEADA FUN_CODE_eada,,
 0x0A47,MAILBOX_PUBLISH_VALUE,0x0EB98,bank0,0xEB98,read,read,0xEADA FUN_CODE_eada,,
 0x0A47,MAILBOX_PUBLISH_VALUE,0x0ED79,bank0,0xED79,read,read,0xED74 write_0a59_block_then_445e,,
+0x04A0,XDATA_04A0,0x12DA5,bank1,0xADA5,read,read,0xAD8B update_0492_from_0490_0524,,
+0x04A0,XDATA_04A0,0x12DB9,bank1,0xADB9,read,read,0xAD8B update_0492_from_0490_0524,,
+0x04A0,XDATA_04A0,0x13234,bank1,0xB234,read,read,0xB224 FUN_CODE_b224,,
+0x04A0,XDATA_04A0,0x132A5,bank1,0xB2A5,read,read,0xB2A0 cmp_0404_vs_0518_then_store_0436,,
+0x04A0,XDATA_04A0,0x132ED,bank1,0xB2ED,handed to lcall/ljmp -> callee writes,write,0xB2D5 copy_0514_0516_to_04ab_04ac_then_probe,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04A0,XDATA_04A0,0x13A53,bank1,0xBA53,read,read,0xBA43 gate_chain_to_0491_bit0,,
+0x04A0,XDATA_04A0,0x1478D,bank1,0xC78D,write,write,0xC778 clear_0492_04a0_0524_0526_and_0497b5,,
+0x04A0,XDATA_04A0,0x150CC,bank1,0xD0CC,write,write,0xD0C4 update_0524_0526_4a0_and_0497_flags,,
+0x04A0,XDATA_04A0,0x15166,bank1,0xD166,write,write,0xD0C4 update_0524_0526_4a0_and_0497_flags,,
+0x04A1,XDATA_04A1,0x13A5F,bank1,0xBA5F,read,read,0xBA43 gate_chain_to_0491_bit0,,
+0x04A1,XDATA_04A1,0x13A90,bank1,0xBA90,read,read,0xBA43 gate_chain_to_0491_bit0,,
+0x04A1,XDATA_04A1,0x1414A,bank1,0xC14A,read,read,0xC11C latch_0490_bit3_or_bit7,,
+0x04A1,XDATA_04A1,0x141B2,bank1,0xC1B2,read,read,0xC11C latch_0490_bit3_or_bit7,,
+0x04A1,XDATA_04A1,0x150D9,bank1,0xD0D9,write,write,0xD0C4 update_0524_0526_4a0_and_0497_flags,,
+0x04AE,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x13871,bank1,0xB871,handed to lcall/ljmp -> callee writes,write,0xB841 arm_05f2_countdown_0575_clears_0490,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04AE,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x13FDD,bank1,0xBFDD,handed to lcall/ljmp -> callee writes,write,0xBFBB FUN_CODE_bfbb,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04AE,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x1401B,bank1,0xC01B,read,read,0xBFBB FUN_CODE_bfbb,,
+0x04AE,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x1403C,bank1,0xC03C,handed to lcall/ljmp -> callee reads,read,0xC032 FUN_CODE_c032,0x8886,0x8886 read_xdata_pair_to_r1r2
+0x04AE,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x14074,bank1,0xC074,handed to lcall/ljmp -> callee reads,read,0xC032 FUN_CODE_c032,0x8886,0x8886 read_xdata_pair_to_r1r2
+0x04AE,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x14A80,bank1,0xCA80,handed to lcall/ljmp -> callee reads,read,0xCA3E count_0361_to_40_then_branch_on_0347,0x8886,0x8886 read_xdata_pair_to_r1r2
+0x04AF,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",0x14029,bank1,0xC029,read,read,not exported,,
+0x04BE,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",0x13911,bank1,0xB911,handed to lcall/ljmp -> callee writes,write,0xB8E1 arm_05f4_countdown_0576_clears_0490,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04BE,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",0x13FE3,bank1,0xBFE3,handed to lcall/ljmp -> callee writes,write,0xBFBB FUN_CODE_bfbb,0x888C,0x888C write_r1r2_to_xdata_pair
+0x04BE,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",0x140D9,bank1,0xC0D9,read,read,0xC0A8 FUN_CODE_c0a8,,
+0x04BF,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",0x140E7,bank1,0xC0E7,read,read,0xC0A8 FUN_CODE_c0a8,,
