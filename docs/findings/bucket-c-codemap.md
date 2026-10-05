@@ -14,7 +14,10 @@ form [#20](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/20) can
 consume. The tool is [`bucket_c_codemap.py`](../../ec/tools/bucket_c_codemap.py);
 the committed table is
 [`bucket-c-codemap.csv`](../../ec/annotations/bucket-c-codemap.csv), one row per
-site, and `--check` re-derives all 140 of them from the image.
+site, and `--check` re-derives all 140 of them from the image. `--spans` is a
+separate export of the same walk and carries **every descent it made**, seed and
+callee alike, under a `#` header that says so — see "Limits" for what that
+changed in the measurements below.
 
 ## The seed set, and why each element's code-ness is not in question
 
@@ -320,13 +323,21 @@ name. That is raised as a follow-up rather than patched in silently.
   reads `tail-jump` exactly as the other `tail-jump` rows do while lying 921
   bytes below the nearest decoded instruction. Nor is `0x021C6` a singleton —
   measured against the nearest decoded address below, a tail of `not-reached`
-  rows sits hundreds of bytes past the frontier, not one row. **A reader who
-  wants the second kind has to measure the gap**, from the `--spans` export:
-  take each `not-reached` `file_offset` and its distance to the nearest address
-  in the decoded `block_lo`-`block_hi` ranges. The figure is not carried in the
-  CSV because it is a reading over two artifacts rather than a property of
-  either, and a column that meant "the walk stopped here" would be a claim
-  about coverage wearing a row's clothes.
+  rows sits hundreds of bytes past the frontier, not one row. *(Superseded in
+  part: "hundreds of bytes" was inflated by the export carrying only the seed
+  set's blocks. Measured against the nearest decoded address below, 44 of the
+  123 `not-reached` rows sat at least 200 bytes past the frontier under the
+  seed-only export and 14 do under the complete one; the rows that move are
+  66, and every one of them moves **shallower**, because the full walk's decoded
+  set is a superset of the seed set's. `0x021C6`'s own 921 is unchanged — its
+  nearest decoded address below is `0x1E2D` under both.)* **A reader who wants
+  the second kind has to measure the gap**, from the `--spans` export: take each
+  `not-reached` `file_offset` and its distance to the nearest address in the
+  decoded `block_lo`-`block_hi` ranges — which, since the export now carries
+  every descent, are the whole walk's decoded bytes and not the seed set's.
+  The figure is not carried in the CSV because it is a reading over two
+  artifacts rather than a property of either, and a column that meant "the walk
+  stopped here" would be a claim about coverage wearing a row's clothes.
 - **Three of the 16 reached sites are themselves seeds**, which is circular by
   construction: a site the scan named cannot then be evidence that the scan
   found a real entry. They are in the table as reached, and the `is a seed`
@@ -337,11 +348,18 @@ name. That is raised as a follow-up rather than patched in silently.
 - **Not a code/data separation of the image.** That is
   [#20](https://github.com/ElDavoo/tongfang-gm7mg7p-re/issues/20). This is the
   narrow slice of it one question needed, and `--spans` emits the reached-span
-  set in a form #20 can consume: **1007 blocks over 615 entry points**. Those
-  615 are the seeds; the walk's 950 descents include entries it reached through
-  a callee, and `write_spans()` iterates the seeds, so the 335 callee-discovered
-  entries are in the coverage count and **not** in the file. A consumer reading
-  the export gets the 615.
+  set in a form #20 can consume: **every descent the walk made**, each block one
+  row. *(Superseded: this bullet previously read "**1007 blocks over 615 entry
+  points**", with the 335 callee-discovered entries "in the coverage count and
+  **not** in the file", because `write_spans()` iterated `seeds` rather than
+  the descents the walk returned. It now iterates the descents, and the export
+  opens with a `#` block stating the population it covers, so a file that has
+  lost descents is visibly short rather than silently so.)* The `basis` column
+  still separates the two kinds — a `SEED_BASES` member from a seed the walk was
+  given, `call-from-0xNNNN` for one it reached through a caller — so a consumer
+  that wants the old seed-only view filters on that column and gets exactly it
+  back. **A consumer has to drop the `#` lines before parsing**: `csv.DictReader`
+  run on the whole file reads the first one as the fieldnames.
 - **Banks 2 and 3 are taken as unused** on the word of `find_banks.py`, which
   `audit_call_targets.py` already takes as given; this tool does not re-derive
   it.
@@ -370,6 +388,7 @@ python3 ec/tools/bucket_c_codemap.py ec/firmware/GMxMGxx_11.800 --self-test
 python3 ec/tools/bucket_c_codemap.py ec/firmware/GMxMGxx_11.800
 python3 ec/tools/bucket_c_codemap.py ec/firmware/GMxMGxx_11.800 --spans | head
 python3 ec/tools/test_bucket_c_codemap.py
+python3 ec/tools/test_bucket_c_codemap_spans.py
 
 # the census did not move, and no region was edited
 python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 | sed -n '/## 4/,/^$/p'
@@ -397,6 +416,16 @@ r2 -a 8051 -e scr.color=0 -q -c 's 0xe000; pd 6' bank1.bin
   finds to be a checked property of this image. Nothing in this table classifies
   those *sites*; they are the walk's frontier, and whether any of them is a
   common-to-bank direct call is the same open question.
-- **The full code map.** `--spans` gives the 1007 blocks, over the 615 entries
-  this seed set reached; the gaps between them are where the next seed set has
-  to come from.
+- **The full code map.** `--spans` gives every block of every descent this walk
+  made — seed-derived and callee-discovered alike, with `basis` saying which is
+  which — so the gaps between them, and not just the gaps between the seeds, are
+  where the next seed set has to come from. *(Superseded: this bullet previously
+  read "the 1007 blocks, over the 615 entries this seed set reached", which
+  understated the walk by the entries it reached through a callee.)*
+- **The erased-fill `0xFF` blocks in the export are a separate defect.** 41 of
+  the blocks `--spans` emits begin inside an erased run — `erased_index()` puts
+  them all in the `0x7400`-`0x7F04` band at the top of the common area — and
+  decode `0xFF` as `mov r7,a`, which is not code. That is the seed policy's
+  problem rather than the export's: the export reports what the walk decoded,
+  faithfully, and a walk pointed into erased flash has nothing to decode
+  correctly. It is not folded in here so that each defect keeps one owner.
