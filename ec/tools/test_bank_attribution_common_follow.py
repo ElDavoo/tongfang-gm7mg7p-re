@@ -566,6 +566,24 @@ class TheReport(unittest.TestCase):
         self.assertEqual(offenders, [],
                          "an uncalibrated negative in the report")
 
+    def test_no_section_claims_the_common_area_is_recorded_and_not_followed(self):
+        """The mechanism is described once and has to be described *the same
+        way* everywhere, because one run of the tool prints every section.
+
+        `main()` builds its closures with the default `follow_common=True`, so a
+        section that still says the common area is recorded and followed
+        nothing contradicts the section that says it is followed as a same-bank
+        continuation -- in the same output, which is what made the original
+        correction land in the document and miss its tool-side twin. Asserting
+        the sentence that is there is what holds the one that is not.
+        """
+        self.assertIn("records it and follows it as a same-bank continuation",
+                      self.flat)
+        for stale in ("records it and follows nothing",
+                      "records each and follows none"):
+            self.assertNotIn(stale, self.flat,
+                             f"section 7 still claims {stale!r}")
+
     def test_it_keeps_the_same_bank_caveat(self):
         """Following a common call *extends* the same-bank assumption rather
         than testing it, so the standing caveat has to survive the change that

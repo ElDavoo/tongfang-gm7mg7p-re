@@ -764,7 +764,8 @@ def print_cuts(d: bytes, closures, seeds) -> None:
     print()
     print("The other half of the accounting: calls that leave the bank window. A")
     print("target below 0x8000 is common area, mapped in every bank, so this")
-    print("closure records it and follows nothing. The `?C?CCASE` reader at")
+    print("closure records it and follows it as a same-bank continuation in the")
+    print("calling bank's window. The `?C?CCASE` reader at")
     print("0x7151 dispatches all 15 of this image's inline index tables")
     print("(bank-call-audit.md 9, 10; every one of the 15 sites in")
     print("index-table-entries.csv is an `lcall 0x7151`) and is itself common")
@@ -1271,13 +1272,12 @@ CHECK_PINS = (11, 0, 6, 0)
 # run of 40 both count once.
 CUT_RUNS = ((535, 8244), (135, 7889))
 
-# The closures' own sizes, reported rather than pinned. They are a property of
-# this image's bounds, and a pin here would fail a correct tool over a
-# different dump -- the seed census and the four verdicts above are the pins
-# that mean something independent of how much a walk happened to cover. The
-# figure this file's own docstring and §2 print is derived here, not stored.
-CLOSURE_SIZE = (14830, 12258)
-ENTRY_POINTS = (1010, 669)
+# The closures' own sizes are reported by `self_test()` and pinned nowhere.
+# They are a property of this image's bounds, and a pin here would fail a
+# correct tool over a different dump -- the seed census and the four verdicts
+# above are the pins that mean something independent of how much a walk
+# happened to cover. The one pair that *is* a relation rather than a size, the
+# with/without comparison, is measured and printed by section 8.
 
 # The reset vector's five `lcall`s, and the shape of the linker's route out of
 # the common area that the last section's answer rests on. The reset vector is
@@ -1735,12 +1735,9 @@ def self_test(d: bytes) -> int:
           "and no run counts more seeds than entry points, so the column "
           "cannot exceed the population it is a subset of")
 
-    for bank, want, entries_want in zip((0, 1), CLOSURE_SIZE, ENTRY_POINTS):
-        got_size = len(closures[bank][0])
-        got_entries = len(closures[bank][2])
-        same = (got_size, got_entries) == (want, entries_want)
-        print(f"  --   bank{bank} closure: {got_size} addresses from {got_entries} "
-              f"entry points ({'as recorded' if same else 'document records ' + str(want) + ' and ' + str(entries_want)})")
+    for bank in (0, 1):
+        print(f"  --   bank{bank} closure: {len(closures[bank][0])} addresses from "
+              f"{len(closures[bank][2])} entry points")
 
     print()
     print("self-test FAILED" if bad else "self-test passed")
