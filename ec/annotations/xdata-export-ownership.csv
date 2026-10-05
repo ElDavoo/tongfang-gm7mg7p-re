@@ -864,12 +864,12 @@ bank1/8096.c,bank1,8096,28,bank1/8001.c,8001,decrement_nonzero_xdata_counters,ye
 bank1/80AA.c,bank1,80AA,25,bank1/8001.c,8001,decrement_nonzero_xdata_counters,yes,0.96,47,0.53
 bank1/80D6.c,bank1,80D6,20,bank1/8001.c,8001,decrement_nonzero_xdata_counters,yes,0.90,47,0.43
 bank1/80EF.c,bank1,80EF,16,bank1/8001.c,8001,decrement_nonzero_xdata_counters,yes,0.94,47,0.34
-bank1/818A.c,bank1,818A,6,bank1/818A.c,818A,set_0472_20_and_0457_low3_101,no,1.00,6,1.00
+bank1/818A.c,bank1,818A,6,bank1/818A.c,818A,store_20_to_0472_and_fd_to_0457_then_gate,no,1.00,6,1.00
 bank1/81C5.c,bank1,81C5,18,bank1/81C5.c,81C5,clear_0457_low3_and_dispatch_0800_bit7,no,1.00,18,1.00
 bank1/8202.c,bank1,8202,3,bank1/81C5.c,81C5,clear_0457_low3_and_dispatch_0800_bit7,yes,1.00,18,0.17
 bank1/820F.c,bank1,820F,4,bank1/820F.c,820F,and_r7_results_into_carry,no,1.00,4,1.00
 bank1/823A.c,bank1,823A,17,bank1/81C5.c,81C5,clear_0457_low3_and_dispatch_0800_bit7,yes,0.53,18,0.94
-bank1/8261.c,bank1,8261,9,bank1/8261.c,8261,set_0472_20_and_0457_low3_101_then_gate,no,1.00,9,1.00
+bank1/8261.c,bank1,8261,9,bank1/8261.c,8261,store_fd_to_0457_and_set_0472_bit5_keep4_then_gate,no,1.00,9,1.00
 bank1/8300.c,bank1,8300,9,bank1/8300.c,8300,clear_and_set_xdata_flag_bits,no,1.00,9,1.00
 bank1/833E.c,bank1,833E,5,bank1/833E.c,833E,zero_0750_0756_78_then_85c1_and_two_19b4,no,1.00,5,1.00
 bank1/8354.c,bank1,8354,24,bank1/8354.c,8354,zero_045a_then_reset_0459_bit3_and_0456_low5,no,1.00,24,1.00

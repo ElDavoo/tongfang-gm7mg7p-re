@@ -6,9 +6,9 @@
 
 /* Loads R7 with 0x84, calls 0x19A2 (`trampoline_to_cf96`) and returns. It is the shared tail of the
    block this stretch sits in: 0x8209 in 0x8202 (`clear_0801_bit5_then_call_19a2_84`) and 0x825B in
-   0x823A (`set_0472_08_and_0457_low3_011`) both load the same 0x84 and call the same 0x19A2 before
-   their own `ret`, so this entry is the third spelling of one transition rather than a routine of
-   its own. Nothing is read back and the return value is not loaded.
+   0x823A (`store_fb_to_0457_and_set_0472_bit3_keep4`) both load the same 0x84 and call the same
+   0x19A2 before their own `ret`, so this entry is the third spelling of one transition rather than
+   a routine of its own. Nothing is read back and the return value is not loaded.
    type: forwarder
    evidence: ec/decompiled/bank1/861E.asm; ec/decompiled/bank1/861E.c
    basis: hand-decoded

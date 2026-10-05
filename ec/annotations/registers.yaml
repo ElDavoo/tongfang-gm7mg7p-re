@@ -2183,11 +2183,20 @@ registers:
       an exported function" and "seeding the routine would need --mode
       rebuild-project" are superseded, not deleted -- the four sites are the
       owners of four seeded exports, one each, and export-only closed them with
-      the project database unchanged (0x818A set_0472_20_and_0457_low3_101,
-      0x81C5 clear_0457_low3_and_dispatch_0800_bit7, 0x823A
-      set_0472_08_and_0457_low3_011, 0x8261
-      set_0472_20_and_0457_low3_101_then_gate). See
-      docs/findings/0400-045f-site-owners.md.
+      the project database unchanged (0x818A
+      store_20_to_0472_and_fd_to_0457_then_gate, 0x81C5
+      clear_0457_low3_and_dispatch_0800_bit7, 0x823A
+      store_fb_to_0457_and_set_0472_bit3_keep4, 0x8261
+      store_fd_to_0457_and_set_0472_bit5_keep4_then_gate). See
+      docs/findings/0400-045f-site-owners.md. CORRECTION: "4 EC-side sites,
+      all in bank1 and all read-modify-writes" is superseded on the second
+      clause, not deleted -- each of the four does read, mask and store, but at
+      0x8190, 0x8246 and 0x826A the mask/orl pair is constant (`anl A,#0xf8`
+      then `orl A,#0xfd` or `#0xfb`, whose operands already have bits 3-7 set),
+      so those three store the whole byte `0xFD`/`0xFB`/`0xFD` whatever it held
+      and only 0x81D1 is a true read-modify-write of the low three bits. The
+      site counts, static_refs and status are unchanged; a stored constant is
+      not a behaviour.
 
   - name: XDATA_0458
     addr: 0x0458

@@ -9,7 +9,7 @@ not restate it; what follows is only what the names make readable that the
 addresses could not carry.
 
 Three of those readings are real advances in what the firmware is doing —
-`0x0457`'s low-three-bit field, the `0x0404`/`0x0436` pair comparison, and
+`0x0457`'s write shape, the `0x0404`/`0x0436` pair comparison, and
 `0x0440`'s reader shape — and they are §1 to §3 below. The rest is §4, which is
 one line per remaining byte and points at §5 rather than repeating it.
 
@@ -20,43 +20,59 @@ and a whole-byte store of a constant is a stored constant, not a readback. No
 live test ran; this pipeline has no machine, and every sentence below is read
 from bytes in `ec/firmware/GMxMGxx_11.800`.
 
-## 1. `0x0457`'s low three bits are loaded with three distinct constants, which is a shape and not a meaning
+## 1. Three of `0x0457`'s four writers store a whole-byte constant; only one is a real read-modify-write
 
-All four of the byte's EC-side `MOV DPTR` sites are read-modify-writes, and all
-four now sit one in each of four named exports. Each clears bits 0-2 with
-`anl a,#0xf8` and then either ORs a constant or does not:
+All four of the byte's EC-side `MOV DPTR` sites now sit one in each of four named
+exports, and all four write the byte as `anl a,#0xf8` followed by an optional
+`orl`. What that pair does depends entirely on whether the `orl` constant already
+has the upper bits set, and for three of the four it does:
 
-| site | owning export | constant loaded into bits 0-2 |
-|---|---|---|
-| bank1 `0x8190` | `set_0472_20_and_0457_low3_101` | `0b101` |
-| bank1 `0x81D1` | `clear_0457_low3_and_dispatch_0800_bit7` | `0b000` |
-| bank1 `0x8246` | `set_0472_08_and_0457_low3_011` | `0b011` |
-| bank1 `0x826A` | `set_0472_20_and_0457_low3_101_then_gate` | `0b101` |
+| site | owning export | bytes stored | result |
+|---|---|---|---|
+| bank1 `0x8190` | `store_20_to_0472_and_fd_to_0457_then_gate` | `anl a,#0xf8` / `orl a,#0xfd` | always `0xFD` |
+| bank1 `0x81D1` | `clear_0457_low3_and_dispatch_0800_bit7` | `anl a,#0xf8`, no `orl` | bits 0-2 cleared, bits 3-7 kept |
+| bank1 `0x8246` | `store_fb_to_0457_and_set_0472_bit3_keep4` | `anl a,#0xf8` / `orl a,#0xfb` | always `0xFB` |
+| bank1 `0x826A` | `store_fd_to_0457_and_set_0472_bit5_keep4_then_gate` | `anl a,#0xf8` / `orl a,#0xfd` | always `0xFD` |
 
-`0x81D1` is the one site of the four with no `orl` after the mask, so it zeroes
-the field rather than loading into it. Bits 3-7 pass through untouched at all
-four. **`0xfd & 0x07 = 0b101`, which is what the `orl a,#0xfd` at `0x8190`
-reproduces.**
+**`0xfd` and `0xfb` both have every bit from 3 to 7 set**, so at `0x8190`,
+`0x8246` and `0x826A` the mask contributes nothing: the `anl` clears bits 0-2 and
+the `orl` then sets bits 3-7 along with whichever of the low three the routine
+wants, so the byte ends up exactly `0xFD`/`0xFB`/`0xFD` whatever it held before —
+enumerating all 256 prior values gives exactly one result at each. These three
+are unconditional whole-byte stores, and each one **overwrites bits 3-7 rather
+than preserving them**. Only `0x81D1` is a true read-modify-write of the low
+three bits, and it is the only one of the four that leaves the rest of the byte
+alone. This is the same shape §4 assigns to `0x045A`'s
+`mov A,#0x00 / movx @DPTR,A` and to `0x045F`'s `0xDB`: a stored constant, not a
+bit assembled into a field. The committed `ec/decompiled/bank1/818A.c` and
+`823A.c` read `XDATA_0457 = 0xfd;` and `XDATA_0457 = 0xfb;` for exactly this
+reason — Ghidra folds the pair because the result does not depend on the old
+value, which is sound only under this reading.
 
-The `0x0472` write beside each site is worth naming per routine rather than by
-position, because the four are not the same kind of write.
-`set_0472_20_and_0457_low3_101` (bank1 `0x8190`) stores the constant `0x20`
-into `0x0472` whole — `mov A,#0x20 / movx @DPTR,A`, no mask and no `orl`. The
-other three each rewrite `0x0472` as `anl A,#0x10 / orl A,#0xNN`, which **sets
+The `0x0472` write beside each site is a separate matter and is named per
+routine, because the four are not the same kind of write.
+`store_20_to_0472_and_fd_to_0457_then_gate` (bank1 `0x8190`) stores the constant
+`0x20` into `0x0472` whole — `mov A,#0x20 / movx @DPTR,A`, no mask and no `orl`.
+The other three each rewrite `0x0472` as `anl A,#0x10 / orl A,#0xNN`, which **sets
 their bit whether or not bit 4 was set** and leaves bit 4 as it was, the other six
 bits going to zero: `clear_0457_low3_and_dispatch_0800_bit7` (bank1
-`0x81CC`-`0x81CE`) sets bit 0, `set_0472_08_and_0457_low3_011` (bank1
+`0x81CC`-`0x81CE`) sets bit 0, `store_fb_to_0457_and_set_0472_bit3_keep4` (bank1
 `0x8241`-`0x8243`) sets bit 3, and
-`set_0472_20_and_0457_low3_101_then_gate` (bank1 `0x8265`-`0x8267`) sets bit 5.
-Those same three are the ones that clear bits 0-2 of `0x0457` and load `0b000`,
-`0b011` and `0b101` respectively, so **three of the four routines rewrite one
-byte of `0x0472` around a single bit — set, with bit 4 preserved and six bits
-cleared — and load a constant into a three-bit field of another, and the fourth
-only clears.**
+`store_fd_to_0457_and_set_0472_bit5_keep4_then_gate` (bank1 `0x8265`-`0x8267`)
+sets bit 5. Those `0x0472` writes genuinely do depend on the prior value — two
+possible results each — so **the reading that held for them (a single bit set,
+with bit 4 preserved) does not transfer to the `0x0457` write beside each one.**
 
-A field that four routines load three distinct constants into is a small
-enumerated state rather than a flag. That is the strongest reading the shape
-supports and it is still a shape: **what any of the three values means is not
+So the shape is: **three routines store one of two whole-byte constants into
+`0x0457` and the fourth clears its low three bits.** What that supports is a byte
+whose value three of its four writers set outright, rather than a field three
+routines load into — and it is why the two readings have to be kept apart: the
+same `anl`/`orl` idiom on `0x0472` beside each site really does preserve bit 4,
+while on `0x0457` it does not preserve anything. The stronger reading this
+section used to carry — a small enumerated state living in a three-bit field
+whose upper five bits survive — does not hold on these bytes, because three of
+the four writers destroy the upper five bits rather than preserving them. **What
+any of the values means, and which bits a reader is expected to find set, is not
 established.** The four whole-byte CODE-record stores that seed the byte
 `0x00`, `0x05`, `0x80` and `0x83` are a second writer class on top
 (`ec/annotations/xdata-0400-045f.md` §12), not an explanation of these four.
@@ -196,9 +212,11 @@ and in the committed listings it cites.
 
 None of the following is answered by a name, and all three need the machine:
 
-1. What any of `0x0457`'s four low-three-bit values means. A live read of the
-   byte across the transitions would settle it. §1 poses it sharply; it does not
-   answer it.
+1. What the values `0x0457` is given mean, and which bits a reader is expected
+   to find set. Three of its four EC-side writers store a whole-byte constant
+   (`0xFD`, `0xFB`, `0xFD`) and only `0x81D1` clears just the low three, so a
+   live read of the byte across the transitions would settle it. §1 poses it
+   sharply; it does not answer it.
 2. What reads the three bits of `0x06FF` that a non-zero `0x0440` raises.
 3. What `0x0436`/`0x0437` measures. This one keeps its existing issue, and
    `docs/hardware-tests/remain-capacity-0436.md` is the prepared run.

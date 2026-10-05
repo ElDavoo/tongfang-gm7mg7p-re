@@ -814,12 +814,12 @@ bank1,8096,dec_06d9_only_if_both_calls_return_zero,annotation,0,,,,vacuous
 bank1,80AA,dec_timers_06da_08e4_055f_09ce_070b,annotation,2,06DA,06DA,,agree
 bank1,80D6,clear_0460_0468_when_0706_reaches_zero,annotation,0,,,,vacuous
 bank1,80EF,dec_timers_and_set_expiry_flags,annotation,1,,,,vacuous
-bank1,818A,set_0472_20_and_0457_low3_101,annotation,11,0457 0472 097C,0457 0472 097C,,agree
+bank1,818A,store_20_to_0472_and_fd_to_0457_then_gate,annotation,11,0457 0472 097C,0457 0472 097C,,agree
 bank1,81C5,clear_0457_low3_and_dispatch_0800_bit7,annotation,0,,,,vacuous
 bank1,8202,clear_0801_bit5_then_call_19a2_84,annotation,5,0801,0801,,agree
 bank1,820F,and_r7_results_into_carry,annotation,0,,,,vacuous
-bank1,823A,set_0472_08_and_0457_low3_011,annotation,0,,,,vacuous
-bank1,8261,set_0472_20_and_0457_low3_101_then_gate,annotation,10,0457 0472,0457 0472,,agree
+bank1,823A,store_fb_to_0457_and_set_0472_bit3_keep4,annotation,0,,,,vacuous
+bank1,8261,store_fd_to_0457_and_set_0472_bit5_keep4_then_gate,annotation,10,0457 0472,0457 0472,,agree
 bank1,8300,clear_and_set_xdata_flag_bits,annotation,0,,,,vacuous
 bank1,833E,zero_0750_0756_78_then_85c1_and_two_19b4,annotation,6,0750 0756,0750 0756,,agree
 bank1,8354,zero_045a_then_reset_0459_bit3_and_0456_low5,annotation,15,045A 0801 0824,045A 0801,0824,disagree

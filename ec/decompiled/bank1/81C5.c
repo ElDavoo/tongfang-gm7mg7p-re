@@ -8,14 +8,16 @@
    A,#0x01` and stores it: the `anl` clears every bit but bit 4, so the `orl` sets bit 0 **whether
    or not bit 4 was set** -- bit 0 always ends up set, bit 4 passes through, and the remaining six
    bits go to zero. It then reads 0x0457 and clears bits 0-2 with `anl A,#0xf8` and stores it,
-   **with no `orl` after it**, so this is the one site of the four that zeroes the field rather than
-   loading a constant into it. Calls 0x199C (`trampoline_to_c4b7`), then branches on bit 7 of
-   0x0801. The bit-7-clear path calls 0x820F (`and_r7_results_into_carry`); carry set falls to
-   0x0803, where zero jumps to 0x821F and nonzero is decremented in place. Carry clear skips to
-   0x81F2, which calls 0x8DBC (`write_05_to_06c4_after_1984_check`) and tail-jumps to 0x8225 on
-   carry. The bit-7-set path instead calls 0x8D62 (`FUN_CODE_8d62`), which this repo has exported
-   but not decoded, and returns on no-carry; on carry it stores 0xCD into 0x047E and falls through
-   into 0x8202 (`clear_0801_bit5_then_call_19a2_84`).
+   **with no `orl` after it**. This is the only one of the four 0x0457 sites that is a true
+   read-modify-write: bits 3-7 are left as they were, so unlike 0x818A, 0x8246 and 0x8261 it does
+   not overwrite whatever a reader may be testing above bit 2. Calls 0x199C (`trampoline_to_c4b7`),
+   then branches on bit 7 of 0x0801. The bit-7-clear path calls 0x820F
+   (`and_r7_results_into_carry`); carry set falls to 0x0803, where zero jumps to 0x821F and nonzero
+   is decremented in place. Carry clear skips to 0x81F2, which calls 0x8DBC
+   (`write_05_to_06c4_after_1984_check`) and tail-jumps to 0x8225 on carry. The bit-7-set path
+   instead calls 0x8D62 (`FUN_CODE_8d62`), which this repo has exported but not decoded, and returns
+   on no-carry; on carry it stores 0xCD into 0x047E and falls through into 0x8202
+   (`clear_0801_bit5_then_call_19a2_84`).
    type: state
    evidence: ec/decompiled/bank1/81C5.asm; ec/decompiled/bank1/81C5.c; ec/annotations/registers.yaml
    basis: hand-decoded

@@ -338,9 +338,9 @@ them resolve it, and both leave `0xC848` open.
   | `0x1672` | `0xE56F` | none in the CSV |
   | `0x18AC` | `0x83F8` | `bank1` `clear_0801_bit6_073c_low2_086f_bit3_then_e5` |
   | `0x18B2` | `0x81C5` | `bank1` `clear_0457_low3_and_dispatch_0800_bit7` |
-  | `0x18B8` | `0x823A` | `bank1` `set_0472_08_and_0457_low3_011` |
-  | `0x18BE` | `0x8261` | `bank1` `set_0472_20_and_0457_low3_101_then_gate` |
-  | `0x18C4` | `0x818A` | `bank1` `set_0472_20_and_0457_low3_101` |
+  | `0x18B8` | `0x823A` | `bank1` `store_fb_to_0457_and_set_0472_bit3_keep4` |
+  | `0x18BE` | `0x8261` | `bank1` `store_fd_to_0457_and_set_0472_bit5_keep4_then_gate` |
+  | `0x18C4` | `0x818A` | `bank1` `store_20_to_0472_and_fd_to_0457_then_gate` |
   | `0x1906` | `0x8652` | none in the CSV |
   | `0x1936` | `0x9F01` | none in the CSV |
   | `0x1948` | `0xA694` | none in the CSV |

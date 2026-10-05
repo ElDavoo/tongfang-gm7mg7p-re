@@ -207,10 +207,10 @@ would close it are recorded; the closing is a human's. `0x0457` stays
 > the routines the four sites sit in through `ghidra-functions.csv` rows, which
 > the default build mode exports from a scratch copy of the project, so
 > `--mode rebuild-project` was not needed after all. `site-resolution.csv` now
-> resolves the four to bank1 `0x818A` `set_0472_20_and_0457_low3_101`, `0x81C5`
-> `clear_0457_low3_and_dispatch_0800_bit7`, `0x823A`
-> `set_0472_08_and_0457_low3_011` and `0x8261`
-> `set_0472_20_and_0457_low3_101_then_gate`, still `read+write` and still with no
+> resolves the four to bank1 `0x818A` `store_20_to_0472_and_fd_to_0457_then_gate`,
+> `0x81C5` `clear_0457_low3_and_dispatch_0800_bit7`, `0x823A`
+> `store_fb_to_0457_and_set_0472_bit3_keep4` and `0x8261`
+> `store_fd_to_0457_and_set_0472_bit5_keep4_then_gate`, still `read+write` and still with no
 > callee. `xdata-registers.csv` carries a `0x0457` row, spelled by symbol rather
 > than by the pair-literal seed shape the other eight have, and
 > `xdata_register_map.py`'s `NOT_IN_TREE` has no entry for it. Nothing here moves
