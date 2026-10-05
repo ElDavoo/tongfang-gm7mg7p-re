@@ -289,11 +289,13 @@ FAN_TACH = list(range(0x0460, 0x0470))
 # How close two marks have to be to count as one action, restated from
 # ec/tools/grade_0751_isolation.py:260 rather than imported: this file runs
 # next to ecrw.py on a Windows box, so main() must not depend on the
-# repository layout to know a number (the self-test reaches the grader by
-# path, and that is the one place that may). Pinned against the grader's own
-# constant by windows/tools/test_manual_fan_ctrl_probe.py, so a window that
-# moves there fails this tool's suite and names itself. The window is the
-# grader's and stays there; 5 s is right for its three-console procedure.
+# repository layout to know a number. The self-test does want the grader, and
+# takes it through `ec_watch.py`'s candidate list rather than a path of this
+# file's own, so a copy staged beside that file is found rather than assumed.
+# Pinned against the grader's own constant by
+# windows/tools/test_manual_fan_ctrl_probe.py, so a window that moves there
+# fails this tool's suite and names itself. The window is the grader's and
+# stays there; 5 s is right for its three-console procedure.
 MARK_MERGE_SECONDS = 5
 
 
@@ -676,16 +678,59 @@ def self_test():
           and marks_clear(MARK_MERGE_SECONDS + 0.5)
           and marks_clear(SELFTEST_HOLD))
 
-    # Imported here, not at module scope: this tool runs next to ecrw.py on a
-    # Windows box, where the repository layout is not something to depend on at
-    # import time, and a self-test that cannot reach the grader is a self-test
-    # that checked a shape it wrote rather than the shape the grader reads.
-    grader_path = Path(__file__).resolve().parents[2] / "ec/tools" \
-        / "grade_0751_isolation.py"
-    spec = importlib.util.spec_from_file_location("grade_0751_isolation",
-                                                  grader_path)
-    grader = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(grader)
+    # The grader, through `ec_watch.py`'s own candidate list rather than a path
+    # of this file's. The search order is the part of the lookup that has
+    # already moved once (#549), and a second copy of it here would be the
+    # drift that loading the grader rather than transcribing its rules exists
+    # to prevent -- so this shares the list and keeps its own walk, its own
+    # message and its own exit code, because `load_label_vocab` reports
+    # through an argparse parser and returns a `--label-vocab` prompt's
+    # vocabulary rather than the module this test drives.
+    #
+    # The import is inside this call and not at module scope, and the reason
+    # is a staging convention rather than a platform one: `ec_watch.py`'s own
+    # module scope imports anywhere (`test_import_off_windows.py` -- the DLLs
+    # bind on the first `Ec()`, not at import), so what the deferral buys is
+    # that a grader lookup is not one requirement an importer of this tool
+    # inherits at import time.
+    import ec_watch
+    tried = []
+    for path in ec_watch.grader_candidates():
+        if not path.is_file():
+            tried.append(path)
+            continue
+        try:
+            spec = importlib.util.spec_from_file_location(
+                "grade_0751_isolation", path)
+            if spec is None or spec.loader is None:
+                # No loader for this suffix (a .txt and friends): there, and
+                # there is no module to run. The same one refusal.
+                raise ImportError("importlib has no loader for this file")
+            grader = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(grader)
+        except Exception as e:
+            # Stopped at rather than passed over, which is `load_label_vocab`'s
+            # rule and for its reason: a staged copy quietly standing in for a
+            # committed grader broken since the checkout was made is a
+            # self-test that passes against a rule the tree does not hold.
+            sys.exit(f"--self-test needs grade_0751_isolation.py at {path}, "
+                     f"and it is there but will not load: {e}")
+        break
+    else:
+        # Every place named, whether or not it exists: this is the sentence an
+        # operator standing at a staged box reads, and it is what tells them
+        # which file to copy where. The beside-the-tool copy is named as beside
+        # `ec_watch.py`, because that is the file `grader_candidates` reads
+        # `__file__` from and these tools are staged as a directory -- so it is
+        # the directory this one sits in, whichever shape the run is in, and a
+        # checkout still reaches the committed copy above it first.
+        sys.exit("--self-test needs grade_0751_isolation.py, the module whose "
+                 "reader this run's marks are checked against, and none of "
+                 "these is it:\n"
+                 + "".join(f"  {p}\n" for p in tried)
+                 + "Put a copy of it in the same directory as ec_watch.py, or "
+                   "run from a checkout of this repository, which has one at "
+                   "ec/tools/grade_0751_isolation.py")
 
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "self-test.csv"
