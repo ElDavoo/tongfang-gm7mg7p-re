@@ -6451,6 +6451,8 @@ registers:
       `python3 ec/tools/trace_xdata_refs.py ec/firmware/GMxMGxx_11.800
       0x0EA8` and `make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000`
       plus `r2 -a 8051 -q -c 's 0x0f335; pd 32' bank0.bin`. ***
+      *** Its destination, 0x0F61-0x0F68, has other writers besides it: see
+      docs/findings/xdata-0exx-page-reachability.md. ***
       The other two sites are separate, and both are inside bank0 0xF221:
       0xF221 reads this byte and compares it with 0x12, and 0xF234 is that
       cjne's own branch target -- mov DPTR,#0x0ea8 / movx A,@DPTR / ret -- so
