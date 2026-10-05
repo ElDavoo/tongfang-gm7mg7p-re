@@ -920,7 +920,8 @@ through the action's `claude_code_oauth_token` input, and runs at
 | `agent-fix.yml` (fix rounds after review, including the escalation round; also reached from `agent-fix-ci.yml`) | `sonnet` |
 | `agent-implement.yml` pre-review fix steps | `sonnet` |
 | `agent-followups.yml` | `sonnet` |
-| everything else: plan, implement, pre-review, review verdict, conflicts, `claude.yml` | `opus` |
+| `agent-conflicts.yml` | `sonnet` |
+| everything else: plan, implement, pre-review, review verdict, `claude.yml` | `opus` |
 
 Both callers of the reusable `agent-fix.yml` forward `CLAUDE_CODE_OAUTH_TOKEN`,
 and that workflow requires it. No `ANTHROPIC_DEFAULT_*_MODEL`,
