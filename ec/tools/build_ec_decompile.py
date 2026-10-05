@@ -70,6 +70,13 @@ import grade_name_basis
 # the two above are.
 import second_copy_census
 
+# The framing verdict for every call-target seed whose address the instruction-
+# boundary predicate fires on, and the ratchet --check compares it against.
+# Imported rather than restated for the same one-way reason as the three above,
+# and it defers *its* import of this module in `exporter()` for the same
+# purpose: `call_target_seeds()` has one attribution, not two.
+import call_target_seed_frames
+
 # The provenance header every committed .c carries, held against what
 # write_context() below composes and writeFunctionFile() writes. Imported for
 # the same reason as the three above and with the same one-way consequence: it
@@ -494,7 +501,19 @@ def call_target_seeds(bank, census):
 
     `census` is the validated read from call_target_rows(), passed in rather
     than re-read here, so the two banks and the bucket-C report below are three
-    views of one parse."""
+    views of one parse.
+
+    **Whether the target is an instruction boundary is a separate question, and
+    it is not asked here.** Issue #1110 built the predicate that answers it
+    (`audit_call_targets.earlier_record()`, applied at the *target* rather than
+    at the row's own call site) and `call_target_seed_frames.py` runs it over
+    this population, publishing each affected seed's verdict in
+    `ec/annotations/call-target-seed-frames.csv`. This function **reports** what
+    that verdict is and **never drops a row on it**, for the reason the ordering
+    in seed_rows() gives: a byte-scan target one byte into a real instruction
+    must not swallow the evidence-backed entry inside it, so a filter here would
+    remove exactly the seeds the sort exists to keep subordinate.
+    `seed_basis_labels()` is where a caller reads the label."""
     mine, unattributed = [], []
     for row in census:
         region = row["region"]
@@ -508,6 +527,18 @@ def call_target_seeds(bank, census):
         elif region == "common":
             unattributed.append((target, "call-target-unattributed"))
     return mine, unattributed
+
+
+def seed_basis_labels():
+    """`{(program, target): verdict}` for every seed the framing predicate fires
+    on, read from the published CSV. Empty when the CSV is not there or is not
+    that tool's.
+
+    Read through the module imported at the top rather than re-derived here, so
+    the label a caller prints and the row `--check` ratchets are the same row.
+    Empty is not an error: the labels are a report, and a missing report is
+    `call_target_seed_frames.file_problems()`'s business to name."""
+    return call_target_seed_frames.read_labels()
 
 
 def annotation_rows():
@@ -1927,6 +1958,36 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
                             "(file_offset, target)")
     check("a call-target row with more fields than the header is reported",
           len(_p) == 1, str(_p))
+
+    # The seed rule's blind spot, and the case that makes the rule honest.
+    # `0x012F` trips the instruction-boundary predicate -- 0x012E pairs as
+    # `b0 90` -- and is a real hand-decoded routine whose listing survives
+    # because seed_rows() sorts `annotation` ahead of `call-target`. A rule that
+    # dropped every seed the predicate fires on, or filed all of them as
+    # mid-instruction, would go red on it. Asserted against the image's own bytes
+    # rather than read back from the published CSV, so it cannot pass by the file
+    # agreeing with itself.
+    _ctf_early = call_target_seed_frames.audit_module().earlier_record
+    _ctf_site = 0x012F
+    _ctf_rec = _ctf_early(fw, _ctf_site, 0)
+    check("the 0x012F counter-case trips the predicate (0x012E pairs as `b0 90`)",
+          _ctf_rec == "0x0012E b0 90 anl c,/p1.0", _ctf_rec)
+    _ctf_back = min(call_target_seed_frames.BACK, _ctf_site)
+    _ctf_onto, _ctf_over = call_target_seed_frames.windowed_walk(
+        fw, _ctf_site, _ctf_back)
+    check("and the walk lands on it, so the rule keeps it as a real entry",
+          call_target_seed_frames.verdict_for(_ctf_onto, _ctf_over, True)
+          == "entry-under-walk", "%d/%d" % (_ctf_onto, _ctf_over))
+    # And the seed is still emitted: the label is a report, and `seed_rows()`
+    # still carries the address into both bank programs on the strength of the
+    # annotation. A labelling change that quietly stopped seeding is the failure
+    # this assertion is here to catch.
+    _ctf_seeds = {a for a, _basis in call_target_seeds("bank0", _ct)[0]}
+    check("a seed the predicate fires on is still emitted, not dropped",
+          _ctf_site in _ctf_seeds, "%#06x is not among the seeds" % _ctf_site)
+    check("and it carries the label the published CSV holds for it",
+          seed_basis_labels().get(("bank0", "0x012F")) == "entry-under-walk",
+          str(seed_basis_labels().get(("bank0", "0x012F"))))
 
     # Coverage, on a manifest that agrees with its index and one that does not.
     check("coverage: a manifest that agrees with the index passes",
@@ -4942,6 +5003,34 @@ def check(work):
         fail("... and %d more seed-basis disagreement(s)" % (len(_sbp) - 5))
     print("  seed basis: %s"
           % seed_basis_projection.exposure_line(_sbp_basis, _sbp))
+    # The seed rule's blind spot, ratcheted rather than asserted live. Every
+    # census target above is seeded as a function entry whether or not the
+    # address is an instruction boundary, and call_target_seed_frames.py runs
+    # #1110's predicate over that population and publishes each affected seed's
+    # verdict. This compares the derivation against that file and fails, naming
+    # the seed: a mid-instruction seed appearing, or a verdict being quietly
+    # reverted, is what it catches.
+    #
+    # A live assertion -- fail on any seed the predicate says is mid-instruction
+    # -- is deliberately not what this is, and the reason is the committed tree:
+    # it already holds hundreds of them, so that check is red on arrival and a
+    # check that cannot go green on the tree it ships with is not a guard. The
+    # live assertion replaces this in the pull request that lands the rebuild
+    # and empties the list, which needs --mode rebuild-project.
+    _seed_frames = call_target_seed_frames.file_problems()
+    if not _seed_frames:
+        _seed_rows, _seed_unattributed, _seed_total = \
+            call_target_seed_frames.frames(open(FIRMWARE, "rb").read())
+        _seed_frames = call_target_seed_frames.frame_problems(
+            call_target_seed_frames.read_csv(call_target_seed_frames.FRAMES),
+            _seed_rows)
+        print("  seed frames: %s" % call_target_seed_frames.summary_line(
+            _seed_rows, _seed_total, _seed_unattributed))
+    for problem in _seed_frames[:5]:
+        fail("seed frames: %s" % problem)
+    if len(_seed_frames) > 5:
+        fail("seed frames: ... and %d more seed-frame problem(s)"
+             % (len(_seed_frames) - 5))
     # `_cdig`, not `_cd`: the cross-decoder report below binds that name, and
     # one function's two unrelated locals should not share a spelling.
     _cdig = verify_c_digests()
