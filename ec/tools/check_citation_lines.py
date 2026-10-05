@@ -52,9 +52,9 @@ measurement:
     declared row.** `ROW_SCOPE` below is the visible list of what is held to
     what. The declared subject is a constant in this file rather than something
     read out of the sentence, because a sentence that cites a row does not
-    reliably name that row's subject in the same breath:
-    `xdata-086x-dispatch.md:326` cites the `0x0860` per-bucket totals and names
-    no address at all.
+    reliably name that row's subject in the same breath: the dispatch page's
+    "`check_site_census.py` asserts both" sentence, which cites the `0x0860`
+    per-bucket totals and names no address at all.
 
 **The vocabulary: what counts as superseded.** A paragraph that announces itself
 a correction is skipped, not checked, and this is not a workaround -- it is the
@@ -91,8 +91,9 @@ quietly.
     entry is ONE paragraph opening `name: XDATA_0860` and its
     `*** CORRECTION` marker sits mid-paragraph rather than at the opening.
     Scoping the file in was measured rather than assumed, and it goes red at
-    once: it reports `xdata-registers.csv:662` at `registers.yaml:3008`, the
-    `0x077E` row. That is the 2026-09-24 block's own live prose -- its quoted
+    once: it reports `xdata-registers.csv:662` twice, once for each of the two
+    sentences in that paragraph that name it, and `:662` is the `0x077E` row.
+    The first of those is the 2026-09-24 block's own live prose -- its quoted
     run names the CSV with no row number and holds no pointer -- and the
     2026-09-25 addendum already records the figure as superseded in that same
     paragraph (`:817` is the `0x0860` row), so a rule scoped to the file would
@@ -106,9 +107,9 @@ quietly.
     pointers #870 repointed in place -- the `store_target()` definition,
     `ASSIGN`, the `==` rejection, the reason for it, the tree-wide 838 and the
     `named_in_tree` record. `docs/findings/xdata-0860-note-live-pointers.md`.
-  * *A pointer into a source file*, as against one into a generated CSV:
-    `registers.yaml:3013`'s `:359` and `:1490-1496`, and the `:1557` and
-    `:4073-4085` that addendum writes. That is a different tool with its own
+  * *A pointer into a source file*, as against one into a generated CSV: the
+    `:359` and `:1490-1496` the `XDATA_0860` note names, and the `:1557` and
+    `:4073-4085` its addendum writes. That is a different tool with its own
     false-positive surface; it belongs beside `citation_frames.py`, and those
     cells are fixed by hand and named as a follow-up rather than promised
     here.
@@ -286,18 +287,37 @@ def paragraph(lines: list, lineno: int) -> tuple:
     return start + 1, lines[start:end]
 
 
-def line_of(raw: list, start: int, needle: str) -> int:
-    """The line `needle` is on inside a paragraph, for the report.
+def line_of(raw: list, start: int, unit: int, needle: str, nth: int) -> int:
+    """The line the `nth` copy of `needle` is on inside a paragraph, counting
+    from `unit`, for the report.
 
     Not the line the paragraph or the sentence starts on: a citation and the
     sentence making the claim about it are often not on the same line once the
     text is wrapped, and a report that points a reader at the wrong line is
     worse than one that points at none.
+
+    `nth` is which copy this is among those sharing `needle` in the unit the
+    citation was found in, and the scan is floored at that unit's own line
+    rather than the paragraph's. Both are what keep the standard above true
+    where a paragraph names the same `csv:NNN` more than once, which is the
+    `XDATA_0860` note's own shape: a folded `note: >` scalar holds no blank
+    lines, so the note and the addendum below it are one paragraph, and
+    taking the first copy in it would report the addendum at a line the
+    addendum is not on. `raw` stays the whole paragraph because
+    `supersession()` needs all of it -- a blockquote's `>` can open any line
+    of the run -- and `unit` falls back to itself, which is the line the
+    claim was found on.
     """
+    seen = 0
     for offset, line in enumerate(raw):
+        at = start + offset
+        if at < unit:
+            continue
         if needle in line:
-            return start + offset
-    return start
+            seen += 1
+            if seen == nth:
+                return at
+    return unit
 
 
 def parse_citations(text: str) -> set:
@@ -396,8 +416,14 @@ def check_row_pointers(path: str, text: str, scope: list, csvs: dict,
             continue
         start, raw = paragraph(lines, lineno)
         why = supersession(raw)
+        # Keyed on the needle rather than the tuple so the count is of the
+        # citations that share one, and reset per unit because that is the
+        # scope `line_of` counts in.
+        seen = {}
         for name, cited in POINTER.findall(unit):
-            at = line_of(raw, start, f"{name}:{cited}")
+            needle = f"{name}:{cited}"
+            seen[needle] = seen.get(needle, 0) + 1
+            at = line_of(raw, start, lineno, needle, seen[needle])
             # Ordered before the scope test, not after: a quoted supersession
             # is a denial of currency whatever it names, so a correction that
             # quotes a row this tool holds nothing for is passed over rather

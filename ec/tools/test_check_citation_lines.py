@@ -130,6 +130,17 @@ def site_problems(text=TABLE, rows=None):
                                 False)
 
 
+def reported(text, scope=SCOPE) -> list:
+    """The line each note named, in the order they were printed.
+
+    The reports carry no line numbers of their own -- the line is what a report
+    names -- so a case about which line a citation is reported on has to read
+    them back out of what was printed rather than ask a rule for them.
+    """
+    return [int(n) for n in re.findall(rf"{re.escape(PAGE)}:(\d+): cites",
+                                       moved(text, scope)[1])]
+
+
 def saying(check, *needles, **kwargs) -> list:
     """Problems containing every needle. The needle is the assertion: a case
     that passes because *some* problem was reported would go green on a checker
@@ -390,6 +401,59 @@ class Rule3RowPointers(unittest.TestCase):
                 'decompiled text, which is the `refs: 17` of\n'
                 '`xdata-registers.csv:662`. The 14/2/0/1 below is the bucketing.\n')
         self.assertIn('page.md:3: cites', moved(text)[1])
+
+    def test_a_pointer_named_twice_in_one_paragraph_is_reported_on_its_own_line(
+            self):
+        # The `registers.yaml` shape, because a folded scalar is the only thing
+        # in the tree that produces this: `note: >` holds no blank lines, so the
+        # note and the addendum below it are ONE paragraph. Two sentences, one
+        # needle, two reports -- and each has to name its own line, or the
+        # second sends a reader to the first sentence to look for a claim that
+        # is not in it.
+        text = ('  - name: XDATA_0860\n'
+                '    note: >\n'
+                '      The 2026-09-24 block names xdata-registers.csv:662 as\n'
+                '      the committed row.\n'
+                '      The 2026-09-25 addendum says xdata-registers.csv:662\n'
+                '      is now :817, which is the 0x0860 row.\n')
+        self.assertEqual(reported(text), [3, 5])
+
+    def test_the_same_pointer_twice_in_one_sentence_is_reported_twice(self):
+        # The case that ruled out flooring the search at the sentence's line
+        # and stopping there: both citations are in one wrapped sentence, so a
+        # floor still reports the sentence's first line twice. Counting which
+        # copy of the needle this is, rather than taking the first, is what
+        # makes the docstring's standard hold here too.
+        text = ('  - name: XDATA_0860\n'
+                '    note: >\n'
+                '      The block names xdata-registers.csv:662 and the\n'
+                '      addendum names xdata-registers.csv:662 again.\n')
+        self.assertEqual(reported(text), [3, 4])
+
+    def test_a_report_falls_back_to_the_line_its_sentence_starts_on(self):
+        # `line_of` called directly, because this path is not reachable through
+        # the rule and pretending otherwise would be a case asserting nothing:
+        # a needle `POINTER` found in a unit's joined text is always on one raw
+        # line of that paragraph (the join inserts the space a match could not
+        # straddle), and always at or after the unit's own line. What this pins
+        # is the shape the fallback is *for* -- it lands on the sentence's
+        # line, which is where the claim was found, not the paragraph's first.
+        raw = ['- name: XDATA_0860', '    note: >', '      the row is at', '']
+        needle = 'xdata-registers.csv:662'
+        self.assertEqual(ccl.line_of(raw, 1, 3, needle, 1), 3)
+
+    def test_a_quote_opening_an_earlier_line_still_skips_the_sentence_below_it(
+            self):
+        # Why `line_of` is handed the whole paragraph and floors internally
+        # rather than being handed the paragraph from the sentence's own line:
+        # the `>` opens the paragraph here, not the sentence, so a
+        # `supersession()` given only the sentence's lines finds no quote and
+        # checks a claim inside a correction -- the one outcome this tool's
+        # whole vocabulary exists to refuse.
+        text = ('> A correction that opens with the marker.\n'
+                'It goes on, and its second sentence names\n'
+                '`xdata-registers.csv:662` as the row.\n')
+        self.assertEqual(pointers(text), ([], 0, 1))
 
 
 class TheCommittedTree(unittest.TestCase):
