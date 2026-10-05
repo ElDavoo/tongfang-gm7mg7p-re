@@ -2770,6 +2770,13 @@ within those the two this file has always named:
   own per-address output. The sentence above is left standing because it was
   true when this section's run was taken, and because a correction with the
   wrong text beside it is the form this repository keeps.
+
+  **Correction, 2026-10-03 (issue #175): the `0x0457` half of this stopped being
+  true when that issue's exports landed.** Its four sites now sit one in each of
+  four named exports — `ec/decompiled/bank1/818A.asm`, `81C5.asm`, `823A.asm`
+  and `8261.asm` — and `ec/annotations/xdata-registers.csv` carries a row for
+  the address. `0x0420` is untouched by that and is still in the *not in the
+  decompiled tree* column, for the reason given above.
 - **`0x0733`** and **`0x0735`** (both `MODE_PL_DEFAULTS`, the
   `0x0730`-`0x0737` block's one register name) are
   the two gaps this file has always named, and they fail in

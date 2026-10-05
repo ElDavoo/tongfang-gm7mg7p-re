@@ -54,17 +54,17 @@ The per-function byte readings are the committed listings, one `.asm` and one
 Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
-- `exported functions` — 2722
-- `annotated function rows` — 1964
-- `rows the index marks annotated` — 1971
-- `unresolved rows` — 172
+- `exported functions` — 2748
+- `annotated function rows` — 1990
+- `rows the index marks annotated` — 1997
+- `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
 
 | program | exported | annotated | unannotated |
 |---|---|---|---|
-| `bank0` | 751 | 699 | 52 (7%) |
-| `bank1` | 676 | 594 | 82 (12%) |
+| `bank0` | 755 | 703 | 52 (7%) |
+| `bank1` | 698 | 616 | 82 (12%) |
 | `pd` | 542 | 542 | 0 (0%) |
 | `common` | 753 | 136 | 617 (82%) |
 
@@ -149,7 +149,7 @@ basis rather than the presence of a name.
 > naming rule is in `README.md`, and a check now refuses the collision from
 > either side.
 
-**172 of the 1964 rows are `type: unresolved`, and 290 carry a name that
+**172 of the 1963 rows are `type: unresolved`, and 290 carry a name that
 describes a shape rather than a job.** Each is counted on the whole prefix, not
 a narrower one, and the six prefixes below are the whole scope of that 290 — a
 family that is not a row here is outside the total rather than quietly
@@ -157,13 +157,13 @@ uncounted:
 
 | prefix | rows | of which |
 |---|---|---|
-| `call_` | 99 | |
+| `call_` | 101 | |
 | `load_` | 120 | 83 `load_dptr_`, 37 register and table |
 | `trampoline_` | 29 | |
 | `ret_` | 27 | 19 `ret_only_`, 8 named beside them |
 | `nop_` | 9 | |
 | `seed_` | 6 | |
-| **total** | **290** | |
+| **total** | **292** | |
 
 `--check` recounts that table off `ghidra-functions.csv` and holds every row,
 every breakdown and the total to it, so a tranche that moves a prefix tally
@@ -583,10 +583,14 @@ the jump rather than the callee. And the four *site*
 accessors the issue's phrase points at —
 `0x7421`, `0x9DEC`, `0xB5D3` and `0xE9F5` — **are not exported functions at
 all**: each is a code site inside a larger routine that no `lcall` names.
-[`pd-index-callers.csv`](pd-index-callers.csv) traces all four, and **four of
-its five rows are `status: unresolved`**; the fifth found literals in a caller's
-frame, none of them in a register that site indexes on, and so bounds nothing
-rather than resolving a caller either.
+[`pd-index-callers.csv`](pd-index-callers.csv) traces all four, and **no row of
+it resolves a caller**. The row carrying literals found them in a caller's
+frame, none of them in a register that site indexes on, so it bounds nothing
+rather than resolving a caller either; the rows carrying none are filed either
+`unresolved`, where the frame was long enough to have held a load, or
+`frame too short to say`, where it was not —
+[`pd-index-geometry.md`](pd-index-geometry.md) §4 and
+[`docs/findings/pd-caller-frame-quality.md`](../../docs/findings/pd-caller-frame-quality.md).
 
 **What this group does not establish.** Which entry those four sites belong to,
 and therefore whether the EC has one index-helper routine or several. Making
@@ -626,10 +630,10 @@ The same four totals as §2, restated here so the remainder can be read on its
 own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
-- `exported functions` — 2722
-- `annotated function rows` — 1964
-- `rows the index marks annotated` — 1971
-- `unresolved rows` — 172
+- `exported functions` — 2748
+- `annotated function rows` — 1990
+- `rows the index marks annotated` — 1997
+- `unresolved rows` — 173
 
 **617 of the 753 common-area functions are unannotated, and that is still the
 largest single block of undecoded firmware in this repository** — larger than
@@ -660,8 +664,8 @@ Stated as a list, because the limit is the point of the document:
    `bank-call-audit.md` same-bank caveat is carried, not resolved.
 5. **The fan and thermal group is a grouping, not a control loop.** §6.
 6. **Which functions a power mode reaches is not established.** §7.
-7. **The four index-helper site accessors are not functions**, and four of the
-   five `pd-index-callers.csv` rows are unresolved. §9.
+7. **The four index-helper site accessors are not functions**, and no
+   `pd-index-callers.csv` row resolves one. §9.
 8. **No register `status:` moved**, and none could have. §10.
 9. **A single-byte `ret` in a vector slot is a fact about this image, not about
    the part.** §3.

@@ -5410,7 +5410,7 @@ hands back, and it needs a function seed.
 
 **The reading itself.** 37 of the 43 are countdowns the same twenty
 instructions walk over, 6 are what four of them do at zero, and the two the
-clustering cut into `main-ec-128` and `main-ec-214` (`0x06C6`, `0x06CD`) are
+clustering cut into `countdown-06c6` and `countdown-06cd` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
 `0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
 its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
@@ -6449,13 +6449,16 @@ second path to the int0 forwarder — but it exists because the byte scan found
 `01 03` there, not because the vector table does. Whether either is a genuine
 second copy is not established by the bytes alone.
 
-**Also measured while writing it, and left alone here.** `pd-index-callers.csv`
-has five rows of which **four** are `status: unresolved`, not all five; the fifth
-found literals in a caller's frame, none in a register that site indexes on
-(the status is a function of the intersection, not of the presence of literals —
-corrected in place under
-[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md),
-which carries the vocabulary and what each value does not claim).
+**Also measured while writing it, and left alone here.** No row of
+`pd-index-callers.csv` resolves a caller: the row carrying literals found them
+in a caller's frame, none in a register that site indexes on (the status is a
+function of the intersection, not of the presence of literals), and the rows
+carrying none say `unresolved` or `frame too short to say` — corrected in place
+under
+[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md)
+and
+[`findings/pd-caller-frame-quality.md`](findings/pd-caller-frame-quality.md),
+which carry the vocabulary and what each value does not claim.
 `ec/annotations/bank-call-audit.md`'s own note that
 the BL51 stub at `0x1100` is reached by "350 of the 403 trampolines in
 `0x1150`-`0x1ABC`" is a range-restricted count from the exporter and is not the
@@ -6489,6 +6492,23 @@ only swapped which program's answer it borrowed. It is the same class of
 address-space confusion as §12, one row wide. **The fix is to key `readBasis()`
 on `(program, addr)`**, and it is not made here because it would restate the
 basis column across the whole index and wants its own verification.
+
+**Correction (2026-10-05, issue #393), and the paragraph above is half right
+for a reason that has since aged out.** The vector walk still returns no
+`0x12`, but "`seed_rows()` builds no PD seed at that address **at all**" stopped
+being true: `seed_rows()` also seeds from `annotation_seeds()`, and a `pd`-scoped
+row at `0x0012` exists (`ff_filler_not_a_function_0012`), so the PD program is
+seeded there on its own row. `pd 0x0012` therefore records `annotation` both
+before and after the fix, and for the first time for a reason belonging to the
+PD image rather than to the EC. The borrow this paragraph describes was real
+when written; what it was borrowed *from* is no longer the whole of it. The fix
+is made — in both copies of `readBasis()`, since `ExportListing.java` calls
+`TongFang`'s — and the per-address verdicts, the corrected population and the
+`--check` assertion are in
+[`findings/seed-basis-program-key.md`](findings/seed-basis-program-key.md).
+Two things this paragraph did not know: the affected set is not the 55 addresses
+the issue that filed it measured, and no row anywhere in the tree has moved for
+the reason given above.
 
 **The shape census is held to a recount now (2026-09-25, issue #630).** §2's
 shape-census paragraph states 160 `type: unresolved` rows and 279 names over six
@@ -7683,6 +7703,24 @@ where the committed tables give 7, and read `bank1,DEC4`'s contrast mention as
 the graph booking `9A78` as a caller — it books `DEA5`, and sides with the
 comment's denial of its own site. The split, the verdicts and every site address
 reproduced.)*
+
+*(Correction, 2026-10-05, issue #1268, to the gap-scan figures above and to
+nothing else in this section.)* **The numerator of "15 of the 90" is drawn from
+the gap scan's population and the denominator is not, and only the numerator was
+ever missing its partition.** The 15 come from `ec/ghidra/gap-citation-scan.csv`
+filtered on `neighbour_edge`, and that population is the union of all three
+buckets `citations()` returns — so a pair the citation gate had **refused**, a
+data frame or a cross-program collision, was among the rows a `no-transfer`
+verdict was read off, which is not evidence about a comment because there was no
+code claim for a window to fail to support. The 90 is the `cited_by == inbound`
+count in `call-graph-callees.csv`, and **`cited_by` is a kept-citation figure by
+construction**: `build()` is handed the kept bucket alone, so `rejected` and
+`undecided` never reach a `cited_by` (`call_graph.build()` / `_row`). Every row
+of the gap-scan CSV now carries a `why` column naming the partition, and **both
+`boundary-cut` pairs turn out to be pairs the gate kept** while the one
+`not-code` pair is a refused one. **The fifteen rows, the 9 / 6 split, and every
+conclusion above stand**, and the denominator needed no partition — it never had
+one to lose. [`findings/citation-gap-why-partition.md`](findings/citation-gap-why-partition.md).
 
 ## 39. `spelled_as` is a union across programs, and the CSV now says which half is which (2026-09-25, issue #709)
 
@@ -11906,9 +11944,21 @@ unresolvable and **0** are `>= 0x10000`. So `print_helpers()` now calls
 instead of a bare `IndexError`; `chain_from`'s internal calls pass for free.
 **The sibling question is answered the same way** — an out-of-region address is
 a caller error, rejected at the CLI — and the `site_rows` listing loop itself
-is left alone on purpose, because its contract is a fixed `SITE_WINDOW`-long
+was left alone on purpose, because its contract is a fixed `SITE_WINDOW`-long
 window whose end is the answer, which is the whole difference between it and a
-walk that ends when something stops it; that loop is the named follow-up.
+walk that ends when something stops it; that loop was the named follow-up.
+**Retracted 2026-10-05, issue #1014:** the window contract is not the difference
+it was taken to be — the count bounds the work and the region end bounds the
+window, exactly as it bounds the two walks above — and the listing is now bounded
+at `pd_bounds()` with the same two stops and the same vocabulary. The sharper
+reason is the column: `--sites 0xFFFF` printed the fill past `0x30000` as
+runtime `0x10000`–`0x1000e`, and `pd_bounds()` puts the region at
+`0x0000-0xFFFF`, so none of those was a PD runtime address. `site_rows()` now
+stops at `0x2FFFF` and names `0x30000`, the pin that measured the read moved
+rather than deleted, and the premise assertion the pin rested on went with it to
+where the map is asserted. The argument above is left standing as the record of
+what this section believed; see
+[`docs/findings/site-rows-window-bound.md`](findings/site-rows-window-bound.md).
 **Sixteen modes are byte-identical against the pre-change file from `99c01938`,
 and all five committed CSVs regenerate byte for byte**; the one output that moved
 is `--helpers 0xFFFF`, 24 listing lines to 1, reported as a **correction** — the

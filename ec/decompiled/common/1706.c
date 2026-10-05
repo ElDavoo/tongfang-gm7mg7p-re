@@ -10,7 +10,7 @@ void FUN_CODE_1706(void)
 
 {
   func_0x1000();
-  bl51_bank_select_0(0xc717);
+  bl51_bank_select_0(fan_mode_from_0440_into_0741_0751);
   return;
 }
 

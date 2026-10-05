@@ -213,8 +213,18 @@ class HistoricalTests(unittest.TestCase):
         # folds into `docs/ci/agent-gates-reassembly-bound-check.patch` and the
         # write-up names what was asked for beside what was prepared. Its own
         # case is in docs/findings/audit-call-targets-gate-arm.md.
+        #
+        # `agent-gates-bank-attribution-self-test.patch` is the filename #1081
+        # asked for, declined for that same reason and re-measured rather than
+        # inherited: `bank_attribution.py` takes `<image> --self-test` and wants
+        # the same tail, so a standalone cut applies alone and then collides with
+        # the fold in both orders. Its own case is in
+        # docs/findings/bank-attribution-gate-arm.md. This enumeration is the
+        # exemption, so it grows by a name and not by a figure; a count beside
+        # it would be a line every later declined filename has to edit.
         self.assertEqual(sorted(tool.HISTORICAL),
                          ["agent-gates-audit-call-targets-self-test.patch",
+                          "agent-gates-bank-attribution-self-test.patch",
                           "agent-gates-check-history-checkouts.patch",
                           "agent-gates-claims-and-testdata.patch",
                           "agent-gates-testdata-index.patch"])

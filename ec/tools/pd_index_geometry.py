@@ -50,10 +50,13 @@ Six modes, in increasing order of how much they assume:
               nearest preceding call target by byte scan, and the nearest that
               also passes the two structural tests in reaches() and
               is_entry_shaped() -- and every site calling each, with its own
-              framing counts and any literal `mov rN,#imm` its frame contains
-              in a register this site indexes on. A load into a register the
-              site's term decode does not name is listed and bounds nothing.
-              Both are heuristics; printing them side by side is the point.
+              framing counts, the length of the frame those counts describe, and
+              any literal `mov rN,#imm` its frame contains in a register this
+              site indexes on. A load into a register the site's term decode
+              does not name is listed and bounds nothing, and a frame too short
+              to have held one says so rather than reading as a search that
+              found nothing. Both are heuristics; printing them side by side is
+              the point.
   --reached   Every entry the base sites in a span hand DPTR to, one per entry
               rather than one per site, with the decode outcome each one gets:
               its term string, or `unmodelled` with the listing. --helpers
@@ -93,12 +96,12 @@ evidence is not an extra caller access. low8(x) = x & 0xFF; base-add carry is
 retained and every address wraps modulo 0x10000.
 
 Every walk here is bounded by the pd-image region, not only by its instruction
-count: walk_helper() and chain_from() take both ends of pd_bounds() and stop at
-0x30000 the way access_walk() does, so a run off the region end is a named stop
-rather than a listing of the 0xFF fill past it. Six other functions have always
-kept that `hi` for their own loops; the census of every function that discards
-it is in ../../docs/findings/pd-sites-address-range.md, and the decision this
-bound rests on in ../../docs/findings/count-bounded-walk-invariant.md.
+count: walk_helper(), chain_from() and site_rows() each take both ends of
+pd_bounds() and stop at 0x30000 the way access_walk() does, so a run off the
+region end is a named stop rather than a listing of the 0xFF fill past it.
+Which functions take that `hi` for their own loops, and which discard it, is
+the census in ../../docs/findings/pd-sites-address-range.md; the decision this
+bound rests on is in ../../docs/findings/count-bounded-walk-invariant.md.
 
 Read-only: it opens the firmware image for reading and writes nothing.
 
@@ -126,14 +129,6 @@ import re
 import sys
 
 from disasm8051 import FLOW_OPCODES, OPCODE_LEN, converges_from, mnemonic, paged_target
-# `band_faults` is the one implementation of "is this band all 0xFF" in the
-# tree, imported rather than rewritten so the self-test's floor below and
-# check_image_map.py's own --check cannot come to disagree about it. The
-# vocabulary comes with it for a second reason: the band predicate only knows
-# how to test the `how` strings that tool declares a test for, so asking
-# through `CHECKED` is what keeps an edited row from being measured against a
-# claim it no longer makes.
-from check_image_map import CHECKED, band_faults
 from trace_xdata_refs import (MOV_DPTR, PD_MARKER, REGIONS, offset_for_runtime,
                               runtime_addr)
 
@@ -237,11 +232,30 @@ INDEX_REG_RE = re.compile(r"\bR[0-7]\b")
 # is a heuristic, and literals_in() does not follow what a callee leaves in the
 # register bank, so nothing here says the value survives the call. The
 # "none an index register" value says only that these loads are not the index --
-# not that the index is provably unbounded.
+# not that the index is provably unbounded. The short-frame one says nothing at
+# all about the index: it is about how much of the frame there was to scan.
 UNRESOLVED_CALLER = "unresolved"
 CALLER_NO_INDEX = "literals found, none an index register"
 CALLER_INDEX_LOAD = "literal load into an index register"
 CALLER_UNRESOLVED_INDEX = "literals found; site index registers unresolved"
+CALLER_SHORT_FRAME = "frame too short to say"
+
+# Instructions a caller frame must hold before a row that carries no literal
+# load is filed `unresolved` at all. Below it the row says nothing -- a frame
+# with no room in it cannot hold a load, so `unresolved` there asserts a search
+# that had nowhere to happen.
+#
+# Two facts fix the threshold, both measured in
+# ../../docs/findings/pd-caller-frame-quality.md and reproduced by
+# pd_caller_frame_quality.py: the four committed rows with real frames are
+# 13/16/16/19 instructions against the 0xC9DD phantom's one, so four sits above
+# every frame the committed table trusts; and of the whole-image rows that do
+# carry literals, exactly one falls below it -- and that one already reads
+# `literals found; site index registers unresolved`, which makes no negative
+# claim about an index in either direction, so no positive finding is lost by
+# drawing the line here. Higher would discard real negatives; lower would let a
+# two-instruction frame certify that nothing was loaded into it.
+MIN_FRAME_INSNS = 4
 
 # Every opcode that leaves a new value in the accumulator. Needed in full,
 # because a frame scan that only watched the loads it recognises would report
@@ -729,8 +743,17 @@ def site_rows(d: bytes, addrs, max_insns: int = SITE_WINDOW):
     listing is there so a wrong assertion is visible. The *range* is checked:
     check_site_addr() refuses an address outside 0x0000-0xFFFF and names the
     file range beside it, because the tool's own output puts `file_offset`
-    next to `runtime`."""
-    lo, _ = pd_bounds()
+    next to `runtime`.
+
+    `listing_stop` is the listing's own stop reason, beside the chain's
+    `stopped`: `max_insns` bounds the listing's work and the region end bounds
+    it, so it ends one way or the other and the two are different claims. The
+    stops are chain_from()'s, word for word, because ../../docs/findings/
+    walk-window-terminators.md makes the one-event-one-name argument and a
+    fourth set of words for one event would break it."""
+    lo, hi = pd_bounds()
+    # The buffer as well as the region, as walk_helper() and chain_from() do it.
+    hi = min(hi, len(d))
     # Checked over the whole run first, so one bad address in a multi-address
     # call is the diagnostic rather than a partial listing and then a traceback.
     for addr in addrs:
@@ -746,13 +769,26 @@ def site_rows(d: bytes, addrs, max_insns: int = SITE_WINDOW):
         onto, over = converges_from(d, i)
         listing, j = [], i
         for _ in range(max_insns):
+            if not lo <= j < hi:
+                listing_stop = (f"listing left the {PD_REGION} at runtime "
+                                f"0x{j - lo:04X}, its end at file 0x{hi:05X}")
+                break
+            if j + OPCODE_LEN[d[j]] > hi:
+                # Dropped rather than listed short, as both sibling walks do: a
+                # half-read instruction is not a decodable one.
+                listing_stop = (f"the instruction at runtime 0x{j - lo:04X} is "
+                                f"cut by the {PD_REGION} end at file "
+                                f"0x{hi:05X}")
+                break
             listing.append((j, d[j:j + OPCODE_LEN[d[j]]]))
             j += OPCODE_LEN[d[j]]
+        else:
+            listing_stop = f"{max_insns}-instruction window ended"
         rows.append({
             "addr": addr, "base": base, "file_offset": i,
             "helpers": helpers, "frame_onto": onto, "frame_over": over,
             "a": a_sym, "b": b_sym, "terms": terms, "stopped": stopped,
-            "listing": listing,
+            "listing": listing, "listing_stop": listing_stop,
         })
     return rows
 
@@ -840,7 +876,7 @@ def index_registers(terms):
     return out
 
 
-def caller_status(literals, index_regs) -> str:
+def caller_status(literals, index_regs, frame_insns) -> str:
     """The status cell for one caller row: a function of the *intersection* of
     the frame's literal register loads with the index registers the site's own
     term decode names, not of the mere presence of literals. A caller loading
@@ -848,17 +884,27 @@ def caller_status(literals, index_regs) -> str:
     it, and saying so is the whole difference between the row and the claim
     pd-index-geometry.md 4.2 spends its length denying.
 
-    Branch order is load-bearing. "Does the decode name any index register at
-    all" is tested before the intersection, so a site whose terms resolve
-    nothing keeps its own wording: "not found by this method" is a different
-    claim from "a match was sought here and none was found", and collapsing
-    the two is the mistake this function exists to stop.
+    Branch order is load-bearing, twice over.
+
+    "Does the decode name any index register at all" is tested before the
+    intersection, so a site whose terms resolve nothing keeps its own wording:
+    "not found by this method" is a different claim from "a match was sought
+    here and none was found", and collapsing the two is the mistake this
+    function exists to stop.
+
+    The whole literal branch comes *before* the frame test, because a literal
+    found in a frame of any length is a literal found: `mov rN,#imm` in two
+    instructions is still a load, and grading the frame first would throw a
+    positive finding away. The frame test therefore decides only between the
+    two values a literal-free row can take -- and it is strictly the weaker of
+    them, `CALLER_SHORT_FRAME` claiming nothing about the index at all where
+    `unresolved` claims a search happened in it.
     """
-    if not literals:
-        return UNRESOLVED_CALLER
-    if not index_regs:
-        return CALLER_UNRESOLVED_INDEX
-    return CALLER_INDEX_LOAD if literals.keys() & index_regs else CALLER_NO_INDEX
+    if literals:
+        if not index_regs:
+            return CALLER_UNRESOLVED_INDEX
+        return CALLER_INDEX_LOAD if literals.keys() & index_regs else CALLER_NO_INDEX
+    return CALLER_SHORT_FRAME if frame_insns < MIN_FRAME_INSNS else UNRESOLVED_CALLER
 
 
 def effective_base(row) -> int:
@@ -1007,14 +1053,20 @@ def caller_rows(d: bytes, sites):
             for kind, index in (("call", calls), ("tail-jump", jumps)):
                 for off in index.get(entry, []):
                     onto, over = converges_from(d, off)
-                    lits = literals_in(frame_of(d, off))
+                    # Once, because the two readings below are the same walk:
+                    # literals_in() needs the frame and the status needs its
+                    # length, and frame_of() re-derives it from the image each
+                    # time it is called.
+                    frame = frame_of(d, off)
+                    lits = literals_in(frame)
                     rows.append({
                         "site": site, "entry": entry, "kind": kind,
                         "file_offset": off, "runtime": off - lo,
                         "opcode": mnemonic(d, off, off - lo).strip(),
                         "frame_onto": onto, "frame_over": over,
+                        "frame_insns": len(frame),
                         "literals": lits,
-                        "status": caller_status(lits, regs),
+                        "status": caller_status(lits, regs, len(frame)),
                     })
             pick["rows"] = sorted(rows, key=lambda r: r["file_offset"])
         out.append({"site": site, "picks": picks})
@@ -1142,6 +1194,11 @@ def print_sites(d: bytes, addrs) -> None:
               f"A={r['a'].format(a='A')} B={r['b'].format(b='B')}  -> {chain}")
         print(f"  {fmt_address(r['terms'], r['base'])} "
               f"[chain ends at {r['stopped']}]")
+        # Every listing, including the ordinary budget stop: a 16-line window
+        # is not distinguishable from one the region end cut short without the
+        # sentence, and every other walk here announces its stop in ordinary
+        # operation.
+        print(f"  [listing ends at {r['listing_stop']}]")
         for i, raw in r["listing"]:
             print(f"    0x{i - lo:04x}  {raw.hex():<8} {mnemonic(d, i, i - lo)}")
         print()
@@ -1187,7 +1244,8 @@ def print_callers(d: bytes, sites) -> None:
                 # the very view a reader reads the claim off.
                 print(f"    file 0x{r['file_offset']:05X}  runtime 0x{r['runtime']:04X}  "
                       f"{r['kind']:<9} {r['opcode']:<16} "
-                      f"frame {r['frame_onto']}/{r['frame_onto'] + r['frame_over']}  "
+                      f"frame {r['frame_onto']}/{r['frame_onto'] + r['frame_over']} "
+                      f"({r['frame_insns']} insn)  "
                       f"{lits or '-'} [{r['status']}]")
         print()
 
@@ -1259,7 +1317,7 @@ def write_callers_csv(d: bytes, sites) -> None:
     w.writerow(["site", "entry", "entry_pick", "entry_reaches_site",
                 "entry_preceded_by", "entry_gap_jmps", "caller_file_offset",
                 "caller_runtime", "kind", "opcode", "frame_onto", "frame_over",
-                "literals", "status"])
+                "frame_insns", "literals", "status"])
     for group in caller_rows(d, sites):
         for pick in group["picks"]:
             for r in pick["rows"]:
@@ -1268,6 +1326,7 @@ def write_callers_csv(d: bytes, sites) -> None:
                             pick["entry_gap_jmps"],
                             f"0x{r['file_offset']:05X}", f"0x{r['runtime']:04X}",
                             r["kind"], r["opcode"], r["frame_onto"], r["frame_over"],
+                            r["frame_insns"],
                             " ".join(f"{k}=#0x{v:02X}"
                                      for k, v in sorted(r["literals"].items())),
                             r["status"]])
@@ -1633,23 +1692,28 @@ STRIDE_HELPER_TERMS = {
 # so it is pinned rather than re-read from the prose.
 PAGED_STRIDES = {"60", "1F"}
 
-# The literals and status every row of ../annotations/pd-index-callers.csv
-# carries, keyed by (site, caller runtime). Transcribed from
-# pd-index-geometry.md 4 and 4.2 rather than read back out of the CSV, so the
-# committed cell, the value this run computes and the prose it comes from are
-# three separate things and a disagreement between any two of them fails here.
+# The literals, status and frame length every row of
+# ../annotations/pd-index-callers.csv carries, keyed by (site, caller runtime).
+# Transcribed from pd-index-geometry.md 4 and 4.2 rather than read back out of
+# the CSV, so the committed cell, the value this run computes and the prose it
+# comes from are three separate things and a disagreement between any two of
+# them fails here.
 #
 # 4's net is "not one index register bounded by a literal"; 4.2's is "None of
 # the three literals is an index for this access", for a site indexing on R7
 # and R6 that its frame loads R1/R2/R3 into. The literals sit beside each
 # status so the second of those is checkable and not just assertable: an empty
-# literals column would make CALLER_NO_INDEX true for the wrong reason.
+# literals column would make CALLER_NO_INDEX true for the wrong reason. The
+# frame length is the third element for the same reason one column further on:
+# a hand-set `frame_insns` would make the status true for the wrong frame, and
+# the byte-comparison below only stops the file and the tool drifting apart --
+# not both drifting from these numbers together.
 CALLER_STATUSES = {
-    ("0x7421", "0xC9DD"): ("", UNRESOLVED_CALLER),
-    ("0x7421", "0x7CD1"): ("", UNRESOLVED_CALLER),
-    ("0x9DEC", "0xB452"): ("", UNRESOLVED_CALLER),
-    ("0xB5D3", "0xB838"): ("", UNRESOLVED_CALLER),
-    ("0xE9F5", "0x66E4"): ("R1=#0x00 R2=#0x08 R3=#0x01", CALLER_NO_INDEX),
+    ("0x7421", "0xC9DD"): ("", CALLER_SHORT_FRAME, 1),
+    ("0x7421", "0x7CD1"): ("", UNRESOLVED_CALLER, 19),
+    ("0x9DEC", "0xB452"): ("", UNRESOLVED_CALLER, 16),
+    ("0xB5D3", "0xB838"): ("", UNRESOLVED_CALLER, 13),
+    ("0xE9F5", "0x66E4"): ("R1=#0x00 R2=#0x08 R3=#0x01", CALLER_NO_INDEX, 16),
 }
 
 SITES_CSV = "../annotations/ec-0x07d0-sites.csv"
@@ -1712,22 +1776,6 @@ def fixture(chunks, end=None):
         raw = bytes.fromhex(text)
         image[lo + off:lo + off + len(raw)] = raw
     return bytes(image)
-
-
-def erased_band_holds(d: bytes, lo: int, hi: int) -> bool:
-    """True when the `REGIONS` row spanning `lo`-`hi` really is what it claims.
-
-    The premise the `--sites 0xFFFF` floor and the `0x1FFF1` boundary both rest
-    on, asked of the table rather than of a comment: the row is looked up by
-    its own bounds, and its `how` is put to `band_faults` only if it is a claim
-    `CHECKED` declares a test for. A row whose `how` has been edited therefore
-    answers false here rather than being measured against a claim the table no
-    longer makes -- the self-test goes red on a figure whose source moved, which
-    is the failure a longer comment would have hidden.
-    """
-    row = next((r for r in REGIONS if r[1] == lo and r[2] == hi), None)
-    return (row is not None and row[4] in CHECKED
-            and not band_faults(d, lo, hi, row[4]))
 
 
 def reached_self_test(d, check):
@@ -2168,59 +2216,76 @@ def self_test(fw_path: str) -> int:
         check(got == want, f"--sites 0x{runtime:04X} decodes to {want} (got {got})")
 
     # check_site_addr() is a statement about the caller's argument, not about
-    # this image, so the top of the legal range is pinned to still walk its
-    # whole window: the last read lands at 0x3000E here, inside the 0x3002C
-    # ../../docs/findings/opcode-len-bounds-census.md row 10 puts at the end of
-    # it as the worst case of 15 three-byte instructions.
+    # this image, so the top of the legal range is pinned to stop where the
+    # region ends rather than at its window: the last read is the region's own
+    # last byte, and the stop names that end. This is the listing half of the
+    # bound walk_helper() and chain_from() already carry, and it is what keeps
+    # `--sites 0xFFFF` from presenting the 0xFF fill past 0x30000 as
+    # instructions -- fifteen lines that read as a routine.
     #
-    # 0x3002C is that census's arithmetic and 0x3000E is these bytes, and the
-    # two do not have the same backing: 0x3000E is `0x2FFFF + 15`, one byte per
-    # instruction, and it is only right because the 15 bytes past the region are
-    # the ("erased", 0x30000, 0x40000, None, "all 0xFF") row of
-    # trace_xdata_refs.REGIONS and disasm8051.OPCODE_LEN[0xFF] == 1. That row
-    # was a string in a column every consumer of REGIONS discards, so the floor
-    # below used to rest on a comment. It is asserted now, immediately above
-    # the assertion that needs it, through the same predicate
-    # check_image_map.py measures the whole column with -- imported, not
-    # rewritten, for the reason census_ff_fill.py gives about is_fill -- and
-    # `python3 ec/tools/check_image_map.py <image>` is the named command that
-    # prints the band's size, its distinct byte values and its 0x90 count.
-    erased = erased_band_holds(d, 0x30000, 0x40000)
-    check(erased and OPCODE_LEN[0xFF] == 1,
-          "the 0x30000-0x3FFFF band is the 0xFF fill "
-          "trace_xdata_refs.REGIONS calls `all 0xFF` and 0xFF is a one-byte "
-          "opcode, so the floor below is these bytes "
-          f"(got band holds {erased}, OPCODE_LEN[0xFF] == {OPCODE_LEN[0xFF]})")
+    # **The bound no longer depends on the bytes past the region, which is why
+    # the premise assertion that used to sit here is gone.** The floor it held
+    # was the last read, and the last read now comes from pd_bounds(). The band
+    # is still a claim about the map rather than about this tool, and it is
+    # asserted where the map is: `python3 ec/tools/check_image_map.py <image>`
+    # puts d[0x30000:0x40000] to the `all 0xFF` test its own row names and
+    # refuses a band whose bytes do not satisfy it, and check_image_map.py
+    # --self-test holds the predicate that does it.
     hi = pd_bounds()[1]
     top = site_rows(d, [0xFFFF])[0]
-    peak = top["listing"][-1][0]
-    check(len(top["listing"]) == SITE_WINDOW and 0x3000E <= peak <= 0x3002C,
-          f"--sites 0xFFFF still walks its {SITE_WINDOW}-instruction window, "
-          f"last read at file 0x{peak:05X} (got 0x{peak:05X})")
+    last_read, listing_stop = top["listing"][-1][0], top["listing_stop"]
+    check(len(top["listing"]) == 1 and last_read == hi - 1
+          and f"0x{hi:05X}" in listing_stop
+          and not listing_stop.endswith("ended"),
+          f"--sites 0xFFFF stops at the {PD_REGION} end: "
+          f"{len(top['listing'])} listing line(s), last read at file "
+          f"0x{last_read:05X}, stop {listing_stop!r}")
+    # The other direction, because a bound that stopped too early would satisfy
+    # the case above just as well. 0xC2FA is a mid-region anchor already named
+    # in this file and in ../annotations/pd-index-geometry.md 7, so nothing here
+    # is a new magic address, and its window is the window the mode promises.
+    mid = site_rows(d, [0xC2FA])[0]
+    check(len(mid["listing"]) == SITE_WINDOW
+          and mid["listing_stop"] == f"{SITE_WINDOW}-instruction window ended",
+          f"--sites 0xC2FA still walks its whole {SITE_WINDOW}-instruction "
+          f"window ({len(mid['listing'])} line(s), stop "
+          f"{mid['listing_stop']!r})")
+    # The two stops a committed --sites run cannot reach, each on a fixture.
+    # The instruction cut needs a multi-byte opcode straddling the end, and
+    # this image's last in-region bytes are all one-byte 0xFF; the buffer clamp
+    # needs a buffer shorter than the region, and the committed image carries
+    # 64 KiB past it. The 0xFF tail on the first is the chain_from fixture's
+    # below for the same reason: without the bound the listing walks into it
+    # until its own budget runs out, so this case fails rather than raising.
+    cut = fixture({0xFFFD: "e8e8", 0xFFFF: "900000"}) + b"\xff" * 0x100
+    stopped = site_rows(cut, [0xFFFD])[0]["listing_stop"]
+    check(f"0x{hi:05X}" in stopped and "cut" in stopped
+          and not stopped.endswith("ended"),
+          f"site_rows drops an instruction the {PD_REGION} end cuts rather "
+          f"than listing it short (got {stopped!r})")
+    short = fixture({0x1F0: "e8" * SITE_WINDOW}, end=0x200)
+    clamped = site_rows(short, [0x1F8])[0]
+    check(clamped["listing"][-1][0] == lo + 0x1FF
+          and f"0x{lo + 0x200:05X}" in clamped["listing_stop"]
+          and not clamped["listing_stop"].endswith("ended"),
+          f"site_rows stops at the end of a short image, last line at file "
+          f"0x{clamped['listing'][-1][0]:05X}, stop {clamped['listing_stop']!r}")
     # 0x1FFF1 is the first address whose window ran off the end of this image
-    # before the check, and 0x23478 is a file_offset out of
+    # before check_site_addr() existed, and 0x23478 is a file_offset out of
     # ../annotations/ec-0x07d0-sites.csv -- the plausible wrong column.
     #
-    # 0x1FFF1 is `0x40000 - 15 - 0x20000` -- the same arithmetic as 0x3000E
-    # above, read from the other end, and it came from the same place: the run
-    # of 0xFF from 0x30000 with disasm8051.OPCODE_LEN[0xFF] == 1 puts the
+    # 0x1FFF1 is `0x40000 - 15 - 0x20000`, and it came from the run of 0xFF
+    # from 0x30000 with disasm8051.OPCODE_LEN[0xFF] == 1: that fill put the
     # pre-change boundary at 0x1FFF1 rather than at the 0x1FFFB the issue
-    # predicted, which predicted it on three-byte instructions. 0x3002C is that
-    # worst case and 0x1FFF1 is this image's realised figure, so
+    # predicted, which predicted it on three-byte instructions. Both are
+    # figures for where the *pre-change* walk stopped, so
     # ../../docs/findings/pd-sites-address-range.md's correction 1 carries
-    # both, and both now cite the ("erased", 0x30000, 0x40000, None,
-    # "all 0xFF") row asserted above.
+    # them as history.
     #
-    # **What the arithmetic above explains is not what makes these two
-    # assertions pass, and the difference is the point.** The refusal is
-    # check_site_addr()'s, which bounds the caller's *argument* by the width of
-    # a DPTR and the region's extent -- not a property of the fill past
-    # 0x30000 at all. Measured: splicing 0x00, 0x74 or 0x90 into 0x30000 of a
-    # copy of this image moves the `--sites 0xFFFF` peak by one or two bytes
-    # and leaves both refusals here exactly as they are, while the premise
-    # assertion above goes red. So 0x1FFF1 is where the pre-change walk
-    # stopped, and it is still the right arithmetic for that; what the fill
-    # decides is the peak, not the boundary.
+    # What decides these two assertions is not that arithmetic at all: the
+    # refusal is check_site_addr()'s, which bounds the caller's *argument* by
+    # the width of a DPTR and the region's extent, so it holds whatever is past
+    # the region. Nothing below rests on the fill.
     for addr in (0x1FFF1, 0x23478):
         try:
             site_rows(d, [addr])
@@ -2365,24 +2430,29 @@ def self_test(fw_path: str) -> int:
     # pinned on both sides rather than against the CSV alone: access_self_test
     # below byte-compares the whole file, which stops it drifting from the tool
     # but could not stop both drifting from the prose together. That is how this
-    # column came to contradict 4.2 in the first place.
+    # column came to contradict 4.2 in the first place. The frame length rides
+    # along in the same tuple for the same reason it is a column of its own.
+    absent = ("<absent>", "<absent>", "<absent>")
     fresh = {(f"0x{r['site']:04X}", f"0x{r['runtime']:04X}"):
              (" ".join(f"{k}=#0x{v:02X}"
-                       for k, v in sorted(r["literals"].items())), r["status"])
+                       for k, v in sorted(r["literals"].items())),
+              r["status"], r["frame_insns"])
              for g in groups for p in g["picks"] for r in p["rows"]}
     committed = {(row["site"], row["caller_runtime"]):
-                 (row["literals"], row["status"]) for row in want_callers}
+                 (row["literals"], row["status"], int(row["frame_insns"]))
+                 for row in want_callers}
     check(set(committed) == set(fresh) == set(CALLER_STATUSES),
           f"{CALLERS_CSV}'s keys are exactly the {len(CALLER_STATUSES)} pinned "
           f"site/caller pairs (committed {len(committed)}, computed {len(fresh)})")
     for key, want in sorted(CALLER_STATUSES.items()):
         site, runtime = key
-        got = fresh.get(key, ("<absent>", "<absent>"))
-        was = committed.get(key, ("<absent>", "<absent>"))
+        got = fresh.get(key, absent)
+        was = committed.get(key, absent)
         check(got == want and was == want,
               f"{CALLERS_CSV} site {site} caller {runtime}: literals "
-              f"`{want[0] or '-'}` / status `{want[1]}` (computed "
-              f"`{got[1]}`, committed `{was[1]}`)")
+              f"`{want[0] or '-'}` / status `{want[1]}` / {want[2]} instruction "
+              f"frame (computed `{got[1]}`/`{got[2]}`, committed "
+              f"`{was[1]}`/`{was[2]}`)")
     # The 0xE9F5 status is not vacuously true: its three loads are what 4.2's
     # own `r2` listing shows, and emptying the column they are derived from
     # would leave CALLER_NO_INDEX satisfied by a frame with nothing in it.
@@ -2394,18 +2464,27 @@ def self_test(fw_path: str) -> int:
           "index register` is a statement about those three, not about none")
 
     # The two values no committed row reaches, and the two every committed row
-    # agrees on. caller_status() is pure, so all four are reachable without an
+    # agrees on. caller_status() is pure, so all five are reachable without an
     # image; the two that matter for a reader who finds a new site are the
     # positive one and the one saying the decode itself resolved nothing.
-    for lits, regs, want in (
-            ({}, {"R3"}, UNRESOLVED_CALLER),
-            ({"R1": 0, "R2": 8, "R3": 1}, {"R7", "R6"}, CALLER_NO_INDEX),
-            ({"R7": 4, "R3": 1}, {"R7", "R6"}, CALLER_INDEX_LOAD),
-            ({"R1": 0, "R2": 8, "R3": 1}, set(), CALLER_UNRESOLVED_INDEX)):
-        got = caller_status(lits, regs)
+    #
+    # The last two are the frame test, and between them they are what makes the
+    # threshold falsifiable rather than merely present: a literal-free row on
+    # either side of MIN_FRAME_INSNS gets the value that side implies, and a
+    # *literal-bearing* row below the threshold keeps its literal-based value --
+    # so moving the frame test above the literal test, or dropping it back to
+    # `not literals -> unresolved`, each fails one of the two.
+    for lits, regs, insns, want in (
+            ({}, {"R3"}, MIN_FRAME_INSNS, UNRESOLVED_CALLER),
+            ({"R1": 0, "R2": 8, "R3": 1}, {"R7", "R6"}, 24, CALLER_NO_INDEX),
+            ({"R7": 4, "R3": 1}, {"R7", "R6"}, 24, CALLER_INDEX_LOAD),
+            ({"R1": 0, "R2": 8, "R3": 1}, set(), 24, CALLER_UNRESOLVED_INDEX),
+            ({}, {"R3"}, MIN_FRAME_INSNS - 1, CALLER_SHORT_FRAME),
+            ({"R7": 4, "R3": 1}, {"R7", "R6"}, 2, CALLER_INDEX_LOAD)):
+        got = caller_status(lits, regs, insns)
         check(got == want,
-              f"caller_status({lits or '{}'}, {regs or 'set()'}) is `{want}` "
-              f"(got `{got}`)")
+              f"caller_status({lits or '{}'}, {regs or 'set()'}, {insns}) is "
+              f"`{want}` (got `{got}`)")
     # 0x578E's `A:R1 ← 0x089B + A×0x77`: the R1 is a destination, not an
     # index factor. None of the four committed sites has that form, which is
     # why the stripping is covered here rather than left to a real run.
@@ -2454,7 +2533,8 @@ def main() -> int:
                     help="decode forward from these PD runtime addresses, e.g. 0xC2FA. "
                          "One outside 0x0000-0xFFFF is refused, and one inside the "
                          "file range is answered with the runtime address at that "
-                         "file_offset")
+                         "file_offset; the listing is bounded by the pd-image region "
+                         "end as well as by its window, and names whichever stopped")
     ap.add_argument("--strides", nargs="?", const=BASE_RUN, metavar="SPAN",
                     help="census of the stride constants the decode resolves over SPAN")
     ap.add_argument("--callers", nargs="+", metavar="ADDR",

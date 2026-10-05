@@ -2,21 +2,28 @@
 """`pd_inline_arg_readers.py`'s per-program, per-direction census, on fixtures and
 against the committed image.
 
-The tool answers issue #1142's question -- who reads the `??82` cells
-`lcall 0x104D` fills in -- and the answer is negative, so what needs holding is
-the *shape* of the negative rather than its size. A reader-count tool that
-reported zero because it swept nothing would produce the same table, which is why
-the fixture cases below exist: each one builds bytes that a method must find, so
-a method that silently stopped matching anything is red rather than quietly
-agreeing with the firmware.
+The tool answers issue #1142's question -- who reads the cells `lcall 0x104D`
+fills in -- and what needs holding is the *shape* of a cell's row rather than
+its size. A reader-count tool that reported zero because it swept nothing would
+produce the same table, which is why the fixture cases below exist: each one
+builds bytes that a method must find, so a method that silently stopped matching
+anything is red rather than quietly agreeing with the firmware.
+
+**The cells were the `??82` page cells when this suite was written, and the
+answer was negative; both changed on 2026-10-05 (issue #1154).** The byte at
+`0x104D` was read as `mov r0,#0x82`, a constant substituting for the caller's
+low byte; read as `mov r0,DPL` the destination is the caller's own DPTR, and
+several of those cells do have PD-side reads. The cases that named the retired
+cells are gone with them, and what replaced them is the inversion rather than a
+restatement of the count.
 
 **The fixtures cover the three things that went wrong while writing it.**
 `accumulator_index()` seeded its accumulator walk from nothing and reported zero
 everywhere; it then masked the high byte against itself and decoded a fixture as
 `0x0008`; and it broke on the first DPTR store, so a `mov DPH` before `mov DPL`
 found half the addresses there are. Each has a case below, because each was
-invisible against the image -- this firmware has no accumulator-built `??82`
-cell, so a suite reading only the image would have passed all three.
+invisible against the image -- the accumulator-built cell never occurred there --
+so a suite reading only the image would have passed all three.
 
 **The per-program and per-direction split is asserted as a property, not read
 off a figure.** A blended `reads` total is the defect the tool exists to correct,
@@ -244,49 +251,50 @@ class ImageFigureTests(unittest.TestCase):
         self.assertEqual(sum(int(r["deposits"]) for r in self.rows.values()),
                          len(committed))
 
-    def test_the_0x0a82_site_is_a_writer(self):
-        # The correction at the centre of this issue. `--counts-only` reported
-        # one site for `0x0A82` in the PD image and the issue read it as a
-        # reader; decoded, it stores two bytes and walks one, and this is the
-        # cell that makes "174 writers against one reader" wrong.
-        row = self.rows['0x0A82']
-        self.assertEqual(row["mov_dptr_by_region"], "pd-image=1")
-        self.assertEqual(row["mov_dptr_reads"], 0)
-        self.assertGreater(row["mov_dptr_writes"], 0)
-
-    def test_every_0x0782_site_is_in_another_program(self):
-        # The other half of the correction: all eleven are `bank0`, the main EC.
-        # Summing them into a reader count for the PD image's 107 deposits is the
-        # cross-program artifact, and `pd-xdata-span-sites.csv` already carries
-        # the same split for this address.
-        row = self.rows['0x0782']
-        self.assertEqual(row["mov_dptr_by_region"], "bank0=11")
-        self.assertNotIn("pd-image", row["mov_dptr_by_region"])
-        self.assertEqual(row["pd_side_reads"], 0)
-        # And the main EC's own reads are real, they are just not this
-        # program's -- a row holding zero here would hide the split rather than
-        # report it.
-        self.assertGreater(row["mov_dptr_reads"], 0)
-
-    def test_0x0882_is_settled_as_a_zero_by_two_methods(self):
-        # No `MOV DPTR` site anywhere in the dump, and no row in the
-        # decompile-derived census either. The two have different blind spots,
-        # so their agreement is what makes the zero a result rather than a
-        # shrug.
-        row = self.rows['0x0882']
-        self.assertEqual(row["mov_dptr_sites"], 0)
-        self.assertEqual(row["mov_dptr_by_region"], "")
-        with (REPO / 'ec' / 'annotations' / 'xdata-registers.csv').open(
+    def test_the_cells_are_the_callers_own_dptrs_and_not_a_masked_page(self):
+        # **Retracted, with the reading it rested on.** These three cases
+        # policed the `??82` cells: that `0x0A82` was a writer rather than a
+        # reader, that `0x0782`'s sites were all in another program, and that
+        # `0x0882` was a zero by two methods. All three named cells were an
+        # artifact of reading the byte at `0x104D` as `mov r0,#0x82` -- a
+        # *constant* the helper substitutes for the caller's low byte. Read as
+        # `mov r0,0x82` (a `direct` address, `DPL`) the helper saves the
+        # caller's DPTR into R0:B and restores it, so the deposits land on the
+        # caller's own pointers and the cells are whatever those were.
+        #
+        # So those cells are gone and the cases that named them are gone with
+        # them; what replaces them is the property that follows from the
+        # corrected reading -- the cells are real addresses, which is why the
+        # negative result below is no longer a negative result at all.
+        import csv as _csv
+        with (REPO / 'ec' / 'annotations' / 'pd-inline-arg-sites.csv').open(
                 newline='') as f:
-            census = {r["addr"].upper(): r for r in csv.DictReader(f)}
-        self.assertNotIn("0X0882", census)
+            cells = {r["dest"] for r in _csv.DictReader(f) if r["dest"]}
+        self.assertTrue(cells, "no destination cell at all")
+        # Not one cell per XDATA page any more, and not all sharing a low byte.
+        self.assertGreater(len({c[-2:] for c in cells}), 1)
 
-    def test_no_cell_has_a_pd_side_read(self):
-        # The negative result, in the form the write-up states it: not "there is
-        # no reader" but "these sweeps found none". Asserted per cell so a
-        # single row gaining one is the visible failure.
+    def test_a_pd_side_read_is_found_where_there_is_one(self):
+        # **This was `test_no_cell_has_a_pd_side_read`, and it asserted zero
+        # for every cell.** That was true of the `??82` cells and is not true
+        # of the caller's own DPTRs: `0x07D0` and its neighbours are ordinary
+        # EC registers that the PD image reads constantly, so once the deposit
+        # address is the caller's own, the readers exist and are numerous.
+        #
+        # The finding is therefore inverted rather than merely restated, and
+        # this holds the inversion: a suite that could only say "none" would
+        # have passed on the old cells and failed to notice the change.
+        found = {dest: row for dest, row in self.rows.items()
+                 if row["pd_side_reads"]}
+        self.assertTrue(found, "no cell gained a pd-side read")
+
+    def test_the_split_is_still_reported_per_program_and_per_direction(self):
+        # Unchanged by the correction, and the reason this suite existed: a
+        # site in `bank0` is not a site in the PD image. Asserted as the shape
+        # of the `where` column rather than on any one address, since the cells
+        # moved.
         for dest, row in self.rows.items():
-            self.assertEqual(row["pd_side_reads"], 0, f'{dest} gained a read')
+            self.assertNotEqual(row["mov_dptr_by_region"], "", dest)
 
     def test_every_row_carries_a_reason(self):
         # The empty-is-a-token rule, on the column a reader of the CSV sees
@@ -323,17 +331,27 @@ class CommittedTableTests(unittest.TestCase):
             header = rows[0]
             column = header.index('mov_dptr_by_region')
             for row in rows[1:]:
-                if row[header.index('dest')] == '0x0782':
-                    row[column] = 'pd-image=11'
+                # Whichever cell has the most `mov dptr` sites, so the doctored
+                # row is one a reader would actually look at. It used to be
+                # named outright (`0x0782`), which no longer exists: the cells
+                # are the callers' own DPTRs since the `mov r0,0x82` reading
+                # was corrected, so the case picks one from the committed table
+                # rather than pinning an address that the correction moved.
+                if int(row[header.index('mov_dptr_sites') or 0] or 0) == max(
+                        int(r[header.index('mov_dptr_sites')] or 0)
+                        for r in rows[1:]):
+                    row[column] = 'pd-image=1'
                     break
             else:
-                self.skipTest('the 0x0782 row is gone from the committed table')
+                self.fail('no cell carried a mov_dptr_sites count to doctor')
             buf = io.StringIO(newline='')
             csv.writer(buf, lineterminator='\r\n').writerows(rows)
             path.write_text(buf.getvalue(), newline='')
             rc, _, err = run(str(FIRMWARE), '--check', str(path))
         self.assertNotEqual(rc, 0)
-        self.assertIn('pd-image=11', err)
+        # The doctored region, as written above -- not a fixed address, since
+        # the row it lands on is whichever cell the table carries.
+        self.assertIn('pd-image=1,', err)
 
     def test_an_unaltered_copy_is_green(self):
         with tempfile.TemporaryDirectory() as tmp:

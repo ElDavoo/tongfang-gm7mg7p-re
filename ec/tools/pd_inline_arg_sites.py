@@ -101,10 +101,20 @@ POP_DPH, POP_DPL = 0x1052, 0x1054
 # is the one `census()` and the committed table follow; the second is the one the
 # MCS-51 manual's push order would give.
 READINGS = ("return address", "byte-swapped")
-# The XDATA low byte the helper's `mov r0,#0x82` substitutes for the caller's
+# The XDATA low byte the helper's `mov r0,0x82` substitutes for the caller's
 # DPL. A constant in the instruction, and the reason the destination below is
 # not simply the DPTR the caller loaded.
-DEST_LOW = 0x82
+#
+# **Retracted 2026-10-05 (issue #1154); the constant is gone.** It was an
+# artifact of reading the byte at `0x104D` as `mov r0,#0x82` -- a *constant*
+# `0x82` loaded into R0, which then reached the store through the `xch` chain.
+# The block is `mov r0,0x82` reading its operand as a `direct` address, so the
+# instruction is `mov r0,DPL`: R0 receives the caller's DPL, and the store
+# lands on the caller's own DPTR rather than on a `0x82`-substituted address.
+# `a8af_operand_role.py` derives the reading; the wrong reading and the
+# `??82` column it produced are left visible in
+# `../../docs/findings/pd-inline-arg-trampoline.md` beside the correction.
+DEST_LOW = None
 # How far back `dptr_load` looks for a `mov dptr,#imm16`. 32 is wide enough to
 # reach the load at all 458 sites and short enough that a `90 xx xx` inside
 # unrelated code is unlikely to be taken for one; `dptr_gap` is what a reader
@@ -134,7 +144,7 @@ SIM_LEN = {0xA8: 2, 0x85: 3, 0xD0: 2, 0x12: 3, 0xE4: 1, 0x93: 1, 0xA3: 1,
 # two of them and the two-byte forms one, and a single `%`-format cannot say
 # which is which.
 SIM_TEXT = {
-    0xA8: lambda b1, b2: f"mov  r0,#0x{b1:02x}",
+    0xA8: lambda b1, b2: f"mov  r0,0x{b1:02x}",
     0x85: lambda b1, b2: f"mov  0x{b2:02x},0x{b1:02x}",
     0xD0: lambda b1, b2: f"pop  0x{b1:02x}",
     0x12: lambda b1, b2: f"lcall 0x{(b1 << 8) | b2:04x}",
@@ -240,7 +250,13 @@ def simulate(d: bytes, base: int, entry: int, pops: list, machine: Machine,
         b1 = d[base + pc + 1]
         b2 = d[base + pc + 2] if n == 3 else None
         if op == 0xA8:
-            machine.v["R0"] = b1
+            # `mov r0,0x82` is `mov r0,DPL` -- a load *from* that address, the
+            # operand's being a direct rather than a constant. The old
+            # `machine.v["R0"] = b1` made it an immediate, which is the reading
+            # this tool's own `DEST_LOW` was built on and the one the
+            # destination column below reported. `Machine.rd` is what makes the
+            # difference visible: an immediate would not consult DPL at all.
+            machine.v["R0"] = machine.rd(b1)
         elif op == 0x85:
             machine.wr(b2, machine.rd(b1))
         elif op == 0xD0:
@@ -330,8 +346,16 @@ def census(d: bytes, base: int) -> list:
                      f"={int.from_bytes(arg, 'big')}",
             "dptr_load": f"0x{dptr:04X}" if dptr is not None else "",
             "dptr_gap": gap if gap is not None else "",
-            "dest": f"0x{(dptr & 0xFF00) | DEST_LOW:04X}" if dptr is not None
-                    else "",
+            # The caller's own DPTR, unchanged. This column used to read
+            # `(dptr & 0xFF00) | 0x82` -- the high byte the caller loaded with
+            # the literal `0x82` standing in for its low byte -- which is what
+            # the helper does when `mov r0,0x82` is read as `mov r0,#0x82`.
+            # Read as `mov r0,DPL` the helper's first two instructions save the
+            # caller's DPTR into R0:B and the `xch` chain puts it back before
+            # the store, so the low byte is the caller's own and there is
+            # nothing to substitute. `--simulate` is where that is executed
+            # rather than argued.
+            "dest": f"0x{dptr:04X}" if dptr is not None else "",
         })
     return rows
 

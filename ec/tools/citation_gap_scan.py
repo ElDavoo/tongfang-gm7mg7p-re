@@ -4,11 +4,13 @@
 `citation_callers.py` vetoes a pair whose citing listing is an `0xFF` fill run
 and corroborates one whose listing carries a transfer to the named callee. Both
 rules read the citing row's *own* export, and there is a population they can
-never reach: a real call at an address the export stops short of. 89 of the 105
+never reach: a real call at an address the export stops short of. Most of the
 citing rows `citing-listing-evidence.md` measured turned out to have no gap at
-all, so for most of them the question is what sits at the head of the
-*neighbouring* export -- but for the other 16 the call really is between two
-exports, and nothing in the repository asked whether it was there.
+all, so for those the question is what sits at the head of the *neighbouring*
+export; for the rest the call really is between two exports, and nothing in the
+repository asked whether it was there. Run this tool for that split on the tree
+as it is -- the figures move every time an annotation lands, so they are not
+written down here.
 
 This tool asks, per (callee, citing row) pair: take the citing listing's last
 instruction address, the next exported entry in that row's own scope, and the
@@ -70,6 +72,37 @@ site: a data island inside a function's range decodes exactly as convincingly as
 code, which is what the `bank0,D091` correction in
 `docs/findings/citing-listing-evidence.md` is standing warning about.
 
+**The `why` column says which `citations()` partition a pair came from, because
+a verdict alone is not one reading.** The population is all three partitions of
+`call_graph.citations()` put together, and the three already disagree about
+whether the pair is a code citation at all: `kept` credits it as one,
+`undecided` says the frame settled nothing, and `rejected` says the pair is a
+data mention or a cross-program collision. A `no-transfer` on the last of those
+is a statement about a window that was never evidence about a comment, and
+pooling the three publishes it as though it were the same finding. The column
+is `"<partition>:<reason>"`: for `rejected` the reason is the first of the
+`Candidate.reasons` strings `citations()` recorded, which is its own precedence
+order and puts the program veto ahead of the frame, and for `kept` it is which
+of the two keep arms fired. A rejected pair can carry several reasons and the
+column shows one, so the report says how many and names them. Nothing here is
+re-derived from the prose; the report prints the split and what each partition
+means on every run, and `docs/findings/citation-gap-why-partition.md` is the
+reading.
+
+**`fall_through` is a column rather than a fourth verdict, for the reason
+`neighbour_edge` is one.** A pair whose two listings abut is crossed by running
+off the end of one into the other, which no transfer-based verdict can express
+and which scores as an unprovenanced citation. Either direction counts: the
+citing listing ending where the callee's begins, or the callee's ending where
+the citing row begins. **Abutting is not the same as crossed, so the junction's
+own instruction is read**: a listing ending in `ret`, `sjmp`, `ljmp`, `ajmp`,
+`jmp` or `reti` hands control elsewhere and the pair is `blocked`, which keeps
+it apart from the `no` that says the rows do not abut at all. A conditional
+branch can fall through and stays `yes`. Making it a verdict would repartition
+every split `docs/findings/citation-gap-scan.md` publishes, so it is graded in a
+column and `docs/findings/citation-gap-why-partition.md` says what promoting it
+would cost.
+
 Usage:
     python3 ec/tools/citation_gap_scan.py              # census, write nothing
     python3 ec/tools/citation_gap_scan.py --report     # write the CSV
@@ -81,6 +114,7 @@ import collections
 import csv
 import os
 import sys
+import textwrap
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -94,9 +128,10 @@ REPO = cg.REPO
 REPORT = os.path.join(REPO, "ec", "ghidra", "gap-citation-scan.csv")
 
 COLUMNS = ["callee_scope", "callee_addr", "citer_scope", "citer_addr",
-           "verdict", "gap", "end", "next", "window", "transfers",
+           "verdict", "why", "gap", "end", "next", "window", "transfers",
            "hit_site", "hit_text", "at_next", "neighbour_edge",
-           "db", "unassigned", "truncated", "frame_onto", "frame_over"]
+           "db", "unassigned", "truncated", "frame_onto", "frame_over",
+           "fall_through"]
 
 # `lcall`/`ljmp` are the widest transfer, so a window that stopped at the
 # boundary could cut one in half. See the module docstring.
@@ -111,9 +146,31 @@ SLACK = 3
 # becoming a second copy of the decoder's coverage.
 UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 
-# Known answers, measured on the committed tree and asserted in --self-test.
-# They are literals here rather than read out of the committed CSV, so a listing
-# or annotation edit that moves one fails instead of quietly re-basing the claim.
+# Instructions that cannot hand control to the address after them, so a listing
+# ending in one is not crossed by running off its end. Mnemonic names, because
+# that is what `verify_reassembly.parse_listing` yields and reading the listing
+# is the whole point: the address-only criterion this replaces called
+# `bank0,C26E`'s `C277 ret` a fall-through into `bank0,C278`, which the
+# committed listing contradicts. **A conditional branch is absent deliberately**
+# -- `jc` falls through when it is not taken, so those rows keep `yes` -- and so
+# is a call, because `lcall`/`acall` return to the instruction after them rather
+# than leaving. `reti` is here for the reason `ret` is: it is the same exit.
+# `jmp` is `jmp @A+DPTR`, the only `jmp` the map has.
+NO_FALL_THROUGH = ("ret", "reti", "sjmp", "ljmp", "ajmp", "jmp")
+
+# Known answers, asserted in --self-test **as relationships rather than as
+# figures.** The census this tool prints moves every time an export is added, so
+# a pinned row, pair or per-verdict tally here is a value the next merge has to
+# edit, and a stale one is a false failure on a tree that is merely bigger. What
+# --self-test holds instead is that the population is the one the committed
+# tables propose, that each verdict is read off its own pair's window, and that
+# the `boundary-cut` and `not-code` cases are the *named* pairs and not a tally
+# of them -- which pins strictly more than a count did, because a count permits
+# any set of the same size. The figures belong to
+# `docs/findings/citation-gap-scan.md`, which quotes them beside the command
+# that prints them, and a literal that stops moving is a number nobody edits.
+#
+# **The predicate has never been the same twice, and it moves both ways.**
 #
 # **The plan stage measured 100 rows / 114 pairs.** The predicate is unchanged --
 # the same `transfers()`-yields-nothing test on the citing listing, minus the rows
@@ -142,42 +199,41 @@ UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 #     which naming the callee does not decide. They want their own reading.
 #
 # `docs/findings/citation-gap-scan.md` carries the correction in place.
-EXPECT_ROWS = 95
-EXPECT_PAIRS = 120
-# The second cut is `common,3459` cited by `common,355E` -- #603's own rank-1
-# tranche row, whose one-`ret` listing is followed by 25 bytes before the next
-# common entry, and whose `ljmp 0x3459` sits at that boundary. It is the
-# zero-gap case the write-up describes, turning out to carry a real transfer.
-EXPECT_CUT = 2
-EXPECT_NOT_CODE = 1
-EXPECT_NO_TRANSFER = 117
-# The issue's premise is the exception: 84 of the 96 citing rows have a
-# zero-byte window, so for most of the population the question is the head of
-# the neighbouring export rather than bytes stranded between two. 108 of the
-# 121 pairs, counting a comment that names three callees three times.
-EXPECT_ZERO_GAP_ROWS = 84
-EXPECT_ZERO_GAP_PAIRS = 108
-# Pairs where the callee's edge list already books a same-scope transfer under a
-# *different* function -- the graph attributing to a neighbour what the comment
-# attaches elsewhere. Up on #603 for the same reason the cut count is: the
-# tranche's rows are `common`, and the six new citers each name callees whose
-# inbound already sits on a neighbour.
-EXPECT_NEIGHBOUR_EDGE = 31
-EXPECT_COMMON_CITERS = 10
-# How many of the common citers have a zero-byte window. This used to be all of
-# them, and saying so was the point: a common listing abutting the next common
-# entry is why the scope-boundary worry never bit. #603's `common,355E` breaks
-# it -- a one-`ret` row with 25 bytes before the next common entry -- so the
-# figure is a count and the exception is named in the assert that reads it.
-EXPECT_COMMON_ZERO_GAP = 9
+#
+# The `boundary-cut` pairs, named rather than counted: the issue's worked case,
+# and `common,3459` cited by `common,355E` -- #603's own rank-1 tranche row,
+# whose one-`ret` listing is followed by 25 bytes before the next common entry,
+# and whose `ljmp 0x3459` sits at that boundary. It is the zero-gap case the
+# write-up describes, turning out to carry a real transfer.
+EXPECT_CUT_PAIRS = {("bank1", "E5D6", "bank1", "E57E"),
+                    ("common", "3459", "common", "355E")}
+# The `not-code` pair, named for the same reason: the assertion below reads its
+# window in full, and this is what says no second pair lands there.
+EXPECT_NOT_CODE_PAIR = ("common", "1300", "bank0", "3AD6")
+# The one `common` citer that does *not* abut the next common entry. That every
+# other `common` listing does is why the scope-boundary worry never bit; #603's
+# `common,355E` breaks it -- a one-`ret` row with 25 bytes before the next
+# common entry -- so the exception is the one thing here worth naming, and how
+# many of the rest abut is not.
 EXPECT_COMMON_NONZERO_CITER = "355E"
-# Of the common citers, how many have a bank-scope entry nearer than the common
-# one. The common window is the common scope's boundary by construction, and at
-# runtime the executing bank's is the one that exists; this is that consequence
-# counted rather than silently resolved. Zero on this tree.
-EXPECT_COMMON_SHORTER_IN_BANK = 0
 
-Context = collections.namedtuple("Context", "index edges listings pairs")
+# What each of the three `citations()` partitions means, printed on every run.
+# A partition is not a finer verdict: it is the caller's own answer to whether
+# the pair is a code citation at all, and the verdicts below are read off bytes.
+# Pooling them is what put `no-transfer` on pairs that were never a claim.
+PARTITION_GLOSS = {
+    "kept": "credits this as a code citation (a code frame, or a listing "
+            "transfer); the verdict is about corroboration",
+    "undecided": "the frame settled nothing; the window walk is the only "
+                 "evidence there is",
+    "rejected": "citations() already decided this is not a code citation (a "
+                "data frame, or the program veto), so the verdict describes a "
+                "window, not a claim",
+}
+
+Context = collections.namedtuple(
+    "Context",
+    "index edges listings pairs kept reasons listing_kept undecided")
 
 
 def listing_end(path):
@@ -188,14 +244,10 @@ def listing_end(path):
     `mov A, #0x10` is six -- and the bytes are what say how long the function
     is. `verify_reassembly.parse_listing` is the committed reader of that column
     and the one `verify_gap_text` already decodes from, so it is reused here
-    rather than a third parse of the same lines.
+    rather than a third parse of the same lines. `listing_tail()` is that read,
+    shared with the junction test so one file is not parsed two ways.
     """
-    last = None
-    for addr, hexbytes, _mnem, _ops in V.parse_listing(path):
-        last = (addr, len(hexbytes) // 2)
-    if last is None:
-        return None
-    return last[0] + last[1]
+    return listing_tail(path)[0]
 
 
 def next_entry(by_scope, scope, addr):
@@ -295,16 +347,59 @@ def context():
     The scan is the expensive half (it walks all 2,707 listings), and
     `--self-test` needs both the population and the verdicts, so it is built
     once here rather than once per question.
+
+    **The partition is carried, not discarded.** `citations()` splits its answer
+    three ways and the caller used all three to build `pairs`, so keeping only
+    the union left the reason behind in this function -- which is what let a
+    `no-transfer` on a data mention publish as though it were about a comment.
+    `kept`, `reasons`, `listing_kept` and `undecided` are the caller's own
+    values, held for `why_of()` to read rather than a second derivation of them.
     """
     index = cg.load_index()
     edges, _unresolved, _orphans, _total, listings = cg.scan(index)
-    kept, rejected, undecided, _listing_kept = cg.citations(index, listings)
-    pairs = set()
+    kept, rejected, undecided, listing_kept = cg.citations(index, listings)
+    kept_pairs, reasons = set(), {}
     for key, citers in kept.items():
-        pairs.update((key, (scope, addr)) for scope, addr, _n in citers)
-    pairs.update((c.callee, c.citer) for c in rejected)
-    pairs.update((c.callee, c.citer) for c in undecided)
-    return Context(index, edges, listings, pairs)
+        for scope, addr, _n in citers:
+            kept_pairs.add((key, (scope, addr)))
+    for c in rejected:
+        reasons[(c.callee, c.citer)] = tuple(c.reasons)
+    undecided_pairs = {(c.callee, c.citer) for c in undecided}
+    pairs = set(kept_pairs) | set(reasons) | undecided_pairs
+    return Context(index, edges, listings, pairs, kept_pairs, reasons,
+                   listing_kept, undecided_pairs)
+
+
+def why_of(ctx, pair):
+    """`"<partition>:<reason>"` for one pair, from what `citations()` decided.
+
+    The reason is the caller's own, in the caller's own precedence: a
+    `Candidate.reasons` tuple starts with the program veto when one fired and
+    carries every data reason after it, so taking the first is not a choice this
+    tool makes about which veto mattered. A `kept` pair is split by
+    `listing_kept`, which is the subset the citing listing's own bytes settled
+    rather than the prose.
+
+    **A pair in none of the three is blank, not `undecided`.** `classify()` can
+    be driven over a pair the caller never returned, and answering
+    `undecided` for one would claim the frame settled nothing when it was never
+    read -- the same not-found-is-not-absent rule the rest of this repository
+    keeps. `--self-test` asserts the blank is absent from every live row.
+    """
+    if pair in ctx.reasons:
+        reasons = ctx.reasons[pair]
+        return "rejected:%s" % (reasons[0] if reasons else "")
+    if pair in ctx.kept:
+        arm = "listing-corroborated" if pair in ctx.listing_kept else "code-frame"
+        return "kept:%s" % arm
+    if pair in ctx.undecided:
+        return "undecided:undecided"
+    return ""
+
+
+def partition_of(why):
+    """The partition half of a `why` value, for grouping without re-deriving."""
+    return why.split(":", 1)[0]
 
 
 def population(ctx):
@@ -357,6 +452,106 @@ def resolved_empty_population(ctx):
     keep = set(rows)
     pairs = sorted(pair for pair in ctx.pairs if pair[1] in keep)
     return rows, pairs
+
+
+def listing_tail(path):
+    """`(end, last mnemonic)` for a listing, or `(None, "")` if it has none.
+
+    One read of the listing for both halves, because the junction question and
+    the length question are asked about the same last line and two readers of
+    one file is the hazard `listing_end`'s own docstring names. The mnemonic is
+    read here rather than re-derived from the image so that the junction test
+    below is a statement about the committed listing and not about this tool's
+    decode of it.
+    """
+    last = None
+    for addr, hexbytes, mnem, _ops in V.parse_listing(path):
+        last = (addr + len(hexbytes) // 2, mnem)
+    return last if last is not None else (None, "")
+
+
+def ends_with_transfer(path):
+    """Whether the listing's last instruction cannot hand control onward.
+
+    The junction test for `falls_through()`. Read from the listing with the
+    committed reader `verify_reassembly.parse_listing`, rather than inferred
+    from the addresses either side of the junction: two listings can abut
+    exactly and still not be crossed, because the instruction sitting on the
+    boundary leaves. An empty listing has no last instruction and so nothing to
+    read, which is `False` -- not-found-is-not-absent again, one step in from
+    the blank the caller leaves for a missing file.
+    """
+    return listing_tail(path)[1] in NO_FALL_THROUGH
+
+
+def junction_mnemonic(path):
+    """The last mnemonic in `path`, or `""` for a listing that has none."""
+    return listing_tail(path)[1]
+
+
+def junction_of(scope, addr, callee, end):
+    """The `.asm` path whose last instruction sits on the junction, or None.
+
+    Whichever of the two listings abuts: the citing row's own when its end is
+    the callee's address, the callee's when its end is the citing row's. None
+    means the two do not abut, or the abutting listing is not on disk.
+    """
+    if end == int(callee[1], 16):
+        return os.path.join(cg.DECOMPILED, scope, addr + ".asm")
+    path = os.path.join(cg.DECOMPILED, callee[0], callee[1] + ".asm")
+    if not os.path.isfile(path) or listing_end(path) != int(addr, 16):
+        return None
+    return path
+
+
+def falls_through(callee, scope, addr, end):
+    """`"yes"` when the two rows are crossed by running off an end, not a
+    transfer; `"blocked"` when they abut but the instruction on the boundary
+    leaves instead; `""` when the callee has no listing on disk to read.
+
+    Either direction counts, and both are the same relation with the two rows
+    swapped: the citing listing ends exactly where the callee's begins, so
+    execution runs from the citer into the callee; or the callee's own listing
+    ends exactly where the citing row begins, so it runs the other way. The
+    second is the shape issue #489 left open -- `pd 0x39E7`'s comment names
+    `0x39E6`, whose listing is one `mov R5,A` and no `ret` of its own -- and it
+    is invisible to a verdict that only looks forward from the citing row.
+
+    **The junction's own instruction decides, not the addresses.** Deciding
+    from addresses alone graded `bank0,C26E`'s `C277 ret` as a fall-through into
+    `bank0,C278`, which the committed listing contradicts: control returns to
+    the caller. `bank0,D5DB`/`bank0,D5D4` and `bank1,C931`/`bank1,C924` are the
+    same shape, ending in `sjmp` and `jmp @A+DPTR`. Those are `blocked` rather
+    than `no`, which keeps the two readings apart: `no` says the rows do not
+    abut, `blocked` says they do and the crossing is closed. A *conditional*
+    branch at the junction can fall through, so it stays `yes` -- `bank0,B4A8`
+    ends in `jc 0xb5d2` and `bank0,B737` in `jnc 0xb83a`, and both are real.
+
+    **Same-scope only.** Two exports in different programs that share an
+    address are a collision, not an adjacency: `bank1 0xE924`'s comment names a
+    fall-through into `bank1 0xE931`, and the token resolved to a `pd` row at
+    0xE930 that merely shares the number.
+
+    The blank is not-found-is-not-absent, the direction this repository keeps
+    everywhere else: an index row need not have a `.asm` beside it -- `bank0,
+    F0A1` is an index row in this tree with no listing, as are `bank1,17FE` and
+    `bank1,D235` -- and a missing listing decides nothing about whether it
+    falls. No pair in the population lands on that blank.
+    """
+    if callee[0] != scope:
+        return "no"
+    if end == int(callee[1], 16):
+        # Forward: the citing listing ends where the callee begins, so the
+        # instruction on the junction is the citing row's own last one, and it
+        # is on disk because `classify()` has just read it.
+        return ("blocked" if ends_with_transfer(
+            os.path.join(cg.DECOMPILED, scope, addr + ".asm")) else "yes")
+    path = os.path.join(cg.DECOMPILED, callee[0], callee[1] + ".asm")
+    if not os.path.isfile(path):
+        return ""
+    if listing_end(path) != int(addr, 16):
+        return "no"
+    return "blocked" if ends_with_transfer(path) else "yes"
 
 
 def classify(ctx, images=None, pairs=None):
@@ -417,6 +612,11 @@ def classify(ctx, images=None, pairs=None):
                 neighbour = "%s:%s %s" % (nscope, ncaller, form)
                 break
 
+        # A citation crossed by falling off the end of one listing into the other.
+        # No transfer carries it, so the window cannot either; a column for the
+        # reason the module docstring gives, so the verdicts still partition.
+        fall_through = falls_through(callee, scope, addr, end)
+
         onto, over = D.converges_from(image, end) if end else (0, 0)
         out.append({
             "callee_scope": callee[0],
@@ -424,6 +624,7 @@ def classify(ctx, images=None, pairs=None):
             "citer_scope": scope,
             "citer_addr": addr,
             "verdict": verdict,
+            "why": why_of(ctx, (callee, (scope, addr))),
             "gap": "" if nxt is None else str(nxt - end),
             "end": "%04X" % end,
             "next": "" if nxt is None else "%04X" % nxt,
@@ -438,6 +639,7 @@ def classify(ctx, images=None, pairs=None):
             "truncated": "yes" if truncated else "no",
             "frame_onto": str(onto),
             "frame_over": str(over),
+            "fall_through": fall_through,
         })
     return out
 
@@ -525,6 +727,11 @@ def report(ctx, rows, images=None):
     images = images if images is not None else G.load_images()
     pop_rows, pop_pairs = population(ctx)
     tal = collections.Counter(r["verdict"] for r in rows)
+    part = collections.Counter(partition_of(r["why"]) for r in rows)
+    blocked = [r for r in rows if r["fall_through"] == "blocked"]
+    multi = [r for r in rows if len(ctx.reasons.get(
+        ((r["callee_scope"], r["callee_addr"]),
+         (r["citer_scope"], r["citer_addr"])), ())) > 1]
     row_keys = {(r["citer_scope"], r["citer_addr"]) for r in rows}
     scopes = collections.Counter(scope for scope, _addr in row_keys)
     zero_rows = len({(r["citer_scope"], r["citer_addr"])
@@ -556,6 +763,18 @@ def report(ctx, rows, images=None):
     print("  %-52s %6d" % ("    with a bank-scope entry nearer than the "
                            "common one", shorter))
     print()
+    print("  the population is all three partitions of call_graph.citations(), and")
+    print("  the `why` column says which one each pair came from -- a pair is")
+    print("  credited as a code citation, left undecided, or already refused, and")
+    print("  the verdicts below are read off bytes either way:")
+    for partition in ("kept", "undecided", "rejected"):
+        print(textwrap.fill(
+            PARTITION_GLOSS[partition], width=79,
+            initial_indent="    %-10s %6d  " % (partition,
+                                                 part.get(partition, 0)),
+            subsequent_indent=" " * 23))
+    print("    %-10s %6d" % ("", sum(part.values())))
+    print()
     print("  %-52s %6d" % ("window, zero bytes (the next export starts where "
                            "this one stops)", zero_pairs))
     print("  %-52s %6d" % ("  rows", zero_rows))
@@ -567,7 +786,27 @@ def report(ctx, rows, images=None):
         print("  %-52s %6d" % ("verdict %s" % verdict, tal.get(verdict, 0)))
     print("  %-52s %6d" % ("  the three verdicts add up to the pair count",
                            sum(tal.values())))
+    print("  the same three verdicts within each partition, which is what the")
+    print("  pooled tally above hides -- a verdict on a refused pair describes a")
+    print("  window, not a claim:")
+    print("    %-10s %6s %14s %13s %9s" % ("", "pairs", "boundary-cut",
+                                          "no-transfer", "not-code"))
+    for partition in ("kept", "undecided", "rejected"):
+        cell = collections.Counter(
+            r["verdict"] for r in rows
+            if partition_of(r["why"]) == partition)
+        print("    %-10s %6d %14d %13d %9d"
+              % (partition, part.get(partition, 0), cell.get("boundary-cut", 0),
+                 cell.get("no-transfer", 0), cell.get("not-code", 0)))
     print()
+    print("  %-52s %6d" % ("pairs whose two listings abut, and the junction "
+                           "falls through",
+                           sum(1 for r in rows if r["fall_through"] == "yes")))
+    print("  %-52s %6d" % ("pairs whose two listings abut, and the junction "
+                           "instruction leaves",
+                           sum(1 for r in rows if r["fall_through"] == "blocked")))
+    print("  %-52s %6d" % ("pairs whose `why` shows one of several reasons "
+                           "citations() recorded", len(multi)))
     print("  %-52s %6d" % ("pairs whose callee is already reached from the "
                            "same scope by another function",
                            sum(1 for r in rows if r["neighbour_edge"])))
@@ -597,6 +836,27 @@ def report(ctx, rows, images=None):
                      r["next"], int(r["unassigned"])))
             print("      byte the MCS-51 map assigns to no instruction; it "
                   "opens `%s`" % r["window"][:18])
+    if multi:
+        print("  pairs refused for more than one reason, the `why` column "
+              "carrying the first:")
+        for r in multi:
+            print("    %s,%s cited by %s,%s: %s"
+                  % (r["callee_scope"], r["callee_addr"], r["citer_scope"],
+                     r["citer_addr"], " and ".join(ctx.reasons[(
+                         (r["callee_scope"], r["callee_addr"]),
+                         (r["citer_scope"], r["citer_addr"]))])))
+    if blocked:
+        print("  abutting pairs whose junction instruction leaves, read one by "
+              "one -- these are `blocked`, not `yes`:")
+        for r in blocked:
+            abutting = junction_of(r["citer_scope"], r["citer_addr"],
+                                   (r["callee_scope"], r["callee_addr"]),
+                                   int(r["end"], 16))
+            print("    %s,%s cited by %s,%s: the junction is `%s` in %s, so "
+                  "control does not run into the other row"
+                  % (r["callee_scope"], r["callee_addr"], r["citer_scope"],
+                     r["citer_addr"], junction_mnemonic(abutting),
+                     os.path.relpath(abutting, REPO)))
     print()
     print("  limit: %d of the %d pairs are `no-transfer`, which is this window "
           "carrying" % (tal.get("no-transfer", 0), len(rows)))
@@ -604,6 +864,17 @@ def report(ctx, rows, images=None):
     print("  not the call being absent. %d window(s) carry a transfer that lands "
           "elsewhere;" % with_transfer)
     print("  those are a different reading and are not pooled with the rest.")
+    print("  limit: that pooled tally spans all three partitions, and on a `rejected`")
+    print("  pair there was no code claim for the window to miss -- citations()")
+    print("  had already read the mention as a data frame or a cross-program")
+    print("  collision. Read the per-partition table above, not the pooled one, for")
+    print("  anything about a comment.")
+    print("  limit: a `fall_through` row is a column, not a fourth verdict, so it")
+    print("  still reads `no-transfer` and the comment is neither credited nor")
+    print("  faulted by it. `blocked` is not `no`: it says the two listings abut")
+    print("  and the instruction on the boundary leaves. `pd 0x39E6`/`0x39E7` is")
+    print("  the shape; the reading is in")
+    print("  docs/findings/citation-gap-why-partition.md.")
     print("  limit: a `boundary-cut` is evidence about framing and about the")
     print("  comment's accuracy, not proof that a function entry belongs at the")
     print("  site. `bank0,D091` -- a CODE table read as ACALLs -- decodes exactly")
@@ -681,6 +952,31 @@ def self_test():
     assert_that(verdict_of([(0x10, b"\x22", "ret", False)]) is None,
                 "and a clean window is not")
 
+    # The junction set's own oracle, stated from the manual and paired with the
+    # decoder -- the same shape as the `UNASSIGNED` block above, and for the
+    # same reason: `NO_FALL_THROUGH` is a list of mnemonic *names*, so the
+    # pairing is what stops it drifting into a second, partial copy of the
+    # decoder's transfer coverage. Each byte is fed to `mnemonic()` at its own
+    # length and the two answers are read together.
+    junction_cases = [(0x22, "ret", True), (0x32, "reti", True),
+                      (0x02, "ljmp", True), (0x80, "sjmp", True),
+                      (0x73, "jmp", True), (0x01, "ajmp", True),
+                      (0x21, "ajmp", True), (0x40, "jc", False),
+                      (0x50, "jnc", False), (0x60, "jz", False),
+                      (0x70, "jnz", False), (0x10, "jbc", False),
+                      (0x20, "jb", False), (0x30, "jnb", False),
+                      (0xD5, "djnz", False), (0x12, "lcall", False),
+                      (0x11, "acall", False)]
+    assert_that(all(D.mnemonic(bytes([op]) + bytes(D.OPCODE_LEN[op] - 1),
+                              0, 0).split()[0] == name
+                    and (name in NO_FALL_THROUGH) is blocks
+                    for op, name, blocks in junction_cases),
+                "every mnemonic `NO_FALL_THROUGH` names is what `disasm8051` "
+                "prints for a byte that leaves, and every one it omits is a "
+                "byte that can fall through -- conditional branches, which "
+                "reach the next row when not taken, and the calls, which "
+                "return to the instruction after them")
+
     # The overrun guard, on `walk()` and on `decode()`. A gap window ends on a
     # 1-byte opcode routinely (`bank0,B5D2` is a bare `ret`), so the shape that
     # matters is a window that holds less than the caller asked for. `walk()`
@@ -707,19 +1003,37 @@ def self_test():
                 "keeps walk() for the unassigned flag and the truncated column "
                 "rather than for the bounds check")
 
-    # The population, and the pins the write-up quotes.
+    # The population, as the two-way identity it is rather than as a pair of
+    # pinned figures: re-derived here from the committed `call-graph-callees.csv`
+    # and `ghidra-functions.csv` through the predicate `population()`'s own
+    # docstring states, so an annotation edit that moves the population has to
+    # move this. Which rows the filter keeps is the whole claim, and it is
+    # checked both ways -- a row it wrongly drops fails here as surely as one it
+    # wrongly keeps.
     ctx = context()
     pop_rows, pop_pairs = population(ctx)
     citers = set(pop_rows)
-    assert_that(len(citers) == EXPECT_ROWS,
-                "the population reproduces %d citing rows (measured %d)"
-                % (EXPECT_ROWS, len(citers)))
-    assert_that(len(pop_pairs) == EXPECT_PAIRS,
-                "and %d (callee, citer) pairs over them (measured %d)"
-                % (EXPECT_PAIRS, len(pop_pairs)))
+    with open(cg.ANNOTATIONS, newline="") as f:
+        ann = list(csv.DictReader(f, strict=True))
+    commented = {(r["scope"], cc.norm_addr(r["addr"]))
+                 for r in ann if r.get("comment")}
+    proposed = set()
+    for key in {citer for _callee, citer in ctx.pairs}:
+        listing = os.path.join(cg.DECOMPILED, key[0], key[1] + ".asm")
+        if (key in commented and os.path.isfile(listing)
+                and not list(cc.transfers(listing))
+                and not cc.is_fill(listing)):
+            proposed.add(key)
+    assert_that(proposed == citers and proposed,
+                "the population is exactly the citers the committed annotations "
+                "carry a comment for whose listing yields no transfer and is not "
+                "a fill run -- the two refusals `population()` names")
+    assert_that(set(pop_pairs) == {p for p in ctx.pairs if p[1] in citers},
+                "and the pairs are exactly the ones the graph proposes over "
+                "those rows: none dropped by the filter, none invented")
     assert_that({p[1] for p in pop_pairs} == citers,
-                "every pair's citing row is in the row set, so the two numbers "
-                "describe one population and cannot be read as contradicting")
+                "every pair's citing row is in the row set, so the two describe "
+                "one population and cannot be read as contradicting")
     assert_that(len({(p[0], p[1]) for p in pop_pairs}) == len(pop_pairs),
                 "and the pairs are distinct")
 
@@ -728,11 +1042,14 @@ def self_test():
     # resolves to no index row, and those rows are the whole of the difference.
     alt_rows, alt_pairs = resolved_empty_population(ctx)
     extra = set(alt_rows) - citers
-    assert_that(len(alt_rows) == EXPECT_ROWS + 2
-                and len(alt_pairs) == EXPECT_PAIRS + 2,
-                "the resolved-target predicate gives %d rows / %d pairs against "
-                "the transfer-line predicate's %d / %d"
-                % (len(alt_rows), len(alt_pairs), EXPECT_ROWS, EXPECT_PAIRS))
+    assert_that(set(pop_pairs) < set(alt_pairs)
+                and set(alt_rows) - citers == extra
+                and set(alt_pairs) - set(pop_pairs)
+                == {p for p in alt_pairs if p[1] in extra},
+                "the resolved-target predicate's population is this one's plus "
+                "exactly the rows it adds and exactly the pairs over them -- and "
+                "never narrower, since a listing carrying no transfer line at all "
+                "resolves no target either")
     assert_that(extra == {("bank1", "8802"), ("bank1", "E954")},
                 "and the two rows it adds are %s -- each carries a transfer "
                 "line whose target resolves to no index row, which is why the "
@@ -748,10 +1065,31 @@ def self_test():
     for r in live:
         by_verdict[r["verdict"]].append(r)
 
-    # The worked example the issue names, and the census it sits in.
+    def pair_key(r):
+        return (r["callee_scope"], r["callee_addr"],
+                r["citer_scope"], r["citer_addr"])
+
+    def row_of(verdict, key):
+        """The classified row for one *named* pair, or a blank one.
+
+        The blocks below read their case by name rather than by position, so a
+        pair that is renamed or loses its verdict has to be a second failing
+        assertion rather than an `IndexError` that stops the run before the
+        ones after it are reached.
+        """
+        return next((r for r in by_verdict[verdict] if pair_key(r) == key),
+                    collections.defaultdict(lambda: "0"))
+
+    # The worked example the issue names, and the census it sits in. The set of
+    # cut pairs is named rather than counted: a count would license any two
+    # pairs, this says which two, and it is also what keeps the `common`
+    # exception below and this one the same claim.
     cut = [r for r in by_verdict["boundary-cut"]]
-    assert_that(len(cut) == EXPECT_CUT, "%d boundary-cut pair(s)" % EXPECT_CUT)
-    e57e = cut[0]
+    assert_that({pair_key(r) for r in cut} == EXPECT_CUT_PAIRS,
+                "the `boundary-cut` verdict lands on the two named pairs -- "
+                "bank1,E5D6 cited by bank1,E57E, and common,3459 cited by "
+                "common,355E -- and on no third")
+    e57e = row_of("boundary-cut", ("bank1", "E5D6", "bank1", "E57E"))
     # Oracle: bank-call-targets.csv:5766 reads
     # `0x16580,bank1,0xE580,lcall,0xE5D6,B,24,0,,,entry,entry` and bank1/E57E.asm
     # is a single `push 0x07`, so the listing ends at 0xE580 and the lcall is
@@ -783,9 +1121,11 @@ def self_test():
                 "all -- which is why the window runs 3 past the boundary")
 
     # The one `not-code` pair, and the one `no-transfer` pair read in full.
-    assert_that(len(by_verdict["not-code"]) == EXPECT_NOT_CODE,
-                "%d not-code pair(s)" % EXPECT_NOT_CODE)
-    nc = by_verdict["not-code"][0]
+    assert_that({pair_key(r) for r in by_verdict["not-code"]}
+                == {EXPECT_NOT_CODE_PAIR},
+                "the `not-code` verdict lands on the one named pair, "
+                "common,1300 cited by bank0,3AD6, and on no second")
+    nc = row_of("not-code", EXPECT_NOT_CODE_PAIR)
     assert_that(nc["citer_scope"] == "bank0" and nc["citer_addr"] == "3AD6",
                 "the not-code pair's citing row is bank0,3AD6")
     assert_that(nc["end"] == "3AF0" and nc["next"] == "445E",
@@ -803,8 +1143,15 @@ def self_test():
                 "`mnemonic()` its six `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` "
                 "cases; the disagreement between the two counts, which is what "
                 "this case is for, is the same either side of that change")
-    assert_that(len(by_verdict["no-transfer"]) == EXPECT_NO_TRANSFER,
-                "%d no-transfer pairs" % EXPECT_NO_TRANSFER)
+    assert_that(all((r["verdict"] == "not-code") == bool(int(r["unassigned"]))
+                    and (r["verdict"] == "no-transfer")
+                    == (r["hit_site"] == "" and not int(r["unassigned"]))
+                    for r in live),
+                "every pair's verdict is read off its own window: `not-code` "
+                "exactly when the walk landed on a byte the MCS-51 map assigns "
+                "to no instruction, and `no-transfer` exactly when that is not "
+                "the case and the window resolved no transfer to the named "
+                "callee -- a per-pair property, not a share of the population")
     zero = [r for r in by_verdict["no-transfer"]
             if r["citer_scope"] == "bank0" and r["citer_addr"] == "B5B2"]
     assert_that(len(zero) == 1 and zero[0]["gap"] == "0"
@@ -819,25 +1166,202 @@ def self_test():
                 "read from the window, not from the byte column: the neighbour's "
                 "head is `mov DPTR,#0x089C`, not a call to 0xB4A8")
 
-    # The three verdicts partition, and the shape figures the write-up quotes.
-    assert_that(sum(len(v) for v in by_verdict.values()) == len(live)
-                == EXPECT_PAIRS,
-                "the three verdicts partition all %d pairs" % len(live))
-    assert_that(sum(1 for r in live if r["gap"] == "0") == EXPECT_ZERO_GAP_PAIRS
-                and len({(r["citer_scope"], r["citer_addr"]) for r in live
-                         if r["gap"] == "0"}) == EXPECT_ZERO_GAP_ROWS,
-                "%d of %d pairs (%d rows) have a zero-byte window, so the "
-                "question for most of the population is the head of the "
-                "neighbouring export"
-                % (EXPECT_ZERO_GAP_PAIRS, len(live), EXPECT_ZERO_GAP_ROWS))
-    assert_that(sum(1 for r in live if r["neighbour_edge"])
-                == EXPECT_NEIGHBOUR_EDGE,
-                "%d pairs' callee is already reached from the same scope under "
-                "another function" % EXPECT_NEIGHBOUR_EDGE)
-    assert_that(sum(1 for r in live if r["transfers"]) == 12,
-                "12 windows carry a transfer that lands somewhere other than "
-                "the named callee -- reported per pair, not pooled with the "
-                "112 that carry none")
+    # The three verdicts partition, and the shapes the write-up's figures describe.
+    assert_that(len(live) == len(pop_pairs)
+                and {r["verdict"] for r in live} == set(by_verdict)
+                and sum(len(v) for v in by_verdict.values()) == len(live),
+                "the three verdicts partition the population exactly: it "
+                "classifies the pairs `population()` returned, every pair "
+                "carries one of the three, and none is left unclassified")
+
+    # The `why` column, against `citations()` called again here rather than
+    # against the `Context` the rows were built from -- otherwise a `context()`
+    # that had quietly stopped carrying the partition would agree with itself.
+    # `citations()` is cheap next to `scan()`, which is the expensive half and
+    # is not re-run: it re-reads the annotation CSV and re-frames the comments.
+    kept2, rejected2, undecided2, listing_kept2 = cg.citations(ctx.index,
+                                                               ctx.listings)
+    caller_kept, caller_reasons = set(), {}
+    for key, citers in kept2.items():
+        for scope, addr, _n in citers:
+            caller_kept.add((key, (scope, addr)))
+    for c in rejected2:
+        caller_reasons[(c.callee, c.citer)] = tuple(c.reasons)
+
+    def four(pair):
+        """A pair flat, so the caller's set and the rows' compare directly."""
+        callee, citer = pair
+        return (callee[0], callee[1], citer[0], citer[1])
+
+    pop_set = {four(p) for p in pop_pairs}
+
+    def live_pairs(partition):
+        return {four(((r["callee_scope"], r["callee_addr"]),
+                      (r["citer_scope"], r["citer_addr"])))
+                for r in live if partition_of(r["why"]) == partition}
+
+    assert_that(live_pairs("kept")
+                == {four(p) for p in caller_kept if four(p) in pop_set},
+                "every row the `why` column calls `kept` is one `citations()` "
+                "itself kept, over the population `population()` returned -- the "
+                "column is the caller's partition, not a second reading of the "
+                "prose")
+    assert_that(live_pairs("rejected")
+                == {four(p) for p in caller_reasons if four(p) in pop_set},
+                "and every row it calls `rejected` is one `citations()` refused, "
+                "for the same reason and over the same pairs")
+    assert_that(live_pairs("undecided")
+                == pop_set - live_pairs("kept") - live_pairs("rejected"),
+                "and every row it calls `undecided` is the remaining one, so the "
+                "three partitions together are exactly the population: none "
+                "dropped, none invented, none claimed twice")
+
+    by_part = collections.Counter(partition_of(r["why"]) for r in live)
+    assert_that(set(by_part) == set(PARTITION_GLOSS)
+                and all(r["why"] and ":" in r["why"]
+                        and r["why"].split(":", 1)[1]
+                        for r in live)
+                and sum(by_part.values()) == len(live),
+                "no row's `why` is blank or carries a fourth partition or an "
+                "empty reason: every row names one of the three and says why, "
+                "and they add up to the pair count")
+
+    bad = [r for r in live if partition_of(r["why"]) == "rejected"
+           and r["why"].split(":", 1)[1]
+           not in caller_reasons.get(((r["callee_scope"], r["callee_addr"]),
+                                      (r["citer_scope"], r["citer_addr"])), ())]
+    assert_that(not bad,
+                "and every `rejected` row's reason is one `citations()` recorded "
+                "for that same pair -- a fabricated, defaulted or invented reason "
+                "fails here rather than reading as a finding")
+    assert_that(live_pairs("kept") and all(
+                    ("listing-corroborated" in r["why"])
+                    == (((r["callee_scope"], r["callee_addr"]),
+                         (r["citer_scope"], r["citer_addr"])) in listing_kept2)
+                    for r in live if partition_of(r["why"]) == "kept"),
+                "a `kept` row names the arm that kept it -- the citing listing's "
+                "own bytes, or the comment's frame -- checked against the "
+                "caller's own `listing_kept` set rather than against the column")
+
+    fall = {(r["citer_scope"], r["citer_addr"], r["callee_scope"],
+             r["callee_addr"]) for r in live if r["fall_through"] == "yes"}
+    rederived = set()
+    blocked = set()
+    for r in live:
+        scope, addr = r["citer_scope"], r["citer_addr"]
+        callee = (r["callee_scope"], r["callee_addr"])
+        if callee[0] != scope:
+            continue
+        abutting = junction_of(scope, addr, callee, int(r["end"], 16))
+        if abutting is None:
+            continue
+        # The junction instruction is read here from the committed listing, not
+        # from the column, so a `falls_through()` that went back to deciding on
+        # addresses alone would fail this rather than agree with itself.
+        (blocked if ends_with_transfer(abutting)
+         else rederived).add((scope, addr, callee[0], callee[1]))
+    assert_that(fall and fall == rederived,
+                "the `fall_through` column's `yes` rows are exactly the pairs "
+                "whose two listings abut *and* whose junction instruction falls "
+                "through -- the citing listing ending where the callee's "
+                "begins, or the callee's ending where the citing row begins -- "
+                "re-derived here from the committed `.asm` files rather than "
+                "from the column, so it cannot drift from the arithmetic that "
+                "defines it")
+    assert_that({(r["citer_scope"], r["citer_addr"], r["callee_scope"],
+                  r["callee_addr"]) for r in live
+                 if r["fall_through"] == "blocked"} == blocked and blocked,
+                "and its `blocked` rows are exactly the abutting pairs whose "
+                "junction is `ret`, `reti`, `sjmp`, `ljmp`, `ajmp` or `jmp` -- "
+                "abutting is not crossed, and `bank0,C26E` ends in `C277 ret` "
+                "where `bank0,C278` begins, so control returns to the caller "
+                "rather than running into the next row")
+    assert_that(not (fall & blocked),
+                "the two are disjoint: a junction either falls through or it "
+                "does not, and no pair is claimed as both")
+    assert_that(all(r["fall_through"] == "no"
+                    for r in live if r["callee_scope"] != r["citer_scope"]),
+                "and it is `no` on every cross-program pair: two exports in "
+                "different programs sharing an address are a collision, not an "
+                "adjacency, and grading one as the other would credit a data "
+                "mention with a control-flow relation it does not have")
+    assert_that(all((r["fall_through"] == "")
+                    == (not os.path.isfile(os.path.join(
+                        cg.DECOMPILED, r["callee_scope"],
+                        r["callee_addr"] + ".asm")))
+                    for r in live if r["callee_scope"] == r["citer_scope"]
+                    and int(r["end"], 16) != int(r["callee_addr"], 16)),
+                "and the blank it leaves is exactly the row whose callee has no "
+                "listing on disk to read -- not found by this method, never "
+                "absent, and not silently scored either way")
+    # A conditional branch falls through when it is not taken, so an abutting
+    # pair whose junction is one is a real `yes` rather than a `blocked` --
+    # read off the listing by name, not counted and not matched against a second
+    # table of conditional mnemonics to keep in step with `NO_FALL_THROUGH`.
+    b4a8 = next((r for r in live if (r["callee_scope"], r["callee_addr"],
+                                     r["citer_scope"], r["citer_addr"])
+                 == ("bank0", "B4A8", "bank0", "B5B2")), None)
+    assert_that(b4a8 is not None and b4a8["fall_through"] == "yes"
+                and junction_mnemonic(os.path.join(
+                    cg.DECOMPILED, "bank0", "B4A8.asm")) == "jc",
+                "a conditional branch at the junction falls through when it is "
+                "not taken, so the pair stays `yes`: bank0,B4A8 cited by "
+                "bank0,B5B2 abuts at 0xB5B2 and the junction is `jc 0xb5d2` "
+                "inside bank0/B4A8.asm, which reaches the next row on the "
+                "not-taken path")
+    blocked_rows = [r for r in live if r["fall_through"] == "blocked"]
+    assert_that(blocked_rows
+                and all(ends_with_transfer(junction_of(
+                    r["citer_scope"], r["citer_addr"],
+                    (r["callee_scope"], r["callee_addr"]), int(r["end"], 16)))
+                    for r in blocked_rows),
+                "and every `blocked` row's junction really is one of the "
+                "unconditional transfers, read off its own listing -- so "
+                "`blocked` is a claim about the instruction sitting on the "
+                "boundary and not a restatement of `no`")
+    zero_gap_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
+                     if r["gap"] == "0"}
+    abut_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
+                 if r["next"] and int(r["next"], 16) == listing_end(
+                     os.path.join(cg.DECOMPILED, r["citer_scope"],
+                                  r["citer_addr"] + ".asm"))}
+    assert_that(zero_gap_rows and zero_gap_rows == abut_rows
+                and all(int(r["next"], 16) - int(r["end"], 16) == int(r["gap"])
+                        for r in live if r["next"]),
+                "a zero-byte window is a shape, not a tally: the citing rows the "
+                "report reads a zero `gap` for are exactly the ones whose listing "
+                "ends where the next export in their own scope begins, read back "
+                "from the committed listings -- which is why for those rows the "
+                "question is the head of the neighbouring export")
+
+    def booked_under_another(r):
+        """The callee's inbound edges booked from the citing row's own scope
+        under a *different* function -- what the `neighbour_edge` column is."""
+        return [edge for edge in ctx.edges.get(
+            (r["callee_scope"], r["callee_addr"]), ())
+            if edge[0] == r["citer_scope"] and edge[1] != r["citer_addr"]]
+
+    booked = {pair_key(r) for r in live if booked_under_another(r)}
+    assert_that(booked and booked == {pair_key(r) for r in live
+                                      if r["neighbour_edge"]}
+                and all(r["neighbour_edge"]
+                        in {"%s:%s %s" % e for e in booked_under_another(r)}
+                        for r in live if r["neighbour_edge"]),
+                "the `neighbour_edge` column is filled for exactly the pairs "
+                "whose callee the graph already reaches from the same scope under "
+                "another function, and names one of those edges -- the graph "
+                "attributing to a neighbour what the comment attaches here")
+    carries = [r for r in live if r["transfers"]]
+    assert_that(carries
+                and all(r["hit_site"] == "" for r in carries
+                        if r["verdict"] != "boundary-cut")
+                and all("0x%04X %s" % (int(r["hit_site"], 16), r["hit_text"])
+                        in r["transfers"].split("; ")
+                        for r in carries if r["hit_site"]),
+                "some windows do carry a transfer, and where one does it lands "
+                "somewhere other than the named callee -- \"a transfer is there, "
+                "but not the one named\" stays a reading of its own, reported "
+                "per pair rather than pooled with the windows that carry none")
     assert_that(all(int(r["db"]) == 0 for r in live if r["verdict"] != "not-code"),
                 "no window outside the `not-code` pair has a `db` at an "
                 "instruction start, which is why the looser `db` form of the "
@@ -859,10 +1383,19 @@ def self_test():
                         for r in pd_row),
                 "and a `pd` citer against its own image: pd,1041 ends 0x104D and "
                 "the next pd entry is 0x104D")
-    assert_that(len({(r["citer_scope"], r["citer_addr"]) for r in live
-                     if r["citer_scope"] == "common"}) == EXPECT_COMMON_CITERS,
-                "%d `common` citers, whose window is the common scope's boundary"
-                % EXPECT_COMMON_CITERS)
+    live_by_scope = by_scope_of(ctx)
+    common_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
+                   if r["citer_scope"] == "common"}
+    common_boundary = {key: next_entry(live_by_scope, "common", int(key[1], 16))
+                       for key in common_rows}
+    assert_that(common_rows and all(
+        b is not None and r["next"] == "%04X" % b
+        for r in live if r["citer_scope"] == "common"
+        for b in [common_boundary[(r["citer_scope"], r["citer_addr"])]]),
+        "every `common` citer's next entry is the next *common*-scope export, "
+        "so its window is the common scope's boundary rather than the "
+        "executing bank's -- which is the reading the whole `common` scope "
+        "split exists to report on")
     # ... and the consequence of reading "the next exported entry in that
     # program" as the citing row's own scope, counted rather than resolved.
     by_scope = {"common": [0x05E7], "bank0": [0x05E6, 0x05E8, 0x9CA6],
@@ -875,29 +1408,25 @@ def self_test():
                 and nearer_in_bank(by_scope, "bank0", 0x9C48, 0x9CA6) == "",
                 "and reports nothing when no bank entry is nearer, or the citer "
                 "is not a `common` one")
-    common_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
-                   if r["citer_scope"] == "common"}
     common_zero = {k for k in common_rows
                    if all(r["gap"] == "0" for r in live
                           if (r["citer_scope"], r["citer_addr"]) == k)}
     common_nonzero = common_rows - common_zero
-    assert_that(len(common_zero) == EXPECT_COMMON_ZERO_GAP
-                and common_nonzero == {("common", EXPECT_COMMON_NONZERO_CITER)},
-                "%d of the %d `common` citers are zero-gap and the only one "
-                "that is not is common,%s -- the second `boundary-cut`, so the "
-                "common listing that abuts its neighbour is the exception here "
-                "rather than the rule"
-                % (EXPECT_COMMON_ZERO_GAP, EXPECT_COMMON_CITERS,
-                   EXPECT_COMMON_NONZERO_CITER))
-    live_by_scope = by_scope_of(ctx)
-    shorter = sum(1 for r in live if r["citer_scope"] == "common"
-                  and nearer_in_bank(live_by_scope, "common",
-                                     int(r["citer_addr"], 16), int(r["next"], 16)))
-    assert_that(shorter == EXPECT_COMMON_SHORTER_IN_BANK,
-                "and the report's own count of them agrees: %d `common` citers "
-                "have a bank-scope entry nearer than the common boundary, which "
-                "is what the re-export would have to change for this to move"
-                % shorter)
+    assert_that(common_nonzero == {("common", EXPECT_COMMON_NONZERO_CITER)},
+                "every `common` citer's listing abuts the next common entry "
+                "except the one named here, common,%s -- which is the second "
+                "`boundary-cut`, so the abutting listing is the rule and this "
+                "row is the exception the assertion has to carry"
+                % EXPECT_COMMON_NONZERO_CITER)
+    nearer = [(r["citer_scope"], r["citer_addr"]) for r in live
+              if r["citer_scope"] == "common"
+              and nearer_in_bank(live_by_scope, "common",
+                                 int(r["citer_addr"], 16), int(r["next"], 16))]
+    assert_that(not nearer,
+                "and no `common` citer has a bank-scope entry nearer than the "
+                "common boundary -- the consequence of reading \"the next "
+                "exported entry in that program\" as the citing row's own "
+                "scope, reported rather than silently resolved, and empty here")
 
     # The report's own table, through the same render/compare `--check` runs.
     text = render(live)
@@ -912,6 +1441,12 @@ def self_test():
                 and any("recomputed 'boundary-cut'" in ln for ln in lines),
                 "and a table with one verdict altered is rejected, naming that "
                 "row and that column")
+    drifted = text.replace("kept:code-frame", "kept:listing-corroborated", 1)
+    rc, lines = check_table(drifted, text)
+    assert_that(rc == 1 and lines
+                and any("recomputed 'kept:code-frame'" in ln for ln in lines),
+                "and a table with one `why` altered is rejected the same way, so "
+                "the partition is held by --check and not only by the census")
     dropped = "\n".join(text.splitlines()[:-1]) + "\n"
     rc, lines = check_table(dropped, text)
     assert_that(rc == 1

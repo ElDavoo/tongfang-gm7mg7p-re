@@ -296,6 +296,22 @@ is in [`citation-gap-scan.md`](citation-gap-scan.md), and the two counting rules
 this page turns on — the neighbour's own site / a different one, and the
 `cited_by == inbound` coincidence — are unchanged.
 
+*** CORRECTION 2026-10-05 (issue #1268), leaving every figure above as it was
+written.*** **The `Re-deriving` command's pair count is pooled over three
+populations, and `citation_gap_scan.py` now names which one each pair is from.**
+The gap scan's pairs come from all three buckets `citations()` returns, and the
+verdict was read off bytes with the bucket discarded, so a pair the citation gate
+had already refused — a data frame, or a cross-program collision — carries a
+`no-transfer` that says nothing about a comment. **This page's own fifteen rows
+are not affected in their verdicts**: they are read against the *kept* citation,
+which §35's correction already established, and the split they produce is a
+property of the kept rows rather than of the pooled pair count. **Nothing in the
+fifteen is withdrawn and the 9 / 6 split is unchanged** — what the partition
+column adds is that a reader can now see, per row, whether the pair in front of
+them was ever a code claim. `ec/ghidra/gap-citation-scan.csv` carries `why` on
+every row and the report prints the split; the reading is in
+[`citation-gap-why-partition.md`](citation-gap-why-partition.md).
+
 ## Re-deriving
 
 One command, from the repository root, over the two committed CSVs. It

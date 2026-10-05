@@ -87,7 +87,7 @@ What each bundle writes is traced, and confirmed live, under
 | | `SetGPUdstate`, `SetGPUdstateByGpuMode` | `0x078B` bits 0-2 | both private and **never called in this class, or in any `RamFan1p5` sibling**; `SetGPUdstateByGpuMode` is called in `*_QC`/`*_Intel`, and `SetGPUdstate` is dead in every class in the tree |
 | | `SetFanQuietModeEnable`, `SetOverBoostMode`, `SetPowerLedStatus`, `SetPowerStatus` | `0x07A5` bits 2, 4, 0-1, 7 | four features share this byte, bitwise; all private and **never called in this class** (called in `*_QC`/`*_Intel`) |
 | | `SetOverBoostByDynamicTemp` | `0x07A6` bit 1 | the charge-profile byte, another bit; private and **never called in this class**. Bit 1 is **active-low**: `:2237` sets it when the argument is *false*. Bit map is issue #93 |
-| | `SkipOfficeModeSafetyProtect` | `0x07C5` bit 4 | private and **never called in this class**; the only one of these eight with no second reference in the whole tree |
+| | `SkipOfficeModeSafetyProtect` | `0x07C5` bit 4 | private and **never called in this class**; the only one of these eight with no second reference in the whole tree. Bit 4 is one field of that byte and not the byte's only one — `SetGpuWhisperModeMainSwitch` below writes bit 5, and `SkipFanSafetyAbnormalProtection` in the `_CML`/`_NV`/`_Normal` siblings writes bit 4 from the profile |
 | `FanTable_Manager1p5` | `SetEcFanTable(_Cpu/_Gpu)`, `ClearFanTableAll` | `0x0F00-0x0F5F` | CPU table `0x0F00/10/20`, GPU `0x0F30/40/50` (the same bases `mech-forza-control` names up-temp/down-temp/duty) |
 | | `RefreshDefaultFanTable` | `0x0F5D-0x0F5F` | |
 | | `SetEcFanControlRespective` | `0x07C5` bit 7 | split CPU/GPU tables; upstream `SPLIT_TABLES` |
@@ -96,7 +96,7 @@ What each bundle writes is traced, and confirmed live, under
 | | `SetGpuConfigurableTGPTarget` | `0x0744` | cTGP (issue #8, `NVIDIA_CTGP_CONTROL`) |
 | | `SetGpuDynamicBoostTotalProcessingPowerTarget` | `0x0745` | |
 | | `SetGpuDynamicBoostMaxinumTGP` | `0x0746` | |
-| | `SetGpuWhisperModeMainSwitch` | `0x07C5` | |
+| | `SetGpuWhisperModeMainSwitch` | `0x07C5` bits 5, 6 | bit 5 follows the argument, so this is the DSDT's `WHMS`; bit 6 is set by both arms and nothing in the service clears it. `docs/findings/07c5-whms-bit5-vs-bit4.md` |
 | | `SetWhisperModeStatusDisable` | `0x07C6` | |
 | `MySettingManager` | `SetFnKey` | `0x074E` | Fn lock |
 | | `USB_Charger_ON/OFF` | `0x0767` | USB powershare (issue #7) |

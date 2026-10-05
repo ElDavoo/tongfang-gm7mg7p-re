@@ -139,11 +139,11 @@ rejected at the CLI** — which is what `check_site_addr()` has already done for
 is not bytes to decode and label; it is a value with no file offset to read, and
 the right response is to name the ranges and stop.
 
-**The listing loop itself is deliberately left alone**, for a reason that is
+**The listing loop itself was deliberately left alone**, for a reason that is
 specific rather than convenient. It is census row 10, which #848 closed with a
 range check and *deliberately left the read side to the bytes*; and its
 contract is a fixed `SITE_WINDOW`-long listing, which is exactly the mechanism a
-misaligned anchor is caught by — `#848`'s own self-test pins
+misaligned anchor is caught by — `#848`'s own self-test pinned
 `--sites 0xFFFF` to still walk its whole window, last read at file `0x3000E`
 and no higher than the `0x3002C` ceiling. Bounding that loop would move a pin
 that exists to measure it. The contrast with the two walkers is the point and it
@@ -151,8 +151,39 @@ is a real one: `walk_helper` and `chain_from` walk until something *stops* them,
 and a walk that stops nowhere is a listing with no end; `site_rows` walks a
 window whose length is the contract, and its end is the answer.
 
-`site_rows()` also keeps `lo, _ = pd_bounds()`; `hi` is not load-bearing in it.
-That is unchanged and is not counted below as a fix.
+`site_rows()` also kept `lo, _ = pd_bounds()`; `hi` was not load-bearing in it.
+Both `lo` and `hi` are taken now — see the retraction below.
+
+### Retraction (2026-10-05, issue #1014): the loop is bounded now, and both halves of the decision move
+
+The paragraph above is retracted in place rather than rewritten, because its
+reasoning about the two walkers is the reasoning that settles it. `walk_helper`
+and `chain_from` walk until something stops them; `site_rows` walks a fixed
+window whose length is the contract. That is a difference in what a caller
+expects, not a difference in the loop: `SITE_WINDOW` bounds the walk, and the
+region end bounds it just as it bounds the other two.
+
+The window contract did not hold as an exemption against its own terms, and the
+column is the sharper reason. The lines `--sites 0xFFFF` printed past the region
+render as runtime `0x10000`–`0x1000e`, and `pd_bounds()` puts the region at
+`0x0000-0xFFFF` — **none of those is a PD runtime address**. They are file
+offsets from the next region row, printed in a runtime column whose domain
+excludes them, which is the same defect as any other file offset printed as a
+runtime address.
+
+The pin is moved rather than deleted: `--sites 0xFFFF` now stops at `0x2FFFF`,
+the region's own last byte, and its stop names `0x30000`. `erased_band_holds()`
+and the premise it asserted go with it — nothing here rests on the bytes past
+the region any more, and
+[`erased-band-fill-claim.md`](erased-band-fill-claim.md) records where that
+premise lives now. The pin did its job: it is what made the overflow visible
+before it was fixed.
+
+**Arithmetic correction, beside the figure above.** This section says
+`--sites 0xFFFF` read "14 bytes past the region's last byte". That is measured
+from the region's end address `0x30000`; from the last in-region *byte*
+`0x2FFFF` it is **15**, which is why 15 of the 16 listing lines were the
+erased fill. Both numbers were in the corpus and only one was right.
 
 ## What this does not establish
 
@@ -204,6 +235,18 @@ all byte-identical** — `--helpers`, `--helpers-csv`, `--bases`, `--bases all`,
 0x578E` — plus the existing byte-for-byte regeneration of all five committed
 CSVs, which `--self-test` already asserts and which is what makes "no behaviour
 changed on the committed inputs" a measurement rather than a claim.
+
+**Correction (2026-10-05, issue #1014): three of those sixteen no longer are.**
+Bounding `site_rows()`'s listing moves `--sites 0xFFFF` (16 listing lines to 1,
+which is the correction the retraction above describes) and gives `--sites
+0xFFF0` and `--sites 0xC2FA 0xDA9B` the listing's own stop bracket with their
+content unchanged. The other thirteen modes and all five CSVs are still
+byte-identical. The measurement and its reasoning above stand; it is the list of
+modes that was silent at that time that has narrowed. To reproduce the pair now,
+take the pre-change copy from `HEAD` — the recipe's own `99c01938` is an older
+ancestor that predates several unrelated changes to this tool, so every mode
+diffs against it and it is not the ref for a later change; see
+[`site-rows-window-bound.md`](site-rows-window-bound.md) for that run.
 
 The three that did move:
 
@@ -261,6 +304,11 @@ eleven, so a reader checking the older table knows what moved:
   left silent; the reason for not touching it is the second half of the sibling
   section above, and whoever picks it up needs to know that bounding it moves a
   self-test pin that exists to measure the read.
+  **(Done — issue #1014, and the second half of the sibling section does not
+  hold.)** The loop is bounded at `min(hi, len(d))` with the region end's two
+  stops, the pin moved rather than going away, and `--sites 0xFFFF` prints one
+  listing line and names `0x30000` as what stopped it. See the retraction above
+  and [`site-rows-window-bound.md`](site-rows-window-bound.md).
 - **`--callers` takes caller addresses and still checks nothing.**
   `--callers 0x1FFFF` exits 0 and prints a three-row byte-scan caller list; it
   has no traceback to replace, and its output is the over-counting the module
@@ -281,9 +329,13 @@ that nothing on the committed inputs moved.
 ```sh
 # the legal address that crossed, before and after. The extracted copy needs
 # PYTHONPATH: outside ec/tools/ it cannot find disasm8051 and trace_xdata_refs.
-# 99c01938 is this branch's base and the commit before this one, so it keeps
-# naming the pre-change file after the merge; `git show HEAD:` would name the
-# post-change one and both runs here would be the after column.
+# 99c01938 was this branch's base and the commit before that one, so it kept
+# naming the pre-change file after that merge; `git show HEAD:` would name the
+# post-change one and both runs here would be the after column. It is the right
+# ref for *this* change and not a later one -- it predates other changes to
+# this tool -- so a later change takes `git show HEAD:` while its own is still
+# uncommitted. ../../docs/findings/site-rows-window-bound.md is a worked
+# example of the second case.
 git show 99c01938:ec/tools/pd_index_geometry.py > /tmp/old-pd.py
 PYTHONPATH=ec/tools python3 /tmp/old-pd.py ec/firmware/GMxMGxx_11.800 --helpers 0xFFFF
 python3 ec/tools/pd_index_geometry.py ec/firmware/GMxMGxx_11.800 --helpers 0xFFFF

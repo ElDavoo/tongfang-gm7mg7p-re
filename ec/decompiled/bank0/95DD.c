@@ -131,7 +131,7 @@ void fill_08xx_from_code_table(short param_1,undefined1 param_2,char param_3)
     }
   }
   pcVar8 = FUN_CODE_09e9;
-  DAT_EXTMEM_09e9 = uVar3;
+  XDATA_09E9 = uVar3;
   set_dptr_0a51_b93a();
   DAT_EXTMEM_08bd = pcVar8[0x16];
   sVar5 = 0x8be;

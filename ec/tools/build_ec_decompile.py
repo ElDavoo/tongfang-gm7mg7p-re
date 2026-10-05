@@ -70,11 +70,28 @@ import grade_name_basis
 # the two above are.
 import second_copy_census
 
+# The framing verdict for every call-target seed whose address the instruction-
+# boundary predicate fires on, and the ratchet --check compares it against.
+# Imported rather than restated for the same one-way reason as the three above,
+# and it defers *its* import of this module in `exporter()` for the same
+# purpose: `call_target_seeds()` has one attribution, not two.
+import call_target_seed_frames
+
 # The provenance header every committed .c carries, held against what
 # write_context() below composes and writeFunctionFile() writes. Imported for
 # the same reason as the three above and with the same one-way consequence: it
 # imports nothing from here, so the four stay independently runnable.
 import c_header_provenance
+
+# The `(program, addr)` derivation behind the index's `seed_basis` column, and
+# the check that every committed row records its own program's row. Imported
+# rather than inlined for the reason the four above are: the exporter is what
+# writes the column, so the thing that decides what the column should say is one
+# implementation, not a reading of it in two places. One-way for the same
+# reason -- it imports nothing from here -- so the five stay independently
+# runnable and this module's `--check` and the projection's own CLI cannot
+# disagree about the derivation.
+import seed_basis_projection
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -484,7 +501,19 @@ def call_target_seeds(bank, census):
 
     `census` is the validated read from call_target_rows(), passed in rather
     than re-read here, so the two banks and the bucket-C report below are three
-    views of one parse."""
+    views of one parse.
+
+    **Whether the target is an instruction boundary is a separate question, and
+    it is not asked here.** Issue #1110 built the predicate that answers it
+    (`audit_call_targets.earlier_record()`, applied at the *target* rather than
+    at the row's own call site) and `call_target_seed_frames.py` runs it over
+    this population, publishing each affected seed's verdict in
+    `ec/annotations/call-target-seed-frames.csv`. This function **reports** what
+    that verdict is and **never drops a row on it**, for the reason the ordering
+    in seed_rows() gives: a byte-scan target one byte into a real instruction
+    must not swallow the evidence-backed entry inside it, so a filter here would
+    remove exactly the seeds the sort exists to keep subordinate.
+    `seed_basis_labels()` is where a caller reads the label."""
     mine, unattributed = [], []
     for row in census:
         region = row["region"]
@@ -498,6 +527,18 @@ def call_target_seeds(bank, census):
         elif region == "common":
             unattributed.append((target, "call-target-unattributed"))
     return mine, unattributed
+
+
+def seed_basis_labels():
+    """`{(program, target): verdict}` for every seed the framing predicate fires
+    on, read from the published CSV. Empty when the CSV is not there or is not
+    that tool's.
+
+    Read through the module imported at the top rather than re-derived here, so
+    the label a caller prints and the row `--check` ratchets are the same row.
+    Empty is not an error: the labels are a report, and a missing report is
+    `call_target_seed_frames.file_problems()`'s business to name."""
+    return call_target_seed_frames.read_labels()
 
 
 def annotation_rows():
@@ -705,6 +746,76 @@ def ghidra_preflight(ghidra):
             "  will not decompile'. It is not. Fix the exec bit and re-run." % decomp)
 
 
+def owner_preflight(rep_dir, expect_user=None):
+    """Whether the project copy is openable as this user, said before the run.
+
+    The same shape and the same trade as `ghidra_preflight` above, for the
+    other failure in this pipeline that Ghidra reports only in a log: its
+    ownership check reads `project.prp` and refuses anyone else's copy *at the
+    open*, before a pre-script runs and before an annotation is applied. A copy
+    still carrying the committed owner therefore aborts the whole export having
+    read nothing, and says so in `<work>/ghidra-<program>.log` rather than on
+    the terminal.
+
+    Nothing here establishes that the copy opens once this passes -- that is a
+    run's evidence, and `docs/findings/ghidra-project-owner.md` carries the one
+    recorded. This is the half that needs no run.
+
+    `expect_user` defaults to the running user rather than to "no expectation",
+    because the question here is always whether *this* run will open the copy.
+    Passing None to `owner_problems()` asks only that the state be readable,
+    which is the right question for a report and the wrong one for a preflight:
+    a copy still owned by someone else reads perfectly well.
+    """
+    problems = project_owner.owner_problems(
+        rep_dir, getpass.getuser() if expect_user is None else expect_user)
+    if not problems:
+        return
+    raise SystemExit(
+        "error: the project copy is not openable as this user:\n"
+        "  %s\n"
+        "  Ghidra's ownership check reads that state at the open, before a "
+        "pre-script runs\n"
+        "  and before an annotation is applied, so analyzeHeadless would abort "
+        "the whole\n"
+        "  export having read nothing and say so only in the per-program log "
+        "under the work\n"
+        "  directory. The copy is retaken by rewrite_owner() in "
+        "ghidra/project_owner.py, which\n"
+        "  copy_project_for_export() calls after the copytree; if the copy "
+        "still carries the\n"
+        "  committed owner, that call did not run.\n"
+        "  %s" % ("\n  ".join(problems), rep_dir))
+
+
+def copy_project_for_export(project_dir, work):
+    """The disposable project copy every export-only run works against, and the
+    owner it carries. -> the copy's project directory.
+
+    Copying is what keeps the committed `.rep` out of this entirely --
+    `**/*.rep/**` is `binary -diff -merge`, so a change to one is a hard
+    conflict against every open branch rather than a reviewable diff -- and the
+    rewrite is what keeps the copy openable: the copy inherits the owner
+    `project.prp` records, and analyzeHeadless refuses anyone else's before it
+    reads an annotation. Once, here, rather than per program: the copy is made
+    once and all three programs share it.
+    `docs/findings/ghidra-project-owner.md` has the measurement.
+
+    The preflight is inside this function rather than beside it, which is what
+    makes it a check of the call site and not of the helper: `--self-test`
+    drives this function and so sees a `rewrite_owner()` deleted from here,
+    where a self-test that made its own copy would still be green.
+    """
+    copy_dir = os.path.join(work, "project-copy")
+    if os.path.isdir(copy_dir):
+        shutil.rmtree(copy_dir)
+    shutil.copytree(project_dir, copy_dir)
+    rep_dir = os.path.join(copy_dir, "ec.rep")
+    print("  project copy: %s" % project_owner.rewrite_owner(rep_dir, work))
+    owner_preflight(rep_dir)
+    return copy_dir
+
+
 def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
             mode, programs, annot_spec):
     """One analyzeHeadless invocation for all three programs: they share a
@@ -754,21 +865,11 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
             stderr=subprocess.STDOUT)
     else:
         # export-only: a copy of the committed project, so the committed .rep is
-        # never opened for writing at all.
-        copy_dir = os.path.join(work, "project-copy")
-        if os.path.isdir(copy_dir):
-            shutil.rmtree(copy_dir)
-        shutil.copytree(PROJECT, copy_dir)
-        # The copy inherits the owner the committed project.prp records, and
-        # analyzeHeadless refuses a project owned by anyone else with
-        # NotOwnerException before it reads an annotation -- so without this the
-        # default export cannot run for any contributor whose username is not
-        # that one. Once, here, rather than per program: the copy is made once
-        # and the three programs share it. The scratch root is `work` and the
-        # helper refuses anything outside it, so this can only ever write the
-        # copy. docs/findings/ghidra-project-owner.md has the measurement.
-        print("  project copy: %s" % project_owner.rewrite_owner(
-            os.path.join(copy_dir, "ec.rep"), work))
+        # never opened for writing at all. The copy's owner state is retaken and
+        # checked inside, so a rewrite that stopped running fails here with a
+        # message naming the project rather than as a NotOwnerException in a log
+        # several minutes downstream.
+        copy_dir = copy_project_for_export(project_dir, work)
         for program in programs:
             run([ghidra, copy_dir, "ec", "-process", program, "-noanalysis",
                  "-scriptPath", SCRIPTS,
@@ -1918,6 +2019,36 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("a call-target row with more fields than the header is reported",
           len(_p) == 1, str(_p))
 
+    # The seed rule's blind spot, and the case that makes the rule honest.
+    # `0x012F` trips the instruction-boundary predicate -- 0x012E pairs as
+    # `b0 90` -- and is a real hand-decoded routine whose listing survives
+    # because seed_rows() sorts `annotation` ahead of `call-target`. A rule that
+    # dropped every seed the predicate fires on, or filed all of them as
+    # mid-instruction, would go red on it. Asserted against the image's own bytes
+    # rather than read back from the published CSV, so it cannot pass by the file
+    # agreeing with itself.
+    _ctf_early = call_target_seed_frames.audit_module().earlier_record
+    _ctf_site = 0x012F
+    _ctf_rec = _ctf_early(fw, _ctf_site, 0)
+    check("the 0x012F counter-case trips the predicate (0x012E pairs as `b0 90`)",
+          _ctf_rec == "0x0012E b0 90 anl c,/p1.0", _ctf_rec)
+    _ctf_back = min(call_target_seed_frames.BACK, _ctf_site)
+    _ctf_onto, _ctf_over = call_target_seed_frames.windowed_walk(
+        fw, _ctf_site, _ctf_back)
+    check("and the walk lands on it, so the rule keeps it as a real entry",
+          call_target_seed_frames.verdict_for(_ctf_onto, _ctf_over, True)
+          == "entry-under-walk", "%d/%d" % (_ctf_onto, _ctf_over))
+    # And the seed is still emitted: the label is a report, and `seed_rows()`
+    # still carries the address into both bank programs on the strength of the
+    # annotation. A labelling change that quietly stopped seeding is the failure
+    # this assertion is here to catch.
+    _ctf_seeds = {a for a, _basis in call_target_seeds("bank0", _ct)[0]}
+    check("a seed the predicate fires on is still emitted, not dropped",
+          _ctf_site in _ctf_seeds, "%#06x is not among the seeds" % _ctf_site)
+    check("and it carries the label the published CSV holds for it",
+          seed_basis_labels().get(("bank0", "0x012F")) == "entry-under-walk",
+          str(seed_basis_labels().get(("bank0", "0x012F"))))
+
     # Coverage, on a manifest that agrees with its index and one that does not.
     check("coverage: a manifest that agrees with the index passes",
           not coverage_mismatches([{"program": "bank0", "functions": "2"}],
@@ -2059,19 +2190,39 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # "the committed project.prp is byte-identical" is what keeps that from
     # being the answer. A check of only the first would go green on a rewrite
     # aimed at the wrong directory.
+    #
+    # **Through `copy_project_for_export()`, not around it.** This used to make
+    # its own copy and call `rewrite_owner()` on it, which proved the helper
+    # works and said nothing about whether analyze() still called it: deleting
+    # the rewrite from the export path left every assertion here green while the
+    # default export stopped running. Going through the driver is what makes
+    # this the call-site check the issue asks for, and it is why the preflight
+    # lives inside that function rather than beside it.
     _owner_before = open(os.path.join(PROJECT, "ec.rep", "project.prp"), "rb").read()
     _scratch = tempfile.mkdtemp()
     try:
-        _copy = os.path.join(_scratch, "project-copy")
-        shutil.copytree(PROJECT, _copy)
+        _copy = copy_project_for_export(PROJECT, _scratch)
         _rep = os.path.join(_copy, "ec.rep")
-        _report = project_owner.rewrite_owner(_rep, _scratch)
-        check("the export-only copy's owner is the running user, so "
-              "analyzeHeadless will open it (project_owner: %s)" % _report,
-              not project_owner.owner_problems(_rep, getpass.getuser()))
+        check("the export-only copy analyze() makes is owned by the running "
+              "user, so analyzeHeadless will open it",
+              not project_owner.owner_problems(_rep, getpass.getuser()),
+              str(project_owner.owner_problems(_rep, getpass.getuser())))
         _p = project_owner.owner_problems(_rep)
         check("the copy's owner state is readable and carries no fault",
               not _p, str(_p))
+        # The preflight's own refusal, on a copy that was never retaken. Without
+        # it the known-good case above cannot tell "checked" from "never ran".
+        _unretaken = os.path.join(_scratch, "unretaken")
+        shutil.copytree(PROJECT, _unretaken)
+        try:
+            owner_preflight(os.path.join(_unretaken, "ec.rep"))
+            _said = ""
+        except SystemExit as e:
+            _said = str(e)
+        check("the owner preflight refuses a copy still named for someone else, "
+              "naming the project and the rewrite rather than letting "
+              "analyzeHeadless abort in a log",
+              "NotOwnerException" in _said and "rewrite_owner" in _said, _said)
     finally:
         shutil.rmtree(_scratch, ignore_errors=True)
     check("the committed project.prp is byte-identical after that rewrite, so "
@@ -2218,19 +2369,28 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len(_p) == 2 and "does not contain the name" in _p[0]
           and "still contains the placeholder" in _p[1], str(_p))
 
-    # The known answers, on the committed files, as relations rather than a
-    # total. The row count used to be pinned here, and every seeded routine
-    # moved it: the comment above the pin had grown a paragraph per seed. A
-    # seed is the point of the annotation layer, so the count is not a
-    # property worth failing on; that the three files agree with each other
-    # is. `wc -l`-style totals are `--check`'s output, not an assertion.
-    check("EC: the manifest records as many functions as index.csv has rows, "
-          "across 4 programs",
-          len(_ir) > 0 and len(_mr) == 4
+    # The known answers, on the committed files. These used to be the
+    # repository's function census written out as literals, one figure per
+    # tranche, and every landing export had to edit them; that is the line
+    # CLAUDE.md's "No totals of the repository's own text" is about, and
+    # bit #1169's fourth time. The properties those literals were standing in
+    # for are asserted below instead, recomputed from the committed files, so
+    # the check still goes red when a re-export breaks an agreement -- and does
+    # not go red when one legitimately adds a function. What the history was
+    # for is kept where it belongs: `docs/findings/pd-07d0-accessor-stubs.md`
+    # for the `pd` accessor stubs, and git log -p here for the rest.
+    check("EC: the manifest's per-program function counts sum to index.csv's "
+          "rows, across the 4 documented programs",
+          len(_mr) == 4
           and sum(int(r["functions"]) for r in _mr) == len(_ir),
-          "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
-    check("EC: listing-index.csv has the same number of rows as index.csv",
-          len(_lr) == len(_ir), "%d vs %d row(s)" % (len(_lr), len(_ir)))
+          "%d row(s), %d manifest row(s), manifest sum %d"
+          % (len(_ir), len(_mr), sum(int(r["functions"]) for r in _mr)))
+    check("EC: listing-index.csv carries the same (program, addr) set as "
+          "index.csv",
+          len(_lr) == len(_ir)
+          and {(r["program"], r["addr"]) for r in _lr}
+          == {(r["program"], r["addr"]) for r in _ir},
+          "%d listing row(s) against %d index row(s)" % (len(_lr), len(_ir)))
     check("EC: the manifest's program set is the index's, with no label mapping "
           "in between",
           {r["program"] for r in _mr} == {r["program"] for r in _ir}
@@ -2243,7 +2403,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: addresses are uniformly 4 bare hex digits in both indexes, so "
           "string and int (program, addr) keys agree",
           all(len({(r["program"], r["addr"]) for r in rows})
-              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == len(rows)
+              == len({(r["program"], int(r["addr"], 16)) for r in rows})
+              == len(rows)
               for rows in (_ir, _lr)))
     # The annotation layer's two committed CSVs, the same way. 1,769 records
     # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
@@ -2299,11 +2460,16 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # A `common`-scoped row at an address both banks carry, so it is the shape
     # #603's 37 were, and it moves annotations_applied and functions_named below
     # the same way and for the same reason.
-    check("EC: annotations/ghidra-functions.csv is 1,964 records, no short row "
-          "and no duplicate (scope, addr)",
-          len(_ann) == 1964 and not structure_problems("ghidra-functions.csv", _ann,
-                                                       annotation_key, "(scope, addr)"),
-          "%d record(s)" % len(_ann))
+    # The soundness of the file, not its size: no short row and no duplicate
+    # (scope, addr) is what a merge can break, and a record count is what a
+    # merge legitimately moves.
+    check("EC: annotations/ghidra-functions.csv is sound -- no short row and no "
+          "duplicate (scope, addr)",
+          not structure_problems("ghidra-functions.csv", _ann,
+                                 annotation_key, "(scope, addr)"),
+          "%d record(s), %d problem(s)"
+          % (len(_ann), len(structure_problems("ghidra-functions.csv", _ann,
+                                               annotation_key, "(scope, addr)"))))
     # The function layer's three counters, on the committed files, which is where
     # docs/findings.md §18's corrected figures come from. The history of each
     # pin, because these are the numbers that move on purpose:
@@ -2363,21 +2529,18 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # Then 827 -> 828 and 724 -> 725 with issue #1183's one `common 0D7B` row,
     # which is `common`-scoped and so is handed to both bank programs, moving
     # both by one and `common` with bank0 for the reason #603's 37 did; `pd`
-    # stays at 541 there, that row being EC-scoped.
-    # ... and then 829 -> 830 with issue #337's one `bank0 0xC118` row, an
-    # EC-scoped seed like #603's, so `common` borrows bank0's 830 with it and
-    # no bank's own figure moves.
-    # ... and then pd 541 -> 542 with issue #1120's one `pd 0x11EF` row, a
-    # `pd`-scoped seed at an address the banks do not carry, so no bank's
-    # own figure moves and `common` still borrows bank0's 830.
-    _want_applied = {"bank0": 830, "bank1": 725, "pd": 542}
-    check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 830 / 725 / 542 across the three programs, with `common` "
-          "borrowing bank0's",
-          {r["program"]: int(r["annotations_applied"]) for r in _mr
-           if r["program"] in _want_applied} == _want_applied
-          and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 830,
+    # stays at 541, that row being EC-scoped.
+    # The property is the one the manifest can be wrong about: `common` is
+    # de-duplicated out of both bank programs, so its annotations_applied is
+    # bank0's rather than its own, and MANIFEST_PROGRAM_SOURCE is where that is
+    # decided. The three figures themselves move with every tranche, so they are
+    # not asserted.
+    check("EC: the manifest's `common` annotations_applied is bank0's, which is "
+          "what the de-dup makes it (MANIFEST_PROGRAM_SOURCE)",
+          next(int(r["annotations_applied"]) for r in _mr
+               if r["program"] == "common")
+          == next(int(r["annotations_applied"]) for r in _mr
+                  if r["program"] == "bank0"),
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
@@ -2412,22 +2575,20 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # read the same way in a manifest and are not the same fact. The write-up is
     # docs/findings/cased-in-reserved-namespace.md; the population is derived by
     # ec/tools/second_copy_census.py --check.
-    # ... and then bank0 from 698 to 699, with the sum to 1,970, for issue
-    # #337's one `bank0 0xC118` row: a seed that takes the index's
-    # `annotated` from no to yes, which is the ordinary direction. pd then
-    # 541 -> 542 with the sum to 1,971, for issue #1120's one `pd 0x11EF`
-    # row -- the third reader `pd_index_tables.py` names, seeded because its
-    # 6-byte entry layout is established in
-    # docs/findings/pd-reader-entry-layouts.md. A `pd`-scoped seed at an
-    # address the banks do not carry, so it moves `pd` alone, the ordinary
-    # direction again.
-    _want_named = {"bank0": 699, "bank1": 594, "common": 136, "pd": 542}
+    # functions_named is *defined* as the index's annotated=yes count per
+    # program, so that is what is asserted -- the derivation, recomputed here,
+    # rather than a figure transcribed from a run. The per-program numbers are
+    # what every tranche moves and are not asserted.
+    _want_named = {p: sum(1 for r in _ir if r["program"] == p
+                          and r.get("annotated") == "yes")
+                   for p in {r["program"] for r in _ir}}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 699 / 594 / 136 / 542, summing to 1,971",
+          "program, recomputed rather than transcribed",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1971
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
-          str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
+          "manifest %s against index %s; ledger %s"
+          % ({r["program"]: r["functions_named"] for r in _mr}, _want_named,
+             str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2])))
     # The two-way ledger on the committed files, which is the whole substance of
     # the §18 correction. 0 and 0, and they close the arithmetic exactly:
     # 1,961 rows - 0 applied-but-unflagged + 7 named-without-a-row = 1,968.
@@ -2502,8 +2663,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,964 - 0 + 7 "
-          "= the 1,971 functions named",
+    check("EC: the two ledger directions close the arithmetic -- the CSV rows, "
+          "less the rows the index disagrees with, plus the names no row wrote, "
+          "is the functions the manifest names",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2553,9 +2715,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1964
+          == len({annotation_key(r) for r in _ann}) == len(_ann)
           and len({(r["file_offset"], r["target"]) for r in _ct})
-          == len({call_target_key(r) for r in _ct}) == 5998)
+          == len({call_target_key(r) for r in _ct}) == len(_ct))
 
     # The common-area de-dup, on synthetic rows. A PD-image function that shares
     # an address, a name and a size with the EC's must survive it: the PD is a
@@ -4903,6 +5065,52 @@ def check(work):
              "index row names" % (len(_pres) - 5))
     print("  presence: %d index row(s) paired to the function their .c declares, "
           "across %d distinct file(s)" % (_c_rows, _c_read))
+    # `seed_basis` names how the entry point was found, so it is a reading of the
+    # seed set and it is per PROGRAM: the common area is seeded into both bank
+    # programs on purpose, and the two banks can disagree about one address. The
+    # exporter's readBasis() used to key on the address alone, which made the
+    # column a function of the CSV's row order; seed_basis_projection holds the
+    # derivation and both indexes' mismatches, and the exposure is printed either
+    # way so a green run still shows which addresses a collision could reach.
+    # Asserted immediately above the header check because that check consumes
+    # this column -- it is what decides which .c carry the boundary caveat.
+    _sbp_basis, _sbp_dupes, _sbp = seed_basis_projection.committed_basis(
+        index_rows=rows, listing_rows=listing_rows,
+        census=_read["bank-call-targets.csv"])
+    for problem in _sbp[:5]:
+        fail(problem)
+    if len(_sbp) > 5:
+        fail("... and %d more seed-basis disagreement(s)" % (len(_sbp) - 5))
+    print("  seed basis: %s"
+          % seed_basis_projection.exposure_line(_sbp_basis, _sbp))
+    # The seed rule's blind spot, ratcheted rather than asserted live. Every
+    # census target above is seeded as a function entry whether or not the
+    # address is an instruction boundary, and call_target_seed_frames.py runs
+    # #1110's predicate over that population and publishes each affected seed's
+    # verdict. This compares the derivation against that file and fails, naming
+    # the seed: a mid-instruction seed appearing, or a verdict being quietly
+    # reverted, is what it catches.
+    #
+    # A live assertion -- fail on any seed the predicate says is mid-instruction
+    # -- is deliberately not what this is, and the reason is the committed tree:
+    # it already holds hundreds of them, so that check is red on arrival and a
+    # check that cannot go green on the tree it ships with is not a guard. The
+    # live assertion replaces this in the pull request that lands the rebuild
+    # and empties the list, which needs --mode rebuild-project.
+    _seed_frames = call_target_seed_frames.file_problems()
+    if not _seed_frames:
+        _seed_rows, _seed_unattributed, _seed_total = \
+            call_target_seed_frames.frames(open(FIRMWARE, "rb").read())
+        _seed_frames = call_target_seed_frames.frame_problems(
+            call_target_seed_frames.read_csv(call_target_seed_frames.FRAMES),
+            _seed_rows)
+        print("  seed frames: %s" % call_target_seed_frames.summary_line(
+            _seed_rows, _seed_total, _seed_unattributed))
+    for problem in _seed_frames[:5]:
+        fail("seed frames: %s" % problem)
+    if len(_seed_frames) > 5:
+        fail("seed frames: ... and %d more seed-frame problem(s)"
+             % (len(_seed_frames) - 5))
     # `_cdig`, not `_cd`: the cross-decoder report below binds that name, and
     # one function's two unrelated locals should not share a spelling.
     _cdig = verify_c_digests()

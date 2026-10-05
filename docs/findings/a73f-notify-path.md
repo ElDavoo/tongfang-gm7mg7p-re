@@ -213,7 +213,7 @@ python3 ec/tools/a73f_notify_census.py
 | 0xB10E | bank0 | lcall | 0xB6 | resolved | 0xB10C | 0xB0DC sync_0983_bit5_against_support_2_bit4 |  |
 | 0xC5A5 | bank0 | lcall | - | unresolved | 0xC5A2 | 0xC55F FUN_CODE_c55f | fall-through: a lcall carries the value into the site, and no R7 write in this window follows it |
 | 0xC603 | bank0 | lcall | - | unresolved | 0xC600 | 0xC5BD FUN_CODE_c5bd | fall-through: a lcall carries the value into the site, and no R7 write in this window follows it |
-| 0xC729 | bank0 | ljmp | 0xB0 | resolved | 0xC727 | none exported |  |
+| 0xC729 | bank0 | ljmp | 0xB0 | resolved | 0xC727 | 0xC717 fan_mode_from_0440_into_0741_0751 |  |
 | 0xC77F | bank0 | lcall | - | unresolved | 0xC77D | none exported | 2 paths into this site carry different codes |
 | 0xC848 | bank0 | lcall | - | unresolved | 0xC845 | none exported | fall-through: a lcall carries the value into the site, and no R7 write in this window follows it |
 | 0xC936 | bank0 | ljmp | 0xB9 | resolved | 0xC934 | none exported |  |
@@ -223,6 +223,11 @@ The `listing` column is the exported listing each site falls inside, joined on
 which is why an earlier reading of this list stopped at a subset: the codes
 there are just as real, they are simply in regions the decompiler never
 exported.
+
+> **Updated 2026-10-04, issue #175.** `0xC729` now falls inside
+> `0xC717` `fan_mode_from_0440_into_0741_0751`, which #175 seeded, so three of
+> the sites fall in no exported listing; its `listing` cell above read
+> `none exported` until then.
 
 The issue's own table named six codes from four sites. The census is larger on
 both axes, and four of the sites it adds carry a code the issue had not seen:
@@ -331,11 +336,11 @@ them resolve it, and both leave `0xC848` open.
   | `0x1660` | `0xF160` | `bank1` `toggle_045b_bit0_set_0709_bit0` |
   | `0x166C` | `0x8955` | `bank1` `init_09f1_and_zero_09f2_through_09f9` |
   | `0x1672` | `0xE56F` | none in the CSV |
-  | `0x18AC` | `0x83F8` | none in the CSV |
-  | `0x18B2` | `0x81C5` | none in the CSV |
-  | `0x18B8` | `0x823A` | none in the CSV |
-  | `0x18BE` | `0x8261` | none in the CSV |
-  | `0x18C4` | `0x818A` | none in the CSV |
+  | `0x18AC` | `0x83F8` | `bank1` `clear_0801_bit6_073c_low2_086f_bit3_then_e5` |
+  | `0x18B2` | `0x81C5` | `bank1` `clear_0457_low3_and_dispatch_0800_bit7` |
+  | `0x18B8` | `0x823A` | `bank1` `store_fb_to_0457_and_set_0472_bit3_keep4` |
+  | `0x18BE` | `0x8261` | `bank1` `store_fd_to_0457_and_set_0472_bit5_keep4_then_gate` |
+  | `0x18C4` | `0x818A` | `bank1` `store_20_to_0472_and_fd_to_0457_then_gate` |
   | `0x1906` | `0x8652` | none in the CSV |
   | `0x1936` | `0x9F01` | none in the CSV |
   | `0x1948` | `0xA694` | none in the CSV |
@@ -343,6 +348,10 @@ them resolve it, and both leave `0xC848` open.
   | `0x1954` | `0x92F7` | `bank1` `write_057b_057c_057d_and_call_888c` |
   | `0x1978` | `0xA710` | none in the CSV |
   | `0x197E` | `0xA6F7` | none in the CSV |
+
+  > **Updated 2026-10-04, issue #175.** The destinations of `0x18AC`,
+  > `0x18B2`, `0x18B8`, `0x18BE` and `0x18C4` read "none in the CSV" until #175
+  > seeded those five routines, which is where their names above come from.
 
   The last column is the correction to an earlier reading of this section,
   which said each of these was "one `gate`/`writer` row away in

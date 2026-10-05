@@ -68,7 +68,7 @@ target,sites,callers,forms,cause,host_scope,host_addr,host_name,listings
 7E8C,1,1,ljmp,interior-entry,pd,7CE0,dispatch_on_0a8c_command_then_write_0a8b_record,pd/7CE0@7E2B
 7E90,5,1,ljmp,interior-entry,pd,7CE0,dispatch_on_0a8c_command_then_write_0a8b_record,pd/7CE0@7D1E pd/7CE0@7D91 pd/7CE0@7DAD pd/7CE0@7DCE pd/7CE0@7E0D
 845D,1,1,ajmp,interior-entry,bank0,83FF,sync_0788_and_07d4_from_09e9,bank0/8044@8044
-861A,1,1,ljmp,interior-entry,pd,8576,step_state_07d0_07d1,pd/8576@858C
+861A,1,1,ljmp,interior-entry,pd bank1,8576 8617,step_state_07d0_07d1 zero_045f,pd/8576@858C
 8822,1,1,ajmp,interior-entry,bank0 bank1,8749 881B,mode_tick_084c_07a5_09ee copy_2000_2002_to_0450_0452,bank1/8802@8802
 8B30,1,1,ljmp,interior-entry,pd bank1 bank0,8A4A 8B04 8B14,dispatch_on_07d1_bits_then_update_07d1_07d2 countdown_06c0_latch_097f_bit0 FUN_CODE_8b14,pd/8A4A@8A99
 8BBF,5,1,ljmp,interior-entry,pd bank0 bank1,8A4A 8B14 8BB2,dispatch_on_07d1_bits_then_update_07d1_07d2 FUN_CODE_8b14 set_0480_50_zero_048f_0459_02_06e1_a0,pd/8A4A@8A66 pd/8A4A@8A84 pd/8A4A@8AED pd/8A4A@8B01 pd/8A4A@8B37
