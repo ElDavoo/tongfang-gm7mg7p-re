@@ -39,13 +39,34 @@ could not otherwise reach. Both seed a *row or target address* and let
 follows rather than targets this file asserts. **A table edge is a table
 edge**: the reader pops the return address into DPTR, so the table's address is
 never an immediate and the edge is read out of data, never proved by control
-flow. §8 carries the same caveat beside the numbers.
+flow. This file's standing caveat carries the same warning beside the
+numbers.
 
-**What is deliberately not a seed, and named rather than quietly dropped:** the
-reset vector and the interrupt vectors. They are common-area entry points no
-trampoline names, and adding them changes the closure's size materially. This
-is the single change most likely to move the residue below, so it is a
-follow-up and not an oversight.
+**The reset vector and the interrupt vectors are seeds now, and what they were
+worth is a measured negative.** They are common-area entry points no trampoline
+names, so they were the single change most likely to move the residue below.
+They are seeded (`vector_handlers()`), and a `callee` below `BANK_FLOOR` is
+followed as a same-bank continuation rather than only recorded. Together those
+add entry points and **zero banked addresses**, and leave all four verdicts
+where they were: the last section measures it against the closure without
+them, and
+../../docs/findings/common-area-continuation-zero-delta.md is the write-up.
+
+**The edge that would have moved it is one this worklist does not have.** A
+common-area routine routes into banked code the way the linker writes a
+cross-bank route -- `mov dptr,#target ; ljmp <stub>`, as at common `0x1150`.
+`descend()` records the immediate in `arm.code_immediates` and never in
+`arm.callees`, so a worklist keyed on callees cannot see that edge, and the stub
+it lands on ends in `ret` at `0x1113`, so nothing branches onward to the
+DPTR's value either. **The route the linker writes at a trampoline site is
+covered by a different edge**, because `seeds_for()` reads the same bytes as a
+seed and the closure reaches the target; the last section measures how much of
+the census that accounts for, so its DPTR-immediate count is not read as a count
+of routes nothing follows. What the worklist lacks is the immediate written
+where no trampoline names it. A DPTR immediate at or above `CODE_FLOOR` is a
+code-pointer *candidate* rather than a proved entry, so enabling it is a
+separate decision with its own calibration and is deliberately not enabled
+here.
 
 **The counting, stated precisely because the three headline numbers
 double-count.** A bucket-B pair is `(caller bank b, target T)` and the closure
@@ -94,6 +115,7 @@ import collections
 import csv
 import sys
 
+import build_ec_decompile
 import dispatch_edges
 from audit_call_targets import AUDITED, bucket_of, survey
 from disasm8051 import mnemonic
@@ -150,8 +172,37 @@ def seeds_for(tramp):
     return out
 
 
+def vector_handlers(d: bytes, tramp):
+    """The vector table's common-area code handlers, as `{bank: {addr, ...}}`.
+
+    The other seed source the firmware writes down itself: the reset vector and
+    the interrupt vectors, whose targets are entry points no trampoline names.
+    Read from `build_ec_decompile.vector_seeds()` rather than by walking the
+    table here, for the reason `seeds_for()` gives for the trampolines -- the
+    vector layout is walked, not assumed (`discover_vector_table()`, because
+    both images in this dump defeat the textbook one), and a second walk of it
+    in this file could only drift from the census the decompile was built on.
+
+    Every vector target on this image is common area, so the same set seeds both
+    banks and `bank` is the caller spreading one set over two closures. Five of
+    the twelve targets are themselves trampoline entries, whose targets are
+    already seeds through a different route, so they are left out here; the
+    split is asserted in --self-test rather than restated as a list, because the
+    assertion is what would catch a change to either half.
+    """
+    out = {0: set(), 1: set()}
+    for addr, basis in build_ec_decompile.vector_seeds(d):
+        if basis != "vector-target" or addr >= BANK_FLOOR:
+            continue
+        if addr in tramp:
+            continue
+        for bank in out:
+            out[bank].add(addr)
+    return out
+
+
 def closure(d: bytes, bank: int, seeds, max_depth: int = MAX_DEPTH,
-            max_insns: int = MAX_INSNS):
+            max_insns: int = MAX_INSNS, follow_common: bool = True):
     """Everything reachable from `seeds` inside bank `bank`'s own window.
 
     `walk_branch_arms.descend()` does the block-level work unchanged and is
@@ -178,16 +229,23 @@ def closure(d: bytes, bank: int, seeds, max_depth: int = MAX_DEPTH,
     land in carries 5, and a walk with no function-boundary recovery cannot
     tell the two apart on its own.
 
-    `common` is the other half of the same honest accounting. A call below
-    0x8000 leaves the bank window, and this closure does not follow it, so
-    every routine the common area can reach -- and everything a common-area
-    routine dispatches to in turn -- is outside the attribution. That is not a
-    detail: the `?C?CCASE` reader at 0x7151 that dispatches all 15 of this
-    image's inline index tables (bank-call-audit.md 9, 10) is itself common
-    area, and its handlers are only reachable through it. `dispatch_edges.py`
-    is how the index tables get past that: it reads their table->target mapping
-    out of `index-table-entries.csv` and seeds each banked target as an entry
-    point of its own right.
+    **A `callee < BANK_FLOOR` is followed as a same-bank continuation, and
+    nothing at or above BANK_FLOOR is attributed to a bank because of one.**
+    `common` keeps recording the call for section 7 either way; what
+    `follow_common` decides is whether the callee also becomes an entry point of
+    its own, descended in the *calling* bank's window. The `pc >= BANK_FLOOR`
+    gate above is what holds the attribution still: a common-area arm can only
+    add banked bytes by decoding a banked address, and on this image none of
+    them does -- which is why following them moves no verdict in section 4. The
+    continuation applies the same convention `offset_for_runtime()` already
+    applies to bucket B, so it *extends* that assumption rather than testing
+    it, and this file's standing caveat is unchanged.
+
+    Where two banks reach the same common callee the continuation is ambiguous
+    by construction -- a common-area routine is shared, so the bytes below
+    0x8000 name no bank. `entries` records it as the `kind` `"common"` with
+    `frm` the entry point that reached it, which is the bank that would have
+    continued, and picks no winner.
 
     **The worklist is a fixpoint, and it has to be.** A dispatch-table edge is
     only added once its `jmp @a+dptr` is inside the walk, because a table
@@ -235,6 +293,8 @@ def closure(d: bytes, bank: int, seeds, max_depth: int = MAX_DEPTH,
             for callee in dict.fromkeys(arm.callees):
                 if callee < BANK_FLOOR:
                     common[callee].add(start)
+                    if follow_common:
+                        pending.append((callee, "common", start))
                 elif offset_for_runtime(callee, region) is not None:
                     pending.append((callee, "call", start))
         # The worklist has drained, so every dispatch site this walk can reach
@@ -265,6 +325,13 @@ def entry_chain(entries, addr):
     without making it more meaningful: `who` maps an address to *every* entry
     point that decoded it, so there is no one chain to splice, and picking
     among them would report an arbitrary walk's depth as the row's.
+
+    A `common` hop is spliced the same way a table edge is, and for the same
+    reason: its `frm` is the entry point that called it, so the chain ends at a
+    banked entry point rather than at a seed. It is also the honest place to
+    stop, because a common-area address below the bank floor is one every bank
+    maps -- continuing past it would attribute shared code to whichever bank
+    happened to be walked first.
     """
     out = [addr]
     while out[-1] in entries:
@@ -334,14 +401,18 @@ def tally(pairs):
     return collections.Counter(p["verdict"] for p in pairs)
 
 
-def print_seeds(stubs, seeds) -> None:
+def print_seeds(stubs, seeds, handlers) -> None:
     print("## 1. The seeds: what the linker's own trampolines name")
     print()
     for addr, bank in sorted(stubs.items()):
         print(f"  stub 0x{addr:04X} selects bank {bank}: "
-              f"{len(seeds.get(bank, ()))} seed(s) route through it")
-    print(f"  {sum(len(v) for v in seeds.values())} seeds in all, every target "
-          f">= 0x{BANK_FLOOR:04X}")
+              f"{len(seeds.get(bank, ())) - len(handlers.get(bank, ()))} "
+              f"seed(s) route through it")
+    banked = sum(len(v) - len(handlers.get(b, ()))
+                 for b, v in seeds.items())
+    print(f"  {banked} seeds in all, every target >= 0x{BANK_FLOOR:04X}, plus "
+          f"{len(handlers[0])} common-area handler(s) per bank from the vector "
+          f"table")
     print()
     print("A seed is a (target, bank) pair the linker itself wrote down: the")
     print("trampoline's DPTR immediate, and the bank its stub selects. That bank")
@@ -349,6 +420,12 @@ def print_seeds(stubs, seeds) -> None:
     print("P1.0-P1.2, not a header field -- the same reading bank-call-audit.md 3")
     print("records, corroborated by make_bank_image.py --self-test. It is the one")
     print("link in the chain here that is not new evidence, and it is not new.")
+    print()
+    print("The vector table's common-area handlers are seeds too and are counted")
+    print("apart, because they are a different kind of claim: a trampoline names")
+    print("a target *and* the bank that reaches it, where a vector names a")
+    print("target and every bank gets it. The last section measures what they")
+    print("are worth.")
     print()
 
 
@@ -360,22 +437,31 @@ def print_closure(closures, seeds) -> None:
     print("seeds plus everything the walk derived from them, each descended once;")
     print("`runs` is how many contiguous spans those addresses fall into.")
     print()
-    print("| bank | seeds | entry points | call-derived | table-derived | "
-          "addresses | runs |")
-    print("|---|---:|---:|---:|---:|---:|---:|")
+    print("| bank | seeds | entry points | call-derived | common-derived | "
+          "table-derived | addresses | runs |")
+    print("|---|---:|---:|---:|---:|---:|---:|---:|")
     for bank in sorted(closures):
         reached, _who, entries, _cuts, _common = closures[bank]
         kinds = collections.Counter(kind for kind, _frm in entries.values())
         print(f"| `bank{bank}` | {len(seeds[bank])} | {len(entries)} "
-              f"| {kinds['call']} "
-              f"| {sum(n for k, n in kinds.items() if k != 'call' and k != 'trampoline')} "
+              f"| {kinds['call']} | {kinds['common']} "
+              f"| {sum(n for k, n in kinds.items() if k != 'call' and k != 'common' and k != 'trampoline')} "
               f"| {len(reached)} | {len(runs_of(reached))} |")
+    print()
+    print("`common-derived` is the entry points reached by following a call")
+    print("below 0x8000 as a same-bank continuation. They are counted apart")
+    print("because none of them attributes a byte to a bank: the `pc >=")
+    print("0x8000` gate in `closure()` holds, so a common-area arm can only add")
+    print("addresses above the floor, and on this image none of them decodes one.")
+    print("That is the measurement the last section prints, and it is why this")
+    print("column and `addresses` move independently.")
     print()
     print("`table-derived` is the split the two dispatch mechanisms need: an")
     print("entry point a `?C?CCASE` table named, and one a `jmp @a+dptr` table")
     print("named. Both are read out of data rather than walked to, so they carry")
-    print("section 8's caveat and an ordinary same-bank call target does not --")
-    print("the regions CSV's `sources` column keeps them apart per run.")
+    print("this file's standing caveat and an ordinary same-bank call target")
+    print("does not -- the regions CSV's `sources` column keeps them apart per")
+    print("run.")
     print()
     print("How many distinct entry points decode each attributed address. One")
     print("path is the common case and is not evidence of anything on its own;")
@@ -560,7 +646,7 @@ def print_check(pairs) -> None:
     print()
 
 
-def print_handoff(d, closures, seeds, tramp) -> None:
+def print_handoff(d, closures, seeds, tramp, handlers) -> None:
     """The site issue #48 was opened for: bank-1 runtime 0xDFD0's
     `lcall 0x888C`, whose `handoff->write` verdict rests on the same-bank
     assumption plus one hand decode (pd-xdata-overlap.md 2).
@@ -597,6 +683,10 @@ def print_handoff(d, closures, seeds, tramp) -> None:
         print(f"  the target is reached from entry point(s) "
               f"{' -> '.join(f'0x{a:04X}' for a in chain)}")
         for a in chain:
+            if a in handlers[bank]:
+                print(f"  0x{a:04X} is a vector-table handler, which names a "
+                      f"target for every bank rather than naming this one")
+                continue
             if a not in seeds[bank]:
                 continue
             names = [e for e, (b, t) in sorted(tramp.items()) if t == a and b == bank]
@@ -728,9 +818,12 @@ def print_cuts(d: bytes, closures, seeds) -> None:
     print("    under the table's own framing and nothing stronger.")
     print("  * The four common-area index tables dispatch below 0x8000, so no")
     print("    bank owns their handlers and no closure can attribute them.")
-    print("  * The reset vector and the interrupt vectors are not seeds, so")
-    print("    whatever they reach is outside both closures. This is the single")
-    print("    change most likely to move the residue in section 4.")
+    print("  * The reset vector and the interrupt vectors are seeds now, and a")
+    print("    call into the common area is followed as a same-bank")
+    print("    continuation, so neither is a blind spot by omission any more --")
+    print("    but the route out of the common area still is. The last section")
+    print("    measures it: a common-area arm names banked code in a DPTR")
+    print("    immediate, which is not an edge this walk follows.")
     print("  * A second bank-switch idiom spelled differently would be invisible:")
     print("    this walk treats every same-bank call as intra-bank.")
     print("  * Banks 2 and 3 are taken as unused on find_banks.py's word and were")
@@ -748,6 +841,202 @@ def print_cuts(d: bytes, closures, seeds) -> None:
     print("Nothing in this file was measured on hardware. No register was read")
     print("back, no capture was taken, and no `status:` in")
     print("../annotations/registers.yaml moves.")
+    print()
+
+
+def print_common(d: bytes, closures, without, handlers, seeds,
+                 tramp) -> None:
+    """The common area, followed and measured: the answer to whether the
+    residue in section 4 is seeds or bounds.
+
+    `without` is the same closure with `follow_common` off and the vector
+    handlers not seeded, so every figure here is a difference between two
+    populations this file computed rather than a remembered one.
+
+    The three edge kinds stay separable in that comparison without being
+    measured against each other here: `without` differs from `closures` in
+    both the seeds and the continuation, while the `0x7151` and
+    `jmp @a+dptr` edges are present in *both* populations and so cancel out.
+    That is what keeps this section from being read as crediting issue #1079's
+    tables with work they did not do -- sections 3 and 4 report those edges on
+    their own.
+    """
+    print("## 8. The common area, followed: seeds, bounds, and neither")
+    print()
+    print("Two changes reach past the bank window, and this section measures")
+    print("both against the closure without them. A `callee < BANK_FLOOR` is")
+    print("followed as a same-bank continuation, and the vector table's")
+    print(f"common-area handlers ({len(handlers[0])} of them) seed each bank.")
+    print()
+    print("| bank | entry points without | with | addresses without | with |")
+    print("|---|---:|---:|---:|---:|")
+    for bank in sorted(closures):
+        print(f"| `bank{bank}` | {len(without[bank][2])} | {len(closures[bank][2])} "
+              f"| {len(without[bank][0])} | {len(closures[bank][0])} |")
+    print()
+    same = [b for b in sorted(closures)
+            if closures[b][0] == without[b][0]]
+    if len(same) == len(closures):
+        print("The attributed address set is identical in both banks. The walk")
+        print("does real work and gains no banked byte: that is the measured")
+        print("answer, and it is a negative one.")
+    else:
+        print("The attributed address set is NOT identical -- this is a real")
+        print("change, not the zero delta the write-up reports:")
+        for b in sorted(closures):
+            if b not in same:
+                print(f"  bank{b} gained "
+                      f"{len(closures[b][0]) - len(without[b][0])} address(es)")
+    print()
+
+    # One survey for both populations: it is the expensive pass over every
+    # call site in the image, and the two closures differ only in what they
+    # reached, not in what was called.
+    rows = survey(d)[0]
+    pairs_with = pair_rows(rows, closures)
+    pairs_without = pair_rows(rows, without)
+    for label, sel in (("all bucket-B pairs", None),
+                       ("both-banks-live pairs", both_live)):
+        a = tally(sel(pairs_without) if sel else pairs_without)
+        b = tally(sel(pairs_with) if sel else pairs_with)
+        cells = " / ".join(f"{b[v] - a[v]:+d}" for v in VERDICTS)
+        print(f"  {label}: {cells} (agreeing / contradicting / still ambiguous /")
+        print("    unreached), as the delta of the four verdicts.")
+    print()
+    # Each contribution on its own, so the zero is three measured zeros rather
+    # than one number a reader has to take on trust. Each row varies exactly one
+    # thing against the same `without` baseline: the seeds row turns the
+    # continuation off, the continuation row leaves the vector handlers out. The
+    # third row is what ships. `follow_common` defaults to True, so a row that
+    # did not pass it would silently measure the same closure as the one above
+    # and print identical figures under a second label -- which is the failure
+    # this argument exists to make impossible rather than to argue about.
+    baseline = tally(pair_rows(rows, without))
+    seeds_only = {b: closure(d, b, seeds[b] | handlers[b],
+                             follow_common=False) for b in (0, 1)}
+    cont_only = {b: closure(d, b, seeds[b]) for b in (0, 1)}
+    print("Each contribution on its own, against the same \"without\" baseline.")
+    print("The entry points each row adds are what tell the rows apart: the banked")
+    print("figures are all `+0`, which is the finding, so a row that had quietly")
+    print("reused the closure above it would print the same zeros under a second")
+    print("label and nothing here would notice.")
+    print()
+    for label, cl in (("vector-table seeds alone", seeds_only),
+                      ("common-area continuation alone", cont_only),
+                      ("both (as shipped)", closures)):
+        b = tally(pair_rows(rows, cl))
+        cells = " / ".join(f"{b[v] - baseline[v]:+d}" for v in VERDICTS)
+        print(f"  {label}: {cells} -- adds "
+              f"{len(cl[0][2]) - len(without[0][2])} entry point(s) and "
+              f"{len(cl[0][0]) - len(without[0][0])} banked address(es) in bank0, "
+              f"{len(cl[1][2]) - len(without[1][2])} and "
+              f"{len(cl[1][0]) - len(without[1][0])} in bank1")
+    print("  The three agree, so the zero is not a sum of two cancellations that")
+    print("  would partly survive either change on its own. Two rows printing the")
+    print("  same figures would instead mean the two changes are indistinguishable")
+    print("  on this image, which is worth seeing rather than hiding behind a")
+    print("  label -- so nothing here collapses a row that matches another.")
+    print("  `0x7151` and `jmp @a+dptr` edges: present in every population above,")
+    print("  so they cancel; sections 3 and 4 report them (issue #1079 took the")
+    print("  residue from 398 to 89).")
+    print()
+
+    # The reason, which is the useful part: what a common-area arm actually
+    # carries. A DPTR immediate at or above the floor is the linker's route out
+    # of the common area, and descend() records it as a code immediate rather
+    # than a callee, so a worklist keyed on callees cannot see the edge.
+    #
+    # The count is reported *against the trampoline census*, not on its own,
+    # because on this image the census already names almost all of them: the
+    # linker writes the route at the trampoline site, so `seeds_for()` has the
+    # target as a seed and the closure reaches it. Reading the bare total as
+    # "103 unfollowed routes" would be the opposite of what it measures -- it is
+    # how often the idiom appears in the arms this walk descended, most of which
+    # are covered by a different edge. What is left over is printed beside it.
+    named = {target for _bank, target in tramp.values()}
+    # Decoded once per bank and reused by the cross-bank paragraph below:
+    # `imms_for()` descends every `common`-kind entry point, which is the
+    # expensive half of this section, and the two paragraphs ask different
+    # questions of one set rather than two.
+    banked_imms = {bank: {i for i in imms_for(d, f"bank{bank}", closures[bank])
+                          if offset_for_runtime(i, f"bank{bank}") is not None}
+                   for bank in sorted(closures)}
+    for bank in sorted(closures):
+        beyond = banked_imms[bank]
+        common_eps = sum(1 for a, (k, _f) in closures[bank][2].items()
+                         if a < BANK_FLOOR and k == "common")
+        covered = beyond & named
+        print(f"  bank{bank}: {common_eps} entry points of kind `common` "
+              f"name {len(beyond)} distinct DPTR immediates at or above "
+              f"0x{BANK_FLOOR:04X}, of which {len(covered)} are already named "
+              f"by a trampoline entry somewhere in the image and "
+              f"{len(beyond) - len(covered)} are not")
+        for i in sorted(beyond - named):
+            print(f"    0x{i:04X} is named by no trampoline entry")
+    print()
+    print("So the arms carry the idiom in bulk, and the trampoline census already")
+    print("reads it at the linker sites -- which is why following the common area")
+    print("reaches those targets by a different route rather than not at all. The")
+    print("total above is how often the idiom appears in the arms this walk")
+    print("descended, **not a count of routes nothing follows**. The edge this")
+    print("worklist lacks is the *non*-linker one: an immediate written where no")
+    print("trampoline names it.")
+    print()
+    print("And on this image there is no such code route to miss. The immediate")
+    print("above that no trampoline names is an **XDATA** pointer, not a code")
+    print("address: common 0x0F75's `mov dptr,#0x9000` at "
+          f"0x{XDATA_CLEAR_SITE:04X} bounds")
+    print("the `movx @dptr,a` loop that clears XDATA 0x9000-0x97FF, and nothing")
+    print("branches to it. So the closure misses no banked route through the")
+    print("common area -- not because it sees every edge, but because the routes")
+    print("it does not see are already seeds. That is what makes the zero a")
+    print("measurement rather than a lucky one, and it is also why the follow-up")
+    print("below is sized on the closure as a whole rather than on an example.")
+    print()
+    # The half of the overlap that is not "the same bank's own trampolines",
+    # because it is the reason following the common area could not have moved a
+    # byte even if the edge were added. These are cross-bank routes: the
+    # immediate names a target the *other* bank seeds. Attributing them to the
+    # bank whose common-area code carried the immediate is precisely the
+    # same-bank assumption this file already applies, extended one step further
+    # than the standing caveat covers -- so it is named here rather than counted
+    # as coverage.
+    for bank in sorted(closures):
+        other = 1 - bank
+        cross = (banked_imms[bank] - seeds[bank]) & seeds[other]
+        print(f"  bank{bank}: of the immediates above that are not seeds of "
+              f"bank{bank}, {len(cross)} name a target `seeds_for()` seeds for "
+              f"bank{other} -- a cross-bank route, which following the common "
+              f"area could only have attributed to bank{bank} by extending the "
+              f"same-bank assumption past what the standing caveat covers")
+    print()
+    print("`descend()` records a `mov dptr,#imm` in `arm.code_immediates` and")
+    print("never in `arm.callees`, so a worklist keyed on callees cannot see")
+    print("the edge -- and the stub the route lands on ends in `ret` at")
+    print("0x1113, so nothing branches onward to the DPTR's value either. That is")
+    print("the shape the linker writes a cross-bank route in:")
+    print()
+    off = offset_for_runtime(0x1150, "common")
+    print(f"  common 0x1150 is `{d[off:off + 6].hex(' ')}`")
+    print(f"    = `{mnemonic(d, off, 0x1150)}` ; `{mnemonic(d, off + 3, 0x1150)}`")
+    print()
+    print("**So the answer to \"seeds or bounds\" is neither.** The residue is")
+    print("not waiting on more entry points and not waiting on more budget: the")
+    print("worklist has an edge vocabulary, and this edge is not in it. The")
+    print("`bounds` figures section 7 prints are the walks that stopped, and the")
+    print("four verdicts above do not move when those walks are given more room")
+    print("to stop -- so neither the seeds nor the bounds is what is left.")
+    print()
+    print("Adding the DPTR immediate as an edge is a separate decision with its")
+    print("own calibration -- an immediate at or above CODE_FLOOR is a code")
+    print("pointer *candidate*, not a proved entry -- so it is not enabled")
+    print("here. What it would move is measured in")
+    print("../../docs/findings/common-area-continuation-zero-delta.md.")
+    print()
+    print("**Nothing above is a verdict on the same-bank assumption.** Following")
+    print("a common call applies the same convention `offset_for_runtime()`")
+    print("already applies to bucket B, so it extends that assumption rather")
+    print("than testing it. The standing caveat is unchanged.")
     print()
 
 
@@ -958,7 +1247,8 @@ EFE7 = {
 # ambiguous verdict means. `contradicting` fell from 207 to 75 for the same
 # reason -- some of those targets are now reached on the calling bank's side
 # too. So this is more coverage and a weaker separation on the pairs that were
-# already ambiguous, not a verdict on the same-bank assumption, and §8 says so
+# already ambiguous, not a verdict on the same-bank assumption, and the
+# standing-caveat section says so
 # beside the numbers rather than in a footnote.
 PAIR_PINS = {
     "all": (625, 75, 510, 95),
@@ -989,6 +1279,66 @@ CUT_RUNS = ((535, 8244), (135, 7889))
 CLOSURE_SIZE = (14830, 12258)
 ENTRY_POINTS = (1010, 669)
 
+# The reset vector's five `lcall`s, and the shape of the linker's route out of
+# the common area that the last section's answer rests on. The reset vector is
+# the clearest common-area entry point there is -- it is the one the CPU reaches
+# at power-on -- so it is the one the "seeds or bounds" question is asked of.
+#
+# Both routes are pinned as bytes because the claim is about the worklist's
+# *vocabulary*: `0x158E` is `mov dptr,#0xD89F ; ljmp 0x1100`, so the target is a
+# DPTR immediate and the only thing branched to is the stub. No callee in the
+# walk ever names `0xD89F`.
+#
+# **What these two are NOT is an example of a target the closure fails to
+# reach, and the distinction is asserted rather than left to the reader.**
+# `0x158E` and `0x1594` are themselves entries in `trampolines()`, so
+# `seeds_for()` already seeds their targets and bank0's closure reaches both
+# `0xD89F` and `0xD96C` -- before this change as well as after. The pair is
+# pinned to show that the *edge* is missing from the vocabulary, not that the
+# *address* is out of reach: the census covers the route at the linker site by a
+# different edge, and what a callee-keyed worklist cannot see is an immediate
+# written where no trampoline names it. The last section measures that overlap
+# rather than leaving a reader to infer it from the byte count.
+# docs/findings/reset-vector-dptr-targets.md is about the two targets; what is
+# asserted here is the vocabulary claim, which is why following the common area
+# moves nothing.
+RESET_VECTOR = 0x0070
+DPTR_ROUTES = ((0x158E, b"\x90\xd8\x9f\x02\x11\x00", 0xD89F, 0x1100),
+               (0x1594, b"\x90\xd9\x6c\x02\x11\x00", 0xD96C, 0x1100))
+
+# The one DPTR immediate at or above `CODE_FLOOR` that a `common`-kind arm
+# carries and no trampoline entry names: `0x9000` at `0x0F95`, where it bounds
+# the `movx @dptr,a` loop that clears XDATA `0x9000`-`0x97FF`. It is an XDATA
+# pointer, not a code route, and it is named here so the leftover it accounts
+# for is not read as a missed bank of code -- which is the claim
+# `reset-vector-dptr-targets.md` would otherwise be cited for. Pinned as bytes
+# for the same reason `DPTR_ROUTES` is: the `mov dptr` is real, and what it
+# points at is the part that decides what it means.
+XDATA_CLEAR_SITE = 0x0F95
+XDATA_CLEAR_IMMEDIATE = 0x9000
+XDATA_CLEAR_IMMEDIATES = frozenset({XDATA_CLEAR_IMMEDIATE})
+
+
+def imms_for(d: bytes, region: str, closure_result):
+    """Every DPTR immediate the `common`-kind entry points of one bank's
+    closure carry, decoded afresh rather than read out of a cached arm.
+
+    `common-kind entry points`, not "common-area entry points": the set is the
+    entry points whose recorded `kind` is `"common"`, which is a smaller set
+    than every entry point below `BANK_FLOOR` (a seed or a trampoline entry in
+    the common area is one too) and a different set again from the `common`
+    call-target map section 7 prints. Naming it precisely is the point: the
+    three are adjacent and a bare count reads as interchangeable.
+    """
+    eps = [a for a, (kind, _frm) in closure_result[2].items()
+           if a < BANK_FLOOR and kind == "common"]
+    out = set()
+    for a in sorted(eps):
+        for dp in descend(d, region, a, None, MAX_DEPTH, MAX_INSNS,
+                          True).code_immediates:
+            out.add(dp)
+    return out
+
 
 def self_test(d: bytes) -> int:
     bad = 0
@@ -1009,6 +1359,7 @@ def self_test(d: bytes) -> int:
 
     rows, _stubs, tramp = survey(d)
     seeds = seeds_for(tramp)
+    handlers = vector_handlers(d, tramp)
     census = (len(tramp), len(seeds[0]), len(seeds[1]))
     check(census == SEEDS and all(t >= BANK_FLOOR for _e, (_b, t) in tramp.items()),
           f"{census[0]} trampolines, {census[1]} through the bank-0 stub and "
@@ -1016,7 +1367,39 @@ def self_test(d: bytes) -> int:
           f"0x{BANK_FLOOR:04X}"
           + ("" if census == SEEDS else f" -- expected {SEEDS}"))
 
-    closures = {b: closure(d, b, seeds[b]) for b in (0, 1)}
+    # The vector table's split, asserted as the relation between the two rather
+    # than as a list of addresses: what it adds is the common-area code
+    # handlers, and what it does not add is the targets that are themselves
+    # trampoline entries, because their own targets are already seeds through
+    # the stub. Both halves are the claim -- "twelve targets, seven seeds" read
+    # as a number would not catch a vector table that grew a thirteenth entry.
+    vtargets = {addr for addr, basis in build_ec_decompile.vector_seeds(d)
+                if basis == "vector-target"}
+    common_targets = {a for a in vtargets if a < BANK_FLOOR}
+    already = common_targets & set(tramp)
+    got_handlers = handlers[0]
+    check(handlers[0] == handlers[1] and got_handlers == common_targets - already,
+          f"the vector table's {len(vtargets)} targets are all common area, and "
+          f"{len(already)} of them are themselves trampoline entries whose "
+          f"targets are already seeds, so {len(got_handlers)} common-area "
+          f"handler(s) seed each bank"
+          + ("" if handlers[0] == handlers[1]
+             and got_handlers == common_targets - already
+             else f" -- got {sorted(got_handlers)}"))
+    check(bool(already) and all(tramp[a][1] >= BANK_FLOOR
+                                and tramp[a][1] in seeds[tramp[a][0]]
+                                for a in already),
+          f"and the {len(already)} targets that are trampoline entries "
+          f"({', '.join(f'0x{a:04X}' for a in sorted(already))}) are left out "
+          f"because each one's own target is already a banked seed -- "
+          f"{', '.join(f'0x{tramp[a][1]:04X}' for a in sorted(already))}"
+          if already else "no vector target is a trampoline entry, which is not "
+          "the shape this image has")
+
+    closures = {b: closure(d, b, seeds[b] | handlers[b]) for b in (0, 1)}
+    # Without either change, so every claim below is a difference between two
+    # populations this function computed rather than a remembered one.
+    without = {b: closure(d, b, seeds[b], follow_common=False) for b in (0, 1)}
 
     # The hand-decoded positive, end to end: the trampoline's bytes, the call
     # site's bytes, the path the closure takes, and the other bank's answer.
@@ -1157,6 +1540,144 @@ def self_test(d: bytes) -> int:
           f"and the two populations are the {PAIR_PINS['populations'][0]} and "
           f"{PAIR_PINS['populations'][1]} bank-call-audit.md 4 records")
 
+    # --- the common area: a measured negative, and the edges behind it -----
+    #
+    # The four verdicts above are unchanged by following the common area and
+    # seeding the vector handlers, and that is the finding rather than a
+    # disappointment: it is what moves "the residue is seeds or bounds" off
+    # both horns. So the identity is asserted directly, against the closure
+    # computed without either change, and asserted as the *address set* rather
+    # than as the four tallies -- the tallies would also agree if a byte had
+    # moved between two verdicts.
+    for b in (0, 1):
+        grew = len(closures[b][2]) - len(without[b][2])
+        check(closures[b][0] == without[b][0],
+              f"bank{b}: seeding the {len(handlers[b])} vector handler(s) and "
+              f"following the common area adds {grew} entry point(s) and "
+              f"{len(closures[b][0]) - len(without[b][0])} banked address(es) -- "
+              f"the attributed set is identical, which is the measured negative"
+              + ("" if closures[b][0] == without[b][0] else " -- IT MOVED"))
+    check(all(tally(pair_rows(rows, closures))[v]
+              == tally(pair_rows(rows, without))[v] for v in VERDICTS),
+          "and the four verdicts are identical over both populations, so none of "
+          "the residue moved either")
+    check(all(closures[b][0][a] == without[b][0][a]
+              for b in (0, 1) for a in closures[b][0]),
+          "including the per-address path counts, so no byte was reached more "
+          "often than before -- following the common area added entry points "
+          "and no path")
+
+    # The worklist followed them, which is what makes the zero above a
+    # measurement rather than a no-op: a change that silently did nothing would
+    # produce the same identity.
+    followed = {a for b in (0, 1) for a, (k, _f) in closures[b][2].items()
+                if k == "common"}
+    check(followed and all(a < BANK_FLOOR for a in followed),
+          f"the walk does descend common-area callees: {len(followed)} distinct "
+          f"address(es) are `common`-kind entry points, every one of them below "
+          f"0x{BANK_FLOOR:04X}"
+          + ("" if followed else " -- it followed none, so the identity above "
+             "proves nothing"))
+    # Each records the entry point that reached it, so the shared-routine
+    # ambiguity is written down rather than resolved by picking a bank.
+    check(all(closures[b][2][a][1] is not None
+              for b in (0, 1) for a, (k, _f) in closures[b][2].items()
+              if k == "common"),
+          "and each one's `frm` is the entry point that reached it rather than "
+          "None, so a common callee two banks reach is recorded as ambiguous by "
+          "construction instead of attributed to whichever bank was walked "
+          "first -- entry_chain() stops there rather than splicing past a "
+          "region no bank owns")
+
+    # The edge that is missing, pinned as bytes and as an absence. This is the
+    # whole of the last section's answer, so it is asserted rather than
+    # described:
+    # the target is a DPTR immediate and never a callee, which is precisely why
+    # a callee-keyed worklist cannot reach it.
+    for site, raw, target, stub in DPTR_ROUTES:
+        site_off = offset_for_runtime(site, "common")
+        got_raw = d[site_off:site_off + len(raw)]
+        arm = descend(d, "bank0", site, None, MAX_DEPTH, MAX_INSNS, True)
+        check(got_raw == raw and target in arm.code_immediates
+              and target not in arm.callees and stub in arm.callees,
+              f"common 0x{site:04X} is `{got_raw.hex(' ')}`, so 0x{target:04X} "
+              f"is in its `code_immediates` and not in its `callees` -- the "
+              f"linker's route out of the common area is an edge this "
+              f"worklist's vocabulary does not have"
+              + ("" if got_raw == raw and target in arm.code_immediates
+                 and target not in arm.callees and stub in arm.callees
+                 else f" -- immediates {sorted(set(arm.code_immediates))}, "
+                      f"callees {[hex(c) for c in dict.fromkeys(arm.callees)]}"))
+    reset = descend(d, "bank0", RESET_VECTOR, None, MAX_DEPTH, MAX_INSNS, True)
+    reset_callees = dict.fromkeys(reset.callees)
+    check(all(site in reset_callees for site, _r, _t, _s in DPTR_ROUTES),
+          f"and the reset vector at 0x{RESET_VECTOR:04X} reaches both of those "
+          f"routes by `lcall`, so the routes are reachable from the common "
+          f"area and the walk descends them")
+    # ...and the closure reaches both targets anyway, which is the half that
+    # stops the pair above from being read as a counterexample to itself. Both
+    # route sites are trampoline entries, so `seeds_for()` already seeds their
+    # targets. Asserting it here is what keeps the claim honest: the missing
+    # thing is the *edge*, not the address.
+    check(all(site in tramp for site, _r, _t, _s in DPTR_ROUTES)
+          and all(tramp[site][1] in seeds[tramp[site][0]]
+                  for site, _r, _t, _s in DPTR_ROUTES),
+          "and the closure reaches both targets regardless, because the route "
+          "sites are themselves trampoline entries whose targets `seeds_for()` "
+          "already seeds -- so the pair above shows the edge is missing from "
+          "the vocabulary, NOT that these addresses are out of reach")
+    # The census overlap, measured: on this image nearly every banked DPTR
+    # immediate in a common-area arm is already named by a trampoline entry, so
+    # the bare count is a frequency of the idiom and not a count of unfollowed
+    # routes. Printed rather than pinned, because the numbers move with the
+    # walk's bounds; what is asserted is that the overlap is the large majority,
+    # which is what makes the distinction worth stating.
+    named_targets = {t for _b, t in tramp.values()}
+    for bank in (0, 1):
+        common_eps = [a for a, (k, _f) in closures[bank][2].items()
+                      if a < BANK_FLOOR and k == "common"]
+        imms = set()
+        for a in sorted(common_eps):
+            for dp in descend(d, f"bank{bank}", a, None, MAX_DEPTH,
+                              MAX_INSNS, True).code_immediates:
+                imms.add(dp)
+        beyond = {i for i in imms
+                  if offset_for_runtime(i, f"bank{bank}") is not None}
+        covered = beyond & named_targets
+        check(beyond and len(covered) >= len(beyond) // 2,
+              f"bank{bank}: the {len(common_eps)} entry points of kind `common` "
+              f"name {len(beyond)} distinct banked DPTR immediates, of which "
+              f"{len(covered)} the trampoline census already names -- so the "
+              f"count is how often the idiom appears in the arms this walk "
+              f"descended, not a count of routes nothing follows"
+              + ("" if beyond and len(covered) >= len(beyond) // 2
+                 else " -- the census no longer covers most of them, so the "
+                      "wording in the write-up and the last section needs "
+                      "re-measuring"))
+    # What is left over, and why it is not the worked example the idiom wants.
+    # The one immediate no trampoline names on this image is `0x9000` in the
+    # XDATA-clearing routine at `0x0F75` -- `mov dptr,#0x9000` bounds a
+    # `movx @dptr,a` loop, it does not route to code. So there is *no* banked
+    # code route in the arms this walk reached that the census misses, which
+    # is the real reason the delta is zero and not an artefact of one. Asserted
+    # so the follow-up is sized on the whole closure rather than on an example
+    # that does not exist: a DPTR immediate at or above CODE_FLOOR is a
+    # code-pointer candidate, not a proved entry, and this one is neither.
+    for bank in (0, 1):
+        leftovers = {i for i in imms_for(d, f"bank{bank}", closures[bank])
+                     if offset_for_runtime(i, f"bank{bank}") is not None
+                     } - named_targets
+        check(all(i in XDATA_CLEAR_IMMEDIATES for i in leftovers),
+              f"bank{bank}: every DPTR immediate in a `common`-kind arm that no "
+              f"trampoline names is an XDATA pointer rather than a code route "
+              f"({', '.join(f'0x{i:04X}' for i in sorted(leftovers))}) -- so this "
+              f"image offers no missed *code* route in the arms the walk "
+              f"reached, and the follow-up has to be sized on the closure as a "
+              f"whole"
+              + ("" if all(i in XDATA_CLEAR_IMMEDIATES for i in leftovers)
+                 else " -- a leftover appeared that is not a known XDATA clear, "
+                      "so it needs reading before it is called a code route"))
+
     live_own = [p for p in pairs
                 if p["own_bank"] != "erased" and p["other_bank"] == "erased"]
     both_erased = [p for p in pairs
@@ -1254,21 +1775,30 @@ def main() -> int:
 
     rows, stubs, tramp = survey(d)
     seeds = seeds_for(tramp)
-    closures = {b: closure(d, b, seeds[b]) for b in (0, 1)}
+    handlers = vector_handlers(d, tramp)
+    # The vector handlers seed both banks alongside the trampolines, so
+    # seeds_for()'s banked-only reading is kept and the two are unioned at the
+    # call site. The last section needs the population without either, so that
+    # is computed too rather than reconstructed.
+    seeded = {b: seeds[b] | handlers[b] for b in (0, 1)}
+    closures = {b: closure(d, b, seeded[b]) for b in (0, 1)}
     pairs = pair_rows(rows, closures)
 
     if args.regions_csv:
-        return write_regions_csv(closures, seeds)
+        return write_regions_csv(closures, seeded)
     if args.pairs_csv:
         return write_pairs_csv(pairs)
 
-    print_seeds(stubs, seeds)
-    print_closure(closures, seeds)
+    without = {b: closure(d, b, seeds[b], follow_common=False) for b in (0, 1)}
+
+    print_seeds(stubs, seeded, handlers)
+    print_closure(closures, seeded)
     print_pairs(pairs)
     print_headline(pairs, closures)
     print_check(pairs)
-    print_handoff(d, closures, seeds, tramp)
-    print_cuts(d, closures, seeds)
+    print_handoff(d, closures, seeded, tramp, handlers)
+    print_cuts(d, closures, seeded)
+    print_common(d, closures, without, handlers, seeds, tramp)
     return 0
 
 

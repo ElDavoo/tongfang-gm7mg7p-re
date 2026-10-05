@@ -62,11 +62,12 @@ $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
 ```
 
-The self-test exits 0 and prints 19 checks: the stub→bank decoding re-derived
-through `find_stubs()`, the seed census, the two hand-decoded pins below, the
-two `jmp @a+dptr` dispatch shapes §5 names, the four verdicts over both
-populations, the closure's own internal check, and the per-run `bounds` column
-below.
+The self-test exits 0 and prints one line per check: the stub→bank decoding
+re-derived through `find_stubs()`, the seed census, the two hand-decoded pins
+below, the two `jmp @a+dptr` dispatch shapes §5 names, the four verdicts over
+both populations, the closure's own internal check, the per-run `bounds` column
+below, and — since issue #1078 — the common-area identity and the DPTR routes
+that explain it.
 
 Wiring it into `check_ghidra_tooling`'s tool list in
 `../../.github/scripts/agent-gates.sh` would make it permanently self-checking,
@@ -105,10 +106,10 @@ chain here that is **not new evidence**, and it is not presented as new.
 
 ## 2. The closure, and how far it is from a disassembly
 
-| bank | seeds | entry points | call-derived | table-derived | addresses | runs |
-|---|---:|---:|---:|---:|---:|---:|
-| `bank0` | 350 | 1010 | 547 | 113 | 14830 | 8244 |
-| `bank1` | 53 | 669 | 434 | 182 | 12258 | 7889 |
+| bank | seeds | entry points | call-derived | common-derived | table-derived | addresses | runs |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `bank0` | 357 | 1439 | 547 | 422 | 113 | 14830 | 8244 |
+| `bank1` | 60 | 1039 | 434 | 363 | 182 | 12258 | 7889 |
 
 > **Correction, 2026-10-04 (issue #1079): `table-derived` is a new column, and
 > every figure in this table moved.** The dispatch tables are closure edges now
@@ -119,6 +120,21 @@ chain here that is **not new evidence**, and it is not presented as new.
 > `call-derived`: an entry point a table named is read out of data, and §8's
 > caveat applies to it and not to an ordinary same-bank call target. The
 > regions CSV's new `sources` column carries the same split per run.
+
+> **Correction, 2026-10-05 (issue #1078): `common-derived` is a new column, and
+> the *addresses* and *runs* columns did not move — that is the finding.** The
+> reset vector and the interrupt vectors are seeds now, and a call below
+> `0x8000` is followed as a same-bank continuation rather than only recorded, so
+> `entry points` grew by 429 in bank0 and 370 in bank1 while `addresses` and
+> `runs` are **unchanged**. A new seed and a followed continuation both add
+> entry points; neither attributes a byte to a bank here, because the
+> `pc >= BANK_FLOOR` gate holds — a common-area arm can only add a banked byte
+> by decoding a banked address, and on this image none of them does. The
+> `seeds` column moved by seven per bank because those are the vector table's
+> common-area handlers, which seed every bank rather than naming one. The
+> write-up is
+> [common-area-continuation-zero-delta.md](../../docs/findings/common-area-continuation-zero-delta.md),
+> and it answers §9's seeds-or-bounds question with a third answer.
 
 `addresses` and `runs` are group-bys over
 [`bank-attribution-regions.csv`](bank-attribution-regions.csv) — `bytes` summed
@@ -449,15 +465,54 @@ bank1   135 of  7889 runs carry a bound, holding 12258 bytes
 ```
 
 **The calls that leave the bank window are the larger blind spot, and they are
-counted.** bank0's 130 entry points call 67 distinct common-area targets —
-`0x445E` from 18 of them and `0x7151` from 12 — and bank1's 43 call 42. The
-closure records each and follows none, because the common area is mapped in every
-bank and no bank owns those bytes. What that cost was larger than the count
+counted.** bank0's 181 banked entry points call 89 distinct common-area
+targets — `0x445E` from 18 of them and `0x7151` from 13 — and bank1's 101 call
+64. The closure records each, and as of issue #1078 it also *follows* each as a
+same-bank continuation, because the common area is mapped in every bank and no
+bank owns those bytes. Following them attributes nothing, and the reason is the
+`pc >= BANK_FLOOR` gate rather than how far the descent goes: the walk does
+descend 422 **entry points of kind `common`** in bank0 and 363 in bank1, but a
+common-area arm can only add a banked byte by decoding a banked address, and on
+this image none of them does. What that cost was larger than the count
 suggested: the `?C?CCASE` reader at `0x7151` dispatches all 15 of this image's
 inline index tables — every one of the 15 `site` values in
 [`index-table-entries.csv`](index-table-entries.csv) is an `lcall 0x7151`, 11 of
 them inside bank0's window and 4 in the common area — and it is itself common
 area.
+
+> **Correction, 2026-10-05 (issue #1078: the descent count is not the
+> mechanism, and it is not the same population as the counts above it).** The
+> paragraph read "the walk descends 422 common-area entry points … and reaches
+> no banked address through any of them", which pairs the descent count with
+> the zero as though the count were what stopped attribution. It is not: the
+> `pc >= BANK_FLOOR` gate is, and the count is a symptom. The figures are also
+> three different populations that a reader landing here from §2 or §7 could
+> read as interchangeable — 422/363 is **entry points of kind `common`** (what
+> the tool's section 8 prints), 89/64 is **distinct common-area targets called
+> from banked entry points**, and §7's "422 distinct common-area call targets
+> from 419 entry point(s)" counts the whole `common` map including callers below
+> the floor. bank0's 422 happens to equal the §7 target count and bank1's does
+> not (363 against 364), so the coincidence is in one bank and not the other.
+> Nothing here is wrong; they are three censuses and are now named as three.
+
+> **Correction, 2026-10-05 (issue #1078): "records each and follows none" was
+> the right description of the *old* closure and is no longer the mechanism —
+> but the conclusion it supported is now measured rather than assumed.** The
+> common area is followed, and the blind spot is not "we stop at the boundary"
+> any more; it is that the common area's route into banked code is a DPTR
+> immediate, which is not an edge a callee-keyed worklist has. §8b measures it
+> and the write-up reads it back from the bytes.
+
+> **Correction, 2026-10-05 (issue #1078): the counts in the paragraph above
+> were themselves stale, and this diff is where they get fixed.** It said 130
+> entry points calling 67 targets in bank0 and 43 calling 42 in bank1, with
+> `0x7151` from 12. Those were true of the closure *before* issue #1079 seeded
+> the dispatch tables; that change added entry points, and the entry points
+> added more calls into the common area, so the census moved without anything
+> here being re-checked. The figures now stated are measured against the
+> committed image. They are counts over that firmware, so nothing in this
+> repository can move them; a future change to the closure's seeds can, and
+> §2's `common-derived` column is where that shows up first.
 
 > **Correction, 2026-10-04 (issue #1079): "all 15 handlers are out of reach"
 > was right about the reach and wrong about the remedy, and the 15/11/4 split
@@ -560,10 +615,12 @@ shape scan finds no `mov dptr`-based table in bank0's window either. Both
 - **The four common-area index tables dispatch below `0x8000`,** into the region
   every bank maps and no bank owns, so no bank can attribute their handlers.
   That is unattributable by construction rather than a gap in coverage.
-- **The reset vector and the interrupt vectors are not seeds.** They are
-  common-area entry points no trampoline names, and adding them changes the
-  closure's size materially. This is the single change most likely to move the
-  residue in §3.
+- **The reset vector and the interrupt vectors are seeds, and the common area is
+  followed, so neither is a blind spot by omission any more.** Both were
+  changed by issue #1078 and both measured: together they add entry points and
+  zero banked addresses, and move no verdict. The blind spot that replaces them
+  is the route out of the common area, which is a DPTR immediate rather than a
+  callee. §8b measures it and §9's first bullet records the correction.
 - A second bank-switch idiom spelled differently would be invisible: this walk
   treats every same-bank call as intra-bank.
 - Banks 2 and 3 are taken as unused on `find_banks.py`'s word and were not
@@ -770,11 +827,128 @@ lands on code at all.
   machine. If a behavioural check is ever wanted, that is a separate
   `needs-hardware-test` issue and a human's.
 
+## 8b. The common area, followed — a measured zero
+
+This is the tool's own printed section 8, which answers §9's first bullet. It
+is summarised here because the answer is a negative and a negative needs its
+evidence next to it rather than in another file.
+
+Two changes reach past the bank window. `closure()` follows a
+`callee < BANK_FLOOR` as a same-bank continuation instead of only recording it,
+and `vector_handlers()` seeds each bank from the vector table's common-area
+targets. Measured against the closure without either:
+
+| bank | entry points without | with | addresses without | with |
+|---|---:|---:|---:|---:|
+| `bank0` | 1010 | 1439 | 14830 | 14830 |
+| `bank1` | 669 | 1039 | 12258 | 12258 |
+
+The attributed address set is **identical** in both banks, the per-address path
+counts are identical, no pair changes verdict, and both committed CSVs
+regenerate byte-identically. The walk descends 422 **entry points of kind
+`common`** in bank0 and 363 in bank1 and reaches no banked address through any of
+them — and the reason is the `pc >= BANK_FLOOR` gate, not the number descended:
+a common-area arm can only add a banked byte by decoding a banked address, and
+on this image none does. (Those counts are the entry points of that `kind`, not
+the distinct common-area call targets §5 and §7 count; see the correction in §5.)
+
+Each contribution is also measured on its own against the same "without"
+baseline — the seeds alone with the continuation off, the continuation alone
+with the handlers unseeded, and both as shipped — and all three are `+0` on all
+four verdicts in both banks, so the zero is not two cancellations that would
+partly survive either change alone. The **entry-point** deltas are what tell the
+three rows apart (7, 415 and 429 in bank0): the banked figures are all `+0`, so
+a row that had reused the closure above it would print identical zeros under a
+second label and nothing would catch it.
+
+**That zero is the answer to "seeds or bounds", and it is neither.** The route
+out of the common area is the one the linker writes a cross-bank route in —
+`mov dptr,#imm16 ; ljmp <stub>`, as at common `0x1150`, which is
+`90 bf 1c 02 11 00`. `descend()` records the immediate in `arm.code_immediates`
+and never in `arm.callees`, so a worklist keyed on callees cannot see the edge;
+and the stub it lands on ends in `ret` at `0x1113`, so nothing branches onward
+to the DPTR's value either. Two independent reasons the same edge is invisible.
+
+**What that edge costs here is nothing, and the reason is worth stating rather
+than leaving the bare byte count to imply otherwise.** Measured over the entry
+points of kind `common` the walk reached, those arms name 103 distinct banked
+DPTR immediates in bank0 and 108 in bank1 — but 102 and 107 of those are
+already named by a trampoline entry somewhere in the image, because the linker
+writes the route at the trampoline site, which is where `seeds_for()` reads it.
+So the count is how often the idiom appears, **not** a count of routes nothing
+follows. The one immediate no trampoline names is `0x9000` at `0x0F95`, where it
+bounds the `movx @dptr,a` loop clearing XDATA `0x9000`-`0x97FF`: an XDATA
+pointer above `CODE_FLOOR`, not a route into code.
+
+> **Correction, 2026-10-05 (issue #1078: an earlier draft of this section and
+> of the write-up used `0x158E`/`0x1594` — `mov dptr,#0xD89F`/`#0xD96C ; ljmp
+> 0x1100`, `lcall`ed from the reset vector — as the worked example of a target
+> the closure "now walks the code that names and still does not reach". That was
+> false, and the tool's own output said so: both sites are themselves entries in
+> `trampolines()`, so `seeds_for()` already seeds `0xD89F` and `0xD96C` and
+> bank0's closure reached both before this change as well as after.** They show
+> the *edge* is missing from the worklist's vocabulary, which is true and worth
+> pinning — they do not show an address out of reach, and
+> `reset-vector-dptr-targets.md` had already recorded both as seeded. The
+> section 8 of the tool now prints the census overlap beside the total and
+> asserts the leftover is the XDATA clear, so the figure cannot be re-read as
+> unfollowed routes.
+
+> **Correction, 2026-10-05 (issue #1078): this replaces a reading §5 and §9
+> both used, and the wrong version is left above rather than edited away.** §5
+> said the closure "records each and follows none" and §9 called the vectors
+> "the single change most likely to move the residue". Both were reasonable
+> from the outside and both are now measured: the common area *is* followed, and
+> it moves nothing. The blind spot was never "the walk stops at the boundary" —
+> it is an edge the closure's vocabulary does not have.
+
+**Calibration.** This is a statement about this walk on this image, never a
+claim that the common area reaches no banked code — the routes above are real
+and readable. Following a common call *extends* the same-bank assumption rather
+than testing it, so §8's "Not a verdict on the same-bank assumption" survives,
+and survives for a second reason: where two banks reach one shared routine, both
+record it as a `common` entry point with the reaching entry point as `frm`, and
+neither claims it. The write-up is
+[common-area-continuation-zero-delta.md](../../docs/findings/common-area-continuation-zero-delta.md),
+which also sizes the DPTR-immediate edge that would move the number — a
+separate decision, deliberately not taken here.
+
 ## 9. Follow-ups this hands on
 
-- **The reset vector and the interrupt vectors as additional seeds.** The single
-  change most likely to move the residue in §3, and the one whose result would
-  say most about whether what is left is seeds or bounds.
+- ~~**The reset vector and the interrupt vectors as additional seeds.** The
+  single change most likely to move the residue in §3, and the one whose result
+  would say most about whether what is left is seeds or bounds.~~ **Done,
+  2026-10-05 (issue #1078), and it moved nothing.** Both are seeds now and a
+  call into the common area is followed as a same-bank continuation, and the
+  attributed address set is **identical** in both banks: 429 and 370 new entry
+  points in bank0 and bank1, zero banked addresses, and no pair changing
+  verdict. The `?C?CCASE` and `jmp @a+dptr` edges above are unaffected, and
+  both committed CSVs regenerate byte-identically. **What it produced:** an
+  answer to this bullet's own question, and it is neither of the two it
+  offered. Not seeds — they are seeds now, and adding them changed nothing. Not
+  bounds — the `bounds` column reports the walks that stopped, and the verdicts
+  do not move when those walks are given more room to stop. The residue is the
+  closure's **edge vocabulary**: the common area routes into banked code through
+  a `mov dptr,#imm16 ; ljmp <stub>` pair, `descend()` records the immediate in
+  `code_immediates` and never in `callees`, and the stub ends in `ret`, so a
+  callee-keyed worklist cannot see the edge at all. That edge costs nothing on
+  this image because the routes it would carry are **already seeds** — 102 of
+  the 103 banked DPTR immediates in bank0's `common`-kind arms (107 of 108 in
+  bank1's) are named by a trampoline entry — so following the common area
+  reaches them by the census rather than by the missing edge. **What it did not
+  produce:** a stronger verdict — following a common call *extends* the
+  same-bank assumption rather than testing it, so §8's caveat survives. The
+  write-up is
+  [common-area-continuation-zero-delta.md](../../docs/findings/common-area-continuation-zero-delta.md).
+- **A DPTR immediate at or above `CODE_FLOOR` as its own edge kind.** This is
+  the edge the item above names, and it is the first contribution large enough
+  to matter: measured on top of the closure as it now stands, it takes the
+  bucket-B verdicts from 625 / 75 / 510 / 95 to 576 / 76 / 570 / 83 — residue
+  down, `still ambiguous` up by more than the residue falls, the same trade the
+  dispatch tables made. It is not enabled here on purpose: an immediate at or
+  above the code floor is a code-pointer *candidate*, not a proved entry, so it
+  needs its own calibration and would move both CSVs and every
+  `census_closure_functions.py` reading. Sized in the same write-up.
 - ~~**The `jmp @a+dptr` dispatch as a closure edge.**~~ **Done, 2026-10-04
   (issue #1079).** Both halves of this item are now edges: the 15 index-table
   handlers behind the common-area `0x7151` reader, via the table→target mapping
