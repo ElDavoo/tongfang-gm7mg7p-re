@@ -126,6 +126,15 @@ REGIONS = [
 # The PD image announces itself here. Checked rather than assumed, so a
 # different dump whose 0x20000 region is something else gets labelled
 # "unknown" instead of inheriting this image's conclusion.
+#
+# **That is this module's contract, not the marker's.** The pair is two values
+# and can refuse nothing on its own; what a failed comparison *means* is the
+# importing module's decision, and the tools in this directory do not agree.
+# `../tools/check_pd_marker_contract.py` is the census of which does what --
+# refuse, note on one stream or the other, say nothing, hand the boolean to a
+# caller -- and `../../docs/findings/pd-marker-caller-contracts.md` is the
+# write-up, including the one module whose "unknown" note let a found site
+# reach an `ABSENT` verdict.
 PD_MARKER = (0x20040, b"ITE8850-PD")
 
 # Flat image a human would load into r2 to see a site in each region.

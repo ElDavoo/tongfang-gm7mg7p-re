@@ -10,7 +10,7 @@ counted. This page is the answer, the list, and the accounting.
 addresses the pair pass reaches are *only ever* the `inc DPTR` half of an
 accessor's pair, and that 73 of those have no `MOV DPTR,#addr` encoding in
 `common`, `bank0` or `bank1`. The 107 split **73 / 34**, and the 34 split
-**8 entered / 26 not**. All 107 are in
+**11 entered / 23 not**. All 107 are in
 [`xdata-inc-dptr-only.csv`](xdata-inc-dptr-only.csv), one row each, and §1
 prints the command that regenerates it.
 
@@ -64,7 +64,7 @@ and a recipe rather than a list.
 > same call and prints the two halves' sizes and their intersection on every
 > run, which is a stronger statement than a cell can be, and the `MOV DPTR`
 > admission rule of §3 is a question this column says nothing about. The
-> 107/34/8/26 accounting above is unaffected, and nothing in the tree says the
+> 107/34/11/23 accounting above is unaffected, and nothing in the tree says the
 > two halves are one register. `../../docs/findings/xdata-pair-role-column.md`
 > has the column and its limits.
 
@@ -81,13 +81,13 @@ would shrink `S1 - S` and the summary would say so.
 | population | count | what makes it that one |
 |---|---:|---|
 | no `MOV DPTR` site in any image | **71** | the §3 rule has nothing to admit on, and the byte scan found nothing anywhere |
-| pd-image sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
+| pd-image `MOV DPTR` sites only, none in the main EC | **2** | `0x043B` (2 sites), `0x04A5` (3 sites) -- another program's byte at the same address number |
 | **= the 73** | **73** | no main-EC `MOV DPTR` site; §3 declines them |
-| main-EC `MOV DPTR` site, entered in `registers.yaml` | **8** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A3 0x04A7 0x0523` |
-| main-EC `MOV DPTR` site, **not** entered | **26** | the shape §6's rule admits; §5 |
+| main-EC `MOV DPTR` site, entered in `registers.yaml` | **11** | `0x030F 0x0403 0x0435 0x0437 0x0439 0x04A1 0x04A3 0x04A7 0x04AF 0x04BF 0x0523` |
+| main-EC `MOV DPTR` site, **not** entered | **23** | the shape §6's rule admits; §5 |
 | **total** | **107** | |
 
-71 + 2 = 73, and 8 + 26 = 34, and 73 + 34 = 107. Every row of
+71 + 2 = 73, and 11 + 23 = 34, and 73 + 34 = 107. Every row of
 `xdata-inc-dptr-only.csv` falls in exactly one of the four, and the
 `population_of()` classification the summary prints is read back off the row
 rather than recomputed, so this table and the CSV cannot drift apart silently.
@@ -186,6 +186,37 @@ apart. What the accessor establishes is a static access; what it does not
 establish is that the byte is a register, that the EC acts on it, or that any
 two sites agree about what the value means.
 
+**One of them has since been entered, and the rule above is why that is
+worth stating rather than leaving to the CSV's `entered` column** (issue #1202,
+2026-10-04). `0x04A5` — the `inc DPTR` half of the `0x04A4` pair, all three of
+whose `MOV DPTR` sites are pd-image — now carries `XDATA_04A5` in
+`registers.yaml`, so its row reads `entered=yes` where it read `no`. **It was
+not entered on the accessor.** The rule's warrant is a direct `MOV DPTR,#addr`
+site in the EC image, and `0x04A5` has none; what it was entered on is a
+*different* kind of evidence, a committed capture in which the byte takes more
+than one value and tracks the row's own `current_now / 1000` as the high half
+of the `0x04A4` pair, plus the main EC's own writer for that pair at bank1
+`0xB4B6` (`docs/findings/battery-page-first-decoding.md`). So the `if and only
+if` above still describes what admits a byte on **static** evidence, and this
+is not a counterexample to it — it is the first entry in this population made
+on a committed observation instead, which is the distinction the page's own §2
+draws between a static access and a behaviour. Its status is
+`unknown-not-absent` rather than `present-untested`, because every site the
+byte scan finds belongs to the PD image; that grade is the rule-2 outcome
+`check_status_vocabulary.py` assigns such a row and is unchanged by entering
+it.
+
+**That grade is about the byte scan, and `census_refs` on the same row is not a
+contradiction of it.** The row's `census_refs=7` are all `census_write=7` in the
+main EC and none pd-image, because they are the seven `MOV DPTR,#0x04A4` sites
+reaching this byte through `write_r1r2_to_xdata_pair`'s own `inc DPTR` — the
+same encoding `mov_dptr_main_ec=0` above is blind to by construction.
+`static_refs_main_ec` is a direct-`MOV DPTR` count in `registers.yaml`'s own
+header, so rule 2 grades on that and it is zero; the byte is not unwritten, and
+nothing in the grade should be read as saying it is. The two columns answer two
+different questions, which is the §2 distinction between a static access and a
+behaviour applied to the warrant rather than to the byte.
+
 **The reason is about method roles, not about what either method found.** "The
 byte scan finds no site" is a statement about a method, and `docs/findings.md`
 §4c is this repository's retracted case of reading such a silence as absence --
@@ -243,15 +274,15 @@ from both sides: `add_full_product_to_dptr` is not a selected accessor and
 names still reads back as the direction the table recorded, out of the committed
 `.asm` rather than out of the accessor table.
 
-## 5. The 26: entered by §6's rule, and left for a follow-up
+## 5. The 23: entered by §6's rule, and left for a follow-up
 
-The 34 that *do* have a main-EC `MOV DPTR` site are 8 already entered and 26
-not, and the 26 are:
+The 34 that *do* have a main-EC `MOV DPTR` site are 11 already entered and 23
+not, and the 23 are:
 
 ```
-0x0315 0x0319 0x0344 0x0383 0x0389 0x0393 0x03F7 0x03F9 0x04A1
-0x04AF 0x04BF 0x0503 0x0505 0x0507 0x0509 0x050B 0x050D 0x0519 0x051B
-0x0529 0x0609 0x060B 0x060D 0x060F 0x0835 0x0837
+0x0315 0x0319 0x0344 0x0383 0x0389 0x0393 0x03F7 0x03F9 0x0503 0x0505
+0x0507 0x0509 0x050B 0x050D 0x0519 0x051B 0x0529 0x0609 0x060B 0x060D
+0x060F 0x0835 0x0837
 ```
 
 **`0x04A3` is the one address that left this list**, in issue #1425. It is
@@ -267,22 +298,32 @@ and the two columns are never added together. `registers.yaml` now names it
 `PACK_TEMP_DK_1`, and the whole chain that naming documents is in
 [`docs/findings/pack-temp-producer-chain.md`](../../docs/findings/pack-temp-producer-chain.md).
 
-One thing does make `0x04A3` unlike the other seven entered rows, and it is
-worth recording as what it is rather than as an exception: it is the only one
-that is a **high** half. The other seven are low halves of a pair their seed is,
-which is what "entered" has meant here throughout — a name on the byte a `MOV
-DPTR` would have to find. `0x04A3` is the byte *above* the one its `MOV DPTR`
-names. The invariant `test_inc_dptr_sites.py` asserts is unweakened and now
-covers it: every entered row, this one included, has a main-EC site.
+One thing does make `0x04A3` unlike most of the other entered rows, and it is
+worth recording as what it is rather than as an exception: it is a **high**
+half. Most entered rows are low halves of a pair their seed is, which is what
+"entered" has meant here throughout — a name on the byte a `MOV DPTR` would
+have to find. `0x04A3` is the byte *above* the one its `MOV DPTR` names. The
+invariant `test_inc_dptr_sites.py` asserts is unweakened and covers it: every
+entered row, this one included, has a main-EC site.
 
-The remaining 26 have the shape §6's existing rule admits, and they are not
+**`0x04A1`, `0x04AF` and `0x04BF` left this list** with issue #732, on main-EC
+`MOV DPTR` sites of their own, and they are high halves too — `0x04A1` is the
+byte above the seed `0x04A0` reaches through the pair store at `0x888C`,
+`0x04AF` the carry target of `0x04AE`'s 16-bit increment, and `0x04BF` the
+carry target of `0x04BE`'s. Each has a main-EC site that is its own rather than
+its seed's, which is the same situation `0x04A3` is in. The provenance of the
+two `0x04A0` bytes is corrected there, against the listings rather than the
+decompiles:
+[`docs/findings/xdata-04a0-04ae-04be-words.md`](../../docs/findings/xdata-04a0-04ae-04be-words.md).
+
+The remaining 23 have the shape §6's existing rule admits, and they are not
 entered here for a reason that is about coverage rather than about the rule:
-**none of the 26 is on the `0x0400`-`0x045F` page**, and no other page's rule
+**none of the 23 is on the `0x0400`-`0x045F` page**, and no other page's rule
 covers them. The four page addresses among the 34 are `0x0403`, `0x0435`,
 `0x0437` and `0x0439`, and **all four are already entered** -- which is why
 §6's rule, applied to this population, changes nothing on the page at all.
 
-So each of the 26 needs its own `name`/`note` decision, off-page, with no
+So each of the 23 needs its own `name`/`note` decision, off-page, with no
 existing rule to lean on. That is an issue, not a footnote, and it is named as
 the follow-up this pass opens rather than folded in as a silent extra diff
 against a file several other branches are editing.

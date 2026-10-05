@@ -36,10 +36,10 @@ void manual_ctrl_profile_gate(char param_1)
     OEM_4_CHARGING_PROFILE = OEM_4_CHARGING_PROFILE & 0xcf;
   }
   if ((DAT_EXTMEM_0490 >> 1 & 1) != 1) {
-    DAT_EXTMEM_09c7 = 0;
-    DAT_EXTMEM_09c8 = 0;
-    DAT_EXTMEM_09c9 = 0;
-    DAT_EXTMEM_09ca = 0;
+    XDATA_09C7 = 0;
+    XDATA_09C8 = 0;
+    XDATA_09C9 = 0;
+    XDATA_09CA = 0;
     return;
   }
   store_be16_a(BAT_VOLTAGE_MV_0,0xa48,BAT_VOLTAGE_MV_1);
@@ -104,17 +104,17 @@ void manual_ctrl_profile_gate(char param_1)
     }
   }
 LAB_CODE_b211:
-  DAT_EXTMEM_09c7 = DAT_EXTMEM_09c7 + 1;
-  if (0x3b < DAT_EXTMEM_09c7) {
-    DAT_EXTMEM_09c7 = 0;
+  XDATA_09C7 = XDATA_09C7 + 1;
+  if (0x3b < XDATA_09C7) {
+    XDATA_09C7 = 0;
     bVar1 = DAT_EXTMEM_0a48 <
             (byte)(DAT_EXTMEM_0a4a - (((DAT_EXTMEM_0a49 < DAT_EXTMEM_0a4b + 1) << 7) >> 7));
     if (!bVar1) {
-      DAT_EXTMEM_09c8 = DAT_EXTMEM_09c8 + 1;
-      bVar1 = DAT_EXTMEM_09c8 < 0x3cU - ((bVar1 << 7) >> 7);
+      XDATA_09C8 = XDATA_09C8 + 1;
+      bVar1 = XDATA_09C8 < 0x3cU - ((bVar1 << 7) >> 7);
       cVar8 = bVar1 << 7;
       if (!bVar1) {
-        DAT_EXTMEM_09c8 = 0;
+        XDATA_09C8 = 0;
         cVar4 = DAT_EXTMEM_0a4a;
         bVar7 = DAT_EXTMEM_0a4b;
         stress_headroom(0x9c9,0xfd,0xe8);
@@ -164,18 +164,18 @@ LAB_CODE_b211:
       charge_target_minus_r3_times_0a47(bVar7,200);
       return;
     }
-    bVar7 = 0x2c - (((DAT_EXTMEM_09ca < 0xb9) << 7) >> 7);
-    cVar3 = DAT_EXTMEM_09c9 - bVar7;
-    if ((DAT_EXTMEM_09c9 < bVar7) &&
+    bVar7 = 0x2c - (((XDATA_09CA < 0xb9) << 7) >> 7);
+    cVar3 = XDATA_09C9 - bVar7;
+    if ((XDATA_09C9 < bVar7) &&
        (bVar7 = 1 - (((DAT_EXTMEM_0a4d < 0x5e) << 7) >> 7), cVar3 = DAT_EXTMEM_0a4c - bVar7,
        (DAT_EXTMEM_0a4c < bVar7) << 7 < '\0')) {
-      bVar7 = 0x1f - (((DAT_EXTMEM_09ca < 0xc9) << 7) >> 7);
-      bVar6 = DAT_EXTMEM_09c9 - bVar7;
-      if (((DAT_EXTMEM_09c9 < bVar7) &&
+      bVar7 = 0x1f - (((XDATA_09CA < 0xc9) << 7) >> 7);
+      bVar6 = XDATA_09C9 - bVar7;
+      if (((XDATA_09C9 < bVar7) &&
           (cVar3 = ((DAT_EXTMEM_0a4d < 0xfa) << 7) >> 7, bVar6 = DAT_EXTMEM_0a4c + cVar3,
           DAT_EXTMEM_0a4c < (byte)-cVar3)) && (bVar6 = OEM_4_CHARGING_PROFILE & 0x30, bVar6 != 0x10)
          ) {
-        if ((0x12U - (((DAT_EXTMEM_09ca < 0xc1) << 7) >> 7) <= DAT_EXTMEM_09c9) ||
+        if ((0x12U - (((XDATA_09CA < 0xc1) << 7) >> 7) <= XDATA_09C9) ||
            ((byte)-(((DAT_EXTMEM_0a4d < 0x96) << 7) >> 7) <= DAT_EXTMEM_0a4c)) {
           bVar2 = 0x32;
         }

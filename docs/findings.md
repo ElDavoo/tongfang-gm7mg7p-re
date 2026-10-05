@@ -984,6 +984,35 @@ interface; `windows/tools/ecrw.py` is just that calling convention —
 `windows/tools/ec_watch.py` sweeps 2 KiB of EC space about 2.5 times a
 second, fast enough to catch a settings write as it lands.
 
+**CORRECTION to the rate sentence above, added 2026-10-04 (issue #94), the
+paragraph and the claim left visible as they were.** The number is not
+supported by anything measured here, and the clause after it never was.
+Nothing in this repository has ever measured how long one `ECRR` takes on
+this machine — `docs/hardware-tests/manual-fan-ctrl-0751-isolation.md` says
+so in terms and its sibling runbooks say it again. The figure came from
+`1/(0.25 + 0.15)`: the `--interval` default plus a 0.15 s sweep duration that
+nothing here establishes. This section's own capture does not contradict the
+result, and that is worth being exact about rather than tidying — its header
+records a sweep *every* 0.4 s (`evidence/ec-watch/2026-09-18-ac-plugin-sweep-summary.csv`),
+and `1/0.4` is 2.5 a second exactly, the figure above. The two agree because
+0.25 + 0.15 is 0.4, not because the 0.15 s was measured; treat the agreement
+as arithmetic, not as the capture confirming a duration. What the capture
+does establish is the 0.4 s cadence of that run, and by extension that one
+`ECRR` plus the rest of a 2 KiB sweep cost well under a sweep period here —
+which is a weaker claim than "fast enough to catch a settings write as it
+lands", and the clause asserting it was never earned.
+
+`ec_watch.py` also no longer sweeps that fast by any margin: it leaves
+`0x0460-0x046F` out and sleeps `--gap-ms` after every read, so its default
+range is 2032 reads and about 12 s of sleeping a sweep. "Fast enough to catch
+a settings write as it lands" is not what it is for any more — a settings
+write the vendor UI performs persists in the EC, so a coarse sweep still sees
+it; what it cannot do is put two sweeps either side of a write that completes
+inside one. What is true of it today is in
+[`docs/findings/ec-read-pacing-fan-page.md`](findings/ec-read-pacing-fan-page.md),
+and `tools/check_ec_read_pacing_claims.py` is what keeps this paragraph from
+being the one place it went stale.
+
 The driver present is not the build `windows/native/` analysed: that was
 `ACPIDriver.sys` from the 3.1.6.0 era, this is a smaller `UWACPIDriver.sys`.
 It creates the same `\DosDevices\ACPIDriver` symlink and carries all 21 of
@@ -5868,6 +5897,24 @@ the whole time between.)*
    `c_presence_problems()`), none of which shares a name with the thirteen. The
    two older numbers are left above because they are part of the record of the
    defect; neither was ever a measurement.*
+
+   *(Corrected 2026-10-04, issue #299: the paragraph above is left as it was
+   written, and its claim that a rename cannot fail the check was half true. The
+   `lcall` fact is matched on the address, as it says; the increment was pinned
+   to the spelling `DAT_EXTMEM_09c7`. `ORACLE_FACTS[1]` is now
+   `(?:DAT_EXTMEM|XDATA)_09c7` at all three token positions. The rename is what
+   falsified it: giving `0x09C7` a row in `ec/annotations/registers.yaml` puts
+   it in `ec/ghidra/xdata-symbols.csv`, so the export spells it `XDATA_09C7` and
+   `ec/decompiled/bank0/B1F0.c` reads `XDATA_09C7 = XDATA_09C7 + 1;`
+   immediately followed by `if (0x3b < XDATA_09C7)` — a check written against the
+   old name would have failed on the rename rather than on anything about the
+   code, which is the failure the paragraph says the pair does not have. Both
+   spellings are names for one address, and the address is the fact. What the
+   fact asserts is unchanged — `0x09c7` incremented and compared against `0x3b`
+   at `0xB1F0`, as `charge-target-derating.md` established by hand — and
+   `ec/tools/test_xdata_09c7_09ca_rows.py` exercises the widened pattern
+   against both spellings and against a copy with the fact removed, so the
+   negative case is no longer reachable only with Ghidra in the loop.)*
 2. **The export was stale before this change.** 203 committed `.c` files still
    said `DAT_EXTMEM_0440` although `xdata-symbols.csv` has named that byte
    `XDATA_0440` since `8a90bc0` (#160) — that commit regenerated
