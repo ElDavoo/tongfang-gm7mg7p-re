@@ -1,0 +1,479 @@
+program,target,region,verdict,covering_record,onto,over
+bank0,0x000F,common,unread,0x0000E 02 11 56 ljmp 0x1156,0,15
+bank0,0x0017,common,unread,0x00016 02 11 5c ljmp 0x115c,0,23
+bank0,0x0018,common,unread,0x00016 02 11 5c ljmp 0x115c,0,24
+bank0,0x0064,common,mid-instruction,0x00063 02 11 86 ljmp 0x1186,1,23
+bank0,0x00CF,common,mid-instruction,0x000CE 80 90 sjmp 0x0060,2,22
+bank0,0x00E0,common,unread,"0x000DF 54 1f anl a,#0x1f",0,24
+bank0,0x011C,common,mid-instruction,"0x0011B 90 11 01 mov dptr,#0x1101",0,24
+bank0,0x012F,common,entry-under-walk,"0x0012E b0 90 anl c,/p1.0",23,1
+bank0,0x018C,common,entry-under-walk,0x0018B b6 90 17 db 0xb6,23,1
+bank0,0x0208,common,unread,0x00206 12 10 48 lcall 0x1048,0,24
+bank0,0x0211,common,unread,"0x0020F 90 16 e7 mov dptr,#0x16e7",1,23
+bank0,0x0214,common,unread,"0x00213 44 80 orl a,#0x80",0,24
+bank0,0x0237,common,unread,"0x00236 f5 65 mov 0x65,a",0,24
+bank0,0x023D,common,unread,"0x0023C 64 33 xrl a,#0x33",0,24
+bank0,0x031C,common,mid-instruction,0x0031B 80 02 sjmp 0x031f,0,24
+bank0,0x0400,common,unread,0x003FE 02 13 90 ljmp 0x1390,3,21
+bank0,0x0402,common,mid-instruction,0x00401 02 13 96 ljmp 0x1396,0,24
+bank0,0x0408,common,mid-instruction,0x00407 02 13 a2 ljmp 0x13a2,0,24
+bank0,0x0444,common,mid-instruction,0x00443 02 14 1a ljmp 0x141a,0,24
+bank0,0x04C8,common,mid-instruction,"0x004C7 54 fd anl a,#0xfd",0,24
+bank0,0x0504,common,mid-instruction,0x00503 80 12 sjmp 0x0517,0,24
+bank0,0x0512,common,mid-instruction,"0x00511 b4 01 03 cjne a,#0x01,0x0517",0,24
+bank0,0x0574,common,unread,0x00572 12 01 2f lcall 0x012f,0,24
+bank0,0x07D6,common,entry-under-walk,0x007D5 02 f0 90 ljmp 0xf090,22,2
+bank0,0x0817,common,unread,"0x00816 af 35 mov r7,0x35",0,24
+bank0,0x086B,common,entry-under-walk,0x00869 02 22 90 ljmp 0x2290,22,2
+bank0,0x0878,common,unread,"0x00877 90 15 00 mov dptr,#0x1500",0,24
+bank0,0x08C2,common,unread,"0x008C0 b4 01 09 cjne a,#0x01,0x08cc",0,24
+bank0,0x0A01,common,unread,0x00A00 12 0a 74 lcall 0x0a74,0,24
+bank0,0x0A02,common,unread,0x00A00 12 0a 74 lcall 0x0a74,1,23
+bank0,0x0C6D,common,mid-instruction,"0x00C6C 54 e0 anl a,#0xe0",0,24
+bank0,0x0D49,common,entry-under-walk,0x00D48 86 22 db 0x86,22,2
+bank0,0x0E34,common,entry-under-walk,"0x00E33 34 02 addc a,#0x02",23,1
+bank0,0x0E3A,common,entry-under-walk,0x00E39 40 02 jc 0x0e3d,23,1
+bank0,0x0E43,common,entry-under-walk,"0x00E42 52 02 anl 0x02,a",23,1
+bank0,0x0E4C,common,entry-under-walk,"0x00E4B 64 02 xrl a,#0x02",23,1
+bank0,0x0E52,common,entry-under-walk,0x00E51 70 02 jnz 0x0e55,23,1
+bank0,0x0E55,common,entry-under-walk,0x00E54 76 02 db 0x76,23,1
+bank0,0x0E58,common,entry-under-walk,"0x00E57 7c 02 mov r4,#0x02",23,1
+bank0,0x0E5B,common,entry-under-walk,0x00E5A 82 02 db 0x82,23,1
+bank0,0x0E5E,common,entry-under-walk,"0x00E5D 88 75 mov 0x75,r0",23,1
+bank0,0x100E,common,unread,"0x0100D 90 11 50 mov dptr,#0x1150",0,24
+bank0,0x1012,common,entry-under-walk,0x01011 80 f0 sjmp 0x1003,22,2
+bank0,0x1017,common,mid-instruction,"0x01015 10 07 1f jbc 0x20.7,0x1037",1,23
+bank0,0x1048,common,mid-instruction,0x01046 02 05 12 ljmp 0x0512,0,24
+bank0,0x1117,common,unread,"0x01116 74 11 mov a,#0x11",0,24
+bank0,0x1207,common,entry-under-walk,"0x01205 bf 62 02 cjne r7,#0x62,0x120a",22,2
+bank0,0x120E,common,unread,0x0120D 02 11 00 ljmp 0x1100,1,23
+bank0,0x121E,common,unread,"0x0121C 90 bf 66 mov dptr,#0xbf66",0,24
+bank0,0x1229,common,unread,"0x01228 90 bf 68 mov dptr,#0xbf68",0,24
+bank0,0x122A,common,unread,"0x01228 90 bf 68 mov dptr,#0xbf68",0,24
+bank0,0x1230,common,unread,"0x0122E 90 bf 69 mov dptr,#0xbf69",0,24
+bank0,0x123B,common,unread,"0x0123A 90 bf 6b mov dptr,#0xbf6b",0,24
+bank0,0x124A,common,unread,0x01249 02 11 00 ljmp 0x1100,1,23
+bank0,0x1415,common,unread,"0x01414 90 bf bd mov dptr,#0xbfbd",0,24
+bank0,0x1416,common,unread,"0x01414 90 bf bd mov dptr,#0xbfbd",0,24
+bank0,0x1460,common,unread,0x0145F 02 11 00 ljmp 0x1100,1,23
+bank0,0x1502,common,unread,0x01501 02 11 00 ljmp 0x1100,0,24
+bank0,0x151A,common,unread,0x01519 02 11 00 ljmp 0x1100,0,24
+bank0,0x156B,common,mid-instruction,"0x0156A 90 85 24 mov dptr,#0x8524",0,24
+bank0,0x1583,common,unread,"0x01582 90 85 4b mov dptr,#0x854b",0,24
+bank0,0x1602,common,mid-instruction,"0x01600 90 de 41 mov dptr,#0xde41",0,24
+bank0,0x1622,common,unread,0x01621 02 11 00 ljmp 0x1100,0,24
+bank0,0x1628,common,unread,0x01627 02 11 00 ljmp 0x1100,0,24
+bank0,0x1706,common,mid-instruction,0x01705 02 11 00 ljmp 0x1100,2,22
+bank0,0x1800,common,mid-instruction,"0x017FE 90 c2 cf mov dptr,#0xc2cf",0,24
+bank0,0x1803,common,mid-instruction,0x01801 02 11 00 ljmp 0x1100,0,24
+bank0,0x1C02,common,unread,"0x01C00 90 08 46 mov dptr,#0x0846",1,23
+bank0,0x1C07,common,unread,0x01C06 02 1c d1 ljmp 0x1cd1,0,24
+bank0,0x1C14,common,entry-under-walk,0x01C13 b2 12 cpl 0x22.2,23,1
+bank0,0x1CB8,common,unread,"0x01CB7 f5 82 mov 0x82,a",0,24
+bank0,0x1E30,common,entry-under-walk,"0x01E2F 90 ef 64 mov dptr,#0xef64",22,2
+bank0,0x21DF,common,entry-under-walk,"0x021DE 52 e0 anl 0xe0,a",22,2
+bank0,0x2202,common,unread,"0x02201 74 01 mov a,#0x01",0,24
+bank0,0x2238,common,entry-under-walk,"0x02237 7b 78 mov r3,#0x78",23,1
+bank0,0x227F,common,unread,0x0227E 70 1e jnz 0x229e,0,24
+bank0,0x22EF,common,entry-under-walk,"0x022EE 24 e4 add a,#0xe4",22,2
+bank0,0x2890,common,entry-under-walk,"0x0288E 10 e5 e4 jbc acc.5,0x2875",18,6
+bank0,0x2A24,common,mid-instruction,"0x02A23 64 f5 xrl a,#0xf5",0,24
+bank0,0x2A7D,common,entry-under-walk,"0x02A7C 90 af 67 mov dptr,#0xaf67",23,1
+bank0,0x2A92,common,entry-under-walk,0x02A91 80 ae sjmp 0x2a41,23,1
+bank0,0x2AC1,common,entry-under-walk,"0x02ABF 10 22 e4 jbc 0x24.2,0x2aa6",23,1
+bank0,0x2B02,common,unread,"0x02B01 74 88 mov a,#0x88",0,24
+bank0,0x2D85,common,entry-under-walk,"0x02D83 b5 22 7f cjne a,0x22,0x2e05",23,1
+bank0,0x2DE3,common,entry-under-walk,"0x02DE1 b5 22 12 cjne a,0x22,0x2df6",21,3
+bank0,0x2E02,common,mid-instruction,0x02E01 d2 60 setb 0x2c.0,1,23
+bank0,0x3201,common,unread,0x031FF 12 3c 18 lcall 0x3c18,1,23
+bank0,0x3239,common,entry-under-walk,"0x03238 bf 90 0a cjne r7,#0x90,0x3245",20,4
+bank0,0x3352,common,entry-under-walk,"0x03350 30 b5 22 jnb p3.5,0x3375",22,2
+bank0,0x3353,common,entry-under-walk,"0x03351 b5 22 12 cjne a,0x22,0x3366",23,1
+bank0,0x3602,common,entry-under-walk,"0x03600 30 b5 78 jnb p3.5,0x367b",22,2
+bank0,0x37E1,common,entry-under-walk,0x037DF 12 22 ef lcall 0x22ef,22,2
+bank0,0x383D,common,entry-under-walk,"0x0383B 63 22 ed xrl 0x22,#0xed",23,1
+bank0,0x3A02,common,mid-instruction,"0x03A01 74 01 mov a,#0x01",0,24
+bank0,0x3B1D,common,entry-under-walk,0x03B1C 50 90 jnc 0x3aae,23,1
+bank0,0x3B80,common,entry-under-walk,"0x03B7F 8d f8 mov 0xf8,r5",23,1
+bank0,0x3D92,common,entry-under-walk,"0x03D91 a2 e4 mov c,acc.4",21,3
+bank0,0x3F62,common,entry-under-walk,"0x03F61 a2 12 mov c,0x22.2",22,2
+bank0,0x46F6,common,unread,"0x046F4 90 0a 1d mov dptr,#0x0a1d",1,23
+bank0,0x492D,common,entry-under-walk,"0x0492B 43 a5 12 orl 0xa5,#0x12",23,1
+bank0,0x4B77,common,entry-under-walk,"0x04B76 30 90 00 jnb p1.0,0x4b79",22,2
+bank0,0x4C02,common,entry-under-walk,"0x04C00 10 3c 74 jbc 0x27.4,0x4c77",22,2
+bank0,0x4E02,common,unread,"0x04E01 b4 03 e4 cjne a,#0x03,0x4de8",0,24
+bank0,0x5202,common,entry-under-walk,"0x05200 10 3f 04 jbc 0x27.7,0x5207",23,1
+bank0,0x557E,common,entry-under-walk,"0x0557C 63 f0 22 xrl 0xf0,#0x22",23,1
+bank0,0x5597,common,entry-under-walk,"0x05595 30 22 ef jnb 0x24.2,0x5587",22,2
+bank0,0x57C2,common,entry-under-walk,"0x057C1 64 35 xrl a,#0x35",19,5
+bank0,0x6003,common,unread,"0x06002 35 39 addc a,0x39",0,24
+bank0,0x6100,common,mid-instruction,0x060FF 72 57 db 0x72,0,24
+bank0,0x6402,common,mid-instruction,"0x06401 10 00 00 jbc 0x20.0,0x6404",0,24
+bank0,0x6602,common,mid-instruction,0x06601 80 16 sjmp 0x6619,0,24
+bank0,0x6A02,common,entry-under-walk,"0x06A00 30 69 5c jnb 0x2d.1,0x6a5f",23,1
+bank0,0x7000,common,mid-instruction,"0x06FFF 8a 83 mov 0x83,r2",2,22
+bank0,0x7012,common,unread,0x07011 60 c3 jz 0x6fd6,0,24
+bank0,0x702D,common,unread,"0x0702C 90 6f 8a mov dptr,#0x6f8a",0,24
+bank0,0x703A,common,mid-instruction,0x07039 50 02 jnc 0x703d,0,24
+bank0,0x703F,common,mid-instruction,"0x0703D bb fe 02 cjne r3,#0xfe,0x7042",1,23
+bank0,0x7177,common,entry-under-walk,"0x07176 df 8a djnz r7,0x7102",23,1
+bank0,0x717B,common,entry-under-walk,0x0717A 82 e4 db 0x82,23,1
+bank0,0x7202,common,mid-instruction,"0x07200 10 d7 05 jbc psw.7,0x7208",1,23
+bank0,0x7281,common,entry-under-walk,"0x0727F d5 0d e4 djnz 0x0d,0x7266",23,1
+bank0,0x8003,bank0,unread,"0x08001 90 16 54 mov dptr,#0x1654",1,2
+bank0,0x8007,bank0,mid-instruction,"0x08005 90 16 55 mov dptr,#0x1655",1,6
+bank0,0x800A,bank0,unread,"0x08009 90 16 56 mov dptr,#0x1656",0,10
+bank0,0x800E,bank0,unread,"0x0800D 90 16 57 mov dptr,#0x1657",0,14
+bank0,0x800F,bank0,mid-instruction,"0x0800D 90 16 57 mov dptr,#0x1657",1,14
+bank0,0x8016,bank0,entry-under-walk,"0x08015 88 f0 mov 0xf0,r0",21,1
+bank0,0x801F,bank0,entry-under-walk,"0x0801E a0 f0 orl c,/b.0",21,3
+bank0,0x8022,bank0,unread,"0x08020 90 19 02 mov dptr,#0x1902",1,23
+bank0,0x802C,bank0,mid-instruction,0x0802B 12 bc b6 lcall 0xbcb6,3,21
+bank0,0x8055,bank0,unread,"0x08054 90 19 04 mov dptr,#0x1904",1,23
+bank0,0x806F,bank0,unread,"0x0806D 90 0a 59 mov dptr,#0x0a59",1,23
+bank0,0x8073,bank0,unread,"0x08071 90 06 01 mov dptr,#0x0601",1,23
+bank0,0x821F,bank0,entry-under-walk,0x0821E 87 12 db 0x87,17,7
+bank0,0x8274,bank0,entry-under-walk,"0x08272 bc b1 90 cjne r4,#0xb1,0x8205",14,10
+bank0,0x8398,bank0,entry-under-walk,"0x08396 10 f0 22 jbc b.0,0x83bb",22,2
+bank0,0x8749,bank0,entry-under-walk,"0x08747 bb 22 12 cjne r3,#0x22,0x875c",23,1
+bank0,0x8931,bank0,entry-under-walk,"0x0892F 30 f6 90 jnb b.6,0x88c2",23,1
+bank0,0x8F09,bank0,entry-under-walk,"0x08F07 bb 28 e0 cjne r3,#0x28,0x8eea",23,1
+bank0,0x900F,bank0,unread,0x0900D 12 c2 a2 lcall 0xc2a2,0,24
+bank0,0x9022,bank0,unread,"0x09020 90 08 1e mov dptr,#0x081e",1,23
+bank0,0x924B,bank0,entry-under-walk,"0x0924A 53 22 90 anl 0x22,#0x90",23,1
+bank0,0x924C,bank0,entry-under-walk,"0x0924A 53 22 90 anl 0x22,#0x90",23,1
+bank0,0x9390,bank0,unread,"0x0938F 90 0a 47 mov dptr,#0x0a47",0,24
+bank0,0x93FC,bank0,unread,0x093FB 12 c2 6e lcall 0xc26e,2,22
+bank0,0x96AD,bank0,entry-under-walk,"0x096AB bb f0 90 cjne r3,#0xf0,0x963e",22,2
+bank0,0x9902,bank0,entry-under-walk,"0x09900 10 f0 90 jbc b.0,0x9893",21,3
+bank0,0x9A0D,bank0,entry-under-walk,"0x09A0B ba f0 22 cjne r2,#0xf0,0x9a30",20,4
+bank0,0x9C00,bank0,entry-under-walk,0x09BFF 86 7f db 0x86,22,2
+bank0,0x9C24,bank0,entry-under-walk,"0x09C23 90 e4 12 mov dptr,#0xe412",22,2
+bank0,0x9C47,bank0,entry-under-walk,"0x09C45 bf f0 22 cjne r7,#0xf0,0x9c6a",21,3
+bank0,0xA139,bank0,entry-under-walk,"0x0A138 a8 12 mov r0,0x12",23,1
+bank0,0xA1A8,bank0,entry-under-walk,"0x0A1A7 20 90 09 jb p1.0,0xa1b3",23,1
+bank0,0xA6C6,bank0,entry-under-walk,"0x0A6C5 54 12 anl a,#0x12",22,2
+bank0,0xAAC6,bank0,entry-under-walk,"0x0AAC5 90 90 07 mov dptr,#0x9007",22,2
+bank0,0xAD82,bank0,mid-instruction,"0x0AD81 90 07 86 mov dptr,#0x0786",0,24
+bank0,0xAE87,bank0,entry-under-walk,"0x0AE86 7d 12 mov r5,#0x12",23,1
+bank0,0xAEC0,bank0,entry-under-walk,0x0AEBF 72 90 db 0x72,23,1
+bank0,0xAF27,bank0,entry-under-walk,"0x0AF26 7d 12 mov r5,#0x12",23,1
+bank0,0xB3F0,bank0,mid-instruction,"0x0B3EF 90 09 88 mov dptr,#0x0988",0,24
+bank0,0xB46C,bank0,entry-under-walk,"0x0B46A b4 0c 12 cjne a,#0x0c,0xb47f",23,1
+bank0,0xB5B2,bank0,entry-under-walk,"0x0B5B1 20 90 08 jb p1.0,0xb5bc",21,3
+bank0,0xB716,bank0,entry-under-walk,"0x0B715 20 90 08 jb p1.0,0xb720",21,3
+bank0,0xB994,bank0,entry-under-walk,"0x0B993 92 f0 mov b.0,c",22,2
+bank0,0xBA2A,bank0,entry-under-walk,"0x0BA28 63 91 93 xrl 0x91,#0x93",22,2
+bank0,0xBB47,bank0,entry-under-walk,"0x0BB45 90 22 90 mov dptr,#0x2290",23,1
+bank0,0xBB4A,bank0,entry-under-walk,"0x0BB49 b8 f0 74 cjne r0,#0xf0,0xbbc0",21,3
+bank0,0xBB60,bank0,entry-under-walk,0x0BB5F 82 f5 db 0x82,23,1
+bank0,0xBC14,bank0,entry-under-walk,"0x0BC13 10 e4 90 jbc acc.4,0xbba6",23,1
+bank0,0xBD7F,bank0,entry-under-walk,"0x0BD7E 10 f0 8f jbc b.0,0xbd10",23,1
+bank0,0xBD8B,bank0,entry-under-walk,"0x0BD8A 10 90 09 jbc p1.0,0xbd96",23,1
+bank0,0xBE0D,bank0,entry-under-walk,"0x0BE0C 10 90 07 jbc p1.0,0xbe16",23,1
+bank0,0xBE7E,bank0,entry-under-walk,"0x0BE7C b8 22 90 cjne r0,#0x22,0xbe0f",22,2
+bank0,0xC09C,bank0,entry-under-walk,"0x0C09B 7e 12 mov r6,#0x12",23,1
+bank0,0xC0A2,bank0,entry-under-walk,"0x0C0A1 7e 12 mov r6,#0x12",23,1
+bank0,0xC55F,bank0,entry-under-walk,"0x0C55D 90 22 ef mov dptr,#0x22ef",23,1
+bank0,0xCA53,bank0,entry-under-walk,"0x0CA51 90 22 90 mov dptr,#0x2290",23,1
+bank0,0xCDC3,bank0,mid-instruction,"0x0CDC2 90 16 58 mov dptr,#0x1658",0,24
+bank0,0xCFB7,bank0,entry-under-walk,0x0CFB6 b2 02 cpl 0x20.2,22,2
+bank0,0xCFBA,bank0,entry-under-walk,"0x0CFB9 b8 02 18 cjne r0,#0x02,0xcfd4",20,4
+bank0,0xCFBD,bank0,entry-under-walk,"0x0CFBC be 12 cc cjne r6,#0x12,0xcf8b",18,6
+bank0,0xCFC6,bank0,entry-under-walk,"0x0CFC5 b4 e4 fd cjne a,#0xe4,0xcfc5",23,1
+bank0,0xD038,bank0,entry-under-walk,0x0D037 77 90 db 0x77,23,1
+bank0,0xD284,bank0,entry-under-walk,0x0D283 60 74 jz 0xd2f9,22,2
+bank0,0xD5D4,bank0,entry-under-walk,"0x0D5D2 d5 d4 90 djnz 0xd4,0xd565",23,1
+bank0,0xD722,bank0,entry-under-walk,0x0D721 c2 90 clr 0x90,23,1
+bank0,0xD927,bank0,entry-under-walk,"0x0D926 da e4 djnz r2,0xd90c",22,2
+bank0,0xD9FE,bank0,entry-under-walk,0x0D9FD d2 90 setb p1.0,23,1
+bank0,0xE020,bank0,entry-under-walk,"0x0E01E 20 e0 fd jb acc.0,0xe01e",22,2
+bank0,0xE024,bank0,entry-under-walk,"0x0E023 a0 90 orl c,/p1.0",23,1
+bank0,0xE030,bank0,unread,"0x0E02E 75 f0 08 mov 0xf0,#0x08",1,23
+bank0,0xE044,bank0,unread,"0x0E042 90 09 c1 mov dptr,#0x09c1",2,22
+bank0,0xE064,bank0,mid-instruction,"0x0E063 b4 a0 05 cjne a,#0xa0,0xe06b",0,24
+bank0,0xE06F,bank0,mid-instruction,"0x0E06D b4 a1 05 cjne a,#0xa1,0xe075",0,24
+bank0,0xE0D3,bank0,mid-instruction,"0x0E0D1 b4 a5 06 cjne a,#0xa5,0xe0da",1,23
+bank0,0xE0FE,bank0,entry-under-walk,"0x0E0FD 10 e0 30 jbc acc.0,0xe130",23,1
+bank0,0xE37B,bank0,entry-under-walk,0x0E37A 80 f0 sjmp 0xe36c,23,1
+bank0,0xE3D0,bank0,entry-under-walk,"0x0E3CF 8f c9 mov 0xc9,r7",23,1
+bank0,0xE4B9,bank0,entry-under-walk,0x0E4B7 b6 22 90 db 0xb6,23,1
+bank0,0xE4F0,bank0,mid-instruction,"0x0E4EF 74 02 mov a,#0x02",1,23
+bank0,0xE567,bank0,mid-instruction,"0x0E565 90 0a 3d mov dptr,#0x0a3d",1,23
+bank0,0xEBD5,bank0,entry-under-walk,"0x0EBD4 52 12 anl 0x12,a",22,2
+bank0,0xED52,bank0,entry-under-walk,"0x0ED51 d5 90 1c djnz 0x90,0xed70",22,2
+bank0,0xEDA4,bank0,mid-instruction,0x0EDA2 12 0e a2 lcall 0x0ea2,1,23
+bank0,0xEF12,bank0,mid-instruction,"0x0EF11 7f 01 mov r7,#0x01",0,24
+bank0,0xEF60,bank0,mid-instruction,0x0EF5F 12 ee 4f lcall 0xee4f,2,22
+bank0,0xF002,bank0,mid-instruction,"0x0F001 90 0f b4 mov dptr,#0x0fb4",0,24
+bank0,0xF00D,bank0,unread,"0x0F00C 90 0f b4 mov dptr,#0x0fb4",0,24
+bank0,0xF074,bank0,mid-instruction,"0x0F073 90 0f c0 mov dptr,#0x0fc0",0,24
+bank0,0xF095,bank0,entry-under-walk,0x0F094 60 a3 jz 0xf039,23,1
+bank0,0xF0A3,bank0,mid-instruction,"0x0F0A1 90 0f 60 mov dptr,#0x0f60",1,23
+bank0,0xF0C8,bank0,entry-under-walk,0x0F0C7 60 f0 jz 0xf0b9,22,2
+bank0,0xF0EF,bank0,entry-under-walk,"0x0F0EE 88 90 mov 0x90,r0",23,1
+bank0,0xF118,bank0,entry-under-walk,0x0F117 40 90 jc 0xf0a9,23,1
+bank0,0xF495,bank0,entry-under-walk,"0x0F494 bd 90 0f cjne r5,#0x90,0xf4a6",23,1
+bank0,0xF498,bank0,entry-under-walk,0x0F497 60 f0 jz 0xf489,21,3
+bank1,0x000F,common,unread,0x0000E 02 11 56 ljmp 0x1156,0,15
+bank1,0x0017,common,unread,0x00016 02 11 5c ljmp 0x115c,0,23
+bank1,0x0018,common,unread,0x00016 02 11 5c ljmp 0x115c,0,24
+bank1,0x0064,common,mid-instruction,0x00063 02 11 86 ljmp 0x1186,1,23
+bank1,0x00CF,common,mid-instruction,0x000CE 80 90 sjmp 0x0060,2,22
+bank1,0x00E0,common,unread,"0x000DF 54 1f anl a,#0x1f",0,24
+bank1,0x011C,common,mid-instruction,"0x0011B 90 11 01 mov dptr,#0x1101",0,24
+bank1,0x012F,common,entry-under-walk,"0x0012E b0 90 anl c,/p1.0",23,1
+bank1,0x018C,common,entry-under-walk,0x0018B b6 90 17 db 0xb6,23,1
+bank1,0x0208,common,unread,0x00206 12 10 48 lcall 0x1048,0,24
+bank1,0x0211,common,unread,"0x0020F 90 16 e7 mov dptr,#0x16e7",1,23
+bank1,0x0214,common,unread,"0x00213 44 80 orl a,#0x80",0,24
+bank1,0x0237,common,unread,"0x00236 f5 65 mov 0x65,a",0,24
+bank1,0x023D,common,unread,"0x0023C 64 33 xrl a,#0x33",0,24
+bank1,0x031C,common,mid-instruction,0x0031B 80 02 sjmp 0x031f,0,24
+bank1,0x0400,common,unread,0x003FE 02 13 90 ljmp 0x1390,3,21
+bank1,0x0402,common,mid-instruction,0x00401 02 13 96 ljmp 0x1396,0,24
+bank1,0x0408,common,mid-instruction,0x00407 02 13 a2 ljmp 0x13a2,0,24
+bank1,0x0444,common,mid-instruction,0x00443 02 14 1a ljmp 0x141a,0,24
+bank1,0x04C8,common,mid-instruction,"0x004C7 54 fd anl a,#0xfd",0,24
+bank1,0x0504,common,mid-instruction,0x00503 80 12 sjmp 0x0517,0,24
+bank1,0x0512,common,mid-instruction,"0x00511 b4 01 03 cjne a,#0x01,0x0517",0,24
+bank1,0x0574,common,unread,0x00572 12 01 2f lcall 0x012f,0,24
+bank1,0x07D6,common,entry-under-walk,0x007D5 02 f0 90 ljmp 0xf090,22,2
+bank1,0x0817,common,unread,"0x00816 af 35 mov r7,0x35",0,24
+bank1,0x086B,common,entry-under-walk,0x00869 02 22 90 ljmp 0x2290,22,2
+bank1,0x0878,common,unread,"0x00877 90 15 00 mov dptr,#0x1500",0,24
+bank1,0x08C2,common,unread,"0x008C0 b4 01 09 cjne a,#0x01,0x08cc",0,24
+bank1,0x0A01,common,unread,0x00A00 12 0a 74 lcall 0x0a74,0,24
+bank1,0x0A02,common,unread,0x00A00 12 0a 74 lcall 0x0a74,1,23
+bank1,0x0C6D,common,mid-instruction,"0x00C6C 54 e0 anl a,#0xe0",0,24
+bank1,0x0D49,common,entry-under-walk,0x00D48 86 22 db 0x86,22,2
+bank1,0x0E34,common,entry-under-walk,"0x00E33 34 02 addc a,#0x02",23,1
+bank1,0x0E3A,common,entry-under-walk,0x00E39 40 02 jc 0x0e3d,23,1
+bank1,0x0E43,common,entry-under-walk,"0x00E42 52 02 anl 0x02,a",23,1
+bank1,0x0E4C,common,entry-under-walk,"0x00E4B 64 02 xrl a,#0x02",23,1
+bank1,0x0E52,common,entry-under-walk,0x00E51 70 02 jnz 0x0e55,23,1
+bank1,0x0E55,common,entry-under-walk,0x00E54 76 02 db 0x76,23,1
+bank1,0x0E58,common,entry-under-walk,"0x00E57 7c 02 mov r4,#0x02",23,1
+bank1,0x0E5B,common,entry-under-walk,0x00E5A 82 02 db 0x82,23,1
+bank1,0x0E5E,common,entry-under-walk,"0x00E5D 88 75 mov 0x75,r0",23,1
+bank1,0x100E,common,unread,"0x0100D 90 11 50 mov dptr,#0x1150",0,24
+bank1,0x1012,common,entry-under-walk,0x01011 80 f0 sjmp 0x1003,22,2
+bank1,0x1017,common,mid-instruction,"0x01015 10 07 1f jbc 0x20.7,0x1037",1,23
+bank1,0x1048,common,mid-instruction,0x01046 02 05 12 ljmp 0x0512,0,24
+bank1,0x1117,common,unread,"0x01116 74 11 mov a,#0x11",0,24
+bank1,0x1207,common,entry-under-walk,"0x01205 bf 62 02 cjne r7,#0x62,0x120a",22,2
+bank1,0x120E,common,unread,0x0120D 02 11 00 ljmp 0x1100,1,23
+bank1,0x121E,common,unread,"0x0121C 90 bf 66 mov dptr,#0xbf66",0,24
+bank1,0x1229,common,unread,"0x01228 90 bf 68 mov dptr,#0xbf68",0,24
+bank1,0x122A,common,unread,"0x01228 90 bf 68 mov dptr,#0xbf68",0,24
+bank1,0x1230,common,unread,"0x0122E 90 bf 69 mov dptr,#0xbf69",0,24
+bank1,0x123B,common,unread,"0x0123A 90 bf 6b mov dptr,#0xbf6b",0,24
+bank1,0x124A,common,unread,0x01249 02 11 00 ljmp 0x1100,1,23
+bank1,0x1415,common,unread,"0x01414 90 bf bd mov dptr,#0xbfbd",0,24
+bank1,0x1416,common,unread,"0x01414 90 bf bd mov dptr,#0xbfbd",0,24
+bank1,0x1460,common,unread,0x0145F 02 11 00 ljmp 0x1100,1,23
+bank1,0x1502,common,unread,0x01501 02 11 00 ljmp 0x1100,0,24
+bank1,0x151A,common,unread,0x01519 02 11 00 ljmp 0x1100,0,24
+bank1,0x156B,common,mid-instruction,"0x0156A 90 85 24 mov dptr,#0x8524",0,24
+bank1,0x1583,common,unread,"0x01582 90 85 4b mov dptr,#0x854b",0,24
+bank1,0x1602,common,mid-instruction,"0x01600 90 de 41 mov dptr,#0xde41",0,24
+bank1,0x1622,common,unread,0x01621 02 11 00 ljmp 0x1100,0,24
+bank1,0x1628,common,unread,0x01627 02 11 00 ljmp 0x1100,0,24
+bank1,0x1706,common,mid-instruction,0x01705 02 11 00 ljmp 0x1100,2,22
+bank1,0x1800,common,mid-instruction,"0x017FE 90 c2 cf mov dptr,#0xc2cf",0,24
+bank1,0x1803,common,mid-instruction,0x01801 02 11 00 ljmp 0x1100,0,24
+bank1,0x1C02,common,unread,"0x01C00 90 08 46 mov dptr,#0x0846",1,23
+bank1,0x1C07,common,unread,0x01C06 02 1c d1 ljmp 0x1cd1,0,24
+bank1,0x1C14,common,entry-under-walk,0x01C13 b2 12 cpl 0x22.2,23,1
+bank1,0x1CB8,common,unread,"0x01CB7 f5 82 mov 0x82,a",0,24
+bank1,0x1E30,common,entry-under-walk,"0x01E2F 90 ef 64 mov dptr,#0xef64",22,2
+bank1,0x21DF,common,entry-under-walk,"0x021DE 52 e0 anl 0xe0,a",22,2
+bank1,0x2202,common,unread,"0x02201 74 01 mov a,#0x01",0,24
+bank1,0x2238,common,entry-under-walk,"0x02237 7b 78 mov r3,#0x78",23,1
+bank1,0x227F,common,unread,0x0227E 70 1e jnz 0x229e,0,24
+bank1,0x22EF,common,entry-under-walk,"0x022EE 24 e4 add a,#0xe4",22,2
+bank1,0x2890,common,entry-under-walk,"0x0288E 10 e5 e4 jbc acc.5,0x2875",18,6
+bank1,0x2A24,common,mid-instruction,"0x02A23 64 f5 xrl a,#0xf5",0,24
+bank1,0x2A7D,common,entry-under-walk,"0x02A7C 90 af 67 mov dptr,#0xaf67",23,1
+bank1,0x2A92,common,entry-under-walk,0x02A91 80 ae sjmp 0x2a41,23,1
+bank1,0x2AC1,common,entry-under-walk,"0x02ABF 10 22 e4 jbc 0x24.2,0x2aa6",23,1
+bank1,0x2B02,common,unread,"0x02B01 74 88 mov a,#0x88",0,24
+bank1,0x2D85,common,entry-under-walk,"0x02D83 b5 22 7f cjne a,0x22,0x2e05",23,1
+bank1,0x2DE3,common,entry-under-walk,"0x02DE1 b5 22 12 cjne a,0x22,0x2df6",21,3
+bank1,0x2E02,common,mid-instruction,0x02E01 d2 60 setb 0x2c.0,1,23
+bank1,0x3201,common,unread,0x031FF 12 3c 18 lcall 0x3c18,1,23
+bank1,0x3239,common,entry-under-walk,"0x03238 bf 90 0a cjne r7,#0x90,0x3245",20,4
+bank1,0x3352,common,entry-under-walk,"0x03350 30 b5 22 jnb p3.5,0x3375",22,2
+bank1,0x3353,common,entry-under-walk,"0x03351 b5 22 12 cjne a,0x22,0x3366",23,1
+bank1,0x3602,common,entry-under-walk,"0x03600 30 b5 78 jnb p3.5,0x367b",22,2
+bank1,0x37E1,common,entry-under-walk,0x037DF 12 22 ef lcall 0x22ef,22,2
+bank1,0x383D,common,entry-under-walk,"0x0383B 63 22 ed xrl 0x22,#0xed",23,1
+bank1,0x3A02,common,mid-instruction,"0x03A01 74 01 mov a,#0x01",0,24
+bank1,0x3B1D,common,entry-under-walk,0x03B1C 50 90 jnc 0x3aae,23,1
+bank1,0x3B80,common,entry-under-walk,"0x03B7F 8d f8 mov 0xf8,r5",23,1
+bank1,0x3D92,common,entry-under-walk,"0x03D91 a2 e4 mov c,acc.4",21,3
+bank1,0x3F62,common,entry-under-walk,"0x03F61 a2 12 mov c,0x22.2",22,2
+bank1,0x46F6,common,unread,"0x046F4 90 0a 1d mov dptr,#0x0a1d",1,23
+bank1,0x492D,common,entry-under-walk,"0x0492B 43 a5 12 orl 0xa5,#0x12",23,1
+bank1,0x4B77,common,entry-under-walk,"0x04B76 30 90 00 jnb p1.0,0x4b79",22,2
+bank1,0x4C02,common,entry-under-walk,"0x04C00 10 3c 74 jbc 0x27.4,0x4c77",22,2
+bank1,0x4E02,common,unread,"0x04E01 b4 03 e4 cjne a,#0x03,0x4de8",0,24
+bank1,0x5202,common,entry-under-walk,"0x05200 10 3f 04 jbc 0x27.7,0x5207",23,1
+bank1,0x557E,common,entry-under-walk,"0x0557C 63 f0 22 xrl 0xf0,#0x22",23,1
+bank1,0x5597,common,entry-under-walk,"0x05595 30 22 ef jnb 0x24.2,0x5587",22,2
+bank1,0x57C2,common,entry-under-walk,"0x057C1 64 35 xrl a,#0x35",19,5
+bank1,0x6003,common,unread,"0x06002 35 39 addc a,0x39",0,24
+bank1,0x6100,common,mid-instruction,0x060FF 72 57 db 0x72,0,24
+bank1,0x6402,common,mid-instruction,"0x06401 10 00 00 jbc 0x20.0,0x6404",0,24
+bank1,0x6602,common,mid-instruction,0x06601 80 16 sjmp 0x6619,0,24
+bank1,0x6A02,common,entry-under-walk,"0x06A00 30 69 5c jnb 0x2d.1,0x6a5f",23,1
+bank1,0x7000,common,mid-instruction,"0x06FFF 8a 83 mov 0x83,r2",2,22
+bank1,0x7012,common,unread,0x07011 60 c3 jz 0x6fd6,0,24
+bank1,0x702D,common,unread,"0x0702C 90 6f 8a mov dptr,#0x6f8a",0,24
+bank1,0x703A,common,mid-instruction,0x07039 50 02 jnc 0x703d,0,24
+bank1,0x703F,common,mid-instruction,"0x0703D bb fe 02 cjne r3,#0xfe,0x7042",1,23
+bank1,0x7177,common,entry-under-walk,"0x07176 df 8a djnz r7,0x7102",23,1
+bank1,0x717B,common,entry-under-walk,0x0717A 82 e4 db 0x82,23,1
+bank1,0x7202,common,mid-instruction,"0x07200 10 d7 05 jbc psw.7,0x7208",1,23
+bank1,0x7281,common,entry-under-walk,"0x0727F d5 0d e4 djnz 0x0d,0x7266",23,1
+bank1,0x8002,bank1,unread,"0x10001 90 06 c6 mov dptr,#0x06c6",0,2
+bank1,0x8003,bank1,unread,"0x10001 90 06 c6 mov dptr,#0x06c6",1,2
+bank1,0x8006,bank1,unread,0x10005 60 02 jz 0x8009,0,6
+bank1,0x8007,bank1,entry-under-walk,0x10006 02 14 f0 ljmp 0x14f0,6,1
+bank1,0x8008,bank1,entry-under-walk,0x10006 02 14 f0 ljmp 0x14f0,7,1
+bank1,0x800A,bank1,unread,"0x10009 90 06 cd mov dptr,#0x06cd",0,10
+bank1,0x800B,bank1,unread,"0x10009 90 06 cd mov dptr,#0x06cd",1,10
+bank1,0x800E,bank1,unread,0x1000D 60 02 jz 0x8011,0,14
+bank1,0x800F,bank1,entry-under-walk,0x1000E 02 14 f0 ljmp 0x14f0,14,1
+bank1,0x8010,bank1,entry-under-walk,0x1000E 02 14 f0 ljmp 0x14f0,15,1
+bank1,0x8012,bank1,unread,"0x10011 90 06 d1 mov dptr,#0x06d1",0,18
+bank1,0x8013,bank1,unread,"0x10011 90 06 d1 mov dptr,#0x06d1",1,18
+bank1,0x8016,bank1,mid-instruction,0x10015 60 02 jz 0x8019,0,22
+bank1,0x8017,bank1,entry-under-walk,0x10016 02 14 f0 ljmp 0x14f0,22,1
+bank1,0x8018,bank1,entry-under-walk,0x10016 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x801A,bank1,unread,"0x10019 90 06 d2 mov dptr,#0x06d2",0,24
+bank1,0x801B,bank1,unread,"0x10019 90 06 d2 mov dptr,#0x06d2",1,23
+bank1,0x801C,bank1,entry-under-walk,0x1001B d2 e0 setb acc.0,22,2
+bank1,0x801F,bank1,entry-under-walk,0x1001E 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8020,bank1,entry-under-walk,0x1001E 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8022,bank1,unread,"0x10021 90 06 f3 mov dptr,#0x06f3",0,24
+bank1,0x8026,bank1,mid-instruction,0x10025 60 02 jz 0x8029,0,24
+bank1,0x8027,bank1,entry-under-walk,0x10026 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8028,bank1,entry-under-walk,0x10026 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x802B,bank1,unread,"0x10029 90 06 35 mov dptr,#0x0635",1,23
+bank1,0x802C,bank1,entry-under-walk,"0x1002B 35 e0 addc a,0xe0",22,2
+bank1,0x802E,bank1,unread,0x1002D 60 02 jz 0x8031,0,24
+bank1,0x802F,bank1,entry-under-walk,0x1002E 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8030,bank1,entry-under-walk,0x1002E 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8032,bank1,unread,"0x10031 90 06 36 mov dptr,#0x0636",0,24
+bank1,0x8033,bank1,unread,"0x10031 90 06 36 mov dptr,#0x0636",1,23
+bank1,0x8037,bank1,entry-under-walk,0x10036 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8042,bank1,unread,"0x10041 90 06 38 mov dptr,#0x0638",0,24
+bank1,0x8043,bank1,unread,"0x10041 90 06 38 mov dptr,#0x0638",1,23
+bank1,0x8048,bank1,entry-under-walk,0x10046 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8052,bank1,unread,"0x10051 90 06 3a mov dptr,#0x063a",0,24
+bank1,0x8056,bank1,unread,"0x10055 20 e7 04 jb acc.7,0x805c",0,24
+bank1,0x805D,bank1,unread,"0x1005C 90 08 90 mov dptr,#0x0890",0,24
+bank1,0x8060,bank1,entry-under-walk,"0x1005E 90 e0 60 mov dptr,#0xe060",22,2
+bank1,0x8061,bank1,unread,0x10060 60 02 jz 0x8064,2,22
+bank1,0x8062,bank1,entry-under-walk,0x10061 02 14 f0 ljmp 0x14f0,21,3
+bank1,0x807A,bank1,unread,"0x10078 90 06 c2 mov dptr,#0x06c2",1,23
+bank1,0x807E,bank1,entry-under-walk,0x1007D 02 14 f0 ljmp 0x14f0,23,1
+bank1,0x8082,bank1,unread,"0x10080 90 06 c3 mov dptr,#0x06c3",1,23
+bank1,0x808A,bank1,unread,"0x10088 90 04 40 mov dptr,#0x0440",1,23
+bank1,0x80D7,bank1,mid-instruction,0x100D6 60 0c jz 0x80e4,0,24
+bank1,0x80E9,bank1,unread,0x100E8 60 02 jz 0x80ec,0,24
+bank1,0x80EF,bank1,entry-under-walk,0x100EE 40 e0 jc 0x80d0,22,2
+bank1,0x8418,bank1,entry-under-walk,"0x10416 85 f0 90 mov 0x90,0xf0",23,1
+bank1,0x8503,bank1,unread,"0x10502 db 0f djnz r3,0x8513",0,24
+bank1,0x8801,bank1,mid-instruction,"0x10800 b5 f0 01 cjne a,0xf0,0x8804",0,24
+bank1,0x8802,bank1,mid-instruction,"0x10800 b5 f0 01 cjne a,0xf0,0x8804",1,23
+bank1,0x897B,bank1,entry-under-walk,"0x10979 b5 22 90 cjne a,0x22,0x890c",23,1
+bank1,0x8A98,bank1,entry-under-walk,0x10A97 a7 90 db 0xa7,23,1
+bank1,0x8B04,bank1,entry-under-walk,"0x10B03 7f e0 mov r7,#0xe0",22,2
+bank1,0x8B8F,bank1,entry-under-walk,"0x10B8E a2 90 mov c,p1.0",23,1
+bank1,0x8C05,bank1,unread,0x10C03 12 88 86 lcall 0x8886,1,23
+bank1,0x8CDB,bank1,entry-under-walk,0x10CDA 02 c3 22 ljmp 0xc322,23,1
+bank1,0x8D06,bank1,unread,0x10D05 70 05 jnz 0x8d0c,0,24
+bank1,0x8E02,bank1,unread,0x10E01 80 48 sjmp 0x8e4b,0,24
+bank1,0x9003,bank1,unread,"0x11002 74 05 mov a,#0x05",0,24
+bank1,0x9004,bank1,entry-under-walk,0x11003 05 90 inc 0x90,23,1
+bank1,0x9005,bank1,unread,"0x11004 90 06 ce mov dptr,#0x06ce",1,23
+bank1,0x9006,bank1,mid-instruction,"0x11004 90 06 ce mov dptr,#0x06ce",2,22
+bank1,0x9009,bank1,unread,"0x11008 90 06 e1 mov dptr,#0x06e1",0,24
+bank1,0x9202,bank1,entry-under-walk,"0x11201 a8 90 mov r0,0x90",23,1
+bank1,0x94A8,bank1,mid-instruction,0x114A7 05 90 inc 0x90,0,24
+bank1,0x94FA,bank1,entry-under-walk,"0x114F8 b8 22 12 cjne r0,#0x22,0x950d",22,2
+bank1,0x98B3,bank1,entry-under-walk,"0x118B2 8c 22 mov 0x22,r4",23,1
+bank1,0x98CC,bank1,entry-under-walk,"0x118CB b0 90 anl c,/p1.0",17,7
+bank1,0x9A02,bank1,unread,"0x11A01 90 1c 10 mov dptr,#0x1c10",0,24
+bank1,0x9BE6,bank1,entry-under-walk,0x11BE5 12 90 06 lcall 0x9006,23,1
+bank1,0x9E26,bank1,entry-under-walk,"0x11E25 92 90 mov p1.0,c",16,8
+bank1,0x9F04,bank1,entry-under-walk,0x11F03 02 e5 82 ljmp 0xe582,23,1
+bank1,0xA2DA,bank1,entry-under-walk,"0x122D9 62 22 xrl 0x22,a",22,2
+bank1,0xA31B,bank1,entry-under-walk,0x1231A 70 79 jnz 0xa395,22,2
+bank1,0xA32C,bank1,entry-under-walk,"0x1232B 53 79 83 anl 0x79,#0x83",23,1
+bank1,0xA33D,bank1,entry-under-walk,"0x1233C 42 79 orl 0x79,a",20,4
+bank1,0xA35F,bank1,entry-under-walk,"0x1235E 20 79 14 jb 0x2f.1,0xa375",23,1
+bank1,0xA602,bank1,unread,"0x12601 f5 83 mov 0x83,a",0,24
+bank1,0xA873,bank1,entry-under-walk,0x12872 76 c2 db 0x76,23,1
+bank1,0xA8A7,bank1,entry-under-walk,"0x128A6 42 c2 orl 0xc2,a",23,1
+bank1,0xA8C5,bank1,entry-under-walk,"0x128C4 24 c2 add a,#0xc2",19,5
+bank1,0xA8E4,bank1,entry-under-walk,0x128E3 05 c2 inc 0xc2,23,1
+bank1,0xAB01,bank1,unread,"0x12B00 74 10 mov a,#0x10",4,20
+bank1,0xAB8D,bank1,entry-under-walk,"0x12B8B bd 22 12 cjne r5,#0x22,0xaba0",22,2
+bank1,0xABFB,bank1,entry-under-walk,"0x12BF9 b4 22 12 cjne a,#0x22,0xac0e",23,1
+bank1,0xAD68,bank1,entry-under-walk,"0x12D67 88 90 mov 0x90,r0",23,1
+bank1,0xAD7A,bank1,entry-under-walk,"0x12D78 b5 6c 02 cjne a,0x6c,0xad7d",23,1
+bank1,0xAD85,bank1,entry-under-walk,"0x12D84 d5 02 b3 djnz 0x02,0xad3a",23,1
+bank1,0xAE6F,bank1,entry-under-walk,"0x12E6D 63 22 90 xrl 0x22,#0x90",23,1
+bank1,0xAEA2,bank1,entry-under-walk,"0x12EA0 63 22 7e xrl 0x22,#0x7e",23,1
+bank1,0xAED9,bank1,entry-under-walk,"0x12ED7 63 22 90 xrl 0x22,#0x90",23,1
+bank1,0xAEE2,bank1,entry-under-walk,"0x12EE1 8d 7e mov 0x7e,r5",23,1
+bank1,0xB0D1,bank1,mid-instruction,0x130D0 80 90 sjmp 0xb062,5,19
+bank1,0xB202,bank1,entry-under-walk,"0x13201 63 50 d5 xrl 0x50,#0xd5",23,1
+bank1,0xB415,bank1,entry-under-walk,"0x13414 63 40 24 xrl 0x40,#0x24",23,1
+bank1,0xB4A0,bank1,unread,"0x1349F 90 05 0e mov dptr,#0x050e",0,24
+bank1,0xB50E,bank1,entry-under-walk,"0x1350D a8 90 mov r0,0x90",22,2
+bank1,0xB6A8,bank1,entry-under-walk,"0x136A7 aa 90 mov r2,0x90",23,1
+bank1,0xBA43,bank1,entry-under-walk,"0x13A41 bb a4 90 cjne r3,#0xa4,0xb9d4",23,1
+bank1,0xBABF,bank1,entry-under-walk,"0x13ABD bd 10 90 cjne r5,#0x10,0xba50",22,2
+bank1,0xBDEF,bank1,entry-under-walk,"0x13DED bf 3a 90 cjne r7,#0x3a,0xbd80",23,1
+bank1,0xBE02,bank1,entry-under-walk,"0x13E01 b9 e0 b4 cjne r1,#0xe0,0xbdb8",23,1
+bank1,0xBE10,bank1,entry-under-walk,"0x13E0E bf 3a 90 cjne r7,#0x3a,0xbda1",23,1
+bank1,0xBE91,bank1,entry-under-walk,"0x13E8F bf 3a 90 cjne r7,#0x3a,0xbe22",23,1
+bank1,0xC0AA,bank1,unread,"0x140A8 90 04 bd mov dptr,#0x04bd",1,23
+bank1,0xC1CC,bank1,unread,"0x141CA 90 04 9c mov dptr,#0x049c",1,23
+bank1,0xC322,bank1,mid-instruction,0x14321 12 c6 13 lcall 0xc613,0,24
+bank1,0xC6B8,bank1,entry-under-walk,0x146B7 80 90 sjmp 0xc649,23,1
+bank1,0xC80E,bank1,entry-under-walk,"0x1480D 30 90 04 jnb p1.0,0xc814",20,4
+bank1,0xCA02,bank1,entry-under-walk,"0x14A01 62 f0 xrl 0xf0,a",22,2
+bank1,0xCC95,bank1,mid-instruction,"0x14C94 dc 90 djnz r4,0xcc26",2,22
+bank1,0xD018,bank1,entry-under-walk,"0x15017 64 90 xrl a,#0x90",23,1
+bank1,0xD058,bank1,entry-under-walk,"0x15057 10 79 06 jbc 0x2f.1,0xd060",23,1
+bank1,0xD1B8,bank1,entry-under-walk,0x151B7 b7 12 d1 db 0xb7,23,1
+bank1,0xD1E7,bank1,entry-under-walk,"0x151E5 63 22 90 xrl 0x22,#0x90",23,1
+bank1,0xD8BC,bank1,entry-under-walk,0x158BB 70 e0 jnz 0xd89d,22,2
+bank1,0xDEC4,bank1,entry-under-walk,"0x15EC3 da 90 djnz r2,0xde55",23,1
+bank1,0xE054,bank1,mid-instruction,"0x16052 90 04 91 mov dptr,#0x0491",1,23
+bank1,0xE202,bank1,unread,0x16201 40 07 jc 0xe20a,0,24
+bank1,0xE582,bank1,mid-instruction,0x16580 12 e5 d6 lcall 0xe5d6,0,24
+bank1,0xEF32,bank1,entry-under-walk,"0x16F31 bc 90 04 cjne r4,#0x90,0xef38",22,2
+bank1,0xF012,bank1,entry-under-walk,0x17011 40 02 jc 0xf015,16,8
+bank1,0xF018,bank1,mid-instruction,0x17017 40 85 jc 0xef9e,12,12
+bank1,0xF030,bank1,mid-instruction,"0x1702F 90 f0 a1 mov dptr,#0xf0a1",0,24
+bank1,0xF054,bank1,mid-instruction,0x17053 02 f1 0d ljmp 0xf10d,0,24
+bank1,0xF090,bank1,mid-instruction,0x1708F 02 f1 27 ljmp 0xf127,0,24
+bank1,0xF0E4,bank1,mid-instruction,0x170E3 02 f1 3e ljmp 0xf13e,0,24
+bank1,0xF0E5,bank1,unread,0x170E3 02 f1 3e ljmp 0xf13e,0,24
+bank1,0xF0ED,bank1,mid-instruction,0x170EC 02 f1 3e ljmp 0xf13e,0,24
+bank1,0xF0EE,bank1,mid-instruction,0x170EC 02 f1 3e ljmp 0xf13e,0,24
+bank1,0xF104,bank1,entry-under-walk,0x17103 50 80 jnc 0xf085,23,1
+bank1,0xF109,bank1,entry-under-walk,"0x17108 8a 02 mov 0x02,r2",23,1
+bank1,0xF116,bank1,entry-under-walk,"0x17115 75 02 f2 mov 0x02,#0xf2",22,2
+bank1,0xF119,bank1,entry-under-walk,"0x17118 90 02 f2 mov dptr,#0x02f2",20,4
+bank1,0xF11C,bank1,entry-under-walk,"0x1711B ad 02 mov r5,0x02",18,6
+bank1,0xF18A,bank1,entry-under-walk,0x17189 40 90 jc 0xf11b,22,2
+bank1,0xF1F8,bank1,entry-under-walk,"0x171F7 53 90 04 anl 0x90,#0x04",23,1
+bank1,0xF246,bank1,entry-under-walk,"0x17245 53 90 06 anl 0x90,#0x06",23,1
+bank1,0xF275,bank1,entry-under-walk,"0x17274 53 90 04 anl 0x90,#0x04",23,1
