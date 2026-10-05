@@ -294,8 +294,7 @@ guessing at a question the bytes do not answer.
   region end, so a legal address's reads no longer leave the region.**
   `site_rows()` takes both ends of `pd_bounds()` and stops at `0x30000`, naming
   the end in its own stop reason; `--sites 0xFFFF` now reads one instruction,
-  at `0x2FFFF`. The `--callers` half of this bullet is unchanged and still
-  standing: its argument is still unchecked. See
+  at `0x2FFFF`. This change does not touch `--callers`. See
   [`site-rows-window-bound.md`](site-rows-window-bound.md).
 - **It does not make `--callers` consistent with `--sites`.** Measured above:
   `--callers 0x1FFFF` **exits 0** and prints a three-row byte-scan caller list.

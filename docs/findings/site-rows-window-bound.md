@@ -152,8 +152,8 @@ measurement keeps the negative control it had in the other tool.
 - **`--sites`'s argument check is not re-derived.** `check_site_addr()` is
   #848's, it is not what moved here, and the issue says so.
 - **The other `lo, _ = pd_bounds()` sites are still there** — census rows 11,
-  12, 17, 18, 20 and `--callers`' unstated argument contract. They are named as
-  #843's follow-ups and they are the next sweep, not this change.
+  12, 17, 18, 20. They are named as #843's follow-ups and they are the next
+  sweep, not this change.
 - **`pd_stride_families.py`'s own ten-instruction listing loop** in
   `print_site_detail()` is the same shape in a different tool, found while
   checking the consumers of `site_rows()`. Named here, not fixed here.
