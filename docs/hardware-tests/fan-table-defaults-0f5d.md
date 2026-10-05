@@ -149,8 +149,13 @@ is the window itself, and `0x0741`-`0x0785` — `AP_OEM`, `0x0751`, the two
 fan-duty bytes `0x075B`/`0x075C`, `0x0782` and PL1/PL2/PL4 in one 69-byte
 read. 165 bytes per sweep, two ECRR reads. `20 s` and `--interval 0.25` are
 `ec_watch`'s own defaults for a range this size; **no interval here is
-validated**, and issue #94 is the open work that would make these tools safe
-by default. **If the fans audibly change, stop and restore (§4).**
+validated**, and #94 is no longer wholly open. `ec_watch.py` now leaves
+`0x0460-0x046F` out and sleeps `--gap-ms` after every read (default 6 ms, the
+interval `../related-projects.md` records for this access on a sibling board —
+a conservative default, not a rate measured here), so the watcher this runbook
+uses is paced by default. What is still unpaced is `manual_fan_ctrl_probe.py`
+and `gpu_block_watch.py`, and #94 is the open work for those.
+**If the fans audibly change, stop and restore (§4).**
 
 **Pass 1 — one handshake per mode, service running.** For each mode: start
 the two watchers, run the handshake in the second shell, wait the watchers

@@ -29,9 +29,14 @@ of levels, and the two are not the same kind of fact:
 `--interval` is slept *between sweeps* and not between bytes, one sweep of the
 three watchers is `0x100 + 0x60 + 0x60 = 448` `ECRR` reads, and under its own
 bolded heading — **there is no safe interval to hand you from here** — how
-long one IOCTL takes is issue #94's open work and nothing in this repo measures
-it. So the per-byte sampling period is `--interval` plus a sweep duration that
-is unmeasured, and the change states that rather than inventing a threshold.
+long one IOCTL takes is not something this repo measures. #94 has since closed
+its own half of that: `ec_watch.py` now skips the fan-tach page and sleeps
+`--gap-ms` after every read, which is a conservative default borrowed from a
+sibling board and not a measurement either, and `manual_fan_ctrl_probe.py` --
+which §3 runs the three watchers beside -- is still unpaced. So the per-byte
+sampling period is
+`--interval` plus a sweep duration that is unmeasured, and the change states
+that rather than inventing a threshold.
 
 **The tool already knew this, and printed it on one branch only.** The
 `--dump-pair` paragraph in the module docstring, `report_dump_pairs`'s own
