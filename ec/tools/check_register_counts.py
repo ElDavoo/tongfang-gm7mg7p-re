@@ -115,9 +115,10 @@ def check(d: bytes, regs, pd_verified: bool) -> int:
                 # difference -- see ../../docs/findings/erased-band-fill-claim.md.
                 # Left as a comment rather than a check because the premise is
                 # this image's, and a guard written on a committed input that
-                # can change is the mistake docs/findings.md 4 is about;
-                # pd_index_geometry.py's --self-test asserts the same premise
-                # where the 0x3000E floor rests on it.
+                # can change is the mistake docs/findings.md 4 is about. It is
+                # asserted where the map is:
+                #     python3 ec/tools/check_image_map.py <image>
+                # refuses a band whose bytes do not satisfy its `how`.
                 print(f"{name} 0x{addr:04X}: {main} + {pd} sites do not add "
                       f"up to {total} -- some site is outside the mapped "
                       "regions, re-derive them with find_banks.py",

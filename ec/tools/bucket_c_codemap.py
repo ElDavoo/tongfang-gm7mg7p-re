@@ -872,23 +872,89 @@ def decode_bank(d: bytes, target: int, bank_file_offset: int, count: int = 6) ->
     return "; ".join(parts)
 
 
+def spans_note(seeds, descents) -> str:
+    """The `#` block the export opens with, saying which population it covers.
+
+    The coverage statement belongs in the file rather than only in the write-up,
+    because the failure it exists to catch is an export that is silently short:
+    a reader holding the file and not the write-up cannot otherwise tell a
+    complete descent set from the seed set alone. Every figure below is counted
+    from the walk this run performed rather than transcribed, so a seed set that
+    moves moves them too instead of leaving a number to be believed.
+
+    `seeds` is what lets the note split the population, and the split is what
+    keeps `basis` readable: a `SEED_BASES` member is a seed the walk was given,
+    a `call-from-0xNNNN` names the caller whose callee this entry is. A consumer
+    that wants the seed-derived view -- which is all this export carried before
+    the callee-discovered descents were added -- filters on that column and gets
+    exactly it back.
+
+    A consumer has to drop the `#` lines before parsing: `csv.DictReader` run on
+    the whole file reads the first one as the fieldnames and every later one as
+    a row, which is a parse that succeeds and answers nothing. The obligation is
+    the same one `bank_call_regions.HEADER_NOTE` and
+    `call_graph_gaps.read_rows()` carry, and the note says so rather than
+    leaving a consumer to find out.
+    """
+    walked = sum(1 for a, _ in seeds if a in descents)
+    blocks = sum(len(rec.blocks) for rec in descents.values())
+    counts = (("descents", len(descents), "every entry walk() returned a "
+               "Descent for"),
+              ("blocks", blocks, "their decoded blocks, summed"),
+              ("from the seed set", walked, "basis is a member of SEED_BASES"),
+              ("discovered", len(descents) - walked,
+               "basis is call-from-0xNNNN"))
+    table = "".join(f"#   {label:<18} {n:>5}   {what}\n"
+                    for label, n, what in counts)
+    return (
+        "# Written to stdout by ec/tools/bucket_c_codemap.py --spans, so there\n"
+        "# is no committed copy to drift: re-derive with `python3\n"
+        "# ec/tools/bucket_c_codemap.py ec/firmware/GMxMGxx_11.800 --spans >\n"
+        "# spans.csv`. One row per (entry point, block), and `basis` says how\n"
+        "# the walk reached that entry -- a member of SEED_BASES for a seed it\n"
+        "# was given, `call-from-0xNNNN` for one it reached by pushing a caller\n"
+        "# callee. Filtering on `basis` recovers the seed-only view and loses\n"
+        "# nothing.\n"
+        "#\n"
+        "# COVERAGE, counted from this run rather than transcribed. This file\n"
+        "# holds every descent the walk made:\n"
+        "#\n"
+        f"{table}"
+        "#\n"
+        "# A file whose descent or block count is below those two totals is\n"
+        "# short, and says so rather than by omission.\n"
+        "#\n"
+        "# `csv.DictReader` does NOT skip this block: on the whole file it\n"
+        "# reads the first `#` line as the fieldnames and every later one as a\n"
+        "# row, so drop the lines starting with `#` first -- what\n"
+        "# bank_call_regions.py's `parse()` and call_graph_gaps.py's\n"
+        "# `read_rows()` both do.\n"
+    )
+
+
 def write_spans(seeds, descents):
-    """The reached-span set, for #20 to consume.
+    """Every descent's decoded blocks, for #20 to consume.
 
     One row per (entry point, block): the address range a descent decoded and
     the token it ended on. Issue #20's goal is a full code/data separation of
     the image, and this is the half of it that is already a function of the
-    seed set rather than of a reader's judgement.
+    walk rather than of a reader's judgement.
+
+    Over `descents`, not `seeds`. `walk()` pushes every callee it discovers onto
+    the worklist, so the descents it returns are the seed set *and* everything
+    reachable through a call from it; iterating the seeds dropped the second
+    population while carrying no sign that it had. Entries are sorted by address
+    so two branches produce the same file -- the walk is a BFS, so its own order
+    is a function of which seed happened to be popped first.
     """
+    sys.stdout.write(spans_note(seeds, descents))
     w = csv.writer(sys.stdout, lineterminator="\n")
     w.writerow(["entry", "basis", "block_lo", "block_hi", "insns", "end"])
-    for entry, basis in seeds:
-        rec = descents.get(entry)
-        if rec is None:
-            continue
+    for entry in sorted(descents):
+        rec = descents[entry]
         for lo, pcs, _ in rec.blocks:
             last = pcs[-1]
-            w.writerow([f"0x{entry:04X}", basis, f"0x{lo:04X}",
+            w.writerow([f"0x{entry:04X}", rec.basis, f"0x{lo:04X}",
                         f"0x{last:04X}", len(pcs), rec.terminal])
 
 
@@ -1056,7 +1122,8 @@ def main() -> int:
     ap.add_argument("--csv", action="store_true",
                     help="write one row per bucket-C site on stdout")
     ap.add_argument("--spans", action="store_true",
-                    help="write the reached-span set on stdout, for #20")
+                    help="write every descent's decoded blocks on stdout, with "
+                         "a `#` header saying what population they cover, for #20")
     ap.add_argument("--csv-path", default=DEFAULT_CSV,
                     help="the committed table --check compares against")
     ap.add_argument("--index", default=None,

@@ -1471,9 +1471,24 @@ DPTR_ROUTES = ((0x158E, b"\x90\xd8\x9f\x02\x11\x00", 0xD89F, 0x1100),
 # `reset-vector-dptr-targets.md` would otherwise be cited for. Pinned as bytes
 # for the same reason `DPTR_ROUTES` is: the `mov dptr` is real, and what it
 # points at is the part that decides what it means.
+#
+# **`0x9001` joined it on 2026-10-05 (issue #1154), and it is the same loop.**
+# `0x0F95`'s clearing loop increments DPTR (`inc dptr` at `0x0FA2`) before it
+# exits, so the walk steps `0x9000` to `0x9001` and `CODE_FLOOR` refuses it as
+# a code pointer. It was not seen before that correction because the two
+# instructions that follow the two `mov dptr`s here -- `ae 83` and `ac 83` at
+# `0x0F98`/`0x0F7A` -- are `mov rN,DPH`, a *load* from DPH, and
+# `walk_branch_arms._dptr_write()` used to treat `0xA8`-`0xAF` as storing into
+# it. It killed the pointer at those two rows, so the increment never ran and
+# `0x9001` was never produced. With the block read as `mov Rn,direct` the
+# pointer survives, which is the correct behaviour: `0x9001` is the second cell
+# of the same clear loop, not a route into code. Naming it is the honest
+# reading -- an unlisted leftover would be reported as a possible missed bank,
+# which is the exact misreading this constant exists to prevent.
 XDATA_CLEAR_SITE = 0x0F95
 XDATA_CLEAR_IMMEDIATE = 0x9000
-XDATA_CLEAR_IMMEDIATES = frozenset({XDATA_CLEAR_IMMEDIATE})
+XDATA_CLEAR_IMMEDIATES = frozenset({XDATA_CLEAR_IMMEDIATE,
+                                    XDATA_CLEAR_IMMEDIATE + 1})
 
 
 def imms_for(d: bytes, region: str, closure_result):

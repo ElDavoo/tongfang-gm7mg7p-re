@@ -79,6 +79,7 @@ PATCHES = [
     'docs/ci/agent-gates-findings-frozen.patch',
     'docs/ci/agent-gates-gap-text-check.patch',
     'docs/ci/agent-gates-pin-table-rows.patch',
+    'docs/ci/agent-gates-project-owner-gate.patch',
     'docs/ci/agent-gates-reassembly-bound-check.patch',
     'docs/ci/agent-gates-testdata-row-claims.patch',
 ]

@@ -108,10 +108,13 @@ quietly.
     `named_in_tree` record. `docs/findings/xdata-0860-note-live-pointers.md`.
   * *A pointer into a source file*, as against one into a generated CSV:
     `registers.yaml:3013`'s `:359` and `:1490-1496`, and the `:1557` and
-    `:4073-4085` that addendum writes. That is a different tool with its own
-    false-positive surface; it belongs beside `citation_frames.py`, and those
-    cells are fixed by hand and named as a follow-up rather than promised
-    here.
+    `:4073-4085` that addendum writes. `check_source_citations.py` holds that
+    class now, against a named anchor in the target rather than a line: it is
+    beside `citation_frames.py` as this bullet always said it would be, and
+    `docs/findings/source-line-citations-anchored.md` is its census. The six
+    cells above are fixed by hand and are not in its declared scope, so they
+    remain held by nothing -- as do the live cells whose subject that write-up
+    records as no longer present in the tool, which it names rather than counts.
   * *Whether a cited line still holds the right code.* `check_site_census.py`
     reads the decompile through the census and does that; this holds the
     pointers, so the two together cover the chain and neither re-derives the

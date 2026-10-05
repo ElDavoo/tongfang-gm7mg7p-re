@@ -70,6 +70,13 @@ import grade_name_basis
 # the two above are.
 import second_copy_census
 
+# The framing verdict for every call-target seed whose address the instruction-
+# boundary predicate fires on, and the ratchet --check compares it against.
+# Imported rather than restated for the same one-way reason as the three above,
+# and it defers *its* import of this module in `exporter()` for the same
+# purpose: `call_target_seeds()` has one attribution, not two.
+import call_target_seed_frames
+
 # The provenance header every committed .c carries, held against what
 # write_context() below composes and writeFunctionFile() writes. Imported for
 # the same reason as the three above and with the same one-way consequence: it
@@ -494,7 +501,19 @@ def call_target_seeds(bank, census):
 
     `census` is the validated read from call_target_rows(), passed in rather
     than re-read here, so the two banks and the bucket-C report below are three
-    views of one parse."""
+    views of one parse.
+
+    **Whether the target is an instruction boundary is a separate question, and
+    it is not asked here.** Issue #1110 built the predicate that answers it
+    (`audit_call_targets.earlier_record()`, applied at the *target* rather than
+    at the row's own call site) and `call_target_seed_frames.py` runs it over
+    this population, publishing each affected seed's verdict in
+    `ec/annotations/call-target-seed-frames.csv`. This function **reports** what
+    that verdict is and **never drops a row on it**, for the reason the ordering
+    in seed_rows() gives: a byte-scan target one byte into a real instruction
+    must not swallow the evidence-backed entry inside it, so a filter here would
+    remove exactly the seeds the sort exists to keep subordinate.
+    `seed_basis_labels()` is where a caller reads the label."""
     mine, unattributed = [], []
     for row in census:
         region = row["region"]
@@ -508,6 +527,18 @@ def call_target_seeds(bank, census):
         elif region == "common":
             unattributed.append((target, "call-target-unattributed"))
     return mine, unattributed
+
+
+def seed_basis_labels():
+    """`{(program, target): verdict}` for every seed the framing predicate fires
+    on, read from the published CSV. Empty when the CSV is not there or is not
+    that tool's.
+
+    Read through the module imported at the top rather than re-derived here, so
+    the label a caller prints and the row `--check` ratchets are the same row.
+    Empty is not an error: the labels are a report, and a missing report is
+    `call_target_seed_frames.file_problems()`'s business to name."""
+    return call_target_seed_frames.read_labels()
 
 
 def annotation_rows():
@@ -715,6 +746,76 @@ def ghidra_preflight(ghidra):
             "  will not decompile'. It is not. Fix the exec bit and re-run." % decomp)
 
 
+def owner_preflight(rep_dir, expect_user=None):
+    """Whether the project copy is openable as this user, said before the run.
+
+    The same shape and the same trade as `ghidra_preflight` above, for the
+    other failure in this pipeline that Ghidra reports only in a log: its
+    ownership check reads `project.prp` and refuses anyone else's copy *at the
+    open*, before a pre-script runs and before an annotation is applied. A copy
+    still carrying the committed owner therefore aborts the whole export having
+    read nothing, and says so in `<work>/ghidra-<program>.log` rather than on
+    the terminal.
+
+    Nothing here establishes that the copy opens once this passes -- that is a
+    run's evidence, and `docs/findings/ghidra-project-owner.md` carries the one
+    recorded. This is the half that needs no run.
+
+    `expect_user` defaults to the running user rather than to "no expectation",
+    because the question here is always whether *this* run will open the copy.
+    Passing None to `owner_problems()` asks only that the state be readable,
+    which is the right question for a report and the wrong one for a preflight:
+    a copy still owned by someone else reads perfectly well.
+    """
+    problems = project_owner.owner_problems(
+        rep_dir, getpass.getuser() if expect_user is None else expect_user)
+    if not problems:
+        return
+    raise SystemExit(
+        "error: the project copy is not openable as this user:\n"
+        "  %s\n"
+        "  Ghidra's ownership check reads that state at the open, before a "
+        "pre-script runs\n"
+        "  and before an annotation is applied, so analyzeHeadless would abort "
+        "the whole\n"
+        "  export having read nothing and say so only in the per-program log "
+        "under the work\n"
+        "  directory. The copy is retaken by rewrite_owner() in "
+        "ghidra/project_owner.py, which\n"
+        "  copy_project_for_export() calls after the copytree; if the copy "
+        "still carries the\n"
+        "  committed owner, that call did not run.\n"
+        "  %s" % ("\n  ".join(problems), rep_dir))
+
+
+def copy_project_for_export(project_dir, work):
+    """The disposable project copy every export-only run works against, and the
+    owner it carries. -> the copy's project directory.
+
+    Copying is what keeps the committed `.rep` out of this entirely --
+    `**/*.rep/**` is `binary -diff -merge`, so a change to one is a hard
+    conflict against every open branch rather than a reviewable diff -- and the
+    rewrite is what keeps the copy openable: the copy inherits the owner
+    `project.prp` records, and analyzeHeadless refuses anyone else's before it
+    reads an annotation. Once, here, rather than per program: the copy is made
+    once and all three programs share it.
+    `docs/findings/ghidra-project-owner.md` has the measurement.
+
+    The preflight is inside this function rather than beside it, which is what
+    makes it a check of the call site and not of the helper: `--self-test`
+    drives this function and so sees a `rewrite_owner()` deleted from here,
+    where a self-test that made its own copy would still be green.
+    """
+    copy_dir = os.path.join(work, "project-copy")
+    if os.path.isdir(copy_dir):
+        shutil.rmtree(copy_dir)
+    shutil.copytree(project_dir, copy_dir)
+    rep_dir = os.path.join(copy_dir, "ec.rep")
+    print("  project copy: %s" % project_owner.rewrite_owner(rep_dir, work))
+    owner_preflight(rep_dir)
+    return copy_dir
+
+
 def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
             mode, programs, annot_spec):
     """One analyzeHeadless invocation for all three programs: they share a
@@ -764,21 +865,11 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
             stderr=subprocess.STDOUT)
     else:
         # export-only: a copy of the committed project, so the committed .rep is
-        # never opened for writing at all.
-        copy_dir = os.path.join(work, "project-copy")
-        if os.path.isdir(copy_dir):
-            shutil.rmtree(copy_dir)
-        shutil.copytree(PROJECT, copy_dir)
-        # The copy inherits the owner the committed project.prp records, and
-        # analyzeHeadless refuses a project owned by anyone else with
-        # NotOwnerException before it reads an annotation -- so without this the
-        # default export cannot run for any contributor whose username is not
-        # that one. Once, here, rather than per program: the copy is made once
-        # and the three programs share it. The scratch root is `work` and the
-        # helper refuses anything outside it, so this can only ever write the
-        # copy. docs/findings/ghidra-project-owner.md has the measurement.
-        print("  project copy: %s" % project_owner.rewrite_owner(
-            os.path.join(copy_dir, "ec.rep"), work))
+        # never opened for writing at all. The copy's owner state is retaken and
+        # checked inside, so a rewrite that stopped running fails here with a
+        # message naming the project rather than as a NotOwnerException in a log
+        # several minutes downstream.
+        copy_dir = copy_project_for_export(project_dir, work)
         for program in programs:
             run([ghidra, copy_dir, "ec", "-process", program, "-noanalysis",
                  "-scriptPath", SCRIPTS,
@@ -1928,6 +2019,36 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("a call-target row with more fields than the header is reported",
           len(_p) == 1, str(_p))
 
+    # The seed rule's blind spot, and the case that makes the rule honest.
+    # `0x012F` trips the instruction-boundary predicate -- 0x012E pairs as
+    # `b0 90` -- and is a real hand-decoded routine whose listing survives
+    # because seed_rows() sorts `annotation` ahead of `call-target`. A rule that
+    # dropped every seed the predicate fires on, or filed all of them as
+    # mid-instruction, would go red on it. Asserted against the image's own bytes
+    # rather than read back from the published CSV, so it cannot pass by the file
+    # agreeing with itself.
+    _ctf_early = call_target_seed_frames.audit_module().earlier_record
+    _ctf_site = 0x012F
+    _ctf_rec = _ctf_early(fw, _ctf_site, 0)
+    check("the 0x012F counter-case trips the predicate (0x012E pairs as `b0 90`)",
+          _ctf_rec == "0x0012E b0 90 anl c,/p1.0", _ctf_rec)
+    _ctf_back = min(call_target_seed_frames.BACK, _ctf_site)
+    _ctf_onto, _ctf_over = call_target_seed_frames.windowed_walk(
+        fw, _ctf_site, _ctf_back)
+    check("and the walk lands on it, so the rule keeps it as a real entry",
+          call_target_seed_frames.verdict_for(_ctf_onto, _ctf_over, True)
+          == "entry-under-walk", "%d/%d" % (_ctf_onto, _ctf_over))
+    # And the seed is still emitted: the label is a report, and `seed_rows()`
+    # still carries the address into both bank programs on the strength of the
+    # annotation. A labelling change that quietly stopped seeding is the failure
+    # this assertion is here to catch.
+    _ctf_seeds = {a for a, _basis in call_target_seeds("bank0", _ct)[0]}
+    check("a seed the predicate fires on is still emitted, not dropped",
+          _ctf_site in _ctf_seeds, "%#06x is not among the seeds" % _ctf_site)
+    check("and it carries the label the published CSV holds for it",
+          seed_basis_labels().get(("bank0", "0x012F")) == "entry-under-walk",
+          str(seed_basis_labels().get(("bank0", "0x012F"))))
+
     # Coverage, on a manifest that agrees with its index and one that does not.
     check("coverage: a manifest that agrees with the index passes",
           not coverage_mismatches([{"program": "bank0", "functions": "2"}],
@@ -2069,19 +2190,39 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # "the committed project.prp is byte-identical" is what keeps that from
     # being the answer. A check of only the first would go green on a rewrite
     # aimed at the wrong directory.
+    #
+    # **Through `copy_project_for_export()`, not around it.** This used to make
+    # its own copy and call `rewrite_owner()` on it, which proved the helper
+    # works and said nothing about whether analyze() still called it: deleting
+    # the rewrite from the export path left every assertion here green while the
+    # default export stopped running. Going through the driver is what makes
+    # this the call-site check the issue asks for, and it is why the preflight
+    # lives inside that function rather than beside it.
     _owner_before = open(os.path.join(PROJECT, "ec.rep", "project.prp"), "rb").read()
     _scratch = tempfile.mkdtemp()
     try:
-        _copy = os.path.join(_scratch, "project-copy")
-        shutil.copytree(PROJECT, _copy)
+        _copy = copy_project_for_export(PROJECT, _scratch)
         _rep = os.path.join(_copy, "ec.rep")
-        _report = project_owner.rewrite_owner(_rep, _scratch)
-        check("the export-only copy's owner is the running user, so "
-              "analyzeHeadless will open it (project_owner: %s)" % _report,
-              not project_owner.owner_problems(_rep, getpass.getuser()))
+        check("the export-only copy analyze() makes is owned by the running "
+              "user, so analyzeHeadless will open it",
+              not project_owner.owner_problems(_rep, getpass.getuser()),
+              str(project_owner.owner_problems(_rep, getpass.getuser())))
         _p = project_owner.owner_problems(_rep)
         check("the copy's owner state is readable and carries no fault",
               not _p, str(_p))
+        # The preflight's own refusal, on a copy that was never retaken. Without
+        # it the known-good case above cannot tell "checked" from "never ran".
+        _unretaken = os.path.join(_scratch, "unretaken")
+        shutil.copytree(PROJECT, _unretaken)
+        try:
+            owner_preflight(os.path.join(_unretaken, "ec.rep"))
+            _said = ""
+        except SystemExit as e:
+            _said = str(e)
+        check("the owner preflight refuses a copy still named for someone else, "
+              "naming the project and the rewrite rather than letting "
+              "analyzeHeadless abort in a log",
+              "NotOwnerException" in _said and "rewrite_owner" in _said, _said)
     finally:
         shutil.rmtree(_scratch, ignore_errors=True)
     check("the committed project.prp is byte-identical after that rewrite, so "
@@ -4942,6 +5083,34 @@ def check(work):
         fail("... and %d more seed-basis disagreement(s)" % (len(_sbp) - 5))
     print("  seed basis: %s"
           % seed_basis_projection.exposure_line(_sbp_basis, _sbp))
+    # The seed rule's blind spot, ratcheted rather than asserted live. Every
+    # census target above is seeded as a function entry whether or not the
+    # address is an instruction boundary, and call_target_seed_frames.py runs
+    # #1110's predicate over that population and publishes each affected seed's
+    # verdict. This compares the derivation against that file and fails, naming
+    # the seed: a mid-instruction seed appearing, or a verdict being quietly
+    # reverted, is what it catches.
+    #
+    # A live assertion -- fail on any seed the predicate says is mid-instruction
+    # -- is deliberately not what this is, and the reason is the committed tree:
+    # it already holds hundreds of them, so that check is red on arrival and a
+    # check that cannot go green on the tree it ships with is not a guard. The
+    # live assertion replaces this in the pull request that lands the rebuild
+    # and empties the list, which needs --mode rebuild-project.
+    _seed_frames = call_target_seed_frames.file_problems()
+    if not _seed_frames:
+        _seed_rows, _seed_unattributed, _seed_total = \
+            call_target_seed_frames.frames(open(FIRMWARE, "rb").read())
+        _seed_frames = call_target_seed_frames.frame_problems(
+            call_target_seed_frames.read_csv(call_target_seed_frames.FRAMES),
+            _seed_rows)
+        print("  seed frames: %s" % call_target_seed_frames.summary_line(
+            _seed_rows, _seed_total, _seed_unattributed))
+    for problem in _seed_frames[:5]:
+        fail("seed frames: %s" % problem)
+    if len(_seed_frames) > 5:
+        fail("seed frames: ... and %d more seed-frame problem(s)"
+             % (len(_seed_frames) - 5))
     # `_cdig`, not `_cd`: the cross-decoder report below binds that name, and
     # one function's two unrelated locals should not share a spelling.
     _cdig = verify_c_digests()

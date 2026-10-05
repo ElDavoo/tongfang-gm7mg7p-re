@@ -258,7 +258,7 @@ in the function that walks.
 | 7 | `pd_index_geometry.py:1834` `byte_address()` | `while i < len(raw)` | **is** (`len(raw)`) | yes | `--self-test` over the committed fixtures, exit 0 | existing bound; not the image |
 | 8 | `walk_branch_arms.py:327-328` `descend()` | `while True`, `budget <= 0` at `:324`; `if off + n > len(d)` at `:329` | **is**, but the test runs *after* the read | yes | `--self-test` over the image, exit 0 | existing guard; see follow-up 2 |
 | 9 | **`trace_xdata_refs.py:229` `walk()`** | `range(max_insns)`; `len(d)` is tested twice, `:230` and the guard's first disjunct, and only the latter bounds the index | **no** — held by `:241` | yes, 114 walks / 311 iterations over the committed sweep | the guard's first disjunct fired **0** times; the exposure is real (see below) | **restated comment at `:241-242`** |
-| 10 | `pd_index_geometry.py:718-720` `site_rows()` (was `:600-601` when this census was written) | `range(max_insns)` = `SITE_WINDOW` (16), no flow break, two `d[j]` per iteration | **no** | yes, every `--sites` run | last read `0x3000E` from `--sites 0xFFFF` against a `0x40000` image, under the `0x3002C` ceiling below; command 2, exit 0 | **range check added by #848** — [`pd-sites-address-range.md`](pd-sites-address-range.md); the instruction-boundary precondition stays one |
+| 10 | `pd_index_geometry.py:718-720` `site_rows()` (was `:600-601` when this census was written) | `range(max_insns)` = `SITE_WINDOW` (16), no flow break, two `d[j]` per iteration | region, clamped | yes, every `--sites` run | last read `0x2FFFF` from `--sites 0xFFFF`, the region's own last byte, with the stop naming `0x30000`; it read to `0x3000E` before the loop was bounded — [`site-rows-window-bound.md`](site-rows-window-bound.md) | **range check added by #848, then the loop bounded at the region end** — [`pd-sites-address-range.md`](pd-sites-address-range.md), [`site-rows-window-bound.md`](site-rows-window-bound.md); the instruction-boundary precondition stays one |
 | 11 | `pd_index_geometry.py:473` `_insns()` | `while i < start + length` | caller's | yes | `--helpers` and `--accesses`, exit 0 | census row + verdict |
 | 12 | `pd_index_geometry.py:1256` `access_frames()` | `while i < off` | caller's | yes | `--accesses` over the image, 980 lines, exit 0 | census row + verdict |
 | 13 | `second_copy_census.py:468` `framing()` | `while i < off` | caller's | yes | over the committed image, exit 0 | census row + verdict |
@@ -371,12 +371,22 @@ later, at `0x2FFFF + 45` = **`0x3002C`**; and the image
 `ec/firmware/GMxMGxx_11.800` is **262144 bytes** (`0x40000`). That leaves
 **65492 bytes** between the furthest read and the end of the buffer.
 
-`0x3002C` is that ceiling and not the read this image performs: walked from
-`0xFFFF`, the sixteenth read starts at `0x2FFFF + 15` = **`0x3000E`**, because
-every byte from file `0x30000` to `0x40000` is `0xFF` and `OPCODE_LEN[0xFF]` is
-1. The table's cell now says *last read* rather than *peak read* and gives both
-figures. The same `0xFF` fill is what fixes the first address that raised,
-which is `0x1FFF1` and not the `0x1FFFB` the issue that opened #848 put it at.
+`0x3002C` is that ceiling, and it was not the read this image performs:
+walked from `0xFFFF`, the sixteenth read started at `0x2FFFF + 15` = **`0x3000E`**,
+because every byte from file `0x30000` to `0x40000` is `0xFF` and
+`OPCODE_LEN[0xFF]` is 1. The same `0xFF` fill is what fixed the first address
+that raised, which is `0x1FFF1` and not the `0x1FFFB` the issue that opened
+#848 put it at.
+
+**Both figures above describe the pre-change loop, and the loop is now bounded**
+([`site-rows-window-bound.md`](site-rows-window-bound.md)). `--sites 0xFFFF`
+stops at `0x2FFFF`, the region's own last byte, and names `0x30000` as the end
+that stopped it; `0x3000E` and the `0x3002C` ceiling are the arithmetic this
+section derived and the realised figure it measured, both kept above as the
+record of what the code did. The distinction the section drew between a count
+and a bound is the one the fix turns on: `SITE_WINDOW` was the listing's
+contract and the region's end bounds it, so the ceiling was never a guarantee —
+it was where the read would have landed.
 
 Command 2 runs the tightest case the CLI offers — `--sites 0xFFF0`, whose
 window really does reach the last byte of the PD region at `0x2FFFF` — and
@@ -480,14 +490,14 @@ vector is left visible above rather than quietly replaced.
 ## What this does not say
 
 - **No site "cannot raise".** Every reachability cell above is a property of
-  the committed inputs and of the range that was run. Row 10 in particular is
+  the committed inputs and of the range that was run. Row 10 in particular was
   arithmetic over a 262144-byte image, not a property of the code, and the
   `addr` it rests on is a documented convention rather than a clamp. **#848
-  added a range check to row 10 and that does not make this bullet wrong**: the
-  check refuses an address the arithmetic never had to survive, and the last read
-  — `0x3000E` on this image, under the `0x3002C` ceiling — is still decided by
-  these bytes. The instruction-boundary precondition is still unchecked, and
-  still a precondition.
+  added a range check to row 10 and that did not make this bullet wrong**, and
+  neither does bounding the loop at the region end: the check refuses an address
+  the arithmetic never had to survive, and the loop is now bounded by the same
+  `hi` its two siblings in this file carry. The instruction-boundary
+  precondition is still unchecked, and still a precondition.
 - **The sweep bounds the table, not reading.** Per the caveat in
   `ec/annotations/registers.yaml`, a sweep that finds nothing means "not found
   by this method". Twenty functions is what this grep finds in `ec/tools/`
@@ -853,14 +863,17 @@ output that changed is `--helpers 0xFFFF`, from 24 listing lines to 1; it is
 reported as a correction in the write-up rather than as a repair, because the
 23 lines it dropped were erased bytes presented as instructions.
 
-The **row 10 contrast is now sharp enough to be worth stating**: row 10's
-`site_rows` listing loop still reads past the region (`--sites 0xFFFF` to file
-`0x3000E`, 14 bytes past) and is still deliberately left alone, because its
-contract is a fixed `SITE_WINDOW`-long window whose end is the answer, and
-bounding it would move the self-test pin that exists to measure that read. The
-two walkers walk until something stops them, and a walk that stops nowhere is a
-listing with no end. That is the whole difference, and it is a difference in
-contract, not in caution.
+The **row 10 contrast was stated here and is now spent**: this section argued
+that row 10's `site_rows` listing loop was to be left alone, because the other
+two walkers walk until something stops them and a walk that stops nowhere is a
+listing with no end. It is now bounded at the region end like the other two, and
+the argument is retained above rather than rewritten, because it was the right
+argument about the wrong thing: the contract the loop had was `SITE_WINDOW`
+instructions, and the region end bounds that window just as it bounds a walk
+that stops on `ret`. What the contrast actually established — that a listing
+with no end is a listing with no end — is why `--sites 0xFFFF` printed fifteen
+erased bytes as `mov r7,a` with nothing in the output saying so. See
+[`site-rows-window-bound.md`](site-rows-window-bound.md).
 
 ## Note (2026-10-03, issue #1018): which of this tool's stop reasons are cuts, and where that answer now lives
 

@@ -1,0 +1,80 @@
+# The owner state on the committed Ghidra projects, and on every scratch copy a
+# driver makes of one, held by a check that reads committed text only.
+# Prepared here rather than landed, for the reason
+# docs/ci/agent-gates-capture-claims.patch gives:
+# `.github/scripts/agent-gates.sh` is copied from the agent-pipeline template
+# and the pipeline's push token has no `workflow` scope, so a branch editing it
+# fails at the end of the PR rather than at the start of it.
+#
+# To land it:
+#
+#   git apply docs/ci/agent-gates-project-owner-gate.patch
+#
+# and that is the whole change.
+#
+# Added 2026-10-05, issue #572, which is the gate its own "done looks like"
+# asked for and which nothing in the tree implemented. Two `python3` lines and no
+# `gate` line: both top-level gaps a `check_*()` function could take are already
+# cut against by other prepared patches -- the one between check_python_syntax()
+# and check_ghidra_tooling()'s comment by agent-gates-bank-map-score.patch, the
+# one before check_doc_links() by agent-gates-findings-frozen.patch -- so the
+# call goes inside check_ghidra_tooling() on the two-line anchor this patch's
+# header says, and `tools/test_agent_gates_patches.py`, which applies every
+# ordered pair, is what holds that it composes. The shape is the one
+# agent-gates-cross-decoder-disagreement.patch and
+# agent-gates-0751-writer-census.patch already take for the same reason.
+#
+# Why the cheap tier: it reads the three committed `project.prp` files and parses
+# two driver sources with `ast`. No firmware image, no Ghidra, no JVM, no
+# network, no assembler, no PyYAML -- and it reads none of the `.rep` directories
+# themselves, which are tens of megabytes of `-merge`-marked binary.
+#
+# What it buys. Every committed project records `VALUE="dave"` in its
+# `project.prp`, and `analyzeHeadless` refuses a project owned by anyone else at
+# the open, before a pre-script runs. `ghidra/project_owner.py`'s rewrite is what
+# makes a disposable copy openable, and both drivers now preflight it before the
+# run rather than aborting in a log -- but a preflight inside a driver cannot
+# see the other driver, cannot see the third site, and goes away with the driver
+# it lives in. This is the one place all three are visible together: a rewrite
+# deleted from either driver's copy path, or a project that stopped recording an
+# owner at all, is a red run here.
+#
+# What it does not establish. Nothing here claims a project opens, that the
+# committed `.rep` survives a run byte-identical, or that the rewrite is
+# *sufficient* rather than merely present in the copy path. Those are the
+# drivers' `--self-test --oracle` and the run recorded in
+# `docs/findings/ghidra-project-owner-gate.md`.
+diff --git a/.github/scripts/agent-gates.sh b/.github/scripts/agent-gates.sh
+index 16c70c3..037ea2b 100755
+--- a/.github/scripts/agent-gates.sh
++++ b/.github/scripts/agent-gates.sh
+@@ -120,6 +120,29 @@ check_ghidra_tooling() {
+   # --check and --self-test need no Ghidra and no network, which is what lets
+   # them live in a gate at all. A full rebuild does not, and is not here.
+   #
++  # The owner state on the committed Ghidra projects, and on every scratch copy
++  # a driver makes of one. Cheap tier, like the call above: committed text only
++  # -- the three committed project.prp files and each driver's copy path -- so
++  # no image, no Ghidra and no JVM. `--check` is a property of the tree, and
++  # `--self-test` is the half that matters, because it is the refusals over
++  # fixtures written to be known-wrong and a check that has quietly stopped
++  # refusing looks exactly like a check that is working. What it buys: a
++  # rewrite_owner() dropped from a driver's export path, or a project that
++  # stopped recording an owner, is a red run here rather than a
++  # NotOwnerException in an analyzeHeadless log minutes downstream.
++  #
++  # **No `gate` line, and no `check_*()` wrapper.** Both top-level gaps a new
++  # function could take are already cut against: the one between
++  # check_python_syntax() and this function's comment belongs to
++  # agent-gates-bank-map-score.patch, and the one before check_doc_links() to
++  # agent-gates-findings-frozen.patch. Two `python3` lines here are what is
++  # left, and they are the shape agent-gates-cross-decoder-disagreement.patch and
++  # agent-gates-0751-writer-census.patch already take. The anchor is inside this
++  # function's own comment block rather than beside its `local rc=0` line, so
++  # tools/test_agent_gates_patches.py -- which applies every ordered pair --
++  # composes with both of those in either order.
++  python3 ghidra/check_project_owner_gate.py --check || rc=1
++  python3 ghidra/check_project_owner_gate.py --self-test || rc=1
+   # Nothing in this loop turns on whether sdas8051 is installed, which is the
+   # other half of the split. The sdas8051 re-encode used to run from here
+   # whenever `command -v sdas8051` found the tool, and that made the gate's
