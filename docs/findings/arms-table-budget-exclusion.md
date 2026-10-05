@@ -211,10 +211,7 @@ kinds of disagreement:
 > are `mov r4,DPH` / `mov r6,DPH`, and the old predicate mistook each for a store
 > *to* DPH, so it killed the pointer at those two rows. With the block read as a
 > load the pointer survives, the `0x0F95` clear loop's own `inc dptr` (`0x0FA2`)
-> runs, and the walk steps `0x9000` to `0x9001`. Re-running
-> `bank_attribution.py --self-test` reproduces the causality in both directions:
-> with the old predicate restored in-process the leftover set is `0x9000` alone,
-> and with the corrected one it is `0x9000, 0x9001`. `0x9001` is the second cell
+> runs, and the walk steps `0x9000` to `0x9001`. `0x9001` is the second cell
 > of the same clear loop, not a route into code, which is why
 > `bank_attribution.XDATA_CLEAR_IMMEDIATES` now names it rather than letting it
 > read as a missed bank of code.
