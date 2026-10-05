@@ -20,7 +20,7 @@ and a whole-byte store of a constant is a stored constant, not a readback. No
 live test ran; this pipeline has no machine, and every sentence below is read
 from bytes in `ec/firmware/GMxMGxx_11.800`.
 
-## 1. `0x0457`'s low three bits are loaded with four constants, which is a shape and not a meaning
+## 1. `0x0457`'s low three bits are loaded with three distinct constants, which is a shape and not a meaning
 
 All four of the byte's EC-side `MOV DPTR` sites are read-modify-writes, and all
 four now sit one in each of four named exports. Each clears bits 0-2 with
@@ -54,9 +54,9 @@ byte of `0x0472` around a single bit — set, with bit 4 preserved and six bits
 cleared — and load a constant into a three-bit field of another, and the fourth
 only clears.**
 
-A field that four routines load four different constants into is a small
+A field that four routines load three distinct constants into is a small
 enumerated state rather than a flag. That is the strongest reading the shape
-supports and it is still a shape: **what any of the four values means is not
+supports and it is still a shape: **what any of the three values means is not
 established.** The four whole-byte CODE-record stores that seed the byte
 `0x00`, `0x05`, `0x80` and `0x83` are a second writer class on top
 (`ec/annotations/xdata-0400-045f.md` §12), not an explanation of these four.
@@ -114,8 +114,9 @@ reading `0x01` *and* on `0x0440` being non-zero, differing only in which bit of
 
 **That is narrower than it first reads.** Each of the three is still a zero test
 whose zero arm is a bare `ret`, which is the enable-flag shape
-`ec/annotations/xdata-0440-readers.md` §2/§3 already assigns to 32 of the 39 zero
-tests; the three add to the set of sites that are named, not to the shape. The
+`ec/annotations/xdata-0440-readers.md` §2/§3 already assigns to that address's
+zero tests; the three add to the set of sites that are named, not to the shape,
+and are additional to the counts that document measured. The
 selector reading — zero not being one state either, so the byte choosing between
 behaviours — is that document's §2/§3 and the `XDATA_0440` entry's own preceding
 paragraph, recorded before this change, and is not claimed here.

@@ -7,7 +7,7 @@
 /* Opens by storing 0x20 into XDATA 0x0472, then reads 0x0457, clears bits 0-2 with `anl A,#0xf8`
    and sets bit 2 and bit 0 with `orl A,#0xfd`, so the low three bits of 0x0457 come out as 0b101
    and bits 3-7 pass through untouched. **What those three bits mean is not settled by this
-   routine**: the four 0x0457 sites in this stretch assemble four different constants into the same
+   routine**: the four 0x0457 sites in this stretch assemble three distinct constants into the same
    field (0b101 here and at 0x8261, 0b011 at 0x8246, 0b000 at 0x81D1) and nothing read here
    distinguishes them. After the store it walks the conditions below and returns if any of them
    holds: bit 0 of 0x097C, bit 0 of 0x097F, a nonzero R7 from 0x1990 (`trampoline_to_c391`), a

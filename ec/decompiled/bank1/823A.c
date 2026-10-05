@@ -10,7 +10,7 @@
    zero) and loads **0b011** into 0x0457 (`anl A,#0xf8` / `orl A,#0xfb`). The three routines
    therefore differ only in which bit of 0x0472 they set alongside the preserved bit 4, and which
    constant they leave in 0x0457, which is the strongest evidence here that the field is a small
-   enumerated state rather than a flag; **nothing read here says what any of the four values
+   enumerated state rather than a flag; **nothing read here says what any of the three values
    means.** It then calls 0x1984 (`trampoline_to_c10c`) and 0x19A8 (`trampoline_to_c118`), testing
    R7 after each: a zero R7 from the first jumps to 0x8225, a zero from the second jumps to 0x8238,
    and both nonzero stores 0x83 into R7 and calls 0x19A2 (`trampoline_to_cf96`). The return value is
