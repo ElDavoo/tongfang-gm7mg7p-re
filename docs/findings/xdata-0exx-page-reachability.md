@@ -125,12 +125,14 @@ reached, by the read-modify-write at `bank0:0xF228` — one byte, in passing, no
 as a run. So the arrangement is one run reached and one unreached, which is a
 different statement from "31 of 32", and the unreached half stays unreached.
 
-## `0x0F61` has a second writer, earlier in the same routine
+## Two payloads write `0x0F61`, both inside `bank0:0xF2F8`
 
 `CTL0`'s note in `ec/annotations/registers.yaml` describes the eight-stanza copy
-at `bank0` `0xF335`-`0xF374` into `0x0F61`-`0x0F68` and calls it the only one.
-It is not. Two things write that window, and both are *in the same routine* —
-the counted loop first, then the straight-line copy below it:
+at `bank0` `0xF335`-`0xF374` into `0x0F61`-`0x0F68`, and separates that copy from
+`0x0EA8`'s other two read sites at `0xF221` and `0xF234`. It does not speak to
+who else writes the destination. What the decoding above adds is the writer
+*earlier* in the same routine: two things write that window, and both are *in
+`0xF2F8`* — the counted loop first, then the straight-line copy below it:
 
 - `0xF32F` stamps `0x98` to `0x0F60`, and `0xF335`-`0xF374` copies
   `0x0EA8`-`0x0EAF` into `0x0F61`-`0x0F68`, one `mov dptr` / `movx` pair per
@@ -151,8 +153,14 @@ could not resolve a reader for. It may equally be read through the same
 published pointer the destination is, and that is the open question below rather
 than a settled mechanism.
 
-It is also not the only writer, and the tool's walk pass is what shows it. Run
-over the destination window rather than the page:
+The routine is also not the only writer, and that part is not new to the tree:
+`ghidra-functions.csv` already names routines that write `0x0F61` —
+`clear_0f60_61_and_set_0a56_block` and `store_bc02_0f60_61_set_r6` are two of
+them, the latter also a walk seed below — and `ec/annotations/xdata-registers.csv`
+tags the address with `bank0:0xE8C4=write_r6_r7_r5_to_0f60_62 [writer]`. What
+the tool's walk pass adds is the per-address classification over the window,
+not the discovery of the writers. Run over the destination window rather than
+the page:
 
 ```console
 $ python3 ec/tools/xdata_page_reach.py ec/firmware/GMxMGxx_11.800 0x0F60 0x0F70
@@ -168,7 +176,7 @@ second byte, which is what their `write x2` cell says; `bank0:0xE8A0`,
 `0xF151` and `0xF18A` `inc dptr` into an `lcall` or a `ret` and are `write x1`,
 so their reach is a walk onto the byte rather than a store to it. `0x0F62`
 picks up one of the four (`bank0:0xE8C8`, which walks three). **So the
-second-writer claim is true and understates the case**: the loop and the copy
+two-payload claim holds and understates the case**: the loop and the copy
 both store `0x0F61` in one routine, and the walks reach it from outside that
 routine entirely.
 
