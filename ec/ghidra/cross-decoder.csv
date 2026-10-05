@@ -1578,6 +1578,7 @@ pd,10F1,read3_code_to_r3r1,annotation,9,,,,vacuous
 pd,10FD,read3_ptr_kind_dispatch,annotation,0,,,,vacuous
 pd,119C,dispatch_code_table,annotation,5,,,,vacuous
 pd,11C2,dispatch_code_table_2byte_key,annotation,5,,,,vacuous
+pd,11EF,dispatch_code_table_4byte_key_r4r7,annotation,4,,,,vacuous
 pd,1229,load_dptr_then_indirect_jump,annotation,2,,,,vacuous
 pd,122D,jmp_code_at_dptr,annotation,1,,,,vacuous
 pd,122F,add_dptr_to_word_0d0e_ea_guard,annotation,6,,,,vacuous

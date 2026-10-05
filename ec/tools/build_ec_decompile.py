@@ -2299,9 +2299,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # A `common`-scoped row at an address both banks carry, so it is the shape
     # #603's 37 were, and it moves annotations_applied and functions_named below
     # the same way and for the same reason.
-    check("EC: annotations/ghidra-functions.csv is 1,963 records, no short row "
+    check("EC: annotations/ghidra-functions.csv is 1,964 records, no short row "
           "and no duplicate (scope, addr)",
-          len(_ann) == 1963 and not structure_problems("ghidra-functions.csv", _ann,
+          len(_ann) == 1964 and not structure_problems("ghidra-functions.csv", _ann,
                                                        annotation_key, "(scope, addr)"),
           "%d record(s)" % len(_ann))
     # The function layer's three counters, on the committed files, which is where
@@ -2363,13 +2363,16 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # Then 827 -> 828 and 724 -> 725 with issue #1183's one `common 0D7B` row,
     # which is `common`-scoped and so is handed to both bank programs, moving
     # both by one and `common` with bank0 for the reason #603's 37 did; `pd`
-    # stays at 541, that row being EC-scoped.
+    # stays at 541 there, that row being EC-scoped.
     # ... and then 829 -> 830 with issue #337's one `bank0 0xC118` row, an
     # EC-scoped seed like #603's, so `common` borrows bank0's 830 with it and
     # no bank's own figure moves.
-    _want_applied = {"bank0": 830, "bank1": 725, "pd": 541}
+    # ... and then pd 541 -> 542 with issue #1120's one `pd 0x11EF` row, a
+    # `pd`-scoped seed at an address the banks do not carry, so no bank's
+    # own figure moves and `common` still borrows bank0's 830.
+    _want_applied = {"bank0": 830, "bank1": 725, "pd": 542}
     check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 830 / 725 / 541 across the three programs, with `common` "
+          "said -- 830 / 725 / 542 across the three programs, with `common` "
           "borrowing bank0's",
           {r["program"]: int(r["annotations_applied"]) for r in _mr
            if r["program"] in _want_applied} == _want_applied
@@ -2411,12 +2414,18 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # ec/tools/second_copy_census.py --check.
     # ... and then bank0 from 698 to 699, with the sum to 1,970, for issue
     # #337's one `bank0 0xC118` row: a seed that takes the index's
-    # `annotated` from no to yes, which is the ordinary direction.
-    _want_named = {"bank0": 699, "bank1": 594, "common": 136, "pd": 541}
+    # `annotated` from no to yes, which is the ordinary direction. pd then
+    # 541 -> 542 with the sum to 1,971, for issue #1120's one `pd 0x11EF`
+    # row -- the third reader `pd_index_tables.py` names, seeded because its
+    # 6-byte entry layout is established in
+    # docs/findings/pd-reader-entry-layouts.md. A `pd`-scoped seed at an
+    # address the banks do not carry, so it moves `pd` alone, the ordinary
+    # direction again.
+    _want_named = {"bank0": 699, "bank1": 594, "common": 136, "pd": 542}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 699 / 594 / 136 / 541, summing to 1,970",
+          "program, 699 / 594 / 136 / 542, summing to 1,971",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1970
+          and sum(_want_named.values()) == 1971
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
           str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
     # The two-way ledger on the committed files, which is the whole substance of
@@ -2493,8 +2502,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,963 - 0 + 7 "
-          "= the 1,970 functions named",
+    check("EC: the two ledger directions close the arithmetic -- 1,964 - 0 + 7 "
+          "= the 1,971 functions named",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2544,7 +2553,7 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1963
+          == len({annotation_key(r) for r in _ann}) == 1964
           and len({(r["file_offset"], r["target"]) for r in _ct})
           == len({call_target_key(r) for r in _ct}) == 5998)
 

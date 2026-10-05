@@ -2237,6 +2237,7 @@ pd,10F1,read3_code_to_r3r1,match,ab73a882f72dbf0d,10,0,,sdas8051 05.50.4+NoICE+S
 pd,10FD,read3_ptr_kind_dispatch,match,0f0b9ea649fcf698,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,119C,dispatch_code_table,match,34eaeaff36e686a1,27,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,11C2,dispatch_code_table_2byte_key,match,1bf191859abb60c0,31,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+pd,11EF,dispatch_code_table_4byte_key_r4r7,match,3125229dc1805ee5,41,0,,sdas8051 02.00
 pd,1229,load_dptr_then_indirect_jump,match,22c9d9cc227b71ba,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,122D,jmp_code_at_dptr,assembler-gap,a3f1d6a26e4ef5d2,2,0,no bytes emitted at 122D,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 pd,122F,add_dptr_to_word_0d0e_ea_guard,match,74fc547ef98c4148,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
