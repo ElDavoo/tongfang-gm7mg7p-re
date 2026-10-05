@@ -4010,9 +4010,19 @@ ORACLE_FACTS = [
     # read it back, subb #0x3c, branch. Either half alone would be satisfied by
     # an unrelated line, which is the failure a two-fact oracle cannot afford --
     # it would be a check that never fires.
-    ("the DAT_EXTMEM 0x09c7 increment followed by its 0x3b compare", "c",
-     re.compile(r"DAT_EXTMEM_09c7\s*=\s*DAT_EXTMEM_09c7\s*\+\s*1\s*;\s*"
-                r"if\s*\(\s*0x3b\s*<\s*DAT_EXTMEM_09c7\s*\)", re.I)),
+    #
+    # The local is matched on the ADDRESS rather than on one spelling of its
+    # name, for the reason the callee above is: `DAT_EXTMEM_09c7` is what the
+    # exporter's own placeholder calls the byte while `registers.yaml` has no
+    # row for it, and `XDATA_09C7` is what the generated symbol table calls it
+    # once it has one (#299). Both are names; the address hex is the fact. The
+    # alternation goes inside this one pattern rather than into a second entry,
+    # because two entries would report the same code as two facts -- and the
+    # negative case below requires each fact to be removable on its own.
+    ("the 0x09c7 increment followed by its 0x3b compare", "c",
+     re.compile(r"(?:DAT_EXTMEM|XDATA)_09c7\s*=\s*(?:DAT_EXTMEM|XDATA)_09c7"
+                r"\s*\+\s*1\s*;\s*"
+                r"if\s*\(\s*0x3b\s*<\s*(?:DAT_EXTMEM|XDATA)_09c7\s*\)", re.I)),
 ]
 
 

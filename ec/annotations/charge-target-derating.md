@@ -198,8 +198,18 @@ What this predicts, and what was then observed:
 - **`cfg_0xBC8D`** (the source of the 0xC0/0x80 cell-count selector) was
   not decoded. "4 cells" is backed by the pack's own 15200 mV design voltage
   (4 × 3.8 V) and by the 1000 mV arithmetic above, not by that helper.
-- **`check_0xB112`** and the `0x0490` gate bits were not decoded. `0x0490`
-  reads `0x0F` live, so bits 0 and 2 are both set.
+- **`check_0xB112`** was not decoded. Two of the `0x0490` gate bits now have
+  their place in the sequence: bank1 `0xB841` rewrites `0x0490` as old AND
+  `0xF9`, clearing bits 1 and 2, and then stores `0x0000` to the 16-bit word at
+  `0x04AE`/`0x04AF`; bank1 `0xB8E1` masks with `0x9F`, clearing bits 5 and 6,
+  and zeroes `0x04BE`/`0x04BF` the same way. Bit 1 is the gate this page's
+  `charge_target_update` is reached on (`0xB141`/`0xB145` in `bank0`), so the
+  `0x04AE` word is zeroed on the same gate; bank1 `0xBFBB` increments that word
+  once per `0x3C` ticks of the byte at `0x04AD`. What sets either bit is still
+  not decoded. `0x0490` reads `0x0F` live, so bits 0 and 2 are both set — and so
+  is bit 1, with bit 5 clear.
+  [`docs/findings/xdata-04a0-04ae-04be-words.md`](../../docs/findings/xdata-04a0-04ae-04be-words.md)
+  has the byte-level chain and the two `0x04A0` bytes' corrected provenance.
 - **Consequence for "battery health".** The fuel gauge learns full-charge
   capacity from charges that now end at 4.1 V/cell. The 2000 mAh
   `charge_full` (§1, "~49% health") is therefore capacity to 4.1 V/cell,

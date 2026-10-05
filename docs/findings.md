@@ -5897,6 +5897,24 @@ the whole time between.)*
    `c_presence_problems()`), none of which shares a name with the thirteen. The
    two older numbers are left above because they are part of the record of the
    defect; neither was ever a measurement.*
+
+   *(Corrected 2026-10-04, issue #299: the paragraph above is left as it was
+   written, and its claim that a rename cannot fail the check was half true. The
+   `lcall` fact is matched on the address, as it says; the increment was pinned
+   to the spelling `DAT_EXTMEM_09c7`. `ORACLE_FACTS[1]` is now
+   `(?:DAT_EXTMEM|XDATA)_09c7` at all three token positions. The rename is what
+   falsified it: giving `0x09C7` a row in `ec/annotations/registers.yaml` puts
+   it in `ec/ghidra/xdata-symbols.csv`, so the export spells it `XDATA_09C7` and
+   `ec/decompiled/bank0/B1F0.c` reads `XDATA_09C7 = XDATA_09C7 + 1;`
+   immediately followed by `if (0x3b < XDATA_09C7)` — a check written against the
+   old name would have failed on the rename rather than on anything about the
+   code, which is the failure the paragraph says the pair does not have. Both
+   spellings are names for one address, and the address is the fact. What the
+   fact asserts is unchanged — `0x09c7` incremented and compared against `0x3b`
+   at `0xB1F0`, as `charge-target-derating.md` established by hand — and
+   `ec/tools/test_xdata_09c7_09ca_rows.py` exercises the widened pattern
+   against both spellings and against a copy with the fact removed, so the
+   negative case is no longer reachable only with Ghidra in the loop.)*
 2. **The export was stale before this change.** 203 committed `.c` files still
    said `DAT_EXTMEM_0440` although `xdata-symbols.csv` has named that byte
    `XDATA_0440` since `8a90bc0` (#160) — that commit regenerated

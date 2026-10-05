@@ -2464,6 +2464,80 @@ registers:
       member is named as a fan, and that is the name the EC contradicts. All
       bank0, no PD-image site.
 
+  - name: XDATA_04A4
+    addr: 0x04A4
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 1
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      A second 16-bit little-endian milliamp reading, written by the same
+      routine that writes BAT_CURRENT_MA 0x0434/0x0435 twenty lines earlier
+      -- both stores are write_r1r2_to_xdata_pair in FUN_CODE_b43b
+      (ec/decompiled/bank1/B43B.c), at bank1 0xB487 and 0xB4B6 -- but fed
+      from a different source pair: 0x0434's store is reached from a
+      read_xdata_pair_to_r1r2(0x50A) and this one from a
+      read_xdata_pair_to_r1r2(0x50E), each arm short-circuiting to its store
+      when 0x0432 reads zero. So the two addresses are two readings from two
+      sources, not one value written twice.
+      The committed capture agrees and is why this row exists:
+      evidence/battery-traces/2026-09-09-profiles.csv is the only committed
+      record of the whole 0x0400-0x04FF page (its ec_hex cell is 256 bytes on
+      every row) and nothing had decoded it before
+      ec/tools/battery_page_census.py. There this pair equals the row's own
+      current_now / 1000 on all but five rows, and on the rows where it
+      differs from 0x0434/0x0435 it matches current_now where 0x0434 does
+      not -- the capture's sysfs read and its page dump are taken a moment
+      apart. Byte-position correlation is not identification, and 0x04A4 is
+      the standing counter-example inside this very capture: it tracks the
+      same quantity as 0x0434 from a different address. What is claimed here
+      is the writer, read off the listing, not the correlation.
+      Write-only in the census -- ec/annotations/xdata-registers.csv
+      gives the pair seven references and no reads against 0x0434's sixteen
+      including reads -- so the direction of the copy is settled statically
+      even though which value the EC treats as authoritative is not. The one
+      EC-side site is bank1 0xB4B6, handed to write_r1r2_to_xdata_pair; the
+      other two are pd-image (0x9A94, which resolves nothing, and 0xB64F),
+      which is another program's byte at the same address number, see
+      ec/annotations/pd-xdata-overlap.md. Graded present-untested because
+      static-scan finds a real EC-side reference, not yet exercised live:
+      nothing here is a read-back and no status rests on a live run.
+      Write-up: docs/findings/battery-page-first-decoding.md.
+
+  - name: XDATA_04A5
+    addr: 0x04A5
+    sources: [xdata-refs]
+    static_refs: 3
+    static_refs_main_ec: 0
+    static_refs_pd_image: 3
+    status: unknown-not-absent
+    note: >
+      The high half of the 0x04A4 pair. Every site the direct MOV DPTR scan
+      reports is the ITE8850-PD image's: ec/tools/trace_xdata_refs.py finds 3
+      for this address, all pd-image and none in the main EC, which is what
+      static_refs_main_ec: 0 and static_refs_pd_image: 3 record and what the
+      header's rule 2 grades unknown-not-absent on. That is a zero from one
+      scan and never a proof the byte is unused.
+      The pair accessor's inc DPTR is a second spelling that scan cannot see,
+      and the census counts it separately: ec/annotations/xdata-registers.csv
+      reads refs_main_ec=7, write_main_ec=7, refs_pd=0 here, naming seven
+      main-EC functions that reach 0x04A5 as the byte above a 0x04A4 store
+      handed to write_r1r2_to_xdata_pair. So the byte does have main-EC
+      writers and the grade does not deny it; the grade is about the count
+      rule 2 keys on, which the header defines as a direct-MOV-DPTR count, and
+      that one is zero. ec/annotations/xdata-inc-dptr-only.csv lists 0x04A5
+      among the inc-DPTR-only bytes whose pd sites are another program's, and
+      ec/annotations/pd-index-geometry.md places it in that image's own
+      0x04A1-0x04A6 block reached through 0x1F/0x60 stride arithmetic. The
+      EC-side half of the pair is 0x04A4; see the XDATA_04A4 entry above for
+      the writer, the capture, and the caveat that the census's per-byte
+      direction is what settles the copy and not the EC treating either value
+      as authoritative. It does move in the committed capture,
+      tracking current_now / 1000 with 0x04A4, which is the correlation and
+      not the identification. Write-up:
+      docs/findings/battery-page-first-decoding.md.
+
   - name: BAT_CYCLE_COUNT
     addr: [0x04A6, 0x04A7]
     sources: [uniwill-laptop, live]
@@ -2491,9 +2565,37 @@ registers:
       the EC-side one at 0xDFD0 by that file's 2 (a 16-bit store helper) --
       so this is a shape of the count, not a gap in the evidence.
       Also an input to the charge-voltage derating: bank0 0xB167 copies it
-      (big-endian) to 0x0A4C, where 150/250/350/450/550 cycles select 50-250
+      to 0x0A4C, loading 0x04A7 into R4 and 0x04A6 into A. That names which of
+      the two is high and which is low rather than an endianness, because the
+      order they reach the store's arguments in is the callee's and not the
+      pair's byte order -- where 150/250/350/450/550 cycles select 50-250
       mV/cell (ec/annotations/charge-target-derating.md). Read 450 live on
       2026-09-19, which puts it in the 200 mV/cell tier by count alone.
+      The pair steps within a single committed capture, which the note's
+      single "445" did not show: in evidence/battery-traces/
+      2026-09-09-profiles.csv the little-endian value is 445, then 446, then
+      447, and both steps are taken with status Charging, at 33% and 83%
+      capacity. Nothing here is a live observation -- every figure is read out
+      of that committed CSV by ec/tools/battery_page_census.py, and no status
+      moves on it. Status stays confirmed-working because its warrant is the
+      live read above, which a capture cannot strengthen or weaken.
+      Which writer produced either step is NOT settled, and this note does not
+      pick one. There are two: bank1 0xD34B, bump_counter_mirror_to_04a6_04a7
+      (ec/decompiled/bank1/D34B.c), increments 0x0343/0x0344 and mirrors both
+      halves here when the byte at 0x0349 reaches 0xC8, while bank1 0xDEE8 and
+      0xDEF1 copy the pair from 0x0343 after a 0x1C00 block transaction. The
+      gate byte 0x0349 sits below the 0x0400 base of that capture's page, so
+      the capture cannot tell the two apart. Correcting a natural reading
+      rather than adding to it: the count is NOT merely a value arriving over
+      the 0x1C00 path with no increment of its own -- 0xD34B is an incrementing
+      writer, already named in ec/annotations/ghidra-functions.csv and read the
+      same way in ec/annotations/pd-xdata-overlap.md. Its carry runs out of
+      0x0343 into 0x0344, so 0x04A6 is the LOW half: read little-endian the
+      capture's 0xBD 0x01 is the 445 above, where big-endian would be 48385.
+      0x04A7 holds 0x01 on every row of that capture, so both steps are visible
+      in the low half alone. Write-up and its suite:
+      docs/findings/battery-page-first-decoding.md and
+      ec/tools/test_battery_page_census.py.
 
   - name: PACK_TEMP_DK (pack temperature, decikelvin)
     addr: [0x04A2, 0x04A3]
@@ -4509,6 +4611,84 @@ registers:
       direct write. Its only writers outside the sweep that this method found
       are bank0 0xCCAD. No upstream name. Per-address table:
       ec/annotations/xdata-06c2-06db-timers.md.
+
+  - name: XDATA_09C7
+    addr: 0x09C7
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Seconds counter of the charge-target age derating, incremented and
+      compared against 0x3c by ec/annotations/charge-target-derating.md 1.
+      Two EC-side sites, no PD-image site: bank0 0xB149, a write in the
+      0x0490-gate else-branch that zeroes the block, and bank0 0xB211, which
+      reads, increments, stores, reads back and compares. No upstream name.
+      Not read back by any host: 0x09C9 reads 0xFF through the host's
+      0xFE410000 window because that window does not map 0x0800-0x0DFF, and
+      this byte is in the unmapped run. Per-address table:
+      ec/annotations/xdata-09c7-09ca-register-rows.md.
+
+  - name: XDATA_09C8
+    addr: 0x09C8
+    sources: [xdata-refs]
+    static_refs: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Minutes counter of the charge-target age derating, the same
+      increment/compare shape as 0x09C7 and the same 0x3c. Two EC-side sites,
+      no PD-image site: bank0 0xB14D, a write in the 0x0490-gate else-branch,
+      and bank0 0xB234, the increment. No upstream name, and nothing here is
+      read back, for the reason 0x09C7's note gives. Per-address table:
+      ec/annotations/xdata-09c7-09ca-register-rows.md.
+
+  - name: XDATA_09C9
+    addr: 0x09C9
+    sources: [xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      High byte of the big-endian u16 stress counter the charge-target derating
+      compares against its tiers; the low byte is 0x09CA and the pair is stored
+      high byte first by two inline sequences -- the zeroing store at 0xB151
+      (mov DPTR,#0x09C9 / movx @DPTR,A / inc DPTR / movx @DPTR,A) and the
+      0x39D9 store at 0xB20A in charge_stress_update. Not by helper
+      0xBB90 / 0xBD54: both are called only with an 0x0A4x DPTR loaded, and
+      they are the store pair for that overlay's locals. 0xB20A is not one of
+      the sites below -- it stores through the DPTR that 0xBD98
+      tier_200_eligible leaves at 0x09C9, so it carries no MOV DPTR of its own.
+      Nine EC-side sites, no PD-image site: 0xB151 (that two-byte store), 0xB241
+      (DPTR handed to 0xBCF5), 0xB25C and 0xB272 (address loaded, no movx in the
+      decoded window -- a limit of the linear walk that produced
+      ec/annotations/site-resolution.csv, not evidence the byte is untouched;
+      ec/annotations/two-hop-dptr-handoffs.csv does resolve both one call on, to
+      reads+writes), and reads at 0xB2F7, 0xB319, 0xB345, 0xBD91, 0xBD9E, each
+      the high byte of a tier threshold. No upstream name. 0x09C9 reads back
+      0xFF through the host's 0xFE410000 window, which does not map
+      0x0800-0x0DFF, so nothing here is read back.
+      Per-address table: ec/annotations/xdata-09c7-09ca-register-rows.md.
+
+  - name: XDATA_09CA
+    addr: 0x09CA
+    sources: [xdata-refs]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Low byte of the same big-endian u16 stress counter; five EC-side sites, no
+      PD-image site, and all five are direct reads -- 0xB2F1, 0xB313, 0xB33F,
+      0xBD8B and 0xBD98, each a movx A,@DPTR followed by a subb against the
+      low byte of a tier threshold (0xb8, 0xc8, 0xc0, 0xe0, 0xd8 -- the low
+      halves of 0x2CB8, 0x1FC8, 0x12C0, 0x46E0 and 0x39D8), each site then
+      taking the high-byte compare on 0x09C9. No upstream name, and nothing
+      here is read back, for the reason 0x09C7's note gives.
+      Per-address table: ec/annotations/xdata-09c7-09ca-register-rows.md.
 
   - name: XDATA_0860
     addr: 0x0860
@@ -6783,3 +6963,111 @@ registers:
       records is the one path that ties it to the mailbox, and a count this
       large is a reason to distrust any single claim built on it without a
       per-site table. No PD site. docs/findings/a73f-09f1-mailbox-payload.md.
+
+  - name: XDATA_04A0
+    addr: 0x04A0
+    sources: [static-scan, xdata-refs]
+    static_refs: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Three committed writers, and they do not agree on one source, which is
+      the finding: bank1 0xD0C4 gives it whatever 0x0524 holds and, on its
+      later path, the literal 0x20 in a store list with 0x0524, 0x0526 and
+      0x0492; bank1 0xC778 clears it in the same run that clears 0x0524 and
+      0x0526; bank1 0xB2D5, reached through forwarder_to_b2d5, reaches it by
+      a call to the pair store at 0x888C, which does not settle the value
+      from 0x0524 as the decompile reads -- 0xB6C9 loads four bytes into R3,
+      R4, R1 and R2 and 0x888C stores R1 then R2, so the pair store lands
+      the 0x0526/0x0527 bytes rather than 0x0524/0x0525. Its readers test bit
+      5 (bank1 0xAD8B, 0xB224, 0xB2A0). **No reader is the reason any
+      of the three wrote it**, and the three do not even track one value:
+      0x0526's writers are a strict subset of 0x0524's -- bank1 0xC7A7 and
+      0xCBF3 clear 0x0524 without touching 0x0526 -- so on those two paths
+      0x04A0 keeps a value 0x0524 no longer holds. The bit-5 tests are
+      therefore observations about the byte, not the purpose of a store. A
+      reading that made this a mirror of 0x0524 is withdrawn in
+      docs/findings/xdata-04a0-04ae-04be-words.md, with the listing evidence
+      beside it. Nothing here was observed live and no byte was read back: a
+      register the EC arms and disarms is not thereby one a Linux driver
+      should write. Not established: what the bit-5 test selects.
+
+  - name: XDATA_04A1
+    addr: 0x04A1
+    sources: [static-scan, xdata-refs]
+    static_refs: 8
+    static_refs_main_ec: 5
+    static_refs_pd_image: 3
+    status: present-untested
+    note: >
+      **No committed routine has been read setting this non-zero.** Its only
+      direct store is bank1 0xD0C4, with A cleared one instruction earlier;
+      its one helper-written path is bank1 0xB2D5's pair store at 0x888C,
+      which delivers 0x0527, and 0x0527's only committed writer is that same
+      0xD0C4 storing zero. So the bit-6 and `& 0x90` tests at bank1 0xBA43
+      and 0xC11C are tests of a byte no committed writer sets -- which is
+      why they cannot distinguish a mirror of 0x0524 from anything else, and
+      why the mirror reading is withdrawn rather than merely unproven. "Not
+      been read setting" is not "is always zero": a computed DPTR, a
+      register-indirect store and a handed-off pointer are all outside what
+      these listings and the committed decompiles show, so a zero from this
+      method is "not found by this method". Three of the eight sites are in
+      the ITE8850-PD image, a separate program with its own XDATA map, and
+      are counted in `static_refs_pd_image` rather than added to the main-EC
+      column. Nothing was observed live. Not a driver-write target on this
+      evidence, and the byte's role is not established at all.
+
+  - name: XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)
+    addr: [0x04AE, 0x04AF]
+    sources: [static-scan, xdata-refs]
+    static_refs: [6, 1]
+    static_refs_main_ec: [6, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      A 16-bit up-counter, paired structurally rather than by inference: it is
+      zeroed through the pair store at 0x888C and incremented as a word with
+      carry, so the two bytes are one value. bank1 0xB841 rewrites 0x0490 as
+      old AND 0xf9, clearing bits 1 and 2, and three instructions later stores
+      0x0000 here;
+      bank1 0xBFD9 is the same store with a ret and reads no 0x0490 byte; and
+      bank1 0xBFBB's `C01B`-`C031` adds one to 0x04AE and carries into 0x04AF
+      once the byte at 0x04AD reaches 0x3C. That increment is why this entry
+      does not say no committed routine sets the word non-zero -- it does, and
+      the rejected issue text said otherwise. **0x0490 bit 1 is the gate
+      bank0 0xB12C reaches `charge_target_update` on**
+      (`B141 mov DPTR,#0x490`, `B145 jb 0xe1,0xb158`), and it is one of the
+      bits 0xB841 clears in the same breath as the zeroing, which puts the
+      word on the charge-target path. The `* 0x3C` comparison and all three
+      0x0494 accesses are bank1 0xC032's bytes, not 0xBFBB's: 0xBFBB ends at
+      `C031` and has no 0x0494 site, and 0xBFBB.c attributes them here because
+      0xBFBB's first instruction is `lcall 0xc032`. 0x3C is 60 and no unit is
+      claimed, because nothing committed establishes the tick rate of the
+      byte in front of the word; what sets 0x0490 bit 1 is likewise open.
+      Nothing was observed live, and a counter the EC arms and zeroes is not
+      thereby one a Linux driver should write.
+
+  - name: XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)
+    addr: [0x04BE, 0x04BF]
+    sources: [static-scan, xdata-refs]
+    static_refs: [3, 1]
+    static_refs_main_ec: [3, 1]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      The second of the two 16-bit up-counters, one 0x10 column above the
+      0x04AE word and stepped the same way: bank1 0xB8E1 clears bits 5 and 6
+      of 0x0490 and then stores 0x0000 here through 0x888C, bank1 0xBFD9 is
+      the bare zeroing of this word and the 0x04AE one, and bank1 0xC0A8's
+      `C0D9`-`C0EF` adds one to 0x04BE and carries into 0x04BF once the byte
+      at 0x04BD reaches 0x3C. Its gate is 0x0490 bit 5, the bit 0xB8E1 tests
+      before counting 0x05F5 down and clears alongside the zeroing; nothing
+      committed establishes what sets it, and the live 0x0490 reading on the
+      charge-target page does not have it set. 0xC0A8's own `* 0x3C`
+      comparison and its 0x049C update are its bytes, distinct from 0xC032's
+      0x0494 ones. As with the 0x04AE word, no committed routine is what
+      stops the increment and so this entry does not claim the word is never
+      set non-zero; 0x3C is 60 and no unit is claimed. What the word counts,
+      and against what the comparison decides, are not established.
+      Nothing was observed live, and this is not a driver-write target.
