@@ -1035,7 +1035,7 @@ def self_test(d: bytes) -> int:
               and tuple(e["key"] for e in head)
               == tuple(int.from_bytes(b[2:], "big") for b in want),
               f"file 0x{off_4:05X} reads as {stride_4}-byte records whose first "
-              f"two bytes are the target and whose last {stride_4 - 1} are the "
+              f"two bytes are the target and whose last {stride_4 - 2} are the "
               f"key -- `{raw_4}` (got "
               + " ".join(b.hex() for b in got) + ")")
 

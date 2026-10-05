@@ -372,7 +372,13 @@ this image:
   [`pd-code-table-inline-width.md`](../../docs/findings/pd-code-table-inline-width.md)).
   `0x11EF` is named here by address only: it has no row in
   `ghidra-functions.csv`, and §6's sixth item already carries the argument for
-  that.
+  that. *(Corrected, issue #1120: both halves are now false. `0x11EF` has the
+  row `pd,11EF,dispatch_code_table_4byte_key_r4r7`, seeded once its 6-byte
+  entry layout was established in
+  [`pd-reader-entry-layouts.md`](../../docs/findings/pd-reader-entry-layouts.md),
+  and §4.1's dispatch table below lists it by that name. "The unnamed `0x11EF`"
+  a few lines up predates the row the same way. §6's sixth item is about naming
+  `state`-typed rows and is unaffected.)*
 
 So the honest reading is: **the pool is reached by an address this method
 cannot compute**, and the way to find it is to watch DPTR rather than to grep
