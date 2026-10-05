@@ -101,29 +101,39 @@ FIRMWARE = str(EC / "firmware" / "GMxMGxx_11.800")
 PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
 # The addresses `xdata-inc-dptr-only.md` §2 lists as entered, which is what
 # "entered" has meant here throughout -- a name on the byte a `MOV DPTR` would
-# have to find. Most are low halves of a pair their seed is. Two are high
-# halves, and they are here on visibly different warrants rather than on one
-# shared rule:
+# have to find. It is the rows `registers.yaml` names, so it moves whenever an
+# address is entered: issue #1425 entered `0x04A3`, issue #1202 `0x04A5` and
+# issue #732 `0x04A1`, `0x04AF` and `0x04BF`. This is therefore a placeholder
+# for a list that keeps growing rather than a figure anyone should read off,
+# and it is asserted below against `ids.entered_addrs()` as well, so a row the
+# YAML names and this tuple omits is a failure rather than a silent shrink.
+#
+# Most of them are the byte a `MOV DPTR` of their own names. A few are here on
+# visibly different warrants rather than on one shared rule:
 #
 #   `0x04A3` is `PACK_TEMP_DK_1`, the byte above `0x04A2`, and has a main-EC
 #   `MOV DPTR` site of its own (`bank0:0xBAE7`, a read of the high half), so it
 #   is an ordinary entered row and the invariant below covers it like any
 #   other. Being a high half is a fact about the byte, not a reason to hold it
-#   out of the check.
+#   out of the check. `0x04A1`, `0x04AF` and `0x04BF` are high halves too --
+#   the bytes above the seeds `0x04A0`, `0x04AE` and `0x04BE` -- and each has a
+#   main-EC site of its own for the same reason.
 #
 #   `0x04A5` is the high half of the `0x04A4` pair and has no main-EC `MOV
 #   DPTR` site at all: `trace_xdata_refs.py` finds three sites for it and every
-#   one is the ITE8850-PD image's. Issue #1202 entered it on a committed
-#   capture instead -- the byte takes more than one value there and tracks the
-#   row's own `current_now / 1000` -- which is an observation rather than the
-#   static access §6's rule admits on. It is named and asserted on its own
-#   terms below rather than skipped, so a silent exemption cannot let the next
-#   such entry pass unnoticed.
+#   one is the ITE8850-PD image's, which is what puts it among the 73 of §2
+#   rather than among the 34 with a main-EC site. Issue #1202 entered it on a
+#   committed capture instead -- the byte takes more than one value there and
+#   tracks the row's own `current_now / 1000` -- which is an observation rather
+#   than the static access §6's rule admits on. It is named and asserted on its
+#   own terms below rather than skipped, so a silent exemption cannot let the
+#   next such entry pass unnoticed.
 #
 # The population this list has is `population_of`'s to say, not this comment's;
 # what is pinned here is the set of addresses, not how many there are.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
-                     "0x04A3", "0x04A5", "0x04A7", "0x0523")
+                     "0x04A1", "0x04A3", "0x04A5", "0x04A7", "0x04AF",
+                     "0x04BF", "0x0523")
 
 # The ten addresses `xdata-register-map.md` §4.7 spells, in order. See the
 # docstring for why this is ten and not the issue's eleven.
@@ -386,22 +396,37 @@ class TheSplit(unittest.TestCase):
         self.assertEqual(the73[len(NAMED_HEAD)], "0x0364")
         self.assertNotIn(the73[len(NAMED_HEAD)], NAMED_HEAD)
 
-    def test_the_entered_rows_are_exactly_the_named_addresses(self):
+    def test_the_entered_rows_are_exactly_the_addresses_registers_yaml_names(self):
+        # The property, not a census: the rows this table calls entered are the
+        # ones `registers.yaml` names, and nothing else is. No figure here --
+        # the next append must not have to renumber a test to land.
         entered = [r["addr"] for r in self.rows if r["entered"] == "yes"]
         self.assertEqual(entered, list(ENTERED_ADDRESSES))
         # Every entered row has a main-EC `MOV DPTR` site of its own except
         # `0x04A5`, whose warrant is a committed capture instead; the constant
-        # above says why each is here. Both high halves are covered rather
-        # than exempted: `0x04A3` through the ordinary invariant, `0x04A5`
-        # through its own assertions. The invariant is checked for the rest
-        # rather than for all of them because a real second warrant is a
-        # thing this table has to be able to record.
+        # above says why each is here. The high halves are covered rather than
+        # exempted: `0x04A3`, `0x04A1`, `0x04AF` and `0x04BF` through the
+        # ordinary invariant, `0x04A5` through its own assertions. `0x04A3`
+        # being one is a fact about the byte and not a reason to hold it out:
+        # its site is `bank0:0xBAE7`, a read of the high half, and the pin
+        # below is what keeps that from being re-read as an exception. The
+        # invariant is checked for the rest rather than for all of them because
+        # a real second warrant is a thing this table has to be able to record.
         for r in self.rows:
             if r["entered"] == "yes" and r["addr"] != "0x04A5":
                 self.assertNotEqual(r["mov_dptr_main_ec"], "0",
                                     f"{r['addr']} is entered with no main-EC "
                                     "`MOV DPTR` site, so §6's rule and this "
                                     "table disagree about what entering means")
+        # Held against registers.yaml directly as well, so the tuple above
+        # cannot drift from the source of truth in the direction that loses a
+        # row: `entered` is derived from the YAML's `addr` field and nothing
+        # else, and an address the YAML names that this tuple omits would
+        # otherwise only show up as a shorter list.
+        for addr in ENTERED_ADDRESSES:
+            self.assertIn(int(addr, 16), ids.entered_addrs(),
+                          f"{addr} is in ENTERED_ADDRESSES but registers.yaml "
+                          "does not name it")
         for r in self.rows:
             if r["addr"] == "0x04A5":
                 self.assertEqual(r["mov_dptr_main_ec"], "0")
