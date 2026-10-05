@@ -42,14 +42,17 @@ measurable -- **the first two are not independent of each other**:
 - **The MCS-51 manual, transcribed into `MCS51_LEN`** (`--divergence`,
   `--coverage`'s `man` column) is the third route, and the only one that is not
   a decoder at all. It is what makes the other two's independence testable
-  rather than assumed -- **on the rows where it is itself independent.** It was
-  not, on `0xA8`-`0xAF`: the transcription had `2` across that block, copied
-  from the `0x78` row, where the instruction set has `XCH A,Rn` at 1 -- the
-  same instruction the table carries at 1 in the `0xC8` row, and the same two
-  bytes `disasm8051.py` prints for `0x78` and `0xA8` alike. So the third oracle
-  agreed with the two it exists to contradict, and `--divergence` now reports
-  those eight rows rather than a zero. `SPOT_CHECKS` in the suite carries the
-  block, which is what a 256-byte literal read by eye needs.
+  rather than assumed -- **on the rows where it is itself independent**, which
+  is now every row it assigns: `0xA8`-`0xAF` was where it was not, carrying
+  `XCH A,Rn`'s 1 byte on the row that is `MOV Rn,direct`, and an earlier
+  correction had spent eight rows of `--divergence` reporting it. The corpus
+  settled that block without any decoder's help -- every instruction start in
+  it is followed by a row two bytes on, and none by a row one byte on -- and
+  `a8af_operand_role.py` is what re-derives it. The rows are still *named* by
+  `--divergence`, under `CORRECTED_MANUAL_ROWS`, with that reason: a corrected
+  transcription is not a reason for the tool that exists to surface the row to
+  go quiet about it. `SPOT_CHECKS` in the suite carries the block, which is
+  what a 256-byte literal read by eye needs.
 
 **Why the third one, given the repository already knows the two decoders share
 a lineage.** Ghidra's SLEIGH, r2 and `sdas8051` all put `ORL C,/bit` at `0xA0`
@@ -182,6 +185,24 @@ SELF_TEST_TABLES = (
 # the corrected table the manual, Ghidra and r2 agree at both, and 0xA5 is the
 # one row left on which a decoder's agreement is not evidence.
 #
+# **The 0xA0-0xAF row, corrected (2026-10-05, issue #1154).** This row carried
+# `1` at `0xA8`-`0xAF`, which is `XCH A,Rn` -- an instruction that lives at
+# `0xC8`-`0xCF`, where this table and `disasm8051.OPCODE_LEN` both carry the 1
+# correctly and which the corpus frames one byte on. `0xA8`-`0xAF` is
+# `MOV Rn,direct`, two bytes. The manual is not ambiguous about it, so this was a
+# transcription slip and not a firmware departure: an earlier correction had
+# put the `XCH A,Rn` length on the wrong row, and `--divergence` spent eight
+# rows reporting it. The corpus settles it without consulting any decoder --
+# every instruction start in the block is followed by a row two bytes on and
+# none is followed by a row one byte on, and the operand bytes are dominated by
+# `0x82`/`0x83`, which as opcodes are placed at an instruction start a
+# handful of times against the block's own site count.
+# `a8af_operand_role.py` derives both halves and prints them;
+# `../../docs/findings/a8-af-block-length-and-operand.md` is the write-up, with
+# the wrong version left beside the correction. The block is still *reported*
+# by `--divergence`, with that reason attached: a corrected transcription is
+# not a reason for the tool that exists to surface the row to go quiet.
+#
 # Transcribed here rather than imported because there is nothing to import it
 # from, and transcribed with the 0xA0/0xB0 row deliberately *not* resolved:
 # the manual's `ANL C,/bit` at 0xA0 and `ORL C,/bit` at 0xB0 is a different
@@ -204,7 +225,7 @@ MCS51_LEN = (
     b"\x02\x02\x02\x01\x02\x03\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02"
     b"\x02\x02\x02\x01\x01\x03\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02"
     b"\x03\x02\x02\x01\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-    b"\x02\x02\x02\x01\x01\x00\x02\x02\x01\x01\x01\x01\x01\x01\x01\x01"
+    b"\x02\x02\x02\x01\x01\x00\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02"
     b"\x02\x02\x02\x01\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03"
     b"\x02\x02\x02\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
     b"\x02\x02\x02\x01\x01\x03\x01\x01\x02\x02\x02\x02\x02\x02\x02\x02"
@@ -216,6 +237,53 @@ MCS51_LEN = (
 # decoder's agreement with `OPCODE_LEN` is evidence: the manual says nothing,
 # so there is nothing for a decoder to corroborate.
 MANUAL_UNASSIGNED = tuple(op for op in range(256) if MCS51_LEN[op] == 0)
+
+# Rows where a *previous* transcription of `MCS51_LEN` was wrong, and what the
+# corpus says instead. Deliberately not folded into `MANUAL_UNASSIGNED` and not
+# a list of rows still in disagreement: on these rows the manual and the table
+# now agree, so they are neither. They are here because a corrected
+# transcription that makes a tool go quiet is its own kind of failure -- the
+# block is where a hand transcription put one instruction's length on another
+# row, and a reader who has not seen the correction has no way to tell that
+# from a row that was never in question.
+#
+# The reason is stated here rather than generated, because it is a claim about
+# committed files and `a8af_operand_role.py` is what re-derives it: a
+# generated reason would go quiet the moment the corpus moved, which is the
+# opposite of what a row in this table is for.
+CORRECTED_MANUAL_ROWS = (
+    (0xA8, 0xAF,
+     "transcribed as `XCH A,Rn` at 1 byte, which is the instruction at "
+     "0xC8-0xCF; the corpus frames every instruction start in this block two "
+     "bytes on and none one byte on, and reads the operand byte as a direct "
+     "address (0x82/0x83 dominate) -- see a8af_operand_role.py"),
+)
+
+
+def corrected_manual_rows():
+    """The rows a corrected transcription used to get wrong. -> [(op, hex, why)].
+
+    Reported by `--divergence` so that fixing the table does not also silence
+    the report, and deliberately computed from `CORRECTED_MANUAL_ROWS` rather
+    than kept in the prose of this file: the table above is the thing being
+    corrected, and a note about the correction that lives beside the thing it
+    corrects is one merge away from being wrong about it.
+    """
+    return [(op, "0x%02x" % op, why)
+            for lo, hi, why in CORRECTED_MANUAL_ROWS
+            for op in range(lo, hi + 1)]
+
+
+def corrected_manual_ranges():
+    """The same rows as the ranges they were corrected in. -> [(op, lo, hi)].
+
+    The report above prints one line per range, because eight copies of the
+    same sentence is not a report; this expands a range back to one entry per
+    opcode so a test can hold *every* row rather than the shape of the block.
+    """
+    return [(op, lo, hi)
+            for lo, hi, _why in CORRECTED_MANUAL_ROWS
+            for op in range(lo, hi + 1)]
 
 
 def manual_divergences(opcode_len=None):
@@ -829,6 +897,21 @@ def main(argv=None) -> int:
                       "says %d" % (op, ours, theirs))
             print("  %d row(s) of %d the manual assigns"
                   % (len(mdiv), 256 - len(MANUAL_UNASSIGNED)))
+            # Rows a corrected transcription used to get wrong, still named.
+            # Not `FAIL` lines -- these agree now -- and not silently dropped
+            # either: the tool exists to surface a row where the manual and the
+            # firmware's own bytes disagree, and the eight rows here were
+            # exactly that until the transcription was fixed. A reader who sees
+            # a zero here and no mention of them cannot tell a corrected row
+            # from a row that was never in question.
+            fixed = corrected_manual_rows()
+            if fixed:
+                print()
+                print("rows this oracle had wrong and no longer does -- the "
+                      "manual and the table\nagree at %d row(s), so they are "
+                      "neither a disagreement nor\na clean row:" % len(fixed))
+                for lo, hi, why in CORRECTED_MANUAL_ROWS:
+                    print("  0x%02x-0x%02x  %s" % (lo, hi, why))
             print()
             shared = shared_map_rows(table)
             print("rows no oracle can corroborate (the manual assigns no "

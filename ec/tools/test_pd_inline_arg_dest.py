@@ -104,7 +104,10 @@ class DecodeFixtureTests(unittest.TestCase):
         # property: `00 00 00 01` decodes as three `nop`s and an `ajmp`, so a
         # walk that read the block as instructions arrives four bytes past the
         # second call and never lands on it. The decode therefore only recovers
-        # `0x0A82` if the block was stepped over as a block.
+        # the caller's `0x0A98` if the block was stepped over as a block -- the
+        # loaded DPTR *is* the destination, since `mov r0,0x82` reads its
+        # operand as `DPL` and the helper restores the caller's pointer before
+        # the store.
         fixture = bytes([MOV_DPTR, 0x0A, 0x98,
                          *LCALL_104D, 0x00, 0x00, 0x00, 0x01,
                          *LCALL_104D, 0x00, 0x00, 0x00, 0x01])
@@ -112,7 +115,7 @@ class DecodeFixtureTests(unittest.TestCase):
         self.assertIsNotNone(tool.walk_to(fixture, 0, at),
                              'the walk did not reach the second call at all')
         row = decode(fixture, at)
-        self.assertEqual(row["dest_decoded"], "0x0A82")
+        self.assertEqual(row["dest_decoded"], "0x0A98")
         self.assertEqual(row["dest_reason"], tool.UNIQUE)
 
     def test_a_walk_does_not_decode_inside_an_argument_block(self):
@@ -138,11 +141,11 @@ class DecodeFixtureTests(unittest.TestCase):
 
     def test_two_agreeing_walks_read_as_one_answer(self):
         fixture = bytes([0xE4,              # clr a
-                         MOV_DPTR, 0x0A, 0x82,
+                         MOV_DPTR, 0x0A, 0x98,
                          *LCALL_104D, 0x00, 0x00, 0x00, 0x01])
         row = decode(fixture, at=fixture.index(LCALL_104D))
         self.assertEqual(row["dest_reason"], tool.UNIQUE)
-        self.assertEqual(row["dest_decoded"], "0x0A82")
+        self.assertEqual(row["dest_decoded"], "0x0A98")
         # Every walk that carried a load agreed, so the candidate cell names one
         # address. A `decoded-unique` row carrying two candidates would be the
         # token contradicting itself.
@@ -163,8 +166,8 @@ class DecodeFixtureTests(unittest.TestCase):
         self.assertEqual(row["dest_decoded"], "")
         candidates = row["dest_candidates"].split("|")
         self.assertEqual(len(candidates), 2)
-        self.assertIn("0x0882x1", candidates)
-        self.assertIn("0x9082x1", candidates)
+        self.assertIn("0x083Dx1", candidates)
+        self.assertIn("0x9008x1", candidates)
 
     def test_agreement_is_on_the_destination_not_the_loaded_dptr(self):
         # Two DPLs, one high byte. The mechanism overwrites the low byte with
@@ -292,15 +295,32 @@ class ImageFigureTests(unittest.TestCase):
             self.assertEqual(row["dest_decoded"], "")
             self.assertGreater(len(row["dest_candidates"].split("|")), 1)
 
-    def test_every_decoded_destination_has_the_literal_low_byte(self):
-        # The mechanism substitutes 0x82 for the caller's DPL, so a decoded
-        # destination ending in anything else would mean the decode was reading
-        # a DPTR rather than a deposit -- which is the `0x0A98` the summary
-        # rendered before the masking was moved ahead of it.
+    def test_decoded_destinations_are_not_all_the_same_low_byte(self):
+        # **This is the correction, stated as a property rather than a
+        # figure.** The retired case asserted that *every* decoded destination
+        # ended in the literal `0x82`, which is what the image looks like when
+        # the byte at `0x104D` is read as `mov r0,#0x82` and the helper's low
+        # byte is taken to be that constant. `0xA8`-`0xAF` is `mov Rn,direct`,
+        # so the instruction is `mov r0,DPL`: the helper saves the caller's
+        # DPTR into R0:B and restores it before the store, and the deposit
+        # lands on the caller's own pointer.
+        #
+        # So the destinations are the callers' DPTRs and their low bytes vary.
+        # Asserted as a relation -- more than one low byte occurs -- so it
+        # holds however the corpus grows and says the thing the old assertion
+        # said, with the sign reversed.
+        low = {int(r["dest_decoded"], 16) & 0xFF
+               for r in self.rows if r["dest_decoded"]}
+        self.assertGreater(len(low), 1,
+                           "every decoded destination still ends in one byte")
+
+    def test_the_retracted_constant_is_no_longer_used(self):
+        # `DEST_LOW` was the substituted low byte. It is `None` now, and a tool
+        # that reached for it would raise or silently mask -- so the constant
+        # being gone is part of the correction, and this says so rather than
+        # leaving it to be rediscovered.
         from pd_inline_arg_sites import DEST_LOW
-        for row in self.rows:
-            if row["dest_decoded"]:
-                self.assertEqual(int(row["dest_decoded"], 16) & 0xFF, DEST_LOW)
+        self.assertIsNone(DEST_LOW)
 
 
 class CommittedTableTests(unittest.TestCase):
