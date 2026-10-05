@@ -178,9 +178,9 @@ class CsvSink:
     over one byte. The literal is repeated in the other four classes that write
     this shape rather than imported from here, because `windows/tools/` is
     deployed as a directory and a shared constant would be one more thing to
-    copy -- and because this file already loads the grader by path precisely
-    so no second copy of a rule can drift from the thing that enforces it
-    (#548).
+    copy -- and because the grader is loaded through the ordered lookup below
+    rather than transcribed here, so no second copy of a rule can drift from
+    the thing that enforces it (#548).
     """
 
     def __init__(self, path):
@@ -270,16 +270,20 @@ def load_label_vocab(ap, name, grader_path=None):
     nor a byte the encoding cannot decode -- see their docstrings for why that
     is the point rather than an accident.
 
-    The import is the one `manual_fan_ctrl_probe.py`'s self-test makes, and it
-    is by path and only under this flag, for the reason that call gives: this
-    tool is imported at module scope by `gpu_block_watch.py:59,166`, and a
-    grader requirement it never asked for is not one it should inherit. What
-    that call rules out is a dependency on the repository *layout*, and this
-    lookup was one hard-coded path, which made the layout the whole of it. The
-    layout is one of the places `grader_candidates` looks now; the dependency
-    that is real is on the file existing somewhere, which is one -- §3's three
-    commands carry the flag and will not start without it -- and is what this
-    function's refusal is for rather than something to look past. The grader
+    The import is one `manual_fan_ctrl_probe.py`'s self-test makes as well, and
+    it comes through this candidate list rather than a path of that tool's own:
+    the search order having one home is the point, and a second copy of it is
+    the drift the load exists to prevent. Neither is at module scope, and each
+    is out of it for the same reason -- a grader requirement is not one an
+    importer should inherit: `gpu_block_watch.py:59,166` imports this tool at
+    module scope, and whoever imports the probe would inherit this tool's
+    lookup the same way. What that rules out is a dependency on the repository
+    *layout*, and this lookup was one hard-coded path, which made the layout
+    the whole of it. The layout is one of the places `grader_candidates` looks
+    now; the dependency that is real is on the file existing somewhere, which
+    is one -- §3's three commands carry the flag and will not start without it
+    -- and is what this function's refusal is for rather than something to look
+    past. The grader
     imports stdlib only and its module-level work is constants and a
     `__main__` guard, so loading it there opens no capture and touches no
     hardware.

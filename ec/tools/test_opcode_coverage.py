@@ -639,17 +639,21 @@ class TheManualOracle(unittest.TestCase):
         0xC1: 2,   # clr bit -- the row disasm8051.py states from the manual
         0xD5: 3,   # djnz direct,rel
         0xD8: 2,   # djnz r7,rel   -- 2, while the row above is 3
-        # **0xA8-0xAF is here because it is the row this table got wrong.**
-        # The transcription put 2 across the whole block, a byte-for-byte copy
-        # of the 0x78 row (`mov r0,#data`), where the instruction set has
-        # `XCH A,Rn` at 1 -- the same instruction the table carries at 1 in
-        # 0xC8, and the same two bytes `disasm8051.py` emits for 0x78 and 0xA8
-        # alike. The decoders agreed with each other and with a copy, so the
-        # one oracle that could have caught it was the one that agreed.
-        # Nothing in the block was spot-checked before, which is how a
-        # 256-byte literal read by eye keeps a block wrong.
-        0xA8: 1,   # xch a,r0      -- 1, and 0xC8 is the same instruction
-        0xAF: 1,   # xch a,r7      -- 1; the 0x78 row's mirror image
+        # **0xA8-0xAF is here because it is the row this table got wrong
+        # twice.** The transcription carried 2 across the whole block, a
+        # byte-for-byte copy of the 0x78 row (`mov r0,#data`); a correction
+        # then set it to 1, on the reading that the block is `XCH A,Rn` --
+        # which is the instruction at 0xC8-0xCF, not here. `0xA8`-`0xAF` is
+        # `MOV Rn,direct`, 2 bytes, and the committed corpus frames it that
+        # way at every instruction start. Both wrong versions are in the
+        # write-up beside the one this table now carries.
+        #
+        # The 0xC8 row is pinned below for the same reason and is what makes
+        # the pair readable: `XCH A,Rn` at 1 there and `MOV Rn,direct` at 2
+        # here, in one table, so a slip between the two rows is visible.
+        0xA8: 2,   # mov r0,direct -- 2; 0xC8 below is the XCH A,Rn at 1
+        0xAF: 2,   # mov r7,direct -- 2; the 0x78 row's mirror image
+        0xC8: 1,   # xch a,r0      -- 1, and this is where XCH A,Rn lives
         0xE4: 1,   # clr a
         0xE5: 2,   # mov a,direct
         0xF4: 1,   # cpl a
@@ -674,38 +678,68 @@ class TheManualOracle(unittest.TestCase):
         # assigns them; the write-up carries the correction.
         self.assertEqual((0xA5,), C.MANUAL_UNASSIGNED)
 
-    def test_the_real_table_disagrees_with_the_manual_on_exactly_the_eight_shared_rows(self):
-        # **The result this oracle now produces is eight disagreements, not
-        # zero, and the eight are the finding.** `MCS51_LEN` was transcribed
-        # with `2` at `0xA8`-`0xAF`, a byte-for-byte copy of the `0x78` row,
-        # where the instruction set has `XCH A,Rn` at 1 -- the same
-        # instruction the table carries at 1 in the `0xC8` row, and the same
-        # two bytes `disasm8051.py` prints for `0x78` and `0xA8` alike. So on
-        # these eight rows the "independent" third oracle was agreeing with
-        # the two decoders it exists to contradict, and its zero was 247 rows
-        # of corroboration plus eight rows of echo.
+    def test_the_real_table_and_the_manual_now_agree_on_every_row(self):
+        # **This used to be eight disagreements, and the eight were the
+        # finding.** `MCS51_LEN` was transcribed with `2` across `0xA8`-`0xAF`,
+        # a byte-for-byte copy of the `0x78` row; a later correction set it to
+        # `1`, on the reading that the block is `XCH A,Rn` -- the instruction
+        # at `0xC8`-`0xCF`, which this table still carries at 1. The block is
+        # `MOV Rn,direct`, two bytes, and the committed corpus frames it that
+        # way at every instruction start (`a8af_operand_role.py`).
         #
-        # The eight are asserted by value and not by count, so a failure names
-        # the rows rather than reporting that something moved.
-        self.assertEqual(
-            [(op, 2, 1) for op in range(0xA8, 0xB0)],
-            C.manual_divergences())
+        # So the oracle's zero is now 255 rows of corroboration rather than 247
+        # plus eight of echo, and this asserts it -- with the eight rows still
+        # *named* by `corrected_manual_rows()` rather than simply gone, since a
+        # corrected row and a row that was never in question look identical
+        # from the outside.
+        self.assertEqual([], C.manual_divergences())
+        self.assertEqual([(op, 0xA8, 0xAF) for op in range(0xA8, 0xB0)],
+                         [(op, lo, hi) for op, lo, hi in
+                          C.corrected_manual_ranges()])
+
+    def test_the_corrected_block_agrees_with_the_real_table(self):
+        # The point of the correction: the block must not be reported as a
+        # disagreement *and* not quietly dropped. Asserted as a relation
+        # between the two tables, so a future transcription slip in either
+        # direction fails here rather than in a `--divergence` exit code nobody
+        # is watching.
+        for lo, hi, _why in C.CORRECTED_MANUAL_ROWS:
+            for op in range(lo, hi + 1):
+                self.assertEqual(C.MCS51_LEN[op], D.OPCODE_LEN[op],
+                                 "0x%02X" % op)
 
     def test_a_patched_table_is_found_by_the_manual_too(self):
         # The oracle has to be able to fail. Patch one row the manual assigns
         # (`ljmp`, 3 bytes) and one row it does not (`0xA5`, no entry): only
         # the first may come back, and its reported length must be the manual's.
-        #
-        # The eight shared rows are neutralised first, so this case still
-        # measures only the two probes it names: without that, the real table's
-        # eight disagreements ride along in every result and the case stops
-        # being about `ljmp` and `0xA5` at all.
         wrong = bytearray(D.OPCODE_LEN)
-        for op in range(0xA8, 0xB0):
-            wrong[op] = C.MCS51_LEN[op]
         wrong[0x02] = 2
         wrong[0xA5] = 3
         self.assertEqual([(0x02, 2, 3)], C.manual_divergences(opcode_len=bytes(wrong)))
+
+    def test_divergence_exits_zero_on_an_unmodified_tree(self):
+        # The issue's acceptance test, and a property rather than a figure:
+        # the three oracles agree on every row, so the mode exits 0 -- while
+        # still *naming* the rows a correction settled, which is the half that
+        # is easy to lose and the reason `--divergence` is not simply a
+        # disagreement counter.
+        #
+        # Runs against the committed corpus rather than a fixture: this is the
+        # one case whose subject is the tree as it stands, and the point is
+        # that nothing about an ordinary merge turns the mode red.
+        err, out = io.StringIO(), io.StringIO()
+        old_err, old_out = sys.stderr, sys.stdout
+        try:
+            sys.stderr, sys.stdout = err, out
+            rc = C.main(["--divergence"])
+        finally:
+            sys.stderr, sys.stdout = old_err, old_out
+        said = out.getvalue()
+        self.assertEqual(0, rc, said)
+        self.assertIn("had wrong and no longer does", said)
+        # Named, and named by range, so the report does not print the same
+        # sentence eight times.
+        self.assertIn("0xa8-0xaf", said)
 
     def test_an_unassigned_row_is_neither_agreement_nor_disagreement(self):
         # The whole reason the column is tri-state. 0xA5's table length is 1

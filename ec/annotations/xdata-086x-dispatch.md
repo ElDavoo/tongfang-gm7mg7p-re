@@ -315,19 +315,59 @@ neither the numerator nor the denominator here.
 `passed-to-call` is the `switch_case_dispatch(XDATA_0860)` call in
 `dispatch_on_0860` — an address handed to a call is that bucket and not a
 read, which is why the census's 14 reads are all comparisons. The row is not
-the tool's own sum: `HAND_CHECKED["0x0860"]` at
-`ec/tools/xdata_register_map.py:770` pins exactly those buckets, and the
-self-test's "hand-checked direction oracle" assertion at `:2250-2256` fails
-loudly if a generated row ever parts company with it. It is one of five
-addresses in that oracle — and since issue #280 it is **not** the only net:
-the self-test now also asserts, over the whole tree rather than over these
-five, that every occurrence the census buckets `write` or `read+write` has an
-assignment and not a `==` after the address, measured by a second code path
-that does not re-implement the classifier. That check covers 5,677
-occurrences across 1,008 addresses, and against the pre-fix classifier it
-fails naming `0x0860` and `0x0440` — so the hand check is now the per-address
-*count* oracle and the wide one is the per-occurrence shape oracle, and the
-two are not substitutes for each other.
+the tool's own sum, and since issue #868 **not** by a hand oracle keyed to
+this address: the per-address tables that did that are gone, and the comment
+where they stood at `ec/tools/xdata_register_map.py:3599` records why — they
+"held reference counts, and a count of an address moves whenever a routine
+that touches it is seeded". The direction rule is held instead by
+`CLASSIFIER_SHAPE`'s literal snippets (`:946`) and by the corpus-wide direction
+invariant (`:3700`), which asserts that every occurrence the census buckets
+`write` or `read+write` has an assignment and not a `==` after the address,
+measured by a second code path that does not re-implement the classifier.
+Against the pre-fix classifier that invariant fails naming `0x0860` and
+`0x0440`. **Neither of those two holds a per-address count**: the first is a
+shape test over literal snippets, the second is a per-occurrence invariant
+over the whole tree, and what re-derives *these* figures per site is
+`check_site_census.py`'s correspondence against the census — which recomputes
+each bucket from the census's own `classify()`, so it is a cross-check on the
+classifier's inputs and not an independent hand count of `0x0860`. The
+per-address *count* oracle this paragraph used to claim no longer exists.
+
+> **CORRECTION (2026-10-05, issue #868).** The paragraph above used to say
+> that `HAND_CHECKED["0x0860"]` at `ec/tools/xdata_register_map.py:770` "pins
+> exactly those buckets", and that the self-test's "hand-checked direction
+> oracle" assertion at `:2250-2256` "fails loudly if a generated row ever parts
+> company with it", and that `0x0860` was "one of five addresses in that
+> oracle". **Both cited subjects no longer exist in the tool that sentence
+> names**, so this is a retraction rather than a re-point: there is no line
+> that would make the sentence true again. `HAND_CHECKED` and
+> `COREADING_CHECKED` were removed rather than moved — `:770` is a comment
+> inside the module-level `NOT_IN_TREE` dict literal (`:724-888`), on the
+> `0x0733` BLIND_SPOT entry and naming `bank0:0x94D0=copy_code_table_into_0730_07a7`,
+> and `:2250-2256` is a `similar(...)` union-find line inside the cluster
+> grouping. Both were read by an AST scope check rather than by eye, which is
+> what it took to get the first one right: `per_program_columns()` is a `def`
+> at `:423-446` and cannot contain line 770, so naming the enclosing `def` here
+> was itself a stale reading of the same kind. The comment left
+> where the oracles stood is quoted above and names the replacement. The
+> issue's own measured replacements were stale in the same way the issue's own
+> line numbers were: `HAND_CHECKED` was not at the `:1399` it reported either,
+> for the same reason.
+>
+> **Not one figure in the census moved.** `14 read, 2 write, 0 read+write, 1
+> passed-to-call`, `refs: 17`, `bank0/D281.c:19` and `bank0/D289.c:18` are
+> exactly right and are unchanged, because what was wrong was never the
+> figures: it was the claim that a second, hand-derived source agreed with
+> them. A reader deciding how much the row is worth should now weigh that the
+> only independent statement about `0x0860`'s direction split is the tool's
+> own classification, checked for shape rather than for count.
+>
+> Each cell is named by the sentence it sat in rather than by line, for the
+> reason this page's earlier corrections give: a correction block that cites
+> the line numbers of the file it is correcting is stale on arrival. The
+> pointers are held by name by `ec/tools/check_source_citations.py`, whose
+> census of this class is
+> [`docs/findings/source-line-citations-anchored.md`](../../docs/findings/source-line-citations-anchored.md).
 
 `0x0860` is the one that shows how far the pre-fix classifier got: the row
 then read 0 read / 13 `write` / 3 `read+write`, a pure write-side dispatch

@@ -62,18 +62,45 @@ $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 0 0x08000 /tmp/
 $ python3 ec/tools/make_bank_image.py ec/firmware/GMxMGxx_11.800 1 0x10000 /tmp/bank1.bin
 ```
 
-The self-test exits 0 and prints one line per check: the stub→bank decoding
-re-derived through `find_stubs()`, the seed census, the two hand-decoded pins
-below, the two `jmp @a+dptr` dispatch shapes §5 names, the four verdicts over
-both populations, the closure's own internal check, the per-run `bounds` column
-below, and — since issue #1078 — the common-area identity and the DPTR routes
-that explain it.
+The self-test exits 0 and prints an `ok`/`FAIL` line for every check it makes:
+the stub→bank decoding re-derived through `find_stubs()`, the seed census, the
+two hand-decoded pins below, the two `jmp @a+dptr` dispatch shapes §5 names, the
+four verdicts over both populations, the closure's own internal check, the
+per-run `bounds` column below, and — since issue #1078 — the common-area identity
+and the DPTR routes that explain it. (This paragraph used to give a number of
+checks, and that number was right when written but has since gone stale as
+checks were added to the tool — the committed firmware is byte-identical to the
+one it was measured against, so the drift is the tool growing, not the image
+changing. The count is not repeated here because it moves with every check added
+to the tool, and `grep -c '^  ok'` on the command above is what prints the
+current one.)
 
 Wiring it into `check_ghidra_tooling`'s tool list in
 `../../.github/scripts/agent-gates.sh` would make it permanently self-checking,
 and that one line is **out of scope for this branch on purpose**: the push token
 has no `workflow` scope, so a branch touching `.github/` fails at the end of the
 run rather than the start. A human adds it.
+
+**Correction, and the note above is the wrong version.** "A human adds it" to
+the tool *list* was never available: every position in that loop's tool list and
+every line of the `gate` list below it is already another prepared patch's
+context, so there is no free line to add one to. What is prepared instead is a
+call in the tail of `check_ghidra_tooling()` — after `done`, before the scratch
+directory is removed — which is the one region no prepared patch's hunk reaches.
+It is a tail call rather than a `case` arm because this tool takes the dump as a
+positional path and no `--work`, so the loop's `*)` default would hand it
+`--work "$scratch" --check` and its argparse would exit 2 on both.
+
+That call is folded into `docs/ci/agent-gates-reassembly-bound-check.patch`
+rather than shipped as `docs/ci/agent-gates-bank-attribution-self-test.patch`,
+which is the filename issue #1081 asked for and which is deliberately not on
+disk: a standalone cut of the same region applies cleanly alone and then fails
+against the patch already holding it, in both orders, which is the silent shape
+`docs/findings/prepared-gate-patches.md` records. `docs/findings/bank-attribution-gate-arm.md`
+has the measurement and what the arm does and does not buy. The token's missing
+`workflow` scope is unchanged and is still why this is prepared rather than
+landed — **a human still lands it, with `git apply`, and that is the step this
+branch cannot take.**
 
 [`bank-attribution-pairs.csv`](bank-attribution-pairs.csv) is one row per
 distinct bucket-B (caller bank, target) pair — the 1305 — carrying the byte

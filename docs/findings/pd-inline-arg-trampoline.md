@@ -84,15 +84,24 @@ $ python3 ec/tools/disasm8051.py ec/firmware/GMxMGxx_11.800 --at 0x21064 --runti
 the stack, calls `0x1064` four times, and tail-jumps. `0x1064` is one byte out
 of the code stream (`movc a,@a+dptr`), an `xch` chain, and a `movx @dptr,a`.
 
-**The first row is a trap, and it is the reason the decoder's own output is
-quoted rather than trusted here.** `a8 82` is opcode `A8`, which is
-`MOV Rn,#data8` — so the instruction is `MOV R0,#0x82`, loading a *constant*,
-not `MOV R0,direct` copying the caller's DPL. `disasm8051` renders that family
+**The first row is a trap, and the wrong side of it was taken here.**
+`a8 82` is opcode `A8`, and this file read it as `MOV Rn,#data8` — so the
+instruction was `MOV R0,#0x82`, loading a *constant*. It is `MOV R0,direct`
+instead, copying the caller's DPL into R0; `disasm8051` renders that family
 without the `#` (its `0x78`-`0x7F` sibling does print one, so the two rows of
-the same instruction disagree), which reads exactly like a register-to-register
-move. §6 records this as an open question; the mechanism below does not depend
-on fixing it, because the constant reading is the one the simulation bears out
-and the register reading does not.
+the same instruction disagree), which is what made the register reading read
+like a register-to-register move.
+
+*(Corrected 2026-10-05, issue #1154. **The paragraph above argued the constant
+reading and this file's destination column was built on it.** The corpus
+settles it: the committed listings frame every `0xA8`-`0xAF` instruction start
+two bytes on and none one byte on, and read the operand byte as a `direct`
+address — Ghidra transcribes `ad 82` as `mov R5, DPL` and r2 as `mov r5, dpl`.
+`a8af_operand_role.py` derives both halves from the corpus alone and
+`a8-af-block-length-and-operand.md` has the measurement. The wrong reading is
+left above because the reasoning that produced it is still instructive: a
+one-byte instruction has no operand to misread, so the `a8 82` pairing is what
+made the constant reading look available at all.)*
 
 **A hand-trace of the `xch` chain gives the wrong answer, and that is worth
 saying plainly.** The six `xch`s are a 4-cycle rotation: read as
@@ -115,32 +124,37 @@ caller's `A`, `R0` and `B` are given deliberately impossible values (`0x11`,
 $ python3 ec/tools/pd_inline_arg_sites.py ec/firmware/GMxMGxx_11.800 --simulate
 0x104D entered with the caller's DPTR = 0x0A98 (its `mov dptr,#0x0A98` at 0x3AA5) and a return address of 0x3AAB.
 
-  0x104D  mov  r0,#0x82       A=0x11 R0=0x82 B=0x33 DPL=0x98 DPH=0x0A  DPTR=0x0A98
-  0x104F  mov  0xf0,0x83      A=0x11 R0=0x82 B=0x0A DPL=0x98 DPH=0x0A  DPTR=0x0A98
-  0x1052  pop  0x83           A=0x11 R0=0x82 B=0x0A DPL=0x98 DPH=0x3A  DPTR=0x3A98
-  0x1054  pop  0x82           A=0x11 R0=0x82 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
-  0x1056  lcall 0x1064        A=0x11 R0=0x82 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
-    0x1064  clr  a            A=0x00 R0=0x82 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
-    0x1065  movc a,@a+dptr    A=0x00 R0=0x82 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
-    0x1066  inc  dptr         A=0x00 R0=0x82 B=0x0A DPL=0xAC DPH=0x3A  DPTR=0x3AAC
-    0x1067  xch  a,0x83       A=0x3A R0=0x82 B=0x0A DPL=0xAC DPH=0x00  DPTR=0x00AC
-    0x1069  xch  a,0xf0       A=0x0A R0=0x82 B=0x3A DPL=0xAC DPH=0x00  DPTR=0x00AC
-    0x106B  xch  a,0x83       A=0x00 R0=0x82 B=0x3A DPL=0xAC DPH=0x0A  DPTR=0x0AAC
-    0x106D  xch  a,r0         A=0x82 R0=0x00 B=0x3A DPL=0xAC DPH=0x0A  DPTR=0x0AAC
-    0x106E  xch  a,0x82       A=0xAC R0=0x00 B=0x3A DPL=0x82 DPH=0x0A  DPTR=0x0A82
-    0x1070  xch  a,r0         A=0x00 R0=0xAC B=0x3A DPL=0x82 DPH=0x0A  DPTR=0x0A82
-    0x1071  movx @dptr,a      A=0x00 R0=0xAC B=0x3A DPL=0x82 DPH=0x0A  DPTR=0x0A82   <-- store
-    ... the same three calls, each depositing one byte further up 0x0A8x ...
-  0x1062  clr  a            A=0x00 R0=0x86 B=0x0A DPL=0xAF DPH=0x3A  DPTR=0x3AAF
-  0x1063  jmp  @a+dptr      A=0x00 R0=0x86 B=0x0A DPL=0xAF DPH=0x3A  DPTR=0x3AAF
+  0x104D  mov  r0,0x82        A=0x11 R0=0x98 B=0x33 DPL=0x98 DPH=0x0A  DPTR=0x0A98
+  0x104F  mov  0xf0,0x83      A=0x11 R0=0x98 B=0x0A DPL=0x98 DPH=0x0A  DPTR=0x0A98
+  0x1052  pop  0x83           A=0x11 R0=0x98 B=0x0A DPL=0x98 DPH=0x3A  DPTR=0x3A98
+  0x1054  pop  0x82           A=0x11 R0=0x98 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
+  0x1056  lcall 0x1064        A=0x11 R0=0x98 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
+    0x1064  clr  a            A=0x00 R0=0x98 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
+    0x1065  movc a,@a+dptr    A=0x00 R0=0x98 B=0x0A DPL=0xAB DPH=0x3A  DPTR=0x3AAB
+    0x1066  inc  dptr         A=0x00 R0=0x98 B=0x0A DPL=0xAC DPH=0x3A  DPTR=0x3AAC
+    0x1067  xch  a,0x83       A=0x3A R0=0x98 B=0x0A DPL=0xAC DPH=0x00  DPTR=0x00AC
+    0x1069  xch  a,0xf0       A=0x0A R0=0x98 B=0x3A DPL=0xAC DPH=0x00  DPTR=0x00AC
+    0x106B  xch  a,0x83       A=0x00 R0=0x98 B=0x3A DPL=0xAC DPH=0x0A  DPTR=0x0AAC
+    0x106D  xch  a,r0         A=0x98 R0=0x00 B=0x3A DPL=0xAC DPH=0x0A  DPTR=0x0AAC
+    0x106E  xch  a,0x82       A=0xAC R0=0x00 B=0x3A DPL=0x98 DPH=0x0A  DPTR=0x0A98
+    0x1070  xch  a,r0         A=0x00 R0=0xAC B=0x3A DPL=0x98 DPH=0x0A  DPTR=0x0A98
+    0x1071  movx @dptr,a      A=0x00 R0=0xAC B=0x3A DPL=0x98 DPH=0x0A  DPTR=0x0A98   <-- store
+    ... the same three calls, each depositing one byte further up 0x0A9x ...
+  0x1062  clr  a              A=0x00 R0=0x9C B=0x0A DPL=0xAF DPH=0x3A  DPTR=0x3AAF
+  0x1063  jmp  @a+dptr        A=0x00 R0=0x9C B=0x0A DPL=0xAF DPH=0x3A  DPTR=0x3AAF
 
   XDATA written:
-    0x0A82 <- 0x00
-    0x0A83 <- 0x00
-    0x0A84 <- 0x00
-    0x0A85 <- 0x01
-  `clr a ; jmp @a+dptr` then transfers to 0x3AAF, where the byte is 0x90
+    0x0A98 <- 0x00
+    0x0A99 <- 0x00
+    0x0A9A <- 0x00
+    0x0A9B <- 0x01
+  `clr a ; jmp @a+dptr` then transfers to 0x3AAB, where the byte is 0x90
 ```
+
+*(Corrected 2026-10-05, issue #1154. The transcript above is what
+`--simulate` prints now. The one it replaced read `mov r0,#0x82` and deposited
+at `0x0A82`-`0x0A85`; see the correction to §2 for why that reading was wrong
+and `a8-af-block-length-and-operand.md` for what settles it.)*
 
 Four things fall out of that, and each is a claim about the mechanism rather
 than about any one site:
@@ -157,6 +171,21 @@ than about any one site:
   anything, and only the high half survives, in `B`, which is where the
   destination's high byte comes from.** On return `B` still holds it and `R0`
   holds `0x85`.
+
+  *(Corrected 2026-10-05, issue #1154. **This bullet is wrong, and the
+  transcript above it is stale**: it is the `0x82` constant that never existed.
+  `mov r0,0x82` reads its operand as the direct address `DPL`, so `R0` receives
+  the caller's own low byte and the `xch` chain restores the caller's whole
+  DPTR before the store. The destination is the caller's DPTR unchanged —
+  `0x0A98`, not `0x0A82` — and `pd_inline_arg_sites.py --simulate` prints the
+  corrected transcript. The answer to "what the callee does with `R0`/`B`" is
+  the opposite of the one above: it *is* using them to save the caller's DPTR,
+  which is why `0x104D` loads DPL and `0x104F` loads DPH before the two `pop`s
+  overwrite DPTR with the return address. `DEST_LOW` is gone, the `dest` column
+  of `ec/annotations/pd-inline-arg-sites.csv` is the caller's DPTR, and
+  `pd-inline-arg-readers.md` is corrected with it — its "nothing reads these
+  cells" result was an artifact of the masked address, and several of the real
+  cells do have PD-side readers.)*
 - **The tail call dispatches on nothing.** `clr a` immediately precedes
   `jmp @a+dptr`, so it jumps to `DPTR` alone — and `DPTR` is the return address
   plus 4, because each of the four `0x1064` calls leaves it one byte further
@@ -399,6 +428,17 @@ page the callers' DPTRs fall in. **What reads those cells is
 [traced in `pd-inline-arg-readers.md`](pd-inline-arg-readers.md), and no sweep
 found one**, and this file does not claim the `0x82` offset is a per-page
 scratch cell rather than part of a wider structure; it is a fixed literal in the
+
+> **Retracted in place (2026-10-05, issue #1154).** The paragraph above
+> describes the `??82` cells, which do not exist: the destination is the
+> caller's own DPTR, so the deposits land on the addresses the callers loaded
+> and the distribution is not page-shaped. What survives is the *method* — what
+> reads a cell is settled in `pd-inline-arg-readers.md`, per program and per
+> direction, and an empty cell there means "not found by these sweeps" — and the
+> refusal to claim what the `0x82` offset is, which is moot now that there is
+> no `0x82` offset. The `dest` column of
+> `ec/annotations/pd-inline-arg-sites.csv` is regenerated from the corrected
+> mechanism.
 instruction, and that is as far as the decode goes.
 
 ## 6. What changed in the tools, and the counts
@@ -525,12 +565,24 @@ reason.
    tables and which `0x104D` call sites actually run, and what the deposited
    cells are consumed for. Both the census and this file's table are decodes over
    committed bytes, so neither can answer that.
-4. **The consumer of the `??82` cells** (§5), and whether the 32-byte
-   `dptr_load` scan can be replaced by a real backward decode for the 64 sites
-   it misses. Both halves are done in
+4. **The consumer of the deposited cells** (§5, and the cells are the callers'
+   own DPTRs rather than the `??82` page cells since #1154), and whether the
+   32-byte `dptr_load` scan can be replaced by a real backward decode for the
+   64 sites it misses. Both halves are done in
    [`pd-inline-arg-readers.md`](pd-inline-arg-readers.md): the consumer is a
    written negative, and `pd_inline_arg_dest.py` replaces the scan with a
    decode. What is left open is the part that negative opens — what would
    consume the cell if anything did.
+
+   > **Corrected in place (2026-10-05, issue #1154).** "The consumer is a
+   > written negative" and the clause after it describe the `??82` cells, and
+   > both are false over the corrected cells: they are the callers' own DPTRs,
+   > and `pd-inline-arg-readers.md` finds PD-side reads on many of them. A cell
+   > that is still empty there is "not found by these sweeps", not a settled
+   > absence — so what is left open is not the part a negative opens but the
+   > per-cell question the corrected table poses: which of the cells the
+   > sweeps did not find a read for have a consumer, and what any of the reads
+   > is *for*. The second half of the bullet is unaffected — the
+   > `dptr_load` scan is replaced by a real backward decode.
 5. **The three remaining `0x07D0` sites** (`0x3A81`, `0x4869`, `0x83E2`) — the
    address-table idiom, named and not fixed.

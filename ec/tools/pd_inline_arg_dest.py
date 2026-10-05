@@ -70,12 +70,6 @@ import sys
 from disasm8051 import OPCODE_LEN, case_table_len, inline_arg_len
 from trace_xdata_refs import PD_MARKER, check_table, repo_path
 
-# The XDATA low byte `pd_inline_arg_sites.DEST_LOW` substitutes for the caller's
-# DPL, and therefore the cell any decoded DPTR high byte lands in. Read from
-# there rather than repeated, so a change to the mechanism's own constant moves
-# this tool's answers with it.
-from pd_inline_arg_sites import DEST_LOW
-
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITES_CSV = os.path.join(HERE, os.pardir, "annotations",
                          "pd-inline-arg-sites.csv")
@@ -164,14 +158,23 @@ def decode_row(d: bytes, off: int, reach: int = REACH) -> dict:
     instructions -- so the row reports the count and the token, not a
     confidence.
 
-    **Agreement is tested on the destination, not on the loaded DPTR.** The
-    mechanism overwrites the caller's low byte with the literal `DEST_LOW` and
-    keeps only the high byte, so `mov dptr,#0x0A98` and `mov dptr,#0x0A82` are
-    two spellings of the same deposit. Two walks that disagree on the DPTR and
-    agree on the high byte have not disagreed about anything this tool answers,
-    and calling that `decoded-ambiguous` would report a framing difference as
-    though it were a destination difference. `mov_dptr_sites` still records
-    every load's offset, so the disagreement stays visible.
+    **Agreement is tested on the destination, not on the loaded DPTR** -- and
+    the destination *is* the loaded DPTR, unchanged.
+
+    It used not to be. Reading the byte at `0x104D` as `mov r0,#0x82` made the
+    helper overwrite the caller's low byte with that literal, so
+    `mov dptr,#0x0A98` and `mov dptr,#0x0A82` were two spellings of the same
+    deposit and agreement was tested on the high byte alone. Read as
+    `mov r0,0x82` -- a `direct` address, `DPL` -- the helper saves the caller's
+    DPTR into R0:B and restores it before the store, so the low byte is the
+    caller's own and there is nothing to substitute. The destination and the
+    load are now the same number, and the candidates below are keyed on the
+    loaded DPTR directly.
+
+    Two walks that disagree on that number have disagreed about what this tool
+    answers, so they are `decoded-ambiguous` rather than being folded together
+    on their high byte. `mov_dptr_sites` still records every load's offset, so
+    the disagreement stays visible.
     """
     converging = []
     for back in range(1, reach + 1):
@@ -188,7 +191,7 @@ def decode_row(d: bytes, off: int, reach: int = REACH) -> dict:
         at, value = dptr_in_force(insns, d)
         if value is not None:
             loads.add(at)
-            candidates[(value & 0xFF00) | DEST_LOW] += 1
+            candidates[value] += 1
 
     decoded = ""
     if not converging:
@@ -357,10 +360,11 @@ def main() -> int:
     print("Why each row has the value it has:\n")
     for reason, n in reasons.most_common():
         print(f"  {n:>4}  {reason}")
-    print("\nThe decoded destinations, most common first.  Every one is `??82`: "
-          "the\nmechanism substitutes the literal 0x82 for the caller's DPL, so "
-          "only the high\nbyte is the caller's, and one cell per XDATA page "
-          "falls out of that.\n")
+    print("\nThe decoded destinations, most common first.  Each is the DPTR "
+          "the caller\nloaded, unchanged: `mov r0,0x82` reads its operand as "
+          "the direct address\n`DPL`, so the helper saves the caller's DPTR "
+          "into R0:B and restores it\nbefore the store rather than "
+          "substituting a literal for the low byte.\n")
     for dest, n in dests.most_common():
         print(f"  {n:>4}  {dest}")
     print(f"\n`--reach-sweep` prints the curve this sits on, and "
