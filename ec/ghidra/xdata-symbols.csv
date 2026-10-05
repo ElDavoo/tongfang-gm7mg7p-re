@@ -274,3 +274,7 @@ addr,name,from_register,register_status,derivation,programs
 0x04AF,XDATA_04AE_COUNTER_A_1,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",present-untested,override,bank0;bank1
 0x04BE,XDATA_04BE_COUNTER_B_0,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",present-untested,override,bank0;bank1
 0x04BF,XDATA_04BE_COUNTER_B_1,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",present-untested,override,bank0;bank1
+0x0834,CHARGE_STAGE_WORD_0,CHARGE_STAGE_WORD (16-bit word the charge path stages and compares),present-untested,override,bank0;bank1
+0x0835,CHARGE_STAGE_WORD_1,CHARGE_STAGE_WORD (16-bit word the charge path stages and compares),present-untested,override,bank0;bank1
+0x0836,CHARGE_STAGE_CMP_WORD_0,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),present-untested,override,bank0;bank1
+0x0837,CHARGE_STAGE_CMP_WORD_1,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),present-untested,override,bank0;bank1

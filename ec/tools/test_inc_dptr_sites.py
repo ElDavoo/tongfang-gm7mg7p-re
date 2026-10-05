@@ -115,9 +115,12 @@ PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
 #   `MOV DPTR` site of its own (`bank0:0xBAE7`, a read of the high half), so it
 #   is an ordinary entered row and the invariant below covers it like any
 #   other. Being a high half is a fact about the byte, not a reason to hold it
-#   out of the check. `0x04A1`, `0x04AF` and `0x04BF` are high halves too --
-#   the bytes above the seeds `0x04A0`, `0x04AE` and `0x04BE` -- and each has a
-#   main-EC site of its own for the same reason.
+#   out of the check. `0x04A1`, `0x04AF`, `0x04BF`, `0x0835` and `0x0837` are
+#   high halves too -- the bytes above the seeds `0x04A0`, `0x04AE`, `0x04BE`,
+#   `0x0834` and `0x0836` -- and each has a main-EC site of its own for the
+#   same reason. `0x0835` and `0x0837` are the upper halves of the two words
+#   `registers.yaml` names `CHARGE_STAGE_WORD` and `CHARGE_STAGE_CMP_WORD`
+#   (issue #715), entered on the same warrant as the rest.
 #
 #   `0x04A5` is the high half of the `0x04A4` pair and has no main-EC `MOV
 #   DPTR` site at all: `trace_xdata_refs.py` finds three sites for it and every
@@ -133,7 +136,7 @@ PD_ONLY_ADDRESSES = {"0x043B": 2, "0x04A5": 3}
 # what is pinned here is the set of addresses, not how many there are.
 ENTERED_ADDRESSES = ("0x030F", "0x0403", "0x0435", "0x0437", "0x0439",
                      "0x04A1", "0x04A3", "0x04A5", "0x04A7", "0x04AF",
-                     "0x04BF", "0x0523")
+                     "0x04BF", "0x0523", "0x0835", "0x0837")
 
 # The ten addresses `xdata-register-map.md` §4.7 spells, in order. See the
 # docstring for why this is ten and not the issue's eleven.
