@@ -746,6 +746,76 @@ def ghidra_preflight(ghidra):
             "  will not decompile'. It is not. Fix the exec bit and re-run." % decomp)
 
 
+def owner_preflight(rep_dir, expect_user=None):
+    """Whether the project copy is openable as this user, said before the run.
+
+    The same shape and the same trade as `ghidra_preflight` above, for the
+    other failure in this pipeline that Ghidra reports only in a log: its
+    ownership check reads `project.prp` and refuses anyone else's copy *at the
+    open*, before a pre-script runs and before an annotation is applied. A copy
+    still carrying the committed owner therefore aborts the whole export having
+    read nothing, and says so in `<work>/ghidra-<program>.log` rather than on
+    the terminal.
+
+    Nothing here establishes that the copy opens once this passes -- that is a
+    run's evidence, and `docs/findings/ghidra-project-owner.md` carries the one
+    recorded. This is the half that needs no run.
+
+    `expect_user` defaults to the running user rather than to "no expectation",
+    because the question here is always whether *this* run will open the copy.
+    Passing None to `owner_problems()` asks only that the state be readable,
+    which is the right question for a report and the wrong one for a preflight:
+    a copy still owned by someone else reads perfectly well.
+    """
+    problems = project_owner.owner_problems(
+        rep_dir, getpass.getuser() if expect_user is None else expect_user)
+    if not problems:
+        return
+    raise SystemExit(
+        "error: the project copy is not openable as this user:\n"
+        "  %s\n"
+        "  Ghidra's ownership check reads that state at the open, before a "
+        "pre-script runs\n"
+        "  and before an annotation is applied, so analyzeHeadless would abort "
+        "the whole\n"
+        "  export having read nothing and say so only in the per-program log "
+        "under the work\n"
+        "  directory. The copy is retaken by rewrite_owner() in "
+        "ghidra/project_owner.py, which\n"
+        "  copy_project_for_export() calls after the copytree; if the copy "
+        "still carries the\n"
+        "  committed owner, that call did not run.\n"
+        "  %s" % ("\n  ".join(problems), rep_dir))
+
+
+def copy_project_for_export(project_dir, work):
+    """The disposable project copy every export-only run works against, and the
+    owner it carries. -> the copy's project directory.
+
+    Copying is what keeps the committed `.rep` out of this entirely --
+    `**/*.rep/**` is `binary -diff -merge`, so a change to one is a hard
+    conflict against every open branch rather than a reviewable diff -- and the
+    rewrite is what keeps the copy openable: the copy inherits the owner
+    `project.prp` records, and analyzeHeadless refuses anyone else's before it
+    reads an annotation. Once, here, rather than per program: the copy is made
+    once and all three programs share it.
+    `docs/findings/ghidra-project-owner.md` has the measurement.
+
+    The preflight is inside this function rather than beside it, which is what
+    makes it a check of the call site and not of the helper: `--self-test`
+    drives this function and so sees a `rewrite_owner()` deleted from here,
+    where a self-test that made its own copy would still be green.
+    """
+    copy_dir = os.path.join(work, "project-copy")
+    if os.path.isdir(copy_dir):
+        shutil.rmtree(copy_dir)
+    shutil.copytree(project_dir, copy_dir)
+    rep_dir = os.path.join(copy_dir, "ec.rep")
+    print("  project copy: %s" % project_owner.rewrite_owner(rep_dir, work))
+    owner_preflight(rep_dir)
+    return copy_dir
+
+
 def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
             mode, programs, annot_spec):
     """One analyzeHeadless invocation for all three programs: they share a
@@ -795,21 +865,11 @@ def analyze(ghidra, project_dir, work, imgs, spec, basis, context, digest,
             stderr=subprocess.STDOUT)
     else:
         # export-only: a copy of the committed project, so the committed .rep is
-        # never opened for writing at all.
-        copy_dir = os.path.join(work, "project-copy")
-        if os.path.isdir(copy_dir):
-            shutil.rmtree(copy_dir)
-        shutil.copytree(PROJECT, copy_dir)
-        # The copy inherits the owner the committed project.prp records, and
-        # analyzeHeadless refuses a project owned by anyone else with
-        # NotOwnerException before it reads an annotation -- so without this the
-        # default export cannot run for any contributor whose username is not
-        # that one. Once, here, rather than per program: the copy is made once
-        # and the three programs share it. The scratch root is `work` and the
-        # helper refuses anything outside it, so this can only ever write the
-        # copy. docs/findings/ghidra-project-owner.md has the measurement.
-        print("  project copy: %s" % project_owner.rewrite_owner(
-            os.path.join(copy_dir, "ec.rep"), work))
+        # never opened for writing at all. The copy's owner state is retaken and
+        # checked inside, so a rewrite that stopped running fails here with a
+        # message naming the project rather than as a NotOwnerException in a log
+        # several minutes downstream.
+        copy_dir = copy_project_for_export(project_dir, work)
         for program in programs:
             run([ghidra, copy_dir, "ec", "-process", program, "-noanalysis",
                  "-scriptPath", SCRIPTS,
@@ -2130,19 +2190,39 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # "the committed project.prp is byte-identical" is what keeps that from
     # being the answer. A check of only the first would go green on a rewrite
     # aimed at the wrong directory.
+    #
+    # **Through `copy_project_for_export()`, not around it.** This used to make
+    # its own copy and call `rewrite_owner()` on it, which proved the helper
+    # works and said nothing about whether analyze() still called it: deleting
+    # the rewrite from the export path left every assertion here green while the
+    # default export stopped running. Going through the driver is what makes
+    # this the call-site check the issue asks for, and it is why the preflight
+    # lives inside that function rather than beside it.
     _owner_before = open(os.path.join(PROJECT, "ec.rep", "project.prp"), "rb").read()
     _scratch = tempfile.mkdtemp()
     try:
-        _copy = os.path.join(_scratch, "project-copy")
-        shutil.copytree(PROJECT, _copy)
+        _copy = copy_project_for_export(PROJECT, _scratch)
         _rep = os.path.join(_copy, "ec.rep")
-        _report = project_owner.rewrite_owner(_rep, _scratch)
-        check("the export-only copy's owner is the running user, so "
-              "analyzeHeadless will open it (project_owner: %s)" % _report,
-              not project_owner.owner_problems(_rep, getpass.getuser()))
+        check("the export-only copy analyze() makes is owned by the running "
+              "user, so analyzeHeadless will open it",
+              not project_owner.owner_problems(_rep, getpass.getuser()),
+              str(project_owner.owner_problems(_rep, getpass.getuser())))
         _p = project_owner.owner_problems(_rep)
         check("the copy's owner state is readable and carries no fault",
               not _p, str(_p))
+        # The preflight's own refusal, on a copy that was never retaken. Without
+        # it the known-good case above cannot tell "checked" from "never ran".
+        _unretaken = os.path.join(_scratch, "unretaken")
+        shutil.copytree(PROJECT, _unretaken)
+        try:
+            owner_preflight(os.path.join(_unretaken, "ec.rep"))
+            _said = ""
+        except SystemExit as e:
+            _said = str(e)
+        check("the owner preflight refuses a copy still named for someone else, "
+              "naming the project and the rewrite rather than letting "
+              "analyzeHeadless abort in a log",
+              "NotOwnerException" in _said and "rewrite_owner" in _said, _said)
     finally:
         shutil.rmtree(_scratch, ignore_errors=True)
     check("the committed project.prp is byte-identical after that rewrite, so "
