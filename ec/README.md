@@ -528,9 +528,16 @@ into `r2 -a 8051` with no stitching needed.
   this tree that can contradict both, so **0 against the two decoders is one map
   counted twice**.
   *(Corrected 2026-09-27, review of #67: "the only source in this tree that can
-  contradict both" holds on the 247 rows where the manual transcription is itself
-  independent, and not on `0xA8`-`0xAF`, where it had been copied from the
-  `0x78` row and so agreed with both. `--divergence` now reports those eight.)* The **1 row the manual assigns nothing to (`0xA5`) is reported
+  contradict both" holds on the rows where the manual transcription is itself
+  independent, and did not on `0xA8`-`0xAF`, where it had been copied from the
+  `0x78` row and so agreed with both.)*
+  *(Corrected 2026-10-05, issue #1154: the `0xA8`-`0xAF` transcription was wrong,
+  not the firmware. It carried `XCH A,Rn`'s 1 byte — the instruction at
+  `0xC8`-`0xCF`, which this table still carries correctly — where the block is
+  `MOV Rn,direct` at 2. `a8af_operand_role.py` settles it from the committed
+  listings alone, so `--divergence` now exits 0 and still *names* the block under
+  `CORRECTED_MANUAL_ROWS`; `../docs/findings/a8-af-block-length-and-operand.md`
+  is the write-up.)* The **1 row the manual assigns nothing to (`0xA5`) is reported
   as a third state**, in the `man` column of `--coverage` and in `--divergence`,
   because a decoder agreeing with the table where the manual has no row is a
   shared convention and not a corroboration. Lengths

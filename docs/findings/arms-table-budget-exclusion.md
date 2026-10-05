@@ -192,6 +192,49 @@ kinds of disagreement:
   `_dptr_write()` is never reached with it. **This one is not reachable in the
   walk.**
 
+> **Corrected 2026-10-05 (issue #1154). All three clauses of the `0xA8`–`0xAF`
+> bullet above are now wrong, in the same direction.** The block is
+> **`MOV Rn,direct`**, not `mov @Ri,A`, so its operand byte **is** a `direct`
+> address rather than a register number — `0x82` (DPL) and `0x83` (DPH) are its
+> commonest operands — and it *loads a register from* that address, so DPTR is a
+> source and is left alone. `walk_branch_arms._dptr_write()` no longer groups the
+> block with the direct stores, which retires the disagreement itself: it and
+> `is_dptr_rebuild()` now agree on every opcode in the range, so that bullet no
+> longer describes a third kind. `a8af_operand_role.py` derives the reading from
+> the committed listings alone and
+> [`a8-af-block-length-and-operand.md`](a8-af-block-length-and-operand.md) has
+> the measurement.
+>
+> **The "latent" clause is retired, and its retirement is this branch's doing.**
+> It said no such instruction reaches a walked arm. `bank_attribution.py`'s walk
+> does reach one, and now follows it: `ac 83` and `ae 83` at `0x0F7A`/`0x0F98`
+> are `mov r4,DPH` / `mov r6,DPH`, and the old predicate mistook each for a store
+> *to* DPH, so it killed the pointer at those two rows. With the block read as a
+> load the pointer survives, the `0x0F95` clear loop's own `inc dptr` (`0x0FA2`)
+> runs, and the walk steps `0x9000` to `0x9001`. Re-running
+> `bank_attribution.py --self-test` reproduces the causality in both directions:
+> with the old predicate restored in-process the leftover set is `0x9000` alone,
+> and with the corrected one it is `0x9000, 0x9001`. `0x9001` is the second cell
+> of the same clear loop, not a route into code, which is why
+> `bank_attribution.XDATA_CLEAR_IMMEDIATES` now names it rather than letting it
+> read as a missed bank of code.
+>
+> **What did not move, and is why this file's own figures still stand.** That
+> walk is not the one this correction is about. The committed
+> `manual-fan-ctrl-0751-arms.csv` is byte-identical under the corrected
+> predicate —
+> `walk_branch_arms.py ec/firmware/GMxMGxx_11.800 0x0751 --callee-depth 1 --csv
+> | diff - ec/annotations/manual-fan-ctrl-0751-arms.csv` is empty — so §3's
+> figures, its `ends` arithmetic and §5's exclusion are all untouched, and the
+> `pop direct` finding above still stands as written. No `0xA8`–`0xAF`
+> instruction in any committed arm `window` names `0x82` or `0x83`, which is why
+> removing the block from `_dptr_write()` changed nothing here; the instructions
+> that reach DPTR through this block are in the closure `bank_attribution.py`
+> grows, not in these arms. Both walks call the same predicate, and the retracted
+> clause was written about "a walked arm" without saying which walk — that
+> ambiguity is what let a claim scoped to one walk stand as a claim about the
+> image.
+
 Adding `0xD0` to `_dptr_write()` and re-running the reproducing command moves
 **`ends` on 5 of the 171 rows** and **drops a `code_pointers` entry of `0x0A49`
 from the two `0x93CA` arm rows**, and changes nothing else: `xdata`,
@@ -349,5 +392,8 @@ a question says so.
    what it costs on the committed table and nothing more. Whether the fix is to
    widen the predicate or to delegate to `trace_xdata_refs.is_dptr_rebuild()` —
    which is the duplication the census side already avoids — is a question
-   about that tool, and the `0xA8`–`0xAF` clause wants the same answer.
+   about that tool. The `0xA8`–`0xAF` clause used to be named here as wanting the
+   same answer; #1154 resolved it in the other direction, by removing that block
+   from the predicate rather than adding to it, so there is no second consumer
+   left to generalise over.
 2. **No `--check` for the arms table** (§5). Named in §5 and unchanged by it.

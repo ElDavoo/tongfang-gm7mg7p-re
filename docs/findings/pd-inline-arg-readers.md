@@ -1,4 +1,32 @@
-# No sweep found a reader for the `??82` cells `lcall 0x104D` fills in, and the count the issue set out to explain was two mistakes at once (issue #1142)
+# The cells `lcall 0x104D` fills in are the caller's own DPTRs, and several of them *are* read (issue #1142)
+
+**Corrected 2026-10-05, issue #1154. The headline this file used to carry —
+that no sweep found a reader — was an artifact of the address, and it is wrong
+now.** The cells were the `??82` page cells: the byte at `0x104D` was read as
+`mov r0,#0x82`, a *constant* the helper substitutes for the caller's low byte,
+so the destinations came out as `(caller's DPTR & 0xFF00) | 0x82` — one cell
+per XDATA page, with a low byte nothing else in the firmware references. That
+is why the sweeps found no readers, and it is why they would have: the cells
+were not the ones the firmware uses.
+
+`0xA8`-`0xAF` is `mov Rn,direct`, so the instruction is `mov r0,DPL`: the helper
+saves the caller's DPTR into `R0` and `B`, takes its own return address off the
+stack, and the `xch` chain restores the caller's pointer before the store. The
+destination is the caller's own DPTR, unchanged. `a8af_operand_role.py` derives
+the reading from the committed listings and
+`a8-af-block-length-and-operand.md` has the measurement;
+`pd-inline-arg-trampoline.md` §3 carries the corrected transcript.
+
+**What survives the correction, and what does not.** The two mistakes this file
+was written to correct were real and are still corrected below: a `MOV DPTR`
+*site* is not a reader, and a site in `bank0` is not a site in the PD image.
+Both rules still hold and both are still enforced per row and per direction. The
+*conclusion* does not: with the cells being real registers, `pd_inline_arg_
+readers.py` finds PD-side reads on many of them, and the "nothing reads these
+cells" result is replaced by a per-cell table that says which are read and
+which the sweeps did not find a read for. The negative form of the claim is
+still the safe direction and is still what an empty cell means —
+"not found by this method", never "there is none".
 
 **Read the headline before anything else.** Everything below is about the
 `ITE8850-PD` image at file `0x20000` — a second, self-contained 8051 program
@@ -9,10 +37,10 @@ the committed `ec/firmware/GMxMGxx_11.800`. No register was read back, no write
 was attempted, nothing ran on the machine.
 
 `../../docs/findings/pd-inline-arg-trampoline.md` §5 gave the destinations and
-stopped: "What reads those cells was not traced." This is that answer. **The
-answer is negative**, it is stated below at the confidence three cell sweeps, the
-entry sweep and a second independent census can carry, and per row of the census
-it comes with the reason it is empty.
+stopped: "What reads those cells was not traced." This is that answer. It is
+per row of the census, each with the reason it is empty — and after the
+correction above many rows are not empty, though a majority still are, and the
+reads are concentrated in a few heavily-deposited cells.
 
 ## 1. The measurement, and the two mistakes in the count it replaces
 
@@ -59,7 +87,23 @@ a direction error plus a cross-program artifact. The corrected statement is
 issue predicted: the two programs' `??82` cells are unrelated, and within the PD
 image the cells have no identified consumer.
 
+*(Corrected 2026-10-05, issue #1154. The last clause is the part that does not
+survive: those cells do not exist — see the correction at the head of this file.
+The two errors above were real and are still errors; what the corrected cells
+show is that the PD image *does* read several of the addresses it deposits into,
+because they are its own registers rather than one masked cell per XDATA page.)*
+
 ## 2. Three cell sweeps, and every zero is "not found by this method"
+
+> **The table below is the one the `??82` cells produced, and those cells do not
+> exist.** It is left here because the two rules it demonstrates are the rules
+> this file exists to establish, and both still hold over the corrected cells:
+> a `MOV DPTR` *site* is not a reader, and a site in `bank0` is not a site in
+> the PD image. The current table — different cells, many with PD-side reads —
+> is what `pd_inline_arg_readers.py` prints now, and
+> `ec/annotations/pd-inline-arg-readers.csv` is regenerated from it. Every
+> figure in this section that names an address is a figure about a cell the
+> correction removed.
 
 ```console
 $ python3 ec/tools/pd_inline_arg_readers.py ec/firmware/GMxMGxx_11.800
@@ -136,6 +180,13 @@ method reporting zero is a shrug, and this file would have said so had the other
 agreed for a reason that was not independence.
 
 ## 4. `0x0882`, settled
+
+> **Scoped to a cell that no longer exists** (correction at the head of this
+> file). What this section establishes still stands and is the reason it is
+> kept: the *page* `0x08xx` is heavily used, so a cell on it having no
+> identified reader is a fact about that address rather than about the page.
+> It is not a fact about any cell the corrected census produces, and the
+> "no identified consumer" conclusion of §1 does not survive the correction.
 
 The 92-deposit cell with no reader is **not** a claim about the page it sits on.
 The `0x08xx` page is read constantly — 932 `MOV DPTR,#0x08xx` sites in the PD
