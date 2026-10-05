@@ -198,38 +198,60 @@ class NotCodeCriterion(unittest.TestCase):
     statement."""
 
     def test_the_four_map_unassigned_bytes_are_the_criterion(self):
-        # Stated from the MCS-51 opcode map. 0x06/0x07 and 0x16/0x17 are the
-        # two gaps in the 0x00-0x1F row, and 0x18 (DEC R0) is the first
-        # assigned byte above them -- asserted so a list that grew a fifth
-        # entry by accident would be caught rather than quietly widening the
-        # verdict.
+        # **Corrected, and the old comment described a hole that is not there.**
+        # It said 0x06/0x07 and 0x16/0x17 are "the two gaps in the 0x00-0x1F row".
+        # They are not: the map assigns them `INC @R0`/`@R1` and `DEC @R0`/`@R1`,
+        # one byte each, and the committed listings name all four at real
+        # instruction starts. Issue #1153 gave `mnemonic()` those names, which is
+        # what made the assertion this case ended on fail. The wrong claim stays
+        # visible on `citation_gap_scan.UNASSIGNED` itself.
+        #
+        # What is held here is the criterion, which never depended on the claim:
+        # `UNASSIGNED` is a literal of four values, and the decoder is checked to
+        # agree with the map on all four rather than to decline them. 0x18 (DEC
+        # R0) sits immediately above the run and is asserted too, so a list that
+        # grew a fifth entry by accident would be caught rather than quietly
+        # widening the verdict.
         self.assertEqual(tuple(scan.UNASSIGNED), (0x06, 0x07, 0x16, 0x17))
         self.assertEqual(scan.D.mnemonic(b"\x18", 0, 0), "dec  r0")
-        self.assertTrue(all(scan.D.mnemonic(bytes([b]), 0, 0).startswith("db ")
-                            for b in scan.UNASSIGNED))
+        self.assertEqual([scan.D.mnemonic(bytes([b]), 0, 0) for b in scan.UNASSIGNED],
+                         ["inc  @r0", "inc  @r1", "dec  @r0", "dec  @r1"])
 
     def test_verdict_of_reads_the_flag_not_the_mnemonic_text(self):
         # A window whose walk lands on 0x17 is `not-code`; one that lands on
         # 0x22 is not. The two differ only in the byte, and the assertion is
         # that the text is never consulted -- a decoder that grew a case for
         # 0x17 would otherwise move a verdict by editing a table.
+        #
+        # `0x17` is now named `dec @r1` by the decoder, so the third case passes
+        # the text the table actually emits for it and the verdict does not
+        # change: same flag, different text, same answer. That is the claim, and
+        # naming the opcode made it checkable rather than merely asserted.
         self.assertEqual(
             scan.verdict_of([(0x3AF0, b"\x17", "db   0x17", True)]), "not-code")
+        self.assertEqual(
+            scan.verdict_of([(0x3AF0, b"\x17", "dec  @r1", True)]), "not-code")
         self.assertIsNone(
             scan.verdict_of([(0x3AF0, b"\x17", "mov  a", False)]))
         self.assertIsNone(
             scan.verdict_of([(0xB5D2, b"\x22", "ret", False)]))
 
     def test_a_db_that_is_not_a_map_unassigned_byte_is_still_not_verdict_not_code(self):
-        # The reason the criterion is not a `db` count. `disasm8051`'s mnemonic
-        # table is partial by design -- an instruction the map assigns but the
-        # table does not carry prints as `db` too -- so a window landing on one
-        # of those is unknown by this tool's decoder, which is not the same
-        # answer as "not code". 0xD4 (`da A`) is assigned by the 8052 map and
-        # absent from the table, so it is the two rules disagreeing, stated.
-        self.assertTrue(scan.D.mnemonic(b"\xd4", 0, 0).startswith("db "))
-        self.assertNotIn(0xD4, scan.UNASSIGNED)
-        self.assertIsNone(scan.verdict_of([(0x9000, b"\xd4", "db   0xd4",
+        # The reason the criterion is not a `db` count: a window can land on a
+        # byte this tool's decoder cannot name, and that is a different answer
+        # from "not code". `0xA5` is the standing example -- the one byte value
+        # the MCS-51 map assigns no instruction, so `mnemonic()` prints `db` for
+        # it while the map has no row to agree with, and the verdict is None.
+        #
+        # **Corrected: this case used `0xD4`,** `da A`, on the grounds that it was
+        # assigned but absent from the table. Issue #1153 named it, so it is no
+        # longer a `db` at all and the case could not keep using it -- correctly,
+        # since what it wanted was a byte the decoder declines, and `0xD4` is not
+        # one any more. `0xA5` serves, and is if anything the better example: it is
+        # a genuine `db` that is also genuinely not an instruction.
+        self.assertTrue(scan.D.mnemonic(b"\xa5", 0, 0).startswith("db "))
+        self.assertNotIn(0xA5, scan.UNASSIGNED)
+        self.assertIsNone(scan.verdict_of([(0x9000, b"\xa5", "db   0xa5",
                                             False)]))
 
 

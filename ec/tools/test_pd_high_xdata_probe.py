@@ -347,19 +347,30 @@ class TheTwoPathsAreOneMethod(unittest.TestCase):
         self.assertTrue(full)
 
     def test_an_opcode_the_decoder_does_not_have_is_passed_over(self):
-        # 0xF4 is `cpl A` in `pd/A8AE.asm` and `db 0xf4` to `disasm8051`, one
-        # of 36 it assigns to no instruction. A decoded window steps over such a
-        # row rather than reading it, so a window containing one is a window
-        # this tool cannot fully see -- the same lower bound the listed path has
-        # where a listing stops short, and the reason the probe's decoded
-        # verdicts are not stronger than they are written.
-        rows = [(0, "mov", "DPTR, #0xff00"), (3, "db", "0xf4"),
+        # A decoded window steps over a row the decoder prints as `db` rather
+        # than reading it, so a window containing one is a window this tool
+        # cannot fully see -- the same lower bound the listed path has where a
+        # listing stops short, and the reason the probe's decoded verdicts are
+        # not stronger than they are written.
+        #
+        # **Corrected: this case used `0xF4`,** `cpl A` in `pd/A8AE.asm`, on the
+        # grounds that `disasm8051` printed `db 0xf4` for it. Issue #1153 named
+        # it, so it is no longer a byte the decoder passes over and the case
+        # could not keep using it -- correctly, since what it wants is a byte the
+        # decoder declines. `0xA5` serves instead, and is the sturdier example:
+        # it is a genuine `db` *and* a byte value the MCS-51 map assigns no
+        # instruction, so nothing here rests on the decoder being incomplete.
+        # The fixture row is built from the opcode this suite asserts below
+        # rather than typed, so the two cannot drift apart.
+        unrenderable = [op for op in range(256)
+                        if D.mnemonic(bytes([op, 0, 0]), 0).startswith("db ")]
+        self.assertTrue(unrenderable,
+                        "the decoder declines at least one byte value")
+        op = unrenderable[0]
+        rows = [(0, "mov", "DPTR, #0xff00"), (3, "db", f"0x{op:02x}"),
                 (4, "movx", "A, @DPTR")]
         self.assertEqual(P.window(rows, 0xFF00, 0xFF00),
                          ("literal", "read", None))
-        self.assertIn(0xF4,
-                      [op for op in range(256)
-                       if D.mnemonic(bytes([op, 0, 0]), 0).startswith("db ")])
 
     def test_a_register_is_recased_and_an_immediate_is_not(self):
         # `DPTR_IMM` reads a lower-case immediate and `XSPACE_FLOW` compares a

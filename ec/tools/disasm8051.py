@@ -23,8 +23,15 @@ where it is established. `CASE_TABLE_CALLS` has one entry too, the main EC's
 than a width, so it gets its own function and its own write-up.
 
 The opcode length table covers the full 8051 map, because mis-framing one
-instruction corrupts every instruction after it. The mnemonic table covers
-the subset this firmware actually uses; anything else prints as `db`.
+instruction corrupts every instruction after it. The mnemonic table now names
+every opcode value the manual assigns, `0xA5` excepted -- the one the map
+leaves with no instruction, which is the only byte value that prints as `db`.
+The names were read off the committed Ghidra listings, which have never seen
+this table; every value among them has at least one listing row naming it, and
+the per-value citations are in
+../docs/findings/mnemonic-db-fallthrough-coverage.md. Neither the naming nor
+this sentence claims the bytes are framed -- that is what `converges_from()` and
+the annotations' own framing evidence are for.
 
 `--self-test` decodes the two windows that ec/annotations/charge-profile-flow.md
 transcribed by hand from `r2 -a 8051` and requires a byte-for-byte match
@@ -33,7 +40,9 @@ it after touching either. It then checks relative_target() against four more
 hand decodes (ec/annotations/bank-call-audit.md 8), because both windows
 branch forward only and a sign-extension bug would survive them, and mnemonics
 against BIT_SITES, which covers the bit-addressable carry forms the windows
-above contain none of.
+above contain none of. Neither holds the wider mnemonic table: those names were
+decided against the listings, and the suite that pairs each of them with the
+listing row it came from is test_disasm8051_db_fallthrough.py.
 
 Usage:
     python3 disasm8051.py --self-test
@@ -302,6 +311,21 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         name = {0x20: "add", 0x30: "addc", 0x40: "orl",
                 0x50: "anl", 0x60: "xrl", 0x90: "subb"}[op & 0xF0]
         return f"{name:<4} a,r{op & 0x07}"
+    # The `@Ri` half of that same six-way group: the same six operations, on an
+    # indirect register instead of one of the eight, one row eight bytes below
+    # the `Rn` forms. Keyed on the twelve opcode values rather than on a mask
+    # like the row above, because the low two bits of a row are not free: 0x21,
+    # 0x41 and 0x61 are AJMP, 0x31 and 0x51 are ACALL, and `0x90`/`0x91` are
+    # `mov direct,#data` and ACALL -- so `(op & 0x0F) < 0x02` would swallow six
+    # paged forms the table above deliberately keeps. Every one of the twelve has
+    # instruction starts in the committed listings naming it, `ec/decompiled/
+    # bank1/EAC3.asm` (`orl A, @R0`) and `ec/decompiled/bank0/D091.asm`
+    # (`addc A, @R0`) among them; the citations are in
+    # ../../docs/findings/mnemonic-db-fallthrough-coverage.md.
+    if op in (0x26, 0x27, 0x36, 0x37, 0x46, 0x47, 0x56, 0x57, 0x66, 0x67, 0x96, 0x97):
+        name = {0x20: "add", 0x30: "addc", 0x40: "orl",
+                0x50: "anl", 0x60: "xrl", 0x90: "subb"}[op & 0xF0]
+        return f"{name:<4} a,@r{op & 0x01}"
     if op in (0x40, 0x50, 0x60, 0x70, 0x80):
         name = {0x40: "jc", 0x50: "jnc", 0x60: "jz", 0x70: "jnz", 0x80: "sjmp"}[op]
         return f"{name:<4} {rel(1)}"
@@ -334,6 +358,22 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         # recomputed rather than counted here).
         name = {0xA0: "orl", 0xB0: "anl"}[op]
         return f"{name:<4} c,/{bit_name(d[i + 1])}"
+    # ORL C,bit and ANL C,bit -- the *direct* carry forms, as opposed to the
+    # `/bit` ones just above. They are the two opcodes in the bit-addressable
+    # family this table had no case for at all, so `0x72` and `0x82` rendered as
+    # `db` where a listing transcribes `orl CY, 0x20` (ec/decompiled/pd/A890.asm)
+    # and `anl CY, 0x31` (ec/decompiled/bank0/8048.asm). Same `bit_name()`
+    # rendering as the `0x92`/`0xA2` pair, so a bit operand reads the same
+    # whichever of the four spellings it arrives under.
+    #
+    # Unlike the `0xA0`/`0xB0` pair above, **which opcode is which is not in
+    # question here**: every listing row for these two names them the same way,
+    # with no row anywhere reading them the other way round. The two forms
+    # differ from `0xA0`/`0xB0` by the `/` and by the bit rather than register
+    # operand, which is what the `bit_name()` call renders.
+    if op in (0x72, 0x82):
+        name = {0x72: "orl", 0x82: "anl"}[op]
+        return f"{name:<4} c,{bit_name(d[i + 1])}"
     if op == 0xC1:
         # CLR bit, kept out of the 0xD2/0xB2 tuple above because 0xC2 is CLR
         # *direct*: the two are the same length and differ only in what the
@@ -352,8 +392,16 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         return f"cjne a,#0x{d[i + 1]:02x},{rel(2)}"
     if op == 0xB5:
         return f"cjne a,0x{d[i + 1]:02x},{rel(2)}"
-    if 0xB8 <= op <= 0xBF:
-        return f"cjne r{op - 0xB8},#0x{d[i + 1]:02x},{rel(2)}"
+    if 0xB6 <= op <= 0xBF:
+        # CJNE @Ri,#data,rel for 0xB6/0xB7, CJNE Rn,#data,rel for 0xB8-0xBF.
+        # One range rather than two cases because both are three bytes and both
+        # put the displacement last, which is what `relative_target()` reads --
+        # `REL_OPCODES` already groups them the same way. The committed listings
+        # name the `@Ri` half `cjne @R0, #0x1c, 0xe9e6`
+        # (ec/decompiled/bank1/E9CE.asm), the same shape as the `Rn` half one
+        # row below.
+        reg = f"@r{op & 0x01}" if op < 0xB8 else f"r{op - 0xB8}"
+        return f"cjne {reg},#0x{d[i + 1]:02x},{rel(2)}"
     if 0xD8 <= op <= 0xDF:
         return f"djnz r{op - 0xD8},{rel(1)}"
     if op == 0xD5:
@@ -374,6 +422,14 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         return f"mov  r{op - 0xF8},a"
     if 0x78 <= op <= 0x7F:
         return f"mov  r{op - 0x78},#0x{d[i + 1]:02x}"
+    if op in (0x76, 0x77):
+        # MOV @Ri,#data -- the indirect half of the row just above, and the
+        # clearest pair in this table: same destination as `mov @r0,a` at 0xF6,
+        # same immediate as `mov r7,#0x..` at 0x7F, differing only in which of the
+        # two operand bytes each one has room for. Every committed listing that
+        # has it spells it with the `#`, `ec/decompiled/common/012F.asm` (`mov
+        # @R0, #0x2`) among them.
+        return f"mov  @r{op - 0x76},#0x{d[i + 1]:02x}"
     if 0x08 <= op <= 0x0F:
         return f"inc  r{op - 0x08}"
     if 0xA8 <= op <= 0xAF:
@@ -393,8 +449,39 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         # right; `0xC8`-`0xCF` below is the one-byte `XCH A,Rn` this row was
         # once mistaken for.
         return f"mov  r{op - 0xA8},0x{d[i + 1]:02x}"
+    if op in (0xA6, 0xA7):
+        # MOV @Ri,direct -- one row below `mov Rn,direct` above. The manual
+        # assigns it this way too, so this row is not a reading taken against
+        # the manual: `MOV @Ri,#data` is the 0x76/0x77 case above, and reading
+        # it here would duplicate an existing opcode and break the symmetry with
+        # 0x86/0x87 below, which the listings read the other way round. The
+        # listings print no `#` and resolve the operand to an SFR *name* in the
+        # source position, `a7 f0` as `mov @R1, B` at ec/decompiled/pd/0D70.asm,
+        # and the same exporter does print `#` for the 0x76 case -- so the
+        # omission is the tool telling the two forms apart rather than a
+        # formatting habit. `iram_boot_sites.RI_TABLE`, `dptr_rebuild_forms.py`
+        # and `verify_gap_text.py` all carry `direct` for these two values
+        # independently.
+        # What nothing here can check is the rendering *by length*: both forms
+        # are two bytes over the same operand positions and `opcode_coverage`'s
+        # `MCS51_LEN` carries no names, so `--divergence` is blind to it by
+        # construction. That is a limit on this module's output, not a dispute
+        # about the encoding. The write-up is
+        # ../../docs/findings/mnemonic-db-fallthrough-coverage.md.
+        return f"mov  @r{op - 0xA6},0x{d[i + 1]:02x}"
     if 0x88 <= op <= 0x8F:
         return f"mov  0x{d[i + 1]:02x},r{op - 0x88}"
+    if op in (0x86, 0x87):
+        # MOV direct,@Ri -- `direct` destination, `@Ri` source, and the mirror of
+        # the row above it. The direction is what makes this row worth a case:
+        # the byte column alone cannot tell `mov 0x81,@r0` from `mov @r0,0x81`,
+        # which are the same two bytes, so the operand order comes from the
+        # oracle rather than from the encoding. The listings settle it here --
+        # `mov 0x81, @R0` at ec/decompiled/bank0/8653.asm, and `mov B, @R1` at
+        # ec/decompiled/pd/0D0D.asm, whose `B` is an SFR name and so cannot be
+        # an immediate. (The mirror image at `0xA6`/`0xA7` is read the same way,
+        # `direct` in the source position; see the comment on that row.)
+        return f"mov  0x{d[i + 1]:02x},@r{op - 0x86}"
     if op == 0xE5:
         return f"mov  a,0x{d[i + 1]:02x}"
     if op == 0xF5:
@@ -417,6 +504,34 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         return f"dec  0x{d[i + 1]:02x}"
     if 0x18 <= op <= 0x1F:
         return f"dec  r{op - 0x18}"
+    # INC/DEC @Ri -- the two indirect rows either side of INC Rn and DEC Rn.
+    #
+    # **These four are the ones `citation_gap_scan.UNASSIGNED` and
+    # `bank_map_score.UNASSIGNED` both list**, and both files describe that list
+    # as "the byte values the MCS-51 map assigns to no instruction". That
+    # description is wrong: the map assigns all four (`INC @R0`/`@R1`,
+    # `DEC @R0`/`@R1`, one byte each), `OPCODE_LEN` above already carried them at
+    # 1, and `opcode_coverage.MCS51_LEN` -- the table those comments cite as the
+    # manual -- assigns all four a length. The committed listings place real
+    # instruction starts on every one of them and name them, `ec/decompiled/
+    # bank0/B065.asm` (`inc @R0`) and `ec/decompiled/bank0/D091.asm` (`dec @R1`)
+    # among them, so a cross-decode over these four could previously only agree
+    # with a `db` vacuously.
+    #
+    # **Both `UNASSIGNED` sets are deliberately left as they are.** The `not-code`
+    # verdict is driven by `window[i] in UNASSIGNED`, not by this function
+    # returning `db`, so naming the four does not move that verdict -- which is
+    # what makes the change safe here and makes changing the *sets* a different
+    # change: that one moves a published verdict and a bank ranking rather than a
+    # spelling. The contradiction and its measurement are in
+    # ../../docs/findings/mnemonic-db-fallthrough-coverage.md; the new suite
+    # `test_disasm8051_db_fallthrough.py` pairs each of these four against the
+    # real instruction either side of it, the way `TEXTBOOK_BIT_SITES` pairs
+    # `0xC1`/`0xC2`, so a decoder keying on the wrong operand cannot pass.
+    if op in (0x06, 0x07):
+        return f"inc  @r{op - 0x06}"
+    if op in (0x16, 0x17):
+        return f"dec  @r{op - 0x16}"
     if op == 0xC0:
         return f"push 0x{d[i + 1]:02x}"
     if op == 0xD0:
@@ -449,6 +564,18 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         return "cpl  c"
     if op == 0xC4:
         return "swap a"
+    if op == 0xD4:
+        # DA A -- decimal adjust. Padded to four columns like every other
+        # mnemonic here rather than left as the listings print it (`da A`), for
+        # the reason `opcode_coverage.LINE_RE`'s padded byte column records: `da`
+        # is the one mnemonic that is also two hex digits, so a run of hex pairs
+        # is ambiguous exactly where this table is most delicate.
+        return "da   a"
+    if op == 0xF4:
+        # CPL A, over the whole accumulator, one byte above CPL C at 0xB3. The
+        # listings spell it `cpl A` (ec/decompiled/bank0/D091.asm); this module
+        # prints the accumulator lower-case, as it does in `clr a` and `swap a`.
+        return "cpl  a"
     if op == 0x22:
         return "ret"
     if op == 0x32:
@@ -457,6 +584,18 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         return "movc a,@a+dptr"
     if op == 0x83:
         return "movc a,@a+pc"
+    # What reaches here is `0xA5` alone, and it reaches here because the manual
+    # assigns that byte value no instruction: `opcode_coverage.MCS51_LEN` leaves
+    # it at 0, and every committed listing declines to name it -- the listings do
+    # not place `0xA5` at an instruction start anywhere, so there is nothing here
+    # to transcribe a spelling from either. r2 marks it `type: "invalid"`, which
+    # is that same absence read as a verdict by a tool that has to render every
+    # byte. None of that makes it *absent*: the byte value is in the map's 256
+    # and this file gives it a length, so a walk that lands on one is a byte this
+    # firmware uses as something other than an opcode -- the standing caveat
+    # `ec/annotations/registers.yaml` states for a static scan. The reachable set
+    # is held by `test_disasm8051_db_fallthrough.py` against `MCS51_LEN` rather
+    # than against a list typed here, so it fails if either table drifts.
     return f"db   0x{op:02x}"
 
 

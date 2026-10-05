@@ -520,17 +520,25 @@ class AddressTakenIsItsOwnVocabularyRow(unittest.TestCase):
 
 class FlowTailMatchesTheDecoder(unittest.TestCase):
     """`FLOW_TAIL` and `BRANCH_TAIL` are written out by hand, so they are pinned
-    against the table that decides when a window ends. Three opcodes in that set
-    have no entry in the mnemonic table and render as `db`/`clr`; they are
-    excluded here for the reason `FLOW_TAIL`'s own comment gives, and this is
-    where that exclusion is checked rather than asserted in prose.
+    against the table that decides when a window ends. One opcode in that set
+    renders as `clr` rather than as a tail mnemonic and is excluded here for the
+    reason `FLOW_TAIL`'s own comment gives; this is where that exclusion is
+    checked rather than asserted in prose.
 
     The two tuples answer different questions and the difference is load-bearing
     -- `ends_in_branch()` admits a `window-cut` row only on `BRANCH_TAIL`, so a
     tuple that drifts wide again is a weaker check than the tool's docstring
     says it is. Pinning the narrowing here is what stops that."""
 
-    UNRENDERABLE = {0xB6, 0xB7, 0xC1}
+    # `0xC1` renders as `clr <bit>`, which is not a tail form. **`0xB6`/`0xB7`
+    # were in this set until issue #1153 named them**: they are `CJNE @Ri,#data,rel`
+    # and `mnemonic()` used to print `db` for both, so they were excluded for
+    # want of a mnemonic. Naming them adds nothing to the rendered set --
+    # `cjne` is already contributed by `0xB4`/`0xB5`/`0xB8`-`0xBF`, which are in
+    # `FLOW_OPCODES` -- so dropping them here leaves `FLOW_TAIL` exactly as it
+    # was, and `test_the_tuple_is_the_flow_opcode_table_minus_the_unrenderable`
+    # is what proves it rather than this comment asserting it.
+    UNRENDERABLE = {0xC1}
 
     def rendered(self) -> set:
         import disasm8051
@@ -562,9 +570,12 @@ class FlowTailMatchesTheDecoder(unittest.TestCase):
             self.assertNotIn(tail.split(" ")[0], csc.BRANCH_TAIL, tail)
 
     def test_the_unrenderable_opcodes_really_do_not_render_as_a_mnemonic(self):
-        # The exclusion is only sound because these three have no mnemonic.
-        # If the table grows one, this fails and the exclusion has to be
-        # re-examined rather than left in place.
+        # The exclusion is only sound because this one does not render as a
+        # tail mnemonic. If the table grows one, this fails and the exclusion
+        # has to be re-examined rather than left in place. `db` stays in the
+        # accepted pair: it is the render for any byte value the manual assigns
+        # no instruction, and a future opcode joining this set would arrive as
+        # one.
         import disasm8051
         for op in sorted(self.UNRENDERABLE & disasm8051.FLOW_OPCODES):
             n = disasm8051.OPCODE_LEN[op]

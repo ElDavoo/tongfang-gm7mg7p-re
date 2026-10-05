@@ -137,13 +137,33 @@ COLUMNS = ["callee_scope", "callee_addr", "citer_scope", "citer_addr",
 # boundary could cut one in half. See the module docstring.
 SLACK = 3
 
-# The four byte values the MCS-51 map assigns to no instruction. Stated from
-# the manual, not read out of `disasm8051.py`: an oracle derived from the tool
-# it is testing asserts nothing, which is the note `disasm8051.TEXTBOOK_BIT_SITES`
-# makes about its own `0xC1`/`0xC2` pair. The self-test pairs the two -- the
-# manual says these are unassigned, `disasm8051` prints `db` for them -- because
-# the pairing is the assertion, and it is what stops this list from quietly
-# becoming a second copy of the decoder's coverage.
+# **These four are NOT the byte values the MCS-51 map assigns to no instruction,
+# and the sentence this comment used to make was wrong.** The map assigns all
+# four: `0x06`/`0x07` are `INC @R0`/`INC @R1` and `0x16`/`0x17` are `DEC @R0`/
+# `DEC @R1`, one byte each. `disasm8051.OPCODE_LEN` sized them correctly all
+# along, `opcode_coverage.MCS51_LEN` -- the table this comment cited as the
+# manual -- assigns all four a length, and the committed Ghidra listings place
+# real instruction starts on every one and name them (`ec/decompiled/bank0/
+# B065.asm` `inc @R0`, `ec/decompiled/bank0/D091.asm` `dec @R1`). This is the
+# same class of mis-transcription as the `0x96`/`0x97` row this repository has
+# already corrected twice. *Corrected 2026-10-05, issue #1153: `mnemonic()` named
+# the four, so this comment could not keep calling them unassigned without
+# contradicting the decoder `self_test()` below asserts against.*
+#
+# **The set is nevertheless left exactly as it was**, and the reason is the
+# point. This constant drives the `not-code` verdict directly, so changing it
+# changes a published verdict and re-cuts the committed
+# `ec/ghidra/gap-citation-scan.csv` for one row -- a different piece of work
+# from making the decoder name what it prints, and named as its own follow-up in
+# ../../docs/findings/mnemonic-db-fallthrough-coverage.md. What this module
+# asserts about itself is the weaker, true statement: the bytes are ones the
+# `not-code` criterion grades on, which is not the same claim as saying the map
+# assigns them nothing.
+#
+# Stated as a literal here rather than read out of `disasm8051.py`, and rather
+# than derived from the manual as this comment once claimed: an oracle derived
+# from the tool it is testing asserts nothing, which is the note
+# `disasm8051.TEXTBOOK_BIT_SITES` makes about its own `0xC1`/`0xC2` pair.
 UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 
 # Instructions that cannot hand control to the address after them, so a listing
@@ -925,15 +945,27 @@ def self_test():
         print("  %s %s" % ("ok  " if cond else "FAIL", what))
         ok = ok and bool(cond)
 
-    # The `not-code` criterion's own oracle, stated from the manual's opcode map
-    # and paired with the decoder -- the `disasm8051.TEXTBOOK_BIT_SITES` shape.
-    # A `db` on its own would be the partial table deciding; the manual and the
-    # table agreeing is the assertion.
+    # The `not-code` criterion's own oracle, paired with the decoder -- the
+    # `disasm8051.TEXTBOOK_BIT_SITES` shape. **Corrected, because the assertion
+    # it replaced was false.** This used to read "disasm8051 prints `db` for
+    # each of 0x06, 0x07, 0x16, 0x17", as a corollary of the manual assigning
+    # them nothing. Both halves of that were wrong: the manual assigns all four
+    # (`INC @R0`/`@R1`, `DEC @R0`/`@R1`), and `mnemonic()` now names them, so it
+    # would have failed the moment the decoder was corrected rather than when the
+    # module was. What the pairing is actually for -- keeping this list from
+    # quietly becoming a second copy of the decoder's coverage -- is unchanged,
+    # and so is what the set is for: the `not-code` verdict reads the literal
+    # above, not this function. The old text is left visible in the comment on
+    # `UNASSIGNED` itself; see ../../docs/findings/mnemonic-db-fallthrough-
+    # coverage.md.
     assert_that(len(UNASSIGNED) == 4 and all(0 < b < 0x100 for b in UNASSIGNED),
-                "the map-unassigned set is four byte values")
-    assert_that(all(D.mnemonic(bytes([b]), 0, 0).startswith("db ")
-                    for b in UNASSIGNED),
-                "and disasm8051 prints `db` for each of 0x06, 0x07, 0x16, 0x17")
+                "the byte set this module grades a window's `not-code` verdict "
+                "on is four values")
+    assert_that([D.mnemonic(bytes([b]), 0, 0) for b in UNASSIGNED]
+                == ["inc  @r0", "inc  @r1", "dec  @r0", "dec  @r1"],
+                "and disasm8051 names each of 0x06, 0x07, 0x16, 0x17 -- which "
+                "is the correction this pairing exists to catch: the set is not "
+                "the map's hole, and the verdict reads the literal regardless")
     # The neighbours of that set, so the assertion is about the boundary of the
     # map and not about the decoder's coverage: 0x05/0x15 are the 2-byte INC
     # and DEC direct either side of 0x06/0x07, and 0x18 is DEC R0 below 0x16.
@@ -1132,17 +1164,31 @@ def self_test():
                 "whose listing ends at 0x3AF0 and the next bank0 entry is "
                 "0x445E -- a 2,417-byte window, not a boundary slip")
     assert_that(nc["window"].startswith("170017041708170c")
-                and int(nc["unassigned"]) == 9 and int(nc["db"]) == 25
+                and int(nc["unassigned"]) == 9 and int(nc["db"]) == 1
                 and int(nc["db"]) != int(nc["unassigned"]),
-                "and whose window opens `17 00 17 04 17 08 17 0c`: 0x17 is a "
-                "byte the MCS-51 map assigns to no instruction, and 9 of the "
-                "walk's instruction starts land on one. The `db` count is 25, "
+                "and whose window opens `17 00 17 04 17 08 17 0c`: 9 of the "
+                "walk's instruction starts land on `0x17`. The `db` count is 1, "
                 "not 9 -- the two counts differ, and the criterion reads the "
                 "byte so it does not depend on disasm8051's table happening to "
-                "print `db` for exactly those four. It was 74 until #1294 gave "
-                "`mnemonic()` its six `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` "
-                "cases; the disagreement between the two counts, which is what "
-                "this case is for, is the same either side of that change")
+                "print `db` for exactly those four. **Corrected here, and the "
+                "two counts now disagree for a new reason.** This read 25, and "
+                "before that 74 until #1294 gave `mnemonic()` its six "
+                "`0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` cases. "
+                "`mnemonic()` has since named the rest of the map the manual "
+                "assigns, so the only instruction start in this window that "
+                "still renders as `db` is the one byte value the manual "
+                "assigns nothing (`0xA5`). What the case was written to protect "
+                "is unchanged and is why it still holds: the verdict is driven "
+                "by `window[i] in UNASSIGNED`, a literal in this module, so it "
+                "reads 9 against 1 rather than 9 against 25 whichever way "
+                "`mnemonic()` is spelled. Note that `UNASSIGNED`'s own comment "
+                "calls `0x17` a value the map assigns to no instruction, which "
+                "is wrong -- `mnemonic()` names it `dec @r1` and the listings "
+                "agree -- so the two counts differ for a reason no longer to be "
+                "described as agreement. The set is left as it is, deliberately: "
+                "changing it moves a published verdict, and that is its own "
+                "issue. See ../../docs/findings/mnemonic-db-fallthrough-"
+                "coverage.md")
     assert_that(all((r["verdict"] == "not-code") == bool(int(r["unassigned"]))
                     and (r["verdict"] == "no-transfer")
                     == (r["hit_site"] == "" and not int(r["unassigned"]))

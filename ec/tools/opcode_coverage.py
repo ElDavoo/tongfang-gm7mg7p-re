@@ -78,12 +78,22 @@ Lengths only, and deliberately. r2 and `disasm8051` do not always agree on
 which *instruction* a byte is -- r2 reads 0xC1 as `ajmp` and `disasm8051` as
 `clr bit` -- but both call it 2 bytes, and framing rests on the length. A text
 comparison over the same walks gives 2,214 first-token disagreements: 9 of them
-the 0xC1 row, and 2,205 the 35 opcode values `disasm8051.mnemonic()` renders
-as `db 0x..` although `OPCODE_LEN` sizes them correctly -- 34 of those 35 the
-manual assigns, and `0xA5` the one it does not. That gap is measured
-in `docs/findings/opcode-table-coverage.md` and is not this tool's to fix;
+the 0xC1 row, and 2,205 the 35 opcode values `disasm8051.mnemonic()` rendered
+as `db 0x..` although `OPCODE_LEN` sized them correctly -- 34 of those 35 the
+manual assigns, and `0xA5` the one it does not. That gap was measured
+in `docs/findings/opcode-table-coverage.md` and was not this tool's to fix;
 recording it here because a reader of this docstring is exactly the person who
 would otherwise assume a text comparison is a near-miss.
+
+*That gap is now closed, and the figures above are what the comparison measured
+rather than what the tree holds.* `mnemonic()` names every opcode value the
+manual assigns, so a `db` at an instruction start is `0xA5` alone. Nothing here
+moved: this tool's output is lengths, and a name is not a length. What did move
+is the second half of the sentence above -- `db 0x..` used to be a name, and a
+cross-decode against one could only agree vacuously, which is why a reader of
+this docstring should not have treated a first-token agreement as a near-miss.
+The naming, and the oracle each name was decided from, are in
+`docs/findings/mnemonic-db-fallthrough-coverage.md`.
 
 What no measurement here can do is say the table is *correct*. A length is
 about framing, and framing is about what Ghidra and r2 believe the bytes mean,

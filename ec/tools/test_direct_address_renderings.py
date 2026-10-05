@@ -227,21 +227,49 @@ class NegativesHeld(unittest.TestCase):
                 self.assertEqual(D.mnemonic(bytes([op, 0x82]), 0), want)
                 self.assertEqual(D.OPCODE_LEN[op], 2)
 
-    def test_the_four_map_unassigned_bytes_still_print_db(self):
-        # `citation_gap_scan.UNASSIGNED` is the `not-code` criterion a window is
-        # graded against, and a decoder that named these four would quietly change
-        # what that verdict means. Read from the scanner rather than written here
-        # so the two cannot drift into each other being right.
+    def test_the_four_map_unassigned_bytes_are_named(self):
+        # **Corrected, and this assertion was false twice over.** It read
+        # `test_the_four_map_unassigned_bytes_still_print_db` and required
+        # `db 0x..` for all four, on the grounds that they are the byte values the
+        # MCS-51 map assigns to no instruction. They are not: the map assigns
+        # `INC @R0`/`@R1` and `DEC @R0`/`@R1`, one byte each, `OPCODE_LEN` sized
+        # them so throughout, and the committed listings place real instruction
+        # starts on all four and name them. Issue #1153 gave `mnemonic()` those
+        # names, which is what made the old assertion fail — correctly, since it
+        # had been asserting a decoder defect as if it were a fact about the map.
+        # The wrong claim is left visible in the comment on
+        # `citation_gap_scan.UNASSIGNED` itself rather than deleted here.
+        #
+        # What replaces it is the part that was always worth holding, and it is a
+        # *stronger* case than the old one: the decoder is checked to agree with
+        # the map on the four rather than to decline them, and `UNASSIGNED` is
+        # read from the scanner rather than written here, so the set and the
+        # decoder cannot drift into each other being right. The pairing that
+        # makes it falsifiable -- each of the four against the real instruction
+        # either side of it, in the `TEXTBOOK_BIT_SITES` shape -- lives in
+        # `test_disasm8051_db_fallthrough.py`, which owns the wider table; this
+        # case stays the one that ties the set to what the decoder prints.
         C = _load("citation_gap_scan")
         self.assertEqual(set(C.UNASSIGNED), {0x06, 0x07, 0x16, 0x17})
-        for b in sorted(C.UNASSIGNED):
+        for b, want in ((0x06, "inc  @r0"), (0x07, "inc  @r1"),
+                        (0x16, "dec  @r0"), (0x17, "dec  @r1")):
             with self.subTest(op=f"0x{b:02x}"):
-                self.assertEqual(D.mnemonic(bytes([b, 0x00]), 0), f"db   0x{b:02x}")
+                self.assertEqual(D.mnemonic(bytes([b, 0x00]), 0), want)
+                # The `not-code` verdict is unaffected, because it reads
+                # `window[i] in UNASSIGNED` and not this function's return. Held
+                # here as a relation rather than as the row's figure so a
+                # re-cut of the committed CSV does not need this file edited.
+                self.assertEqual(D.OPCODE_LEN[b], 1)
 
     def test_db_is_still_reachable_at_all(self):
         # The negative of the negative: a decoder that stopped printing `db`
-        # anywhere would satisfy the case above vacuously, and `db` is what
-        # several committed tables' framing rests on.
+        # anywhere would satisfy a "these four are not db" case vacuously, and
+        # `db` is what several committed tables' framing rests on. `0xA5` is the
+        # one byte value the manual assigns no instruction, which is why it is
+        # the value this lands on — but it is asserted as *a* reachable `db`, not
+        # as the *only* one, so this case cannot start failing the day the next
+        # map question is settled either way. The reachable set is held against
+        # `MCS51_LEN` in `test_disasm8051_db_fallthrough.py`.
         self.assertTrue(D.mnemonic(b"\xa5\x00", 0).startswith("db"))
 
 

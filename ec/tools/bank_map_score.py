@@ -82,10 +82,22 @@ TARGETS_CSV = os.path.join(EC, "annotations", "bank-call-targets.csv")
 WINDOW_BASE = 0x8000
 BLOCK = 0x8000
 
-# The four byte values the MCS-51 map assigns to no instruction. A linear walk
-# landing on one is a data or unprogrammed byte, which is the same criterion
-# `citation_gap_scan.py` uses for its `not-code` verdict and for the same
-# reason: a transfer read out of one would be vacuous.
+# The four byte values a linear walk landing on one scores as `unassigned`. A
+# walk landing on one is treated as a data or unprogrammed byte, which is the
+# same criterion `citation_gap_scan.py` uses for its `not-code` verdict and for
+# the same reason: a transfer read out of one would be vacuous.
+#
+# **These are not the byte values the MCS-51 map assigns to no instruction, and
+# the sentence this comment used to make was wrong.** The map assigns all four
+# (`INC @R0`/`@R1`, `DEC @R0`/`@R1`, one byte each), `disasm8051.OPCODE_LEN` has
+# sized them at 1 throughout, `opcode_coverage.MCS51_LEN` gives all four a
+# length, and the committed listings name all four at real instruction starts.
+# `mnemonic()` now names them too. *Corrected 2026-10-05, issue #1153, which
+# left the set alone precisely so this comment could be corrected without moving
+# the ranking below.* Fixing the set re-cuts `p_bad` and every ranking derived
+# from it, so it is a separate change from naming a byte; the measurement and
+# the follow-up are in
+# ../../docs/findings/mnemonic-db-fallthrough-coverage.md.
 UNASSIGNED = frozenset({0x06, 0x07, 0x16, 0x17})
 
 # Walk limits for the framing columns. 8 is disasm8051's window size and 64 is
@@ -495,19 +507,28 @@ def self_test() -> int:
           "")
     # The two classes this tool scores on, asserted as the classes they claim
     # to be rather than as the set they happen to hold: `verdict()` over a
-    # one-byte buffer is the oracle, and the list is the manual's, not the
-    # decoder's. The bytes either side of the unassigned run are in it too, so
-    # this is about where the MCS-51 map's hole is and not about how many values
+    # one-byte buffer is the oracle, and the list is this tool's own grading
+    # criterion rather than the decoder's. The bytes either side of the run are
+    # in it too, so this is about where the run is and not about how many values
     # the list happens to carry.
+    #
+    # **Corrected, and the claim this block carried was wrong.** These four are
+    # not the byte values the MCS-51 map assigns to no instruction -- it assigns
+    # all four as INC/DEC @R0/@R1, and `disasm8051.mnemonic()` names them (issue
+    # #1153). The assertions below never depended on that claim: they are about
+    # `verdict()` filing each byte into the class its name says, and the names
+    # are `unassigned` and `erased` rather than "the map's hole". Only the prose
+    # did, so only the prose is corrected here; the set is untouched, because
+    # changing it moves the ranking this tool publishes.
     bad_bytes = (0xFF, 0x06, 0x07, 0x16, 0x17)
-    check("the five bad-landing byte values are exactly 0xFF plus the four the "
-          "MCS-51 map assigns to no instruction, and `verdict()` files each of "
-          "them into the class the name says",
+    check("the five bad-landing byte values are exactly 0xFF plus the four this "
+          "tool grades as `unassigned`, and `verdict()` files each of them into "
+          "the class the name says",
           UNASSIGNED == {0x06, 0x07, 0x16, 0x17} and
           [verdict(bytes([b]), 0) for b in bad_bytes] ==
           [ERASED] + [UNASSIGNED_V] * 4,
           "got " + repr([(hex(b), verdict(bytes([b]), 0)) for b in bad_bytes]))
-    check("the bytes either side of that hole are real instructions and land",
+    check("the bytes either side of that run are real instructions and land",
           all(verdict(bytes([b]), 0) == LANDS
               for b in (0x05, 0x15, 0x18, 0x22)),
           "got " + repr([(hex(b), verdict(bytes([b]), 0))

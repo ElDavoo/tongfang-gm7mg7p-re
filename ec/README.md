@@ -547,6 +547,19 @@ into `r2 -a 8051` with no stitching needed.
   `--self-test` gate call is prepared at
   `../docs/ci/agent-gates-disasm8051-self-test.patch` with no gate running it
   until a human lands that.
+  **On mnemonics, `--self-test` is not the whole table either.** It pins the two
+  windows, the four branch sites, the eleven bit-form sites and the `0xC1`/`0xC2`
+  pair — the cases with a hand transcription behind them. `mnemonic()` now names
+  every opcode value the MCS-51 map assigns, so `db 0x..` is reachable for
+  `0xA5` alone and the code says why at the return; those wider names were
+  decided against the committed Ghidra listings rather than against `--self-test`,
+  and `test_disasm8051_db_fallthrough.py` holds them by reading each listing's
+  first token off disk, so an expectation derived from the decoder cannot pass
+  it. Naming them did not move `citation_gap_scan.py`'s `not-code` verdict,
+  which reads its own literal; it corrected that literal's comment, which
+  described four of these bytes as the map's hole when the map assigns them.
+  Written up in
+  `../docs/findings/mnemonic-db-fallthrough-coverage.md`.
 - **`tools/verify_gap_text.py`** — cross-decodes the 143 instructions
   `verify_reassembly.py` cannot re-encode, so none of the committed listing is
   read by no check. It recomputes the set from `to_sdas()` rather than carrying
