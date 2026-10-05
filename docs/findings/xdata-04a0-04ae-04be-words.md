@@ -252,7 +252,7 @@ decompiles, and §3 above is why that distinction is load-bearing here:
 
 | routine | what it tests | kind of test |
 |---|---|---|
-| `bank1 0xAD8B` | `0x04A0 >> 5 & 1`, against `0x0494 == 0` (twice) | `0x04A0` bit 5 |
+| `bank1 0xAD8B` | `0x04A0 >> 5 & 1`, against `0x0494 == 0` | `0x04A0` bit 5 |
 | `bank1 0xB224` | `0x04A0 >> 5 & 1` | `0x04A0` bit 5 |
 | `bank1 0xB2A0` | `0x04A0 >> 5 & 1`, under `PSW` sign | `0x04A0` bit 5 |
 | `bank1 0xB2D5` | writes the pair (§4 above) | writer |
@@ -304,8 +304,8 @@ disagree:
 Route 3 is the sharper fact, and it is the one that replaces the mirror claim:
 `0x0526`'s writers are a **strict subset** of `0x0524`'s. `0x0527` aside,
 `0x0526` is written by `bank1 0xC778` and `0xD0C4`, while `0x0524` is
-written by those two plus `bank1 0xAD8B`, `0xB2D5`, `0xBA43`, `0xC7A7` and
-`0xCBF3`, which clear `0x0524` without touching `0x0526`. So `0x04A0` does not
+written by those two plus `bank1 0xC7A7` and `0xCBF3`, which clear `0x0524`
+without touching `0x0526`. So `0x04A0` does not
 even track `0x0524` across all three of its own routes, and **no reader is the
 reason any of them wrote it** — the bit-5 tests are observations about a byte,
 not the purpose of a store.

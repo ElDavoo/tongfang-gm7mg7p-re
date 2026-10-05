@@ -6981,7 +6981,7 @@ registers:
       from 0x0524 as the decompile reads -- 0xB6C9 loads four bytes into R3,
       R4, R1 and R2 and 0x888C stores R1 then R2, so the pair store lands
       the 0x0526/0x0527 bytes rather than 0x0524/0x0525. Its readers test bit
-      5 (bank1 0xAD80, 0xAD8B, 0xB224, 0xB2A0). **No reader is the reason any
+      5 (bank1 0xAD8B, 0xB224, 0xB2A0). **No reader is the reason any
       of the three wrote it**, and the three do not even track one value:
       0x0526's writers are a strict subset of 0x0524's -- bank1 0xC7A7 and
       0xCBF3 clear 0x0524 without touching 0x0526 -- so on those two paths
@@ -7005,8 +7005,8 @@ registers:
       direct store is bank1 0xD0C4, with A cleared one instruction earlier;
       its one helper-written path is bank1 0xB2D5's pair store at 0x888C,
       which delivers 0x0527, and 0x0527's only committed writer is that same
-      0xD0C4 storing zero. So the bit-6 and `& 0x90` tests at bank1 0xBA43,
-      0xB98D, 0xC11C are tests of a byte no committed writer sets -- which is
+      0xD0C4 storing zero. So the bit-6 and `& 0x90` tests at bank1 0xBA43
+      and 0xC11C are tests of a byte no committed writer sets -- which is
       why they cannot distinguish a mirror of 0x0524 from anything else, and
       why the mirror reading is withdrawn rather than merely unproven. "Not
       been read setting" is not "is always zero": a computed DPTR, a
