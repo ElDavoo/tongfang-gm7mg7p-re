@@ -904,56 +904,40 @@ only covers what's specific to *this* copy.
   `needs-hardware-test` still means a human at the machine. The measurement and
   its method are in that file's own header comment.
 
-Apart from the provider override below, everything else under
+Apart from the model and permission overrides below, everything else under
 `.github/workflows/agent-*.yml` is an unmodified copy of the `agent-pipeline`
 template. If it fixes a bug in one of those
 files, re-copy it rather than patching around it here.
 
-## Model provider (local override, 2026-09-17; re-applied with a new model 2026-09-23)
+## Model selection (local override; OpenRouter trial ended 2026-10-05)
 
-All eight `claude-code-action` steps use OpenRouter's Anthropic-compatible
-endpoint (`https://openrouter.ai/api`), `--model stealth/space-bunny-alpha`,
-and `--effort max`. Each step passes `secrets.OPENROUTER_API_KEY` as both the
-`anthropic_api_key` input and `ANTHROPIC_AUTH_TOKEN`; the OAuth input is no
-longer used. Both callers of the reusable `agent-fix.yml` forward the new
-secret, and that workflow requires it.
+Every `claude-code-action` step authenticates with `secrets.CLAUDE_CODE_OAUTH_TOKEN`
+through the action's `claude_code_oauth_token` input, and runs at
+`--effort medium`. The model depends on the stage:
 
-The Opus/Sonnet/Haiku default-model environment variables and
-`CLAUDE_CODE_SUBAGENT_MODEL` also select `stealth/space-bunny-alpha`, so the
-review plugin's model aliases do not select other models.
-`CLAUDE_CODE_EFFORT_LEVEL` is set to `max` for inherited configuration as well
-as the explicit CLI flag, and `CLAUDE_CODE_MAX_CONTEXT_TOKENS` is set to
-`950000`. These are requested settings; provider-side reasoning behaviour and
-the actual context-window size are not verified by the local YAML checks — if
-the endpoint advertises a smaller window than 950000 tokens, the larger value
-is what the CLI is told to assume.
+| Stage | Model |
+|---|---|
+| `agent-fix.yml` (fix rounds after review, including the escalation round; also reached from `agent-fix-ci.yml`) | `sonnet` |
+| `agent-implement.yml` pre-review fix steps | `sonnet` |
+| `agent-followups.yml` | `sonnet` |
+| `agent-conflicts.yml` | `sonnet` |
+| everything else: plan, implement, pre-review, review verdict, `claude.yml` | `opus` |
 
-The model was `stealth/union-alpha` when this override was first committed on
-2026-09-17, and `0bf971c` was reverted in full by `4bec8e4` on 2026-09-18
-without replacing it. The 2026-09-23 re-application is the same change with
-`stealth/space-bunny-alpha` in place of `stealth/union-alpha` and the context
-token setting added.
+Both callers of the reusable `agent-fix.yml` forward `CLAUDE_CODE_OAUTH_TOKEN`,
+and that workflow requires it. No `ANTHROPIC_DEFAULT_*_MODEL`,
+`CLAUDE_CODE_SUBAGENT_MODEL` or `CLAUDE_CODE_MAX_CONTEXT_TOKENS` override is set,
+so subagents and context size follow the CLI's defaults.
 
-Why the revert is not repeated: the model is rotated, and `union-alpha`'s
-turn was simply over — the revert was routine re-pointing at a current
-stealth model, not a diagnosis of a failure. As of 2026-09-23, a check of
-OpenRouter's public model list (`GET https://openrouter.ai/api/v1/models`, no
-auth needed) finds `stealth/space-bunny-alpha` and no entry containing
-"union" among the 456 models returned, which is consistent with a retired
-slug rather than a broken one. When the next stealth model is rotated in,
-this section is what changes: the `--model` flag, the four
-`ANTHROPIC_DEFAULT_*_MODEL` variables, `CLAUDE_CODE_SUBAGENT_MODEL`, and the
-`docs/agent-pipeline.md` text here.
+History: from 2026-09-17 (`0bf971c`, reverted by `4bec8e4`, re-applied by
+`8537041a` on 2026-09-23) every step was routed through OpenRouter's
+Anthropic-compatible endpoint to a free stealth model
+(`stealth/union-alpha`, then `stealth/space-bunny-alpha`) at `--effort max`,
+with `secrets.OPENROUTER_API_KEY` as the credential. That trial ended on
+2026-10-05 and the routing was removed; `git show 8537041a` has the full
+configuration if a provider override is wanted again. The
+`OPENROUTER_API_KEY` secret is no longer referenced by any workflow.
 
-The same listing gives `stealth/space-bunny-alpha` a `context_length` of
-1000000, so `CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000` leaves headroom under the
-real window rather than exceeding it, and it advertises `reasoning_effort`
-among its supported parameters, so `--effort max` maps to something the
-endpoint accepts. Pricing is listed as zero for both prompt and completion.
-Re-check the listing before assuming any of this still holds: these slugs
-turn over, which is the whole reason the revert exists.
-
-All eight steps also pass `--dangerously-skip-permissions`, as explicitly
+Every step also passes `--dangerously-skip-permissions`, as explicitly
 requested for unattended CI. This bypasses Claude Code permission prompts;
 `--allowedTools` is no longer a default-deny boundary. The existing explicit
 `--disallowedTools` lists remain, but are not a sandbox or a guarantee that
@@ -961,13 +945,9 @@ shell commands cannot perform equivalent operations. Earlier workflow
 comments describing the allowlist as the safety boundary predate this
 override and no longer describe the effective configuration.
 
-These are human-requested provider and CLI-permission overrides. GitHub
+These are human-requested model and CLI-permission overrides. GitHub
 job permissions, approval gates, triggers, prompts and action pins are
-unchanged. Preserve the overrides when re-copying the template. The
-repository Actions secret `OPENROUTER_API_KEY` is set (added 2026-09-17);
-the old `CLAUDE_CODE_OAUTH_TOKEN` is still present but is not a fallback.
-No live OpenRouter workflow run was performed for this change to validate
-the credentials or the model's availability on the endpoint.
+unchanged. Preserve the overrides when re-copying the template.
 
 ## `claude.yml` — not from agent-pipeline, from `/install-github-app`
 
