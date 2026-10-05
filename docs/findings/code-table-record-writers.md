@@ -140,7 +140,7 @@ $ r2 -a 8051 -e scr.color=0 -q -c 's 0x8453; px 24' /tmp/bank1.bin
 
 | call site | containing routine | CODE base | records | destinations in `0x0400`-`0x04FF` |
 |---|---|---|---:|---|
-| bank1 `0x83B7` | unexported; entry bank1 `0x8354` | `0x8453` | 67 | 18, listed below |
+| bank1 `0x83B7` | unexported; entry bank1 `0x8354` — **corrected below** | `0x8453` | 67 | 18, listed below |
 | bank1 `0x841D` | `zero_1510_and_clear_xdata_flag_bits` (`0x8418`) | `0x851C` | 23 | 4 |
 | bank1 `0x82FD` | unexported (nearest exports `0x820F` / `0x8300`) | `0x8561` | 17 | 5 |
 | bank1 `0x82C9` | unexported (nearest exports `0x820F` / `0x8300`) | `0x8594` | 1 | 1 |
@@ -192,11 +192,9 @@ page.
   strengthens nor weakens. The seed is a static fact about a table.
 - **`0x0457` is seeded four different ways** — `0x00`, `0x05`, `0x80`, `0x83`,
   from four call sites. This is the sharpest case on the page and the reason it
-  is worth a method: two of the four call sites sit in unexported routines
-  (`0x82FD`, `0x82C9`), and its four EC-side `MOV DPTR` sites are all
-  read-modify-writes, one in each of the four named exports
-  `ec/decompiled/bank1/818A.asm`, `81C5.asm`, `823A.asm` and `8261.asm`
-  (§5 of the page document, §11
+  is worth a method: three of the four call sites sit in unexported routines
+  (`0x83B7`, `0x82FD`, `0x82C9`), and its four EC-side `MOV DPTR` sites are all
+  read-modify-writes in code no export covers (§5 of the page document, §11
   item 4). Four whole-byte stores and four bit operations on one byte.
 - **`0x0440` keeps its §5 reading**: three records, all storing `0x00`. The
   entry's "no direct writer" is now explained by mechanism rather than left as
@@ -210,6 +208,28 @@ page.
   two the record is the only writer this repository has found, while for the
   other five the record is an additional writer that a site count cannot see.
   Both suites assert the split.
+
+**Correction, 2026-10-03 (issue #175): this governs the `0x83B7` row of §4's
+table, the `0x043E` bullet's "no export and no recorded caller", and the
+`0x0457` bullet's "three of the four call sites sit in unexported routines",
+all three of which the sentences above leave standing as written.** The routine
+holding `0x83B7` is now the named export
+`zero_045a_then_reset_0459_bit3_and_0456_low5` (`bank1/8354.asm`), and that
+listing carries the call site itself — `83B2 mov DPTR,#0x8453` then
+`83B7 lcall 0xa530` — so which routine holds `0x83B7` is settled and §4's row
+and the `0x043E` bullet's "no export" are both out of date. That leaves two of
+the four call sites unexported rather than three: `0x82FD` and `0x82C9` are
+still in routines no export covers.
+
+**The timing limit is unchanged, and `CPU_TEMP` stays `confirmed-working` on its
+live coretemp cross-check.** Naming the routine does not say *when* the table is
+walked, and this change adds no caller for `0x8354`: the `0x189A ljmp` in
+`task-call-table.csv` that targets it was already recorded on main, and what
+moved here is only that `forwarder-targets.csv` and `trampoline-target-census.csv`
+now resolve it to a listing instead of carrying "no committed export names this
+address in bank1". A static fact about which routine holds a call site is not a
+fact about when it runs, so the seed is still a static fact about a table and
+the `0x043E` reading is still as narrow as the paragraph above states.
 
 **What none of the twelve is.** Not a readback, not a behavioural test, not
 evidence the EC acts on the value afterwards, and not an `absent` or `inert`
@@ -328,6 +348,11 @@ for its own residual:
    `--mode rebuild-project` and a 7 MB database change that cannot merge
    alongside anything else, and it is what would establish *when* these tables
    are walked. Issue #175 owns it; this change names them by address.
+   **Update, 2026-10-03 (issue #175):** `0x8354` and the `0xF326`-`0xF350`
+   stubs are seeded by that issue, as §5's correction above records; the
+   routines holding `0x82C9` and `0x82FD` are not, and the `--mode
+   rebuild-project` run that would put any of them in the committed database
+   is still owed.
 4. **Whether a seeded value is ever the value observed.** A live read of
    `0x043E`, `0x0457` or `0x045F` at reset beside a real reading is a human at
    the machine. The procedure is already written down for these bytes and

@@ -253,11 +253,15 @@ Two limits on this, both real. **When** these two tables are walked is not
 established here: the routine holding `0x83B7` has no export and no recorded
 caller (its entry is bank1 `0x8354`), the one holding `0x841D` is exported but is
 reached from `0x86EE`, which is neither, and `ec/annotations/bank-call-targets.csv`
-has no row targeting either. The surrounding code — clearing `0x045A`, `0x1510`,
-`0x0801`, `0x06E1`, `0x0442` — reads as initialisation, and that is the whole of
-the basis for saying "initialisation" at all. And `0x0440` appears in only three
-of the 108 records, so this is a record that happens to name the byte, not a
-table whose purpose is to set it.
+has no row targeting either. **Update, 2026-10-03 (issue #175):** the routine
+holding `0x83B7` now has an export — `zero_045a_then_reset_0459_bit3_and_0456_low5`
+(bank1/8354.asm) — so that half of the sentence is out of date, and the export
+adds no caller, so **the limit itself stands**: *when* these two tables are
+walked is still not established. The surrounding code — clearing `0x045A`,
+`0x1510`, `0x0801`, `0x06E1`, `0x0442` — reads as initialisation, and that is the
+whole of the basis for saying "initialisation" at all. And `0x0440` appears in
+only three of the 108 records, so this is a record that happens to name the byte,
+not a table whose purpose is to set it.
 
 ## 6. The hypothesis, named as one
 
@@ -635,16 +639,24 @@ only related text is a generic `0xFE410000+addr` mention in
   `--mode rebuild-project` and a 7 MB database change that cannot merge alongside
   anything else, so they stay named by address. The other two unexported
   `0xA530` call sites, `0x82C9` and `0x82FD`, are in the same gap.
+  **Update, 2026-10-03 (issue #175):** `0x8354` and the `0xF326`-`0xF350` stubs
+  are seeded by that issue, so that sentence is out of date for them; `0x86EE`
+  and the `0x82C9` / `0x82FD` gap are not, and the rebuild all of them need is
+  still owed.
 - **Seven plate comments in `ec/decompiled/` are already stale** for the reason
   `xdata-0400-045f.md` §11 gives. §5's tables add a *new* class of writer for
   bytes already in the YAML: `0x0457` is seeded four different ways by four
   chunks of one table (`0x00`, `0x05`, `0x80`, `0x83`), and `0x043E`, `0x0459`,
   `0x045B`, `0x045C`, `0x045F` and eight others are zeroed or seeded by records
   the direct scan cannot see. `0x0457` is the sharpest case — its only four
-  EC-side sites are read-modify-writes, one in each of four named exports
-  (§11 item 4 of
+  EC-side sites are read-modify-writes in code no export covers (§11 item 4 of
   the page document), and it now has a table-driven writer as well. That is the
   same gap the seven comments have, one level down.
+  **Update, 2026-10-03 (issue #175):** "in code no export covers" is no longer
+  true of those four sites — each is now in one of four named exports, which is
+  the seeding `ec/annotations/xdata-0400-045f.md` §5 records and
+  `docs/findings/0400-045f-site-owners.md` §1 reads. The `0x82C9` / `0x82FD`
+  gap named two bullets above is unchanged, and so is the table-driven writer.
 - **Follow-ups this opens**, in rough value order:
   1. the 15 unresolved call sites of §7.6 — the largest remaining hole in the
      writer hunt, and the only one that could still turn up a non-zero writer;
@@ -652,6 +664,9 @@ only related text is a generic `0xFE410000+addr` mention in
      callers are not searched;
   3. seed `0x8354`, `0x86EE` and the `0xF326`-`0xF350` stubs (needs a rebuild),
      which would also establish *when* the `0x0440 = 0` records are walked;
+     **update, 2026-10-03 (issue #175):** `0x8354` and the `0xF326`-`0xF350`
+     stubs are seeded by that issue, but the rebuild is still owed and naming a
+     routine is not a step toward *when* the records are walked;
   4. the `0x070F`-`0x071F` ring has a producer and a `0x19EA` hand-off but no
      decoded consumer — if a host drains that ring, it is a second candidate
      writer path for `0x0440`;
