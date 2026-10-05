@@ -339,7 +339,7 @@ class RowsMatchTheirTable(unittest.TestCase):
 
 
 class UnusedSlots(unittest.TestCase):
-    """`0xFF` is a table's marker for a slot past its max level.
+    """`0xFF` is a table's marker for a slot at or past its max level.
 
     The issue asked what the `0xFF` transients mean and recorded that nothing
     in the corpus said. They are the vendor's unused-step marker, and each one

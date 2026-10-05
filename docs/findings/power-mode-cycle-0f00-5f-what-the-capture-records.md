@@ -122,12 +122,15 @@ Eight addresses in the capture are written `0xFF` and read back: `0x0F08`,
 `0xFF` is the vendor's marker for an unused step —
 `ec-fan-table-defaults.md` §2 says "Unused steps are `0xFF`" — and each publish
 says how many steps it has: `M2T1` carries `CpuTemp_DefaultMaxLevel` 8, `M1T1`
-carries 10, `M3T1` carries 11, and the entries past that level are the ones
-spelled `0xFF`. The two rows do not cut at the same entry — in every table the
-`DownT` row's `0xFF` starts one entry earlier than the `UpT` row's — so which
-addresses are unused depends on the row as well as the level. What is not in
-question is the direction: a longer table has fewer `0xFF` entries, and the
-capture's `0xFF` writes and read-backs track exactly that.
+carries 10, `M3T1` carries 11. That level is an upper bound on what a table
+fills, not the address where the blanks start: no row fills a slot past its
+level, but the blank tail begins *at* the declared level for the `UpT` rows of
+`M1T1` and `M3T1` and one slot *past* it for `M2T1`'s. The two rows do not cut
+at the same entry either — in every table the `DownT` row's `0xFF` starts one
+entry earlier than the `UpT` row's — so which addresses are unused depends on
+the row and on the table, not on the level alone. What is not in question is
+the direction: a longer table has fewer `0xFF` entries, and the capture's
+`0xFF` writes and read-backs track exactly that.
 
 Which is what the capture shows. `0x0F09` and `0x0F1A` are real in `M3T1` and
 `0xFF` in the other two; `0x0F08` and `0x0F19` are real in both `M1T1` and
@@ -139,7 +142,9 @@ made is this one.
 
 The resting dump carries the same thing statically: `0xFF` runs at
 `0x0F0A-0x0F0F`, `0x0F1B-0x0F1F`, `0x0F3A-0x0F3F` and `0x0F4B-0x0F4F`, which
-are the tail of each `UpT` and `DownT` row past `M3T1`'s max level of 11.
+are the tail of each row from `M3T1`'s declared level of 11 onward — `0x0F0A` is
+entry 11 itself, so the `UpT` run begins at the level rather than beyond it, and
+`0x0F1B` is the `DownT` row cutting the one entry earlier.
 
 **A correction to the issue as filed.** It lists nine `0xFF` addresses and
 includes `0x0F48`. `0x0F48` is not one of them: it oscillates `0x3E`↔`0x44`
