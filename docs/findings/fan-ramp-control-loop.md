@@ -75,15 +75,15 @@ by the committed scans these two `ljmp`s are its only entries. That is what
 this method found, not a claim that no other entry exists.
 
 **What the two differ in is where the curve table lives, not what the loop
-does.** `0x8B14` reads its setpoints out of **CODE**, through the pointer pair
-at `0x0A47`/`0x0A48`; block five reads them out of the **XDATA `0x0F00`
+does.** `0x8B14` reads its setpoints out of **CODE**, through the XDATA pointer
+pair at `0x0A47`/`0x0A48`; block five reads them out of the **XDATA `0x0F00`
 page**. Everything else — the integrator bytes, the error terms, the direction,
 the publish — is the same shape in both.
 
 | | block five (`0x8A25`) | `0x8B14` |
 |---|---|---|
-| setpoint table | XDATA `0x0F00 + n` | CODE, via `0x0A47` |
-| threshold table | XDATA `0x0F10 + n` | CODE, via `0x0A47` |
+| setpoint table | XDATA `0x0F00 + n` | CODE, via XDATA `0x0A47` |
+| threshold table | XDATA `0x0F10 + n` | CODE, via XDATA `0x0A47` |
 | CPU integrator | XDATA `0x0460` | XDATA `0x0460` |
 | GPU integrator | XDATA `0x0468` | XDATA `0x0468` |
 | publishes to | `0x8C46` | falls into `0x8C46` |
@@ -110,9 +110,9 @@ Below 4 the controller runs the **dwell** arm, which is the interesting one.
 ### 2a. The dwell arm — a rate limit, not just a threshold
 
 ```
-8B1D     90 0a 47 mov      DPTR, #0xa47      ; the CODE pointer pair
-8B20     12 b9 87 lcall    0xb987            ;   R6 <- [0x0A47]
-8B23     12 bc e9 lcall    0xbce9            ;   DPTR <- the table it points at
+8B1D     90 0a 47 mov      DPTR, #0xa47      ; the XDATA pointer pair
+8B20     12 b9 87 lcall    0xb987            ;   DPTR <- that pair, big-endian
+8B23     12 bc e9 lcall    0xbce9            ;   DPTR <- the CODE pointer inside it
 8B26     c0 83 - -   push   DPH
 8B28     c0 82 - -   push   DPL              ;   save the table pointer
 8B2A     90 04 60 mov      DPTR, #0x460
@@ -137,6 +137,29 @@ is no: `0x043E` is the right-hand operand at `0x8B39`, and the left-hand one
 came out of a table. `0xBCE9` is the other half of the same idea one step
 earlier — it reads a big-endian CODE pointer out of the table and leaves it in
 DPTR, which is why the pair at `0x0A47` is a pointer to a pointer.
+
+**That pointer-to-a-pointer is two dereferences, and the census splits each of
+the two calls in half.** `0xB987` is seeded in `index.csv` at two bytes —
+`movx A,@DPTR` / `mov R6,A`, an XDATA read — but it has no `ret` of its own, so
+execution runs on into `0xB989 finish_dptr_be16_load` (seeded at seven bytes,
+`0xB989`–`0xB98F`) and the first `ret` after `0xB987` is that `0xB98F`. So the
+XDATA byte is not left dead in R6 for `0xBCE9` to overwrite: the run-on consumes
+it at `0xB98D mov DPH,R6`, and what `lcall 0xB987` returns with is DPTR holding
+the XDATA pair. `0xBCE9` splits the same way, at five bytes and then
+`0xBCEE dptr_from_code_be16` — the second `movc A,@A+DPTR`, `mov R7,A`,
+`mov DPL,A`, `mov DPH,R6` and the `ret` at `0xBCF4`. Read as whole routines the
+path is therefore XDATA `0x0A47`/`0x0A48` → a CODE address → the big-endian
+CODE pair at that address, which is the table `0xBB5E` indexes. This is worth
+setting out because taking either seeded entry for the whole routine is what
+makes the XDATA load look dead and the pair look like a CODE address, and
+`disasm8051.py` over the image is what shows both run-ons.
+
+The same address in CODE is not what is read here, and the distinction is not
+subtle once stated: `0x8B1D` loads DPTR with `0xa47` for a **`movx`**, so DPTR
+addresses XDATA. The CODE bytes at `0x0A47` are a different address space, and
+reaching them would take a `movc` with DPTR still at `0x0A47`; there is no
+`movc` between `0x8B1D` and the `push` at `0x8B26`, and `0xB987` has already
+moved DPTR off `0x0A47` by then.
 
 The error term is `CPU_TEMP - setpoint`, computed with the carry preset, and
 the branch is on the borrow. Too cold (`jc` taken) goes to `0x8B57`; too hot
@@ -347,8 +370,7 @@ is: **temperature → error → integrator → curve lookup → duty target**, a
 ## 5. `0xBC4F`: `inferred` corrected, and the comment was wrong too
 
 Issue item 4 asks for the one §6 row with `basis: inferred` to be confirmed or
-corrected. It was wrong on both counts, and the committed listing is ten
-instructions long:
+corrected. It was wrong on both counts, and the committed listing reads:
 
 ```
 BC4F     90 08 e6 mov      DPTR, #0x8e6
@@ -380,10 +402,18 @@ which is the same shape with the low byte taken from the caller's A instead of
 from `0x08E7`. `0xBCCB` is what `0x888D` and block four call; `0xBC4F` is what
 `0x888D` calls for selector 2 and block four calls at `0x8A22`. Between them
 they are the two ways `0x08E6` and the byte above it become the pointer pair
-at `0x0A47`/`0x0A48` — and **that pair is what `0x8B14` dereferences to find
-its curve table** (§1, `0x8B1D`–`0x8B30`). So the routine §6 flagged as the
-weakest row in the group is on the path that decides where this controller
-reads its setpoints from.
+at `0x0A47`/`0x0A48`.
+
+**Those two addresses are XDATA on both sides, and that is what links this
+routine to `0x8B14`.** `0x8B1D` sets DPTR to `0x0A47` and `lcall 0xB987` reads
+it with `movx`, so the pair `0xBC4F` writes is the pair `0x8B14` reads; §2a
+spells out that read and the CODE dereference that follows it. The routine §6
+flagged as the weakest row in the group is therefore on the path that decides
+where this controller reads its setpoints from. The same pair has a second
+reader, §3a's ladder, which loads it with `0xB93D load_dptr_be16_from_xdata`
+at `0xB6EE`/`0xB6F1` and then indexes CODE with `0xBB56`'s `movc` — a
+different consumer reached a different way, and worth naming so the pair is not
+read as `0x8B14`'s alone.
 
 **Two fields of that row are deliberately not changed, and it is worth saying
 why here rather than only in the row.** The *name* is left as it is: renaming
@@ -442,8 +472,9 @@ unestablished** (§6). A driver that wrote `0x0460` on the strength of this
 write-up alone would be guessing at both.
 
 The nearest thing to a next step that this write-up hands over is the pair of
-tables behind `0x0A47`, since `0x8B14`'s whole setpoint path goes through it
-and `0xBC4F` is one of the two writers of it.
+tables behind the XDATA pointer pair at `0x0A47`/`0x0A48`, since `0x8B14`'s
+whole setpoint path goes through it and `0xBC4F` is one of the two writers of
+it.
 
 ## 8. Reproducing this
 

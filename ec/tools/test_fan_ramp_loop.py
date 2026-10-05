@@ -136,6 +136,38 @@ BC4F_COPY = [
     (0xBC5E, 'ret', ''),
 ]
 
+# The two dereferences between `0x8B1D`'s `mov DPTR, #0xa47` and the setpoint
+# lookup at `0xBB5E`, transcribed from the listings the write-up names.
+#
+# Both calls are split by the byte-scan seeding, each into two census entries
+# that between them hold the routine and neither of which reaches its `ret`:
+# `0xB987` is two bytes and runs on into `0xB989`, and `0xBCE9` is five and runs
+# on into `0xBCEE`. Reading either entry as the whole routine is what makes the
+# XDATA byte at `0x0A47` look discarded -- `0xBCE9` does overwrite R6 three
+# bytes later, but with a CODE byte and after `0xB98D` has already moved the
+# XDATA one into DPH -- which in turn makes the pair look like a CODE address
+# rather than an XDATA one. The test below holds both halves of that.
+POINTER_PAIR_READ = [
+    ('B987', 0xB987, 'movx', 'A, @DPTR'),
+    ('B987', 0xB988, 'mov', 'R6, A'),
+    ('B989', 0xB989, 'inc', 'DPTR'),
+    ('B989', 0xB98A, 'movx', 'A, @DPTR'),
+    ('B989', 0xB98B, 'mov', 'DPL, A'),
+    ('B989', 0xB98D, 'mov', 'DPH, R6'),
+    ('B989', 0xB98F, 'ret', ''),
+]
+
+POINTER_DEREFERENCE = [
+    ('BCE9', 0xBCE9, 'clr', 'A'),
+    ('BCE9', 0xBCEA, 'movc', 'A, @A+DPTR'),
+    ('BCE9', 0xBCEB, 'mov', 'R6, A'),
+    ('BCEE', 0xBCEE, 'movc', 'A, @A+DPTR'),
+    ('BCEE', 0xBCEF, 'mov', 'R7, A'),
+    ('BCEE', 0xBCF0, 'mov', 'DPL, A'),
+    ('BCEE', 0xBCF2, 'mov', 'DPH, R6'),
+    ('BCEE', 0xBCF4, 'ret', ''),
+]
+
 # The ladder that orders 0xBB56 against 0xBBDE, in the listing the write-up
 # cites and, independently, in the image (see the image case below).
 LADDER = [
@@ -255,6 +287,95 @@ class FanRampCitations(unittest.TestCase):
         for addr, mnemonic, operand in BC4F_COPY:
             with self.subTest(addr='0x%04X' % addr):
                 cited_insn('BC4F', addr, mnemonic, operand)
+
+    def test_the_pointer_pair_is_xdata_on_both_sides(self):
+        """`0xBC4F` writes XDATA `0x0A47`/`0x0A48`; `0x8B14` reads XDATA too.
+
+        This is the linkage §5 draws, and the address space is the whole of
+        it: same number, one space, so the routine that writes the pair is on
+        the path that decides where this controller reads its setpoints from.
+        Held as three relations rather than as prose, each of which fails if
+        the firmware or an export moves.
+
+        The load is `movx`, not `movc`, at both ends -- `0xBC4F` stores with
+        `movx @DPTR, A` and `0xB987` loads with `movx A, @DPTR`. A `movc` on
+        either side would put the two in different address spaces at the same
+        numeric address and break the claim.
+        """
+        for addr, mnemonic, operand in BC4F_COPY:
+            with self.subTest(addr='0x%04X' % addr):
+                cited_insn('BC4F', addr, mnemonic, operand)
+        self.assertEqual(LISTINGS.get('BC4F')[0xBC5A][0], 'movx',
+                         '0xBC4F must store the pair with movx into XDATA')
+        self.assertEqual(LISTINGS.get('B987')[0xB987][0], 'movx',
+                         '0x8B14 must read the pair with movx from XDATA')
+
+        # And nothing between `0x8B1D` and the `push` reads CODE at 0x0A47, so
+        # the same address in the other address space is not what the setpoint
+        # path uses. A `movc` here would fetch the CODE bytes at 0x0A47 and
+        # make the pair a CODE address instead of an XDATA one.
+        window = {addr: insn for addr, insn in LISTINGS.get('8B14').items()
+                  if 0x8B1D <= addr <= 0x8B26}
+        self.assertTrue(window, '8B14.asm has nothing in the window at all')
+        for addr, (mnemonic, _) in sorted(window.items()):
+            with self.subTest(addr='0x%04X' % addr):
+                self.assertNotEqual(mnemonic, 'movc',
+                                    '0x%04X reads CODE at DPTR before the table '
+                                    'pointer is pushed' % addr)
+
+    def test_the_setpoint_path_dereferences_the_pair_twice(self):
+        """The two calls each run past their census entry into the next one.
+
+        `0xB987` is seeded at two bytes and `0xBCE9` at five, neither with a
+        `ret`, so both listings stop mid-routine and each run-on lands in the
+        entry seeded at the next address -- `0xB989 finish_dptr_be16_load` and
+        `0xBCEE dptr_from_code_be16`. Taking either entry as the whole routine
+        drops the run-on: `0xB987` alone looks like a bare XDATA read whose R6
+        is then overwritten three bytes later by `0xBCE9`, which would make the
+        XDATA load dead and the pair a CODE address.
+
+        So each seed is held to being shorter than its routine, and the `ret`
+        that ends each routine is held to be the one in the entry the run-on
+        landed in.
+        """
+        for stem, addr, mnemonic, operand in POINTER_PAIR_READ:
+            with self.subTest(addr='0x%04X' % addr):
+                cited_insn(stem, addr, mnemonic, operand)
+        for stem, addr, mnemonic, operand in POINTER_DEREFERENCE:
+            with self.subTest(addr='0x%04X' % addr):
+                cited_insn(stem, addr, mnemonic, operand)
+
+        # The seed is shorter than the routine: the run-on is what is missing
+        # from the seeded range, so a census entry that grew to cover its own
+        # `ret` would mean the split this reading depends on is gone.
+        self.assertNotIn(0xB98F, LISTINGS.get('B987'),
+                         'B987.asm now reaches its own ret, so the two census '
+                         'entries have been merged')
+        self.assertNotIn(0xBCF4, LISTINGS.get('BCE9'),
+                         'BCE9.asm now reaches its own ret, so the seeded '
+                         'entry is no longer short of its routine')
+        self.assertIn(0xB989, LISTINGS.get('B989'),
+                      'B989.asm should carry the run-on of 0xB987')
+        self.assertIn(0xBCEE, LISTINGS.get('BCEE'),
+                      'BCEE.asm should carry the run-on of 0xBCE9')
+
+        # And the XDATA byte is consumed by the run-on, not left in R6 for
+        # 0xBCE9 to overwrite: `0xB98D` is what puts it in DPH.
+        self.assertEqual(LISTINGS.get('B989')[0xB98D][1].lower(), 'dph, r6',
+                         'the run-on must move the XDATA byte into DPH, or the '
+                         'pair 0xBC4F writes is not what 0x8B14 reads')
+        # The second dereference is CODE, which is why the pair is a pointer
+        # to a pointer rather than the table itself.
+        self.assertEqual(LISTINGS.get('BCE9')[0xBCEA][0], 'movc',
+                         '0xBCE9 must read CODE, or there is no second '
+                         'dereference')
+
+    def test_the_ladder_reads_the_same_pair_as_a_second_consumer(self):
+        """§3a's ladder reads the pair too, so it is not `0x8B14`'s alone."""
+        cited_insn('B5D3', 0xB6EE, 'mov', 'DPTR, #0xa47')
+        cited_insn('B5D3', 0xB6F1, 'lcall', '0xb93d')
+        cited_insn('B93D', 0xB93D, 'movx', 'A, @DPTR')
+        cited_insn('B93D', 0xB946, 'ret', '')
 
     def test_the_ladder_orders_the_two_threshold_routines_in_code_order(self):
         for addr, mnemonic, operand in LADDER:
