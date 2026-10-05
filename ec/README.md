@@ -670,8 +670,11 @@ into `r2 -a 8051` with no stitching needed.
   restated, run over the `ITE8850-PD` image at `0x20000`. It finds three
   dispatchers a caller names and reads each one's entry stride off its own
   loop: the PD's `0x11C2` and `0x11EF` walk 4- and 6-byte entries where the
-  main EC's reader walks 3, so their verdicts are the main EC's rule over
-  another layout and the CSV says so per row.
+  main EC's reader walks 3, and each dispatcher's sites are decoded and judged
+  at the width that dispatcher walks, so the CSV's `well_formed` is a statement
+  about the table in each row. The layouts are established from the readers'
+  own compare chains in
+  `../docs/findings/pd-reader-entry-layouts.md`.
   `--spans-csv` regenerates `annotations/pd-index-table-spans.csv` and
   `--self-test` pins the search, the reconciliation against
   `pd_image_census.py` — over every reader, not only the ones the census
@@ -1065,10 +1068,12 @@ $ r2 -a 8051 -e scr.color=0 -c 's 0xb2e2; pd 10' /tmp/bank0.bin
   Produced by `tools/decode_index_table.py --spans-csv`.
 - **`annotations/pd-index-table-spans.csv`** — the same census over the
   `ITE8850-PD` image's 28 candidate call sites, with the dispatcher's runtime
-  address and its own entry stride in front of it. The stride is what makes
-  `well_formed` readable there: the column is the main EC's 3-byte rule, and it
-  is only a statement about a table where the stride is 3. Produced by
-  `tools/pd_index_tables.py --spans-csv`.
+  address and its own entry stride in front of it, and the main EC's
+  `first_case`/`last_case` columns rendered as `first_key`/`last_key` — as wide
+  as the key bytes each row's entry actually carries, so the width on its own
+  says which reader produced the row. Each row is decoded at its own
+  `reader_stride`, so `well_formed` is a statement about the table in that row.
+  Produced by `tools/pd_index_tables.py --spans-csv`.
 
 ## Recompilation — status: toolchain proven, not attempted
 

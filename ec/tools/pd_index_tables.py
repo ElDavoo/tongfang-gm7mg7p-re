@@ -18,23 +18,26 @@ prologue shape cannot drift apart. What is new here is the region selection, the
 per-dispatcher grouping, the reconciliation against `pd_image_census.py`, and
 the self-test.
 
-**Two of the three dispatchers are not this family's layout, and saying so is
-the point of `reader_stride`.** `decode_table()` reads 3-byte entries --
-address, address, case -- because that is what the main EC reader at `0x7151`
-does. The PD's `0x11C2` walks 4 bytes per entry and `0x11EF` walks 6, both
-taking the pointer off the return address the same way, and the entry stride is
-read off each reader's own body by `entry_stride()` rather than assumed. So a
-`well_formed=no` row under `0x11C2` is a **failure of the main EC's rule, not a
-verdict about that table** -- and so, in the two rows that pass it, is a
-`well_formed=yes`. The column is there so a reader of the CSV is not misled,
-not so a 4-byte table can be decoded with a 3-byte reader.
+**Two of the three dispatchers walk entries of a different width, and
+`reader_stride` is where that is now paid rather than explained.** The main EC's
+reader at `0x7151` takes three bytes per entry -- address, address, case -- and
+the PD's `0x11C2` takes four and `0x11EF` takes six, all three taking the
+pointer off the return address the same way. The entry stride is read off each
+reader's own body by `entry_stride()` rather than assumed, and
+`decode_table()` is handed it, so **every row's `well_formed` column is a
+statement about the table in that row** at its own reader's own layout. What an
+entry looks like at each width -- two target bytes and `stride - 2` key bytes,
+and a terminator and default that stay four bytes wide at all three -- is
+established from the readers' own compare chains in
+`docs/findings/pd-reader-entry-layouts.md`, which is also where `0x11EF`'s
+layout, previously undecoded anywhere, is written up.
 
 **What a PD well-formedness check is worth.** `malformed()` requires every
 target and the default to resolve inside the caller's own region, which in the
 main EC means *banked* -- below `0x8000` is common area, at or above it is the
 caller's own bank. The PD image is flat, so `REGIONS` gives it base `0x0000` and
 the same test only asks for a `0x0000`-`0xFFFF` CODE address. It is a weaker
-check in the PD than it reads in the main EC, and the other two checks -- cases
+check in the PD than it reads in the main EC, and the other two checks -- keys
 strictly ascending, and the byte after the table being one of its own targets --
 are unchanged.
 
@@ -51,15 +54,15 @@ Usage:
 import argparse
 import collections
 import csv
+import io
 import os
 import sys
 
 from decode_index_table import (ENTRY_LEN, MAX_ENTRIES, PD_IMAGE,
                                 PROLOGUE_BODY_INSNS, PROLOGUE_SHAPES,
                                 SPAN_COLUMNS, census, direct_address_readers,
-                                find_readers, lcalled_readers,
+                                entry_stride, find_readers, lcalled_readers,
                                 reader_call_sites)
-from disasm8051 import decode
 from pd_image_census import (CODE_TABLE_DISPATCHERS, CODE_TABLE_ENTRY_WIDTHS,
                              code_table_inline_tables)
 from trace_xdata_refs import PD_MARKER, REGIONS, region_of
@@ -67,50 +70,29 @@ from trace_xdata_refs import PD_MARKER, REGIONS, region_of
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIRMWARE = f"{HERE}/../firmware/GMxMGxx_11.800"
 
-# Instructions decoded from a reader before giving up on its loop. A reader
-# whose whole body is shorter than this has its stride found inside the bound
-# anyway; the bound is here so a decode that finds no loop-back says so rather
-# than running into the next routine.
-READER_BODY_INSNS = 64
-
-# The main EC's span columns, in its order and with its names, plus the two
-# the PD needs in front of them: which dispatcher the site names, and that
-# dispatcher's own entry stride.
-PD_SPAN_COLUMNS = ["reader", "reader_stride"] + SPAN_COLUMNS
-
-# The relative branches that close a reader's entry loop: `jnz` and `sjmp`.
-# `jz` is excluded because these readers use it for the *dispatch* -- the
-# branch taken on a key match, back into the routine's own head -- and reading
-# that one's displacement would give the dispatch, not the stride.
-LOOP_BRANCHES = (0x70, 0x80)
-INC_DPTR = 0xA3
+# The main EC's span columns, in its order, plus the two the PD needs in front
+# of them: which dispatcher the site names, and that dispatcher's own entry
+# stride. `first_case`/`last_case` become `first_key`/`last_key` -- the two
+# columns sit exactly where the two case columns were -- because at 4 and 6
+# bytes an entry has no single case byte, and a 4-byte entry's second key byte
+# read as a case value is what put most of the 0x11C2 rows' keys out of order.
+# The key is the whole of the `stride - 2` bytes the reader compares, most
+# significant first, so the column is wider at the wider strides and
+# `self_test` checks that this list differs from the main EC's only by the two
+# renames.
+PD_SPAN_COLUMN_RENAMES = {"first_case": "first_key", "last_case": "last_key"}
+PD_SPAN_COLUMNS = ["reader", "reader_stride"] + [
+    PD_SPAN_COLUMN_RENAMES.get(c, c) for c in SPAN_COLUMNS]
 
 
-def entry_stride(d: bytes, off: int, limit: int) -> int:
-    """Bytes one entry advances DPTR, read off `off`'s own loop.
-
-    The reader walks entries by running a few `inc dptr` and branching back to
-    the zero-test at its head, so the stride is the length of the `inc dptr` run
-    that feeds the last `LOOP_BRANCHES` branch in its body. `limit` bounds the
-    decode to this reader's own bytes: the PD's three dispatchers are adjacent,
-    and a window that ran past one would read the next one's stride back.
-
-    None when the decode finds no such branch inside the bound -- "not found by
-    this method", and a caller that needs a number says so rather than
-    defaulting to the main EC's 3."""
-    insns = [x for x in decode(d, off, READER_BODY_INSNS) if x[0] < limit]
-    back = None
-    for n, (_, raw, _) in enumerate(insns):
-        if raw[0] in LOOP_BRANCHES and raw[1] > 0x7F:
-            back = n
-    if back is None:
-        return None
-    run = 0
-    for n in range(back - 1, -1, -1):
-        if insns[n][1][0] != INC_DPTR:
-            break
-        run += 1
-    return run
+def key_hex(key: int, stride: int) -> str:
+    """One entry's key as the bytes it is -- the `stride - 2` after the entry's
+    two target bytes -- most significant first: `0x07` at this family's 3-byte
+    entry, `0x0206` at a 4-byte one, `0x00000005` at a 6-byte one. The column
+    is exactly as wide as the key, so a 3-byte table's `0x07` cannot be read as
+    the same key as a 4-byte table's `0x0007`, and the width on its own says
+    which reader produced the row."""
+    return f"0x{key:0{2 * max(stride - 2, 1)}X}"
 
 
 def pd_readers(d: bytes):
@@ -134,10 +116,18 @@ def pd_readers(d: bytes):
 def pd_census(d: bytes):
     """[(reader, stride, site, table, reasons)] over every dispatcher, in
     reader order and then file order. The census, not a filtered view: a site
-    that fails keeps its row, exactly as `index-table-spans.csv` does."""
+    that fails keeps its row, exactly as `index-table-spans.csv` does.
+
+    Each dispatcher's own stride is what its sites are decoded at, so a row's
+    verdict is about the table in that row rather than about the main EC's
+    layout applied to it. A reader whose stride `entry_stride()` does not
+    derive decodes nothing, the same as a site whose bytes reach no terminator:
+    the row is kept and the other figures are left empty rather than a width
+    borrowed from another reader."""
     out = []
     for reader, sites, stride in pd_readers(d):
-        for site, tbl, bad in census(d, sites):
+        for site, tbl, bad in (census(d, sites, stride) if stride is not None
+                               else [(s, None, []) for s in sites]):
             out.append((reader, stride, site, tbl, bad))
     return out
 
@@ -157,31 +147,26 @@ def print_census(d: bytes, rows) -> None:
         by_reader[(reader["runtime"], reader["shape"], stride)].append((tbl, bad))
     for (rt, shape, stride), items in by_reader.items():
         good = [i for i in items if i[0] is not None and not i[1]]
-        note = "" if stride == ENTRY_LEN else (
-            f"  -- not this family's {ENTRY_LEN}-byte entry, so the "
-            "well-formedness column below is the main EC's rule applied to it "
-            "and not a verdict about those tables")
         print(f"  reader 0x{rt:04X} ({shape}), {len(items)} `lcall` byte "
-              f"site(s), {len(good)} well-formed under the {ENTRY_LEN}-byte "
-              f"reading, stride {stride}{note}")
+              f"site(s), {len(good)} well-formed, stride {stride}")
     print()
     print(f"  {len([r for r in rows if r[3] is not None and not r[4]])} of "
           f"{len(rows)} candidate site(s) are followed by a well-formed table")
     print()
-    print("  reader  site      frame   entries  span              cases       "
-          "stride  verdict")
+    print("  reader  site      frame   entries  span              keys        "
+          "  stride  verdict")
     for reader, stride, site, tbl, bad in rows:
         if tbl is None:
             print(f"  0x{reader['runtime']:04X}  0x{site['file_offset']:05X}  "
                   f"{site['frame_onto']:2}/24   no terminator within "
                   f"{MAX_ENTRIES} entries")
             continue
-        cases = [e["case"] for e in tbl["entries"]]
+        keys = [e["key"] for e in tbl["entries"]]
         span = f"0x{tbl['file_offset']:05X}-0x{tbl['end'] - 1:05X}"
         print(f"  0x{reader['runtime']:04X}  0x{site['file_offset']:05X}  "
-              f"{site['frame_onto']:2}/24  {len(cases):7}  {span}  "
-              f"0x{min(cases):02X}-0x{max(cases):02X}    {str(stride):>4}  "
-              f"{well_formed(bad)}")
+              f"{site['frame_onto']:2}/24  {len(keys):7}  {span}  "
+              f"{key_hex(min(keys), stride)}-{key_hex(max(keys), stride)}    "
+              f"{str(stride):>4}  {well_formed(bad)}")
     total = sum(t["end"] - t["file_offset"] for _, _, _, t, b in rows if t and not b)
     print()
     print(f"  {total} bytes of the PD image read as table data by this method")
@@ -194,22 +179,21 @@ def print_census(d: bytes, rows) -> None:
 
 def write_spans_csv(rows) -> None:
     """One row per candidate `lcall` byte site, in `index-table-spans.csv`'s
-    column contract with two columns in front of it.
+    column contract with two columns in front of it and `first_case`/
+    `last_case` renamed to `first_key`/`last_key`.
 
     `reader` is which dispatcher the site names, because the PD has three and
     the main EC had one. `reader_stride` is that dispatcher's own entry stride,
-    and it is what makes the `well_formed` column readable: the column is
-    `decode_index_table.py`'s verdict under a {n}-byte reading, and it is only a
-    statement about the table when the stride is {n}.
+    and it is what the two key columns are as wide as.
 
     **One deliberate difference from the main EC's file**, which is kept
     standing rather than quietly inherited: a site whose bytes reach a
-    terminator keeps its span, entry count and case range even when the
+    terminator keeps its span, entry count and key range even when the
     well-formedness checks fail, and only a site that never reaches one gets
     empty span fields. `index-table-spans.csv` blanks them for both, which
-    costs it nothing -- all 15 of its rows pass -- and would cost this file 18
-    of 28 rows, which is most of the reading. The rule the two files share is
-    the one that matters: a site that fails keeps its row.""".format(n=ENTRY_LEN)
+    costs it nothing -- all of its rows pass -- and would cost this file most of
+    its rows, which is most of the reading. The rule the two files share is the
+    one that matters: a site that fails keeps its row."""
     w = csv.writer(sys.stdout)
     w.writerow(PD_SPAN_COLUMNS)
     for reader, stride, site, tbl, bad in rows:
@@ -220,11 +204,11 @@ def write_spans_csv(rows) -> None:
         if tbl is None:
             w.writerow(row + [""] * 7 + ["no"])
             continue
-        cases = [e["case"] for e in tbl["entries"]]
+        keys = [e["key"] for e in tbl["entries"]]
         w.writerow(row + [
             len(tbl["entries"]), f"0x{tbl['file_offset']:05X}",
             f"0x{tbl['end']:05X}", f"0x{tbl['runtime']:04X}",
-            f"0x{min(cases):02X}", f"0x{max(cases):02X}",
+            key_hex(min(keys), stride), key_hex(max(keys), stride),
             f"0x{tbl['default']:04X}", well_formed(bad),
         ])
 
@@ -355,25 +339,35 @@ def self_test(d: bytes) -> int:
         per_reader[reader["runtime"]][1] += bool(tbl is not None and not why)
     got_wf = tuple(tuple(per_reader[r]) for r in READERS)
     check(got_wf == WELL_FORMED,
-          f"{WELL_FORMED} as (sites, well-formed) per reader -- 0x11EF's zero "
-          "is a result, not a gap: all three of its sites decode to a single "
-          f"entry under a {ENTRY_LEN}-byte reading of a {STRIDES[2]}-byte table "
+          f"{WELL_FORMED} as (sites, well-formed) per reader -- the one `no` "
+          "is 0x119C's 0x242C5 at that reader's own stride, and both of the "
+          f"non-{ENTRY_LEN} readers pass at the width they walk "
           "(got " + ", ".join(f"0x{r:04X} {v[0]}/{v[1]}"
                               for r, v in per_reader.items()) + ")")
 
+    # The stride a row was decoded and judged at is the stride in that row,
+    # which is the whole point of the column: a verdict about a table is only
+    # that if the table was read the way its own reader reads it.
+    check(all(t is None or t["stride"] == stride
+              for _, stride, _, t, _ in rows),
+          "and every row's table was decoded at its own row's "
+          "`reader_stride`, so `well_formed` is a statement about the table in "
+          "that row rather than about one layout applied to all three "
+          "readers")
+
     # The whole census as a value, so a different dump re-derives it rather
-    # than inheriting it. The 0x11C2 and 0x11EF rows are the main EC's rule
-    # over a table of another stride, and pinning them pins that too.
+    # than inheriting it. The key column is `stride - 2` bytes wide, so the
+    # pinned values differ in width between the three readers.
     got = tuple((r["runtime"], stride, s["file_offset"], s["frame_onto"],
                  None if t is None else (len(t["entries"]), t["file_offset"],
                                          t["end"],
-                                         min(e["case"] for e in t["entries"]),
-                                         max(e["case"] for e in t["entries"])),
+                                         min(e["key"] for e in t["entries"]),
+                                         max(e["key"] for e in t["entries"])),
                  well_formed(w)) for r, stride, s, t, w in rows)
     differs = next((g for g, want in zip(got, CENSUS) if g != want), None)
     check(got == CENSUS,
           f"and all {len(CENSUS)} rows individually: reader, stride, site "
-          "offset, frame_onto, entry count, span, case range and verdict"
+          "offset, frame_onto, entry count, span, key range and verdict"
           + ("" if differs is None else f" (first differing row: {differs})"))
 
     total = sum(t["end"] - t["file_offset"]
@@ -386,6 +380,36 @@ def self_test(d: bytes) -> int:
           "and no direct-address candidate at all: the PD image has no site "
           "that names a table with an immediate and then walks one")
 
+    # The committed CSV, regenerated into a buffer and compared byte for byte,
+    # so a column renamed or a key rendered at the wrong width is a failure
+    # here rather than a diff someone has to notice.
+    buf = io.StringIO()
+    out, sys.stdout = sys.stdout, buf
+    try:
+        write_spans_csv(rows)
+    finally:
+        sys.stdout = out
+    committed = f"{HERE}/../annotations/pd-index-table-spans.csv"
+    with open(committed, newline="") as fh:
+        want = fh.read()
+    check(buf.getvalue() == want,
+          f"and the committed pd-index-table-spans.csv is what "
+          f"`--spans-csv` writes -- {len(PD_SPAN_COLUMNS)} columns, "
+          "`first_key`/`last_key` where the main EC has its case columns "
+          + ("" if buf.getvalue() == want else " (differs from the committed "
+             f"{committed})"))
+
+    # The two column lists differ by the rename and nothing else, so a column
+    # added to `SPAN_COLUMNS` later cannot be quietly dropped from this file.
+    renamed = {c: PD_SPAN_COLUMN_RENAMES[c] for c in SPAN_COLUMNS
+               if c in PD_SPAN_COLUMN_RENAMES}
+    check(PD_SPAN_COLUMNS[2:] == [PD_SPAN_COLUMN_RENAMES.get(c, c)
+                                  for c in SPAN_COLUMNS]
+          and renamed == PD_SPAN_COLUMN_RENAMES,
+          "the two column lists differ by the two renames alone -- "
+          + ", ".join(f"{k} -> {v}" for k, v in sorted(renamed.items()))
+          + f", and nothing else (got {PD_SPAN_COLUMNS[2:]})")
+
     print()
     print("self-test FAILED" if bad else "self-test passed")
     return 1 if bad else 0
@@ -394,12 +418,15 @@ def self_test(d: bytes) -> int:
 # The whole result, as a value, so a different dump gets it re-derived rather
 # than inheriting this image's answer. One tuple per candidate `lcall` byte
 # site: (reader runtime, that reader's own stride, site file offset,
-# frame_onto, (entries, table file offset, one past its last byte, lowest case,
-# highest case) or None, and whether the main EC's rule passed it).
+# frame_onto, (entries, table file offset, one past its last byte, lowest key,
+# highest key) or None, and whether the checks passed it).
 #
-# The `no` rows under 0x11C2 and 0x11EF are not verdicts about those tables:
-# their readers walk 4- and 6-byte entries and decode_table() reads 3. That is
-# why the stride is a column of the same row rather than a note in this file.
+# Each row is decoded and checked at its own reader's own stride, so `yes` is a
+# statement about the table in that row. `0x242C5` is the one that is not, and
+# it is now failing under its own reader's width rather than a foreign one --
+# which makes it a statement about that table, and
+# docs/findings/table-reader-spellings.md hands the question of what it is on
+# from there.
 CENSUS = (
     (0x119C, 3, 0x2136C, 24, (20, 0x2136F, 0x213AF, 0x01, 0x16), "yes"),
     (0x119C, 3, 0x21F2D, 24, (8, 0x21F30, 0x21F4C, 0x01, 0x0F), "yes"),
@@ -410,25 +437,25 @@ CENSUS = (
     (0x119C, 3, 0x2A34B, 24, (7, 0x2A34E, 0x2A367, 0x00, 0x11), "yes"),
     (0x119C, 3, 0x2ADE6, 24, (15, 0x2ADE9, 0x2AE1A, 0x01, 0x0F), "yes"),
     (0x119C, 3, 0x2C879, 24, (8, 0x2C87C, 0x2C898, 0x22, 0x99), "yes"),
-    (0x11C2, 4, 0x213F6, 24, (16, 0x213F9, 0x2142D, 0x00, 0x97), "no"),
-    (0x11C2, 4, 0x2153E, 24, (16, 0x21541, 0x21575, 0x00, 0xEB), "no"),
-    (0x11C2, 4, 0x216A7, 24, (8, 0x216AA, 0x216C6, 0x02, 0xDE), "no"),
-    (0x11C2, 4, 0x21AB6, 24, (11, 0x21AB9, 0x21ADE, 0x00, 0xD1), "no"),
-    (0x11C2, 4, 0x21C88, 24, (14, 0x21C8B, 0x21CB9, 0x00, 0xFF), "no"),
-    (0x11C2, 4, 0x23A46, 22, (33, 0x23A49, 0x23AB0, 0x00, 0xFE), "no"),
-    (0x11C2, 4, 0x24587, 24, (12, 0x2458A, 0x245B2, 0x00, 0xCA), "no"),
-    (0x11C2, 4, 0x2483A, 24, (35, 0x2483D, 0x248AA, 0x00, 0xE0), "no"),
-    (0x11C2, 4, 0x24FFA, 20, (32, 0x24FFD, 0x25061, 0x00, 0xFC), "no"),
-    (0x11C2, 4, 0x2617D, 20, (12, 0x26180, 0x261A8, 0x03, 0xFF), "no"),
-    (0x11C2, 4, 0x2776C, 20, (12, 0x2776F, 0x27797, 0x00, 0xD0), "no"),
-    (0x11C2, 4, 0x27948, 20, (4, 0x2794B, 0x2795B, 0x03, 0xFF), "no"),
-    (0x11C2, 4, 0x28288, 24, (24, 0x2828B, 0x282D7, 0x00, 0xFF), "no"),
-    (0x11C2, 4, 0x283CF, 20, (4, 0x283D2, 0x283E2, 0x04, 0xFF), "yes"),
-    (0x11C2, 4, 0x292EF, 20, (4, 0x292F2, 0x29302, 0x07, 0xFF), "yes"),
-    (0x11C2, 4, 0x2CB4A, 24, (4, 0x2CB4D, 0x2CB5D, 0x01, 0xCB), "no"),
-    (0x11EF, 6, 0x224FE, 24, (1, 0x22501, 0x22508, 0x00, 0x00), "no"),
-    (0x11EF, 6, 0x22867, 22, (1, 0x2286A, 0x22871, 0x00, 0x00), "no"),
-    (0x11EF, 6, 0x2BCEE, 20, (1, 0x2BCF1, 0x2BCF8, 0x00, 0x00), "no"),
+    (0x11C2, 4, 0x213F6, 24, (7, 0x213F9, 0x21419, 0x206, 0x901), "yes"),
+    (0x11C2, 4, 0x2153E, 24, (7, 0x21541, 0x21561, 0x10D, 0x602), "yes"),
+    (0x11C2, 4, 0x216A7, 24, (6, 0x216AA, 0x216C6, 0x207, 0x902), "yes"),
+    (0x11C2, 4, 0x21AB6, 24, (5, 0x21AB9, 0x21AD1, 0x206, 0x602), "yes"),
+    (0x11C2, 4, 0x21C88, 24, (4, 0x21C8B, 0x21C9F, 0x301, 0x602), "yes"),
+    (0x11C2, 4, 0x23A46, 22, (13, 0x23A49, 0x23A81, 0x101, 0x1FF), "yes"),
+    (0x11C2, 4, 0x24587, 24, (9, 0x2458A, 0x245B2, 0x001, 0xA04), "yes"),
+    (0x11C2, 4, 0x2483A, 24, (10, 0x2483D, 0x24869, 0x201, 0x2FF), "yes"),
+    (0x11C2, 4, 0x24FFA, 20, (10, 0x24FFD, 0x25029, 0x801, 0x9FF), "yes"),
+    (0x11C2, 4, 0x2617D, 20, (9, 0x26180, 0x261A8, 0x501, 0x5FF), "yes"),
+    (0x11C2, 4, 0x2776C, 20, (5, 0x2776F, 0x27787, 0x601, 0x6FF), "yes"),
+    (0x11C2, 4, 0x27948, 20, (3, 0x2794B, 0x2795B, 0x302, 0x3FF), "yes"),
+    (0x11C2, 4, 0x28288, 24, (14, 0x2828B, 0x282C7, 0x106, 0x9FF), "yes"),
+    (0x11C2, 4, 0x283CF, 20, (3, 0x283D2, 0x283E2, 0x402, 0x4FF), "yes"),
+    (0x11C2, 4, 0x292EF, 20, (3, 0x292F2, 0x29302, 0x701, 0x7FF), "yes"),
+    (0x11C2, 4, 0x2CB4A, 24, (3, 0x2CB4D, 0x2CB5D, 0x108, 0x207), "yes"),
+    (0x11EF, 6, 0x224FE, 24, (2, 0x22501, 0x22511, 0x005, 0x008), "yes"),
+    (0x11EF, 6, 0x22867, 22, (7, 0x2286A, 0x22898, 0x000, 0x006), "yes"),
+    (0x11EF, 6, 0x2BCEE, 20, (2, 0x2BCF1, 0x2BD01, 0x010, 0x011), "yes"),
 )
 
 # The search, per shape and then the corroborated subset of it, as a whole
@@ -439,16 +466,18 @@ SHAPE_HITS = {"pop-dph-dpl-selector-r0": 2, "pop-dph-dpl": 6,
 TIER2_SITES = (0x2119C, 0x211C2, 0x211EF, 0x212E9, 0x21302)
 
 # The three a caller names, in file order, and the entry stride each one's own
-# loop gives. 3 is this family's stride; 4 and 6 are not, which is the finding.
+# loop gives. Each row below is decoded at the width beside it, so the two
+# non-3 readers' verdicts are statements about their tables and not about this
+# module's layout applied to them.
 READERS = (0x119C, 0x11C2, 0x11EF)
 STRIDES = (3, 4, 6)
 
-# (sites, of which well-formed) per reader above. 0x11EF's zero is a result and
-# is asserted as a zero: all three of its sites decode to a single entry, which
-# is what reading a 6-byte table's first six bytes as a 3-byte entry does.
-WELL_FORMED = ((9, 8), (16, 2), (3, 0))
+# (sites, of which well-formed) per reader above. The single `no` is 0x119C's
+# 0x242C5, under its own reader's own stride; every 0x11C2 and 0x11EF site
+# passes at the width that reader walks.
+WELL_FORMED = ((9, 8), (16, 16), (3, 3))
 
-TABLE_DATA_BYTES = 322
+TABLE_DATA_BYTES = 876
 
 
 def read_region(d: bytes) -> bytes:

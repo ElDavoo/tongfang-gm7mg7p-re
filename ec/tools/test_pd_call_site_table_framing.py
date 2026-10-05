@@ -237,8 +237,8 @@ def facts(addr):
         'table_start': site + LCALL_LEN,
         'last_byte': int(span['table_end'], 16) - 1 - PD_IMAGE_BASE,
         'entries': int(span['entries']),
-        'first_key': int(span['first_case'], 16),
-        'last_key': int(span['last_case'], 16),
+        'first_key': int(span['first_key'], 16),
+        'last_key': int(span['last_key'], 16),
         'default': int(span['default_runtime'], 16),
     }
 

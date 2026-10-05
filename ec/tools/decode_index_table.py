@@ -23,12 +23,22 @@ a symbol read out of this image. So the search here is for the prologue
 shape, then for `lcall` bytes naming it -- an immediate-DPTR scan finds this
 table zero times, which is the blind spot that framing is meant to cover.
 
-**Entry layout, taken from the reader rather than from the table.** The
-helper reads the first two bytes of an entry as a big-endian address and the
-*third* as the case value, and stops on an all-zero address, after which two
-more bytes give the default. Address-then-case, not case-then-address:
-section 8 read them the other way round, which shifts every entry by one byte
-and puts a phantom `sjmp` at the table's head.
+**Entry layout, taken from the reader rather than from the table.** This
+module's own reader at `0x7151` reads the first two bytes of an entry as a
+big-endian address and the *third* as the case value, and stops on an all-zero
+address, after which two more bytes give the default. Address-then-case, not
+case-then-address: section 8 read them the other way round, which shifts every
+entry by one byte and puts a phantom `sjmp` at the table's head.
+
+**That width is a parameter, not a constant, and `ENTRY_LEN` is this module's
+default rather than the family's.** The PD image's three dispatchers walk 4- and
+6-byte entries -- two target bytes at +0/+1 and then `stride - 2` key bytes --
+so `decode_table()` takes the stride its caller derived with `entry_stride()`
+from the reader in question, and `0x7151` is what `ENTRY_LEN` names. What does
+*not* scale with the stride is the end of the table: the terminator is a zero
+target pair and the default the two bytes after it at every stride, which is
+`TERM_LEN`/`DEFAULT_LEN` below and `docs/findings/pd-reader-entry-layouts.md`
+for the bytes it rests on.
 
 **The reader search is an enumerated set of shapes, and it is tiered.** One
 literal is a weak search: `d0 83 d0 82 f8` is the spelling this compiler
@@ -184,7 +194,39 @@ REGION_SETS = {"main": MAIN_EC, "pd": PD_IMAGE, "both": MAIN_EC + PD_IMAGE}
 TRAMPOLINE_RANGE = (0x1150, 0x1ABC)
 TRAMPOLINE_IMMEDIATE_RANGE = (0x8031, 0xFE00)
 
-ENTRY_LEN = 3  # address_hi, address_lo, case value
+ENTRY_LEN = 3  # address_hi, address_lo, case value -- the stride at 0x07151
+
+# The end of a table, which does not scale with the stride. A terminator is a
+# zero target pair -- the same two bytes that carry every entry's target, read
+# by the reader's own zero-tests -- and the default is the two bytes right after
+# it, read by the same `jmp @a+dptr` the matched entries go out through. So the
+# pair is two bytes at every stride and `end` is four bytes past the terminator
+# at every stride. `DEFAULT_TAIL` is the 13 bytes of reader code that does it,
+# byte-identical in all four readers, and it is what this is read from rather
+# than scaled: `docs/findings/pd-reader-entry-layouts.md` has the listings.
+TERM_LEN = 2
+DEFAULT_LEN = 2
+
+# `inc dptr ; inc dptr ; movc a,@a+dptr ; mov r0,a ; mov a,#1 ; movc a,@a+dptr ;
+# mov dpl,a ; mov dph,r0 ; clr a ; jmp @a+dptr`, read: step DPTR two bytes past
+# the zero target pair, load the two bytes there into DPTR, dispatch through
+# them. The same 13 bytes at file 0x0715F (main EC), 0x211AA, 0x211D0 and
+# 0x211FC, which is the per-stride re-derivation the terminator widths above
+# are stated from -- not four constants that happen to agree.
+DEFAULT_TAIL = bytes.fromhex("a3a393f8740193f5828883e473")
+
+# The relative branches that close a reader's entry loop: `jnz` and `sjmp`.
+# `jz` is excluded because these readers use it for the *dispatch* -- the
+# branch taken on a key match, back into the routine's own head -- and reading
+# that one's displacement would give the dispatch, not the stride.
+LOOP_BRANCHES = (0x70, 0x80)
+INC_DPTR = 0xA3
+
+# Instructions decoded from a reader before giving up on its loop. A reader
+# whose whole body is shorter than this has its stride found inside the bound
+# anyway; the bound is here so a decode that finds no loop-back says so rather
+# than running into the next routine.
+READER_BODY_INSNS = 64
 
 # Entries read before giving up on finding the terminator. No table in this
 # image comes close (the largest has 49), and the cap is what stops a
@@ -316,8 +358,60 @@ def trampoline_targets(d: bytes):
     return trampolines(d, bank_switch_stubs(d))
 
 
-def decode_table(d: bytes, off: int):
-    """Decode the inline table at file offset `off`.
+def entry_stride(d: bytes, off: int, limit: int) -> int:
+    """Bytes one entry advances DPTR, read off `off`'s own loop.
+
+    The reader walks entries by running a few `inc dptr` and branching back to
+    the zero-test at its head, so the stride is the length of the `inc dptr` run
+    that feeds the last `LOOP_BRANCHES` branch in its body. `limit` bounds the
+    decode to this reader's own bytes: the PD's three dispatchers are adjacent,
+    and a window that ran past one would read the next one's stride back.
+
+    The chosen branch has to land at or after `off` as well as backwards, or a
+    backward branch belonging to a *different* routine that reaches back past
+    this one's head could be adopted. The three PD loop-backs (`0x11A1`,
+    `0x11C7`, `0x11F3`) all qualify, so this tightens the window rather than
+    changing today's answer -- and it is what makes the "the window is not the
+    routine" caveat checkable instead of merely true today.
+
+    A linear decode, so a branch that does not execute counts the same as one
+    that does; what is read is a shape of bytes, not a control-flow trace.
+
+    None when the decode finds no such branch inside the bound -- "not found by
+    this method", and a caller that needs a number says so rather than
+    defaulting to the main EC's `ENTRY_LEN`."""
+    insns = [x for x in decode(d, off, READER_BODY_INSNS) if x[0] < limit]
+    back = None
+    for n, (at, raw, _) in enumerate(insns):
+        if raw[0] in LOOP_BRANCHES and raw[1] > 0x7F:
+            target = at + len(raw) + (raw[1] - 256)
+            if target >= off:
+                back = n
+    if back is None:
+        return None
+    run = 0
+    for n in range(back - 1, -1, -1):
+        if insns[n][1][0] != INC_DPTR:
+            break
+        run += 1
+    return run
+
+
+def decode_table(d: bytes, off: int, stride: int = ENTRY_LEN):
+    """Decode the inline table at file offset `off`, one entry per `stride`
+    bytes.
+
+    `stride` defaults to `ENTRY_LEN`, this module's own reader's width. An
+    entry is two target bytes at +0/+1 then `stride - 2` key bytes, compared
+    most significant first by the reader's compare chain, and the key is the
+    whole of them as an int, so a 4-byte or a 6-byte entry reads the same way
+    as a 3-byte one. `case` is kept alongside `key` at `ENTRY_LEN` alone,
+    because that is the width every committed CSV and every printed table in
+    this file is written at, and a column named for it would otherwise read a
+    4-byte entry's second key byte as a case value.
+
+    The terminator and the default are `TERM_LEN`/`DEFAULT_LEN` at every stride
+    -- see the constants for why they do not scale.
 
     Returns a dict with the entries, the terminator, the default address and
     the file offset one past the table, or None if the bytes do not reach a
@@ -326,25 +420,30 @@ def decode_table(d: bytes, off: int):
     entries = []
     i = off
     while len(entries) <= MAX_ENTRIES:
-        if i + ENTRY_LEN > len(d):
+        if i + stride > len(d):
             return None
         target = (d[i] << 8) | d[i + 1]
         if target == 0:
-            if i + ENTRY_LEN + 2 > len(d):
+            if i + TERM_LEN + DEFAULT_LEN > len(d):
                 return None
             return {
                 "file_offset": off,
                 "region": region,
                 "runtime": runtime_addr(off, True),
+                "stride": stride,
                 "entries": entries,
                 "terminator_offset": i,
-                "default": (d[i + 2] << 8) | d[i + 3],
-                "default_offset": i + 2,
-                "end": i + 4,
+                "default": (d[i + TERM_LEN] << 8) | d[i + TERM_LEN + 1],
+                "default_offset": i + TERM_LEN,
+                "end": i + TERM_LEN + DEFAULT_LEN,
             }
-        entries.append({"file_offset": i, "runtime": runtime_addr(i, True),
-                        "target": target, "case": d[i + 2]})
-        i += ENTRY_LEN
+        entry = {"file_offset": i, "runtime": runtime_addr(i, True),
+                 "target": target,
+                 "key": int.from_bytes(d[i + 2:i + stride], "big")}
+        if stride == ENTRY_LEN:
+            entry["case"] = d[i + 2]
+        entries.append(entry)
+        i += stride
     return None
 
 
@@ -356,9 +455,14 @@ def malformed(d: bytes, tbl) -> list:
     if not tbl["entries"]:
         bad.append("no entries")
         return bad
-    cases = [e["case"] for e in tbl["entries"]]
-    if cases != sorted(cases) or len(set(cases)) != len(cases):
-        bad.append("case values not strictly ascending")
+    # Over `key`, not over `case`: a 4- or a 6-byte entry has no single case
+    # byte, and its key is the whole of the bytes the reader compares. At
+    # `ENTRY_LEN` the two are the same expression over the same values, so the
+    # main EC's verdicts do not move.
+    keys = [e["key"] for e in tbl["entries"]]
+    if keys != sorted(keys) or len(set(keys)) != len(keys):
+        what = "case" if tbl["stride"] == ENTRY_LEN else "key"
+        bad.append(f"{what} values not strictly ascending")
     region = tbl["region"]
     for target in [e["target"] for e in tbl["entries"]] + [tbl["default"]]:
         if offset_for_runtime(target, region) is None:
@@ -490,11 +594,15 @@ def print_readers(d: bytes, readers, called, regions=MAIN_EC) -> None:
     print()
 
 
-def census(d: bytes, sites):
-    """Every candidate call site with its table, decoded and checked."""
+def census(d: bytes, sites, stride: int = ENTRY_LEN):
+    """Every candidate call site with its table, decoded and checked.
+
+    `stride` is the entry width the *reading reader* walks, passed straight
+    into `decode_table()`; a census over one reader's sites and another
+    reader's width is the mistake this parameter exists to make impossible."""
     out = []
     for site in sites:
-        tbl = decode_table(d, site["file_offset"] + 3)
+        tbl = decode_table(d, site["file_offset"] + 3, stride)
         out.append((site, tbl, [] if tbl is None else malformed(d, tbl)))
     return out
 
@@ -883,6 +991,59 @@ def self_test(d: bytes) -> int:
     check(d[off:off + len(raw)] == raw,
           f"its {len(raw)} bytes are as hand-decoded -- the entry layout is read "
           "off these and off nothing else")
+
+    # The default-dispatch tail, as the bytes rather than as the conclusion:
+    # `inc dptr ; inc dptr` steps past a zero target pair of two bytes and the
+    # two `movc`s read the two bytes after it, which is where `TERM_LEN` and
+    # `DEFAULT_LEN` come from. Pinned at this reader and at the PD image's
+    # three, so "the terminator is four bytes wide" is a reading of these
+    # offsets and not a constant scaled by whatever stride it is handed.
+    for tail_off in (0x0715F, 0x211AA, 0x211D0, 0x211FC):
+        check(d[tail_off:tail_off + len(DEFAULT_TAIL)] == DEFAULT_TAIL,
+              f"file 0x{tail_off:05X} is the same "
+              f"{len(DEFAULT_TAIL)}-byte default-dispatch tail -- the zero "
+              "target pair and the two-byte default after it are "
+              f"{TERM_LEN}+{DEFAULT_LEN} bytes at this reader too, and `end` is "
+              "four past the terminator whatever the entry stride is")
+
+    # `decode_table()`'s stride is a parameter now, so this module's own width
+    # is the default and the 3-byte decodes are unchanged. Asserted over every
+    # entry of the census rather than at one table, because "the default is the
+    # old constant" is a claim about all of them.
+    check(all(decode_table(d, s["file_offset"] + 3)
+              == decode_table(d, s["file_offset"] + 3, ENTRY_LEN)
+              for s in reader_call_sites(d, rt)),
+          "and `decode_table()`'s default stride is still this module's "
+          f"{ENTRY_LEN}, so every one of this image's tables decodes as it did "
+          "before the stride became a parameter")
+
+    # The two widths the PD readers walk, pinned as bytes rather than as the
+    # verdict read off them: a 4-byte record's key is entry bytes +2 and +3,
+    # a 6-byte record's is +2 through +5, and `case` is not populated at either
+    # because neither has a single case byte.
+    for off_4, stride_4, raw_4 in (
+            (0x213F9, 4, "14190206 144c0301 14520401 14a30504"),
+            (0x22501, 6, "253200000005 251100000008")):
+        want = tuple(bytes.fromhex(pair) for pair in raw_4.split())
+        got = tuple(d[o:o + stride_4] for o in
+                    range(off_4, off_4 + stride_4 * len(want), stride_4))
+        wide = decode_table(d, off_4, stride_4)
+        head = [] if wide is None else wide["entries"][:len(want)]
+        check(got == want
+              and len(head) == len(want)
+              and all("case" not in e for e in wide["entries"])
+              and tuple(e["key"] for e in head)
+              == tuple(int.from_bytes(b[2:], "big") for b in want),
+              f"file 0x{off_4:05X} reads as {stride_4}-byte records whose first "
+              f"two bytes are the target and whose last {stride_4 - 2} are the "
+              f"key -- `{raw_4}` (got "
+              + " ".join(b.hex() for b in got) + ")")
+
+    check(entry_stride(d, off, off + 0x100) == ENTRY_LEN,
+          f"and the stride this reader's own `inc dptr` run gives is "
+          f"{ENTRY_LEN} -- the same derivation the PD readers' widths come "
+          f"through, checked here so it cannot quietly mean something else at "
+          f"0x{off:05X} (got {entry_stride(d, off, off + 0x100)})")
 
     for immediate in (0x8038, 0x803A):
         want = bytes((MOV_DPTR, immediate >> 8, immediate & 0xFF))

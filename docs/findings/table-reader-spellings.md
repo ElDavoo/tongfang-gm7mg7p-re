@@ -195,7 +195,7 @@ $ python3 ec/tools/pd_index_tables.py
 |---|---|---|---|---|
 | `0x119C` `dispatch_code_table` | `pop-dph-dpl-selector-r0` | 3 | 9 | 8 of 9 |
 | `0x11C2` `dispatch_code_table_2byte_key` | `pop-dph-dpl-selector-r0` | **4** | 16 | 2 of 16 |
-| `0x11EF` *(unnamed)* | `pop-dph-dpl` | **6** | 3 | 0 of 3 |
+| `0x11EF` *(unnamed when this was written; now `dispatch_code_table_4byte_key_r4r7`)* | `pop-dph-dpl` | **6** | 3 | 0 of 3 |
 
 The three site counts are the committed figures:
 `pd_image_census.py`'s `CODE_TABLE_DISPATCHERS` counts all three — `0x11EF`
