@@ -365,6 +365,29 @@ each: four reads per address (`subb`-against-zero at `0x96B4`/`0x96C2`/`0x96D0`
 and `jz` presence checks at `0x97D8`/`0x98C4`/`0x9DC8` and the equivalents
 for the other two bytes) and the single write in §4.
 
+> **Corrected 2026-10-05 (issue #1228), stated in place rather than replacing
+> the paragraph above.** The per-address count of four stands, and no site is
+> missing: "the equivalents for the other two bytes" resolves to
+> `0x97E3`/`0x98CF`/`0x9EB1` for `0x0784` and `0x97EE`/`0x98DA`/`0x9FC3` for
+> `0x0785`, so the twelve are covered. Two things are worth adding.
+>
+> First, every one of the twelve is the same presence test: read the PL, and
+> skip the store when it is zero. So a zero in these registers means "no
+> override" and not a limit of zero watts, and the clear at `0xA833` writes the
+> same state a driver would.
+>
+> Second, and the reason the sentence above reads as though the twelve share a
+> gate: `0x9DC8` is not under the `0x0741` guard the others are. The nine sites
+> in `apply_oem_overrides_then_fill_08xx` (bank0 `96AD.asm`) sit in three blocks
+> that each open with a `0x0741` read and a `jnb 0xe0`, at `0x96AD`, `0x97D1`
+> and `0x98BD`. The three in `compute_level_blocks_086b_086c_086e` (bank0
+> `9D9B.asm`) do not -- that routine never mentions `0x0741` -- so a PL override
+> can reach `0x0866` whether or not a host agent has announced itself. The
+> guard is a property of the routine, not of the idiom.
+>
+> `docs/findings/battery-pl-default-and-zero-semantics.md` is the derivation,
+> with the twelve listed out and both quoted forms.
+
 So, stated as narrowly as the evidence allows: **no path found by this method
 carries a per-mode default byte into a PL register.** A driver that writes
 `0x0751` and expects the PLs to follow has, on static evidence, nothing to
