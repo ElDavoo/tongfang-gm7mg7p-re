@@ -1329,19 +1329,25 @@ class BlockPathTests(unittest.TestCase):
     def test_the_fan_tach_warning_names_the_issue_and_the_page(self):
         # 0x0460-0x046F stalled the fans on a sibling board through ECRR
         # (#94). A 4-byte read that covers the page is a different access
-        # shape, not a smaller one, so the warning has to say so rather than
-        # let "fewer IOCTLs" read as "safer".
+        # shape, not a smaller one, so `--include-fan-tach` has to say so
+        # rather than let "fewer IOCTLs" read as "safer".
+        #
+        # The opt-in is what this case takes now: the same range under the
+        # default excludes itself, which is what
+        # `test_the_default_sweep_reads_no_fan_tach_byte` in
+        # `test_ec_watch_pacing.py` is about.
         ec = FakeEc()
         ec.marked.set()
         out = io.StringIO()
         with patch.object(ec_watch, 'Ec', lambda: ec), \
              contextlib.redirect_stdout(out):
             ec_watch.main(['--start', '0x0460', '--len', '0x4',
-                           '--interval', '0', '--block'])
+                           '--interval', '0', '--block',
+                           '--include-fan-tach'])
         text = out.getvalue()
         self.assertIn("0x0460-0x046F", text)
         self.assertIn("#94", text)
-        self.assertIn("not a safer one", text)
+        self.assertIn("different access shape, not a safer one", text)
         # No refusal: the run happened, and the warning did not stop it.
         self.assertEqual(set(ec.blocks), {(0x0460, 0x4)})
 

@@ -1166,8 +1166,19 @@ Both tools already exist and need no new code. `ec/tools/ecmem.py` is the Linux
 path (root and `CONFIG_DEVMEM`; physical window `0xFE410000`, the same
 `MMRW(0xFE410000 + Arg0, …)` the vendor's `ECRW` takes, so a read here reads
 what Windows reads). `windows/tools/ec_watch.py` is the Windows one and needs
-the vendor's `ecrw`; its 0.25 s default sweep is close enough to the 0.2 s
-below to use as is.
+the vendor's `ecrw`; its 0.25 s `--interval` is close enough to the 0.2 s
+below to use as is, but that is no longer the whole of its sampling period --
+it also sleeps `--gap-ms` (default 6) after every read, so a sweep of the
+default range takes about 12 s rather than a fraction of one (#94,
+`docs/findings/ec-read-pacing-fan-page.md`). Over the range command 2 below
+actually sweeps -- `0x06C0`-`0x06DF`, 32 addresses, none of them in the
+excluded page -- that is about 0.19 s of sleeping a pass, and one pass to the
+next about 0.39 s at the `--interval 0.2` these commands pass -- so a
+`--seconds 60` run still buys about 150 passes of the window, which is what
+question 2 asks of it. That is no longer the cadence the loop below
+samples at, so the `0.25 s ... close enough ... to use as is` judgement no
+longer rests on the two rates being close; for anything wider than this window,
+`--start 0x0700 --len 0x100` is the range to point it at.
 
 ```console
 # 1. The reload, sampled. Does 0x06D6 step 9 -> 8 -> ... -> 0 and return to 9?

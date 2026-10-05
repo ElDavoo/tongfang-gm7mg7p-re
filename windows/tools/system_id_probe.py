@@ -100,11 +100,14 @@ says so, and asks again, so the capture holds no mark the operator did not
 describe. `docs/findings/system-id-probe-mark-labels.md` is why.
 
 **No interval here is validated.** 0.5 s is the procedure's starting point and
-nothing more -- issue #94 is the open work to make these tools safe by default,
-and nothing in this repository measures an ECRR's cost. Six reads a sweep
-against the 206 `manual_fan_ctrl_probe.py` already sweeps under load is much
-less traffic, but "much less" is not a safety argument. If the fans audibly
-change, stop and raise it.
+nothing more, and nothing in this repository measures an ECRR's cost. #94 is
+the open work for this tool and `manual_fan_ctrl_probe.py`, both of which still
+read with nothing between calls; `ec_watch.py` is no longer among them, having
+been given the fan-page exclusion and a `--gap-ms` between reads, both of which
+are a conservative reading of a sibling board rather than a measurement here.
+Six reads a sweep against the 206 `manual_fan_ctrl_probe.py` already sweeps
+under load is much less traffic, but "much less" is not a safety argument. If
+the fans audibly change, stop and raise it.
 
 Run elevated, next to ecrw.py. Needs the vendor's ACPI driver present.
 
@@ -398,9 +401,9 @@ def main(argv=None):
             print(f"{now()}  {len(addrs)} address(es) per sweep, every "
                   f"{args.interval:g}s, no writes:")
             print("  " + " ".join(f"0x{a:04X}" for a in addrs))
-            print("  no interval here is validated (#94 owns making these "
-                  "tools safe by default): if the fans audibly change, stop "
-                  "and raise it")
+            print("  no interval here is validated, and #94 leaves "
+                  "system_id_probe.py unpaced where ec_watch.py is not: if "
+                  "the fans audibly change, stop and raise it")
             print("  samples the arithmetic cannot place are printed as they "
                   "happen, one line each")
             if args.mark:

@@ -43,6 +43,20 @@ The DSDT's `ECRR` is `MMRW(0xFE410000 + Arg0, 0, 0, 0)` (`evidence/acpi/dsdt.dsl
 :50497), so a read here and a read through `ec/tools/ecmem.py` on Linux are the
 same physical byte, reached two different ways.
 
+`dump` leaves the fan-tach page `0x0460-0x046F` out and sleeps `--gap-ms` (6 by
+default) after each read, so a bare `dump 0x0000 0x0800` no longer walks
+straight through the one page a sibling project reports stalling the fans.
+`--include-fan-tach` puts the page back and `--gap-ms 0` takes the sleeps out;
+what is dropped is always said on stderr rather than left as a hole in the
+output. 6 ms is the interval HydroControl reports for this access on *its*
+board (`docs/related-projects.md`), not one measured on this machine: nothing
+in this repository has read the EC against the driver to time a single IOCTL,
+and reading the fan page has never been observed to stall these fans. The
+default is the conservative reading of a sibling board's report, not a
+validated rate -- see `docs/findings/ec-read-pacing-fan-page.md`. `read` and
+`write` are left alone deliberately: a single explicitly-named address is not
+the shape this evidence is about.
+
 No driver is installed by this tool. It requires the vendor stack's driver to be
 already present and started; on the machine this was developed against that is
 `UWACPIDriver.sys` (Control Center Service 3.1.39.0), which creates the same
@@ -64,6 +78,7 @@ Usage:
   ecrw.py read  0x7b9 0x7d0 ...
   ecrw.py dump  0x0700 0x100          # start, length
   ecrw.py dump  0x0700 0x100 --block  # 4 bytes per IOCTL, same output
+  ecrw.py dump  0x0000 0x0800 --include-fan-tach   # and read the fan page
   ecrw.py write 0x7b9=60 0x7d0=55     # requires --i-mean-it
   ecrw.py mmrd  0x0751                # one MMRD at an unaligned offset
 
@@ -72,6 +87,7 @@ Addresses and values accept 0x-prefixed hex or decimal.
 import argparse
 import ctypes
 import sys
+import time
 try:
     from ctypes import wintypes
 except ImportError:  # pragma: no cover - only on a Python without the module
@@ -88,6 +104,19 @@ IOCTL_MMRD = 0x9C40A494
 # unchanged (:50420, :50481), so the block path has to add this itself.
 EC_BASE = 0xFE410000
 EC_SIZE = 0x10000
+
+# The fan-tach page, kept out of `dump` unless `--include-fan-tach` says
+# otherwise. Reading those bytes through ECRR stalled the fans on a sibling
+# board, and the OEM software and `uniwill-laptop` sleep 6 ms after every EC
+# access because of it (#94, `docs/related-projects.md`).
+#
+# A local constant rather than one imported from the tool that has the same
+# range: this module is the one every other tool in this directory imports, and
+# every offline suite here installs `ecrw_fake.py` in its place -- which exports
+# `Ec`, `EcError` and `block_runs` and nothing else. A fourth export would be a
+# change to that shared fixture with the whole directory as its blast radius,
+# for a range that four tools already spell out for themselves.
+FAN_TACH = range(0x0460, 0x0470)
 
 GENERIC_READ = 0x80000000
 GENERIC_WRITE = 0x40000000
@@ -351,6 +380,17 @@ def _int(s):
     return int(s, 16) if s.lower().startswith("0x") else int(s, 0)
 
 
+def _pace(gap_ms):
+    """Sleep `gap_ms` after a read, and nothing at all when it is zero.
+
+    The conditional is the whole of it: `time.sleep(0)` is not free at 2 KiB
+    and 16 bytes a row, and the offline suites run `dump` at the default gap to
+    check that the gap reaches the sleep at all.
+    """
+    if gap_ms:
+        time.sleep(gap_ms / 1000.0)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -366,6 +406,19 @@ def main(argv=None):
                         help="read 4 bytes per IOCTL (MMRD) instead of 1 "
                              "(ECRR); same output, a path that has never been "
                              "run against the driver -- see this tool's help")
+    p_dump.add_argument("--include-fan-tach", action="store_true",
+                        help="read 0x0460-0x046F as well. Off by default: "
+                             "reading those bytes through ECRR stalled the fans "
+                             "on a sibling board, and nothing on this machine "
+                             "has been observed either way (#94). A dropped "
+                             "byte prints as -- and is named on stderr")
+    p_dump.add_argument("--gap-ms", type=float, default=6.0, metavar="MS",
+                        help="sleep this long after each read (default 6, the "
+                             "interval docs/related-projects.md records for "
+                             "this access on a sibling board -- not one "
+                             "measured here). 0 takes the sleeps out. On "
+                             "--block the gap is per readmany rather than per "
+                             "IOCTL, one readmany covering a whole row")
 
     p_write = sub.add_parser("write", help="write addr=value pairs")
     p_write.add_argument("pairs", nargs="+")
@@ -395,16 +448,49 @@ def main(argv=None):
                     print(f"0x{addr:04X} = 0x{ec.read(addr):02X}")
             elif args.cmd == "dump":
                 start, length = _int(args.start), _int(args.length)
+                wanted = [a for a in range(start, start + length)
+                          if args.include_fan_tach or a not in FAN_TACH]
+                dropped = length - len(wanted)
+                if dropped:
+                    # stderr, and by name: a dump that quietly printed 16 fewer
+                    # bytes than were asked for reads as a range that ended
+                    # there, which is the one shape of this bug that nobody
+                    # would notice at the console.
+                    print(f"not reading {dropped} byte(s) of the fan-tach page "
+                          f"0x{FAN_TACH.start:04X}-0x{FAN_TACH.stop - 1:04X} "
+                          "(--include-fan-tach reads them; they print as -- "
+                          "below, #94)", file=sys.stderr)
+                    if not wanted:
+                        print("that is the whole range: nothing was read",
+                              file=sys.stderr)
                 for base in range(start, start + length, 16):
                     n = min(16, start + length - base)
+                    # The wanted bytes of this row. Cutting the row at the
+                    # page rather than skipping it keeps every column lined up
+                    # with its own address, which is the only reason a hole
+                    # prints as `--` instead of shifting the rest of the row.
+                    #
+                    # On --block the cut is also exact rather than approximate,
+                    # which takes the alignment of both ends of the page.
+                    # readmany covers a run with the blocks enclosing it: a run
+                    # below the page ends at 0x045F at the latest, and 0x0460 is
+                    # 4-aligned, so its last enclosing block ends at or before
+                    # 0x045F; a run above it starts at 0x0470 or later, and
+                    # 0x0470 is 4-aligned too, so there is no lead-in
+                    # overshoot. Neither side can pull in a fan-tach byte.
+                    row = [a for a in wanted if base <= a < base + n]
+                    cells = {}
                     if args.block:
-                        # One IOCTL per four bytes over the row rather than
-                        # one per byte. readmany's keys come out in ascending
-                        # order, which is the order the row prints in.
-                        row = list(ec.readmany(base, n).values())
+                        for run_start, run_length in block_runs(row):
+                            cells.update(ec.readmany(run_start, run_length))
+                            _pace(args.gap_ms)
                     else:
-                        row = [ec.read(base + i) for i in range(n)]
-                    print(f"{base:04X}: " + " ".join(f"{b:02x}" for b in row))
+                        for a in row:
+                            cells[a] = ec.read(a)
+                            _pace(args.gap_ms)
+                    print(f"{base:04X}: " + " ".join(
+                        f"{cells[a]:02x}" if a in cells else "--"
+                        for a in range(base, base + n)))
             elif args.cmd == "mmrd":
                 addr = _int(args.addr)
                 four = ec.read_dword_unaligned(addr)
