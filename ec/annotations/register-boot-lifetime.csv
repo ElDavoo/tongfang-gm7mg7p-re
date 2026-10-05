@@ -122,6 +122,7 @@ addr,symbol,from_register,boot_verdict,boot_value
 0x089F,XDATA_089F,XDATA_089F,cleared,0x00
 0x09E6,XDATA_09E6,XDATA_09E6,cleared,0x00
 0x09E7,XDATA_09E7,XDATA_09E7,cleared,0x00
+0x09E9,XDATA_09E9,XDATA_09E9,cleared,0x00
 0x09EA,XDATA_09EA,XDATA_09EA,cleared,0x00
 0x09EB,XDATA_09EB,XDATA_09EB,cleared,0x00
 0x0460,XDATA_0460,XDATA_0460,cleared,0x00
@@ -274,3 +275,7 @@ addr,symbol,from_register,boot_verdict,boot_value
 0x04AF,XDATA_04AE_COUNTER_A_1,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",cleared,0x00
 0x04BE,XDATA_04BE_COUNTER_B_0,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",cleared,0x00
 0x04BF,XDATA_04BE_COUNTER_B_1,"XDATA_04BE_COUNTER_B (16-bit up-counter, gate 0x0490 bit 5)",cleared,0x00
+0x0834,CHARGE_STAGE_WORD_0,CHARGE_STAGE_WORD (16-bit word the charge path stages and compares),cleared,0x00
+0x0835,CHARGE_STAGE_WORD_1,CHARGE_STAGE_WORD (16-bit word the charge path stages and compares),cleared,0x00
+0x0836,CHARGE_STAGE_CMP_WORD_0,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),cleared,0x00
+0x0837,CHARGE_STAGE_CMP_WORD_1,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),cleared,0x00

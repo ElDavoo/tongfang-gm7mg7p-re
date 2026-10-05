@@ -321,6 +321,17 @@ picks up tables whose header begins with `trace_xdata_refs`' base columns — a
 differently-shaped table is skipped rather than mis-checked, which also means it
 is not covered by it.
 
+**`register-boot-lifetime.csv`'s row set follows `registers.yaml`, so it goes
+stale on any branch that names or drops a register.** The join is keyed by the
+address `registers.yaml` holds, so a merge that brings in a new one leaves this
+table without a row for it until it is regenerated. Nothing in the cheap tier
+above notices, because `test_sites_csv_regeneration.py` skips this table for the
+header reason just given. What catches it is
+`test_register_boot_lifetime.py`'s `test_the_table_names_every_address_registers_yaml_names`,
+which asks the question directly, and `register_boot_lifetime.py --check` beside
+it. Both belong to this branch's own suite, so the branch that moves
+`registers.yaml` is the one that has to run them.
+
 ## Reproducing this
 
 ```sh
