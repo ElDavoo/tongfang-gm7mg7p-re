@@ -49,10 +49,16 @@ disagree rather than the symbol explaining itself.
 
 The 16-bit compare the guards branch on is `cmp_r3r4_against_r1r2_16bit`
 (bank1 `0x8863`): `clr CY / mov A,R3 / subb A,R1 / mov A,R4 / subb A,R2`,
-carry out meaning the first operand is the smaller. It then returns `A=0` and
-carry clear only when the first operand is exactly `0x0001`, and `A=1`
-otherwise. The call sites test the accumulator's bit 0 in one place and the
-carry in another, which is what that special case is for.
+carry out meaning the first operand is the smaller. On the no-borrow path it
+then tests `cjne A,#0x02` against R4 at `0x886B` and `cjne A,#0x01` against R3
+at `0x886F`, so the pair reaching the `A=0` return is R3=`0x01`, R4=`0x02` —
+`0x0201` — and every other value returns `A=1`. The sibling helper
+`set_carry_if_r3r4_is_0102` (bank1 `0x887A`) tests the same pair the other way
+round, and `docs/findings/0436-0437-writer-census.md`'s "`0x0201`, read as
+bytes" section is where the tree already derives the value.
+
+The call sites test the accumulator's bit 0 in one place and the carry in
+another, which is what that special case is for.
 
 ## 2. The routines, and what each does with the zero test
 

@@ -443,7 +443,7 @@ class ThePairHelpers(unittest.TestCase):
 
     def test_the_sixteen_bit_compare_sets_carry_on_the_smaller_operand(self):
         # The routine the guards branch on: `subb` low then `subb` high, carry
-        # out meaning first operand below second. The 0x0001 special case is
+        # out meaning first operand below second. The 0x0201 special case is
         # why its callers test the accumulator's bit 0 in one place and the
         # carry in another, and it is asserted here so the write-up's reading
         # of that cannot drift from the bytes.
@@ -453,6 +453,28 @@ class ThePairHelpers(unittest.TestCase):
         self.assertEqual((at[0x8865], at[0x8867]), ('subb A, R1', 'subb A, R2'))
         self.assertEqual((at[0x8868], at[0x8872], at[0x8877]),
                          ('jc 0x8877', 'mov A, #0x0', 'mov A, #0x1'))
+
+    def test_the_special_case_is_the_pair_0201(self):
+        # The whole nine-byte slice above stops at the `cjne` opcode `b5` at
+        # 0x886B and never reaches the operand bytes at 0x886C and 0x8870, so
+        # on its own it holds the `subb` pair and no constant. These are the
+        # two `cjne` lines, which is where the value actually lives: R4
+        # against 0x02 first and R3 against 0x01 second, so the pair reaching
+        # the `A=0` return is R3=0x01, R4=0x02 -- `0x0201`. Asserted from the
+        # listing and cross-checked against the bytes so neither can drift.
+        self.assertEqual(BANK1[COMPARE_16BIT:COMPARE_16BIT + 23],
+                         bytes([0xc3, 0xeb, 0x99, 0xec, 0x9a, 0x40, 0x0d, 0xec,
+                                0xb5, 0x02, 0x08, 0xeb, 0xb5, 0x01, 0x04,
+                                0x74, 0x00, 0xc3, 0x22, 0xc3, 0x74, 0x01,
+                                0x22]))
+        at = {addr: text for addr, _raw, text in listing('bank1', '8863.asm')}
+        self.assertEqual((at[0x886B], at[0x886F]),
+                         ('cjne A, 0x02, 0x8876', 'cjne A, 0x01, 0x8876'))
+        # The same pair the sibling helper tests the other way round, so the
+        # two readings are pinned against each other rather than each alone.
+        other = {addr: text for addr, _raw, text in listing('bank1', '887A.asm')}
+        self.assertEqual((other[0x887B], other[0x887F]),
+                         ('cjne A, 0x01, 0x8884', 'cjne A, 0x02, 0x8884'))
 
 
 def decode(start, length):
