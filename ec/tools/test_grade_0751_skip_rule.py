@@ -206,3 +206,7 @@ class TheThreeReadersCallTheSameRuleTests(unittest.TestCase):
                          [m.label for m in marks])
         self.assertEqual(refused, [])
         self.assertEqual(changes, [])
+
+
+if __name__ == '__main__':
+    unittest.main()

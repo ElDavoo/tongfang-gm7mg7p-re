@@ -170,28 +170,31 @@ be about the wrong function.
 
 - **The tied spellings in `grade_0751_isolation.py`.** Every reader of a row
   spells the same test, so a pin quoting one spelling cannot name its reader by
-  quoted text alone. Four spellings account for every reported row in this file:
+  quoted text alone. Every reported row in this file is one of them, and each is
+  a pair of lines the recorded number has to choose between:
 
   | the quoted text | it is spelled in | the pin is recorded at | it lands in |
   |---|---|---|---|
   | `if addr == "MARK":` | `take_capture_row` and `partition_capture_rows` | `:1485` | `take_capture_row` |
   | `if addr == "MARK":` | `take_capture_row` and `partition_capture_rows` | `:1678` | `partition_capture_rows` |
   | `if len(row) > 1 and row[1] == "MARK":` | `mark_labels_of` and `existing_mark_provenance` | `:1528` | `mark_labels_of` |
+  | `if len(row) > 1 and row[1] == "MARK":` | `mark_labels_of` and `existing_mark_provenance` | `:1649` | `existing_mark_provenance` |
   | `if len(row) < 4:` | `take_capture_row` and `partition_capture_rows` | `:1413` | `take_capture_row` |
   | `ts, addr, old, new = row[0], row[1], row[2], row[3]` | `take_capture_row` and `partition_capture_rows` | `:1415` | `take_capture_row` |
 
-  Where each lands is where its own claim points. The first three name one
-  reader each, as their subject, and land in it; the `:1413` pin says the test
-  `lives in take_capture_row` further along its claim and lands there too; the
-  `:1415` pin names no function at all — its claim is that the row is read by
-  explicit indexing rather than an unpack, which is a statement about the row
-  and not about a reader. `:1413` is the pin this change re-worded rather than
-  re-anchored; `:1415` is unchanged by it.
+  Where each lands is where its own claim points. The `:1485`, `:1678`, `:1528`
+  and `:1649` pins each name one reader as their subject and land in it; the
+  `:1413` pin says the test `lives in take_capture_row` further along its claim
+  and lands there too; the `:1415` pin names no function at all — its claim is
+  that the row is read by explicit indexing rather than an unpack, which is a
+  statement about the row and not about a reader. `:1413` is the pin this change
+  re-worded rather than re-anchored; `:1415` is unchanged by it.
 
   That is also where the suite's rule below stops: it reads a claim's *subject*,
-  so it checks the first three rows and skips the last two, because a reader
-  named mid-sentence or not at all is not a subject. The blind side is stated
-  under *What would still need checking* rather than left here to be inferred.
+  so it checks the rows that name a reader outright and skips `:1413` and
+  `:1415`, because a reader named mid-sentence or not at all is not a subject.
+  The blind side is stated under *What would still need checking* rather than
+  left here to be inferred.
 
   The table's own comments already document the midpoint rule that keeps a tied
   pair on opposite sides, and that is a *choice of position that has to be
