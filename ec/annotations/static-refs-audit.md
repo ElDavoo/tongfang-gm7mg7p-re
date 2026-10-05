@@ -853,7 +853,11 @@ writer each — and
 the gap stands: `0x166A` still has no entry, the `0x07C4` writer is still
 unattributed, and `0x09E9` — which `0x83FF` syncs into `0x0788` — still has
 no entry either, because it has two direct writers and is a different
-question. That file's §6 carries the three forward.
+question. That file's §6 carries the three forward. **`0x09E9`'s third is
+answered (issue #597)** in
+[`ec-09e9-writers.md`](ec-09e9-writers.md), which reconciles the two writers
+and gives the byte `XDATA_09E9`; the two sentences above are left as they were
+written.
 
 **The `0x166A` half closed too, 2026-09-25 (issue #267);** the paragraph
 above is left as it was written. `0x1665`, `0x1666` and `0x166A` now carry
@@ -862,7 +866,9 @@ above is left as it was written. `0x1665`, `0x1666` and `0x166A` now carry
 from the image: 6/6/0, 2/2/0 and 3/3/0. The file-wide total this line
 records moves with them, to **160 entries / 192 addresses**. The two
 remaining thirds of the gap are untouched: the `0x07C4` writer is still
-unattributed and `0x09E9` still has no entry.
+unattributed and `0x09E9` still has no entry. *(`0x09E9` was answered
+afterwards — issue #597, `ec/annotations/ec-09e9-writers.md` — and carries
+`XDATA_09E9`; the sentence above is left as it was written.)*
 
 One thing this file's own shape applies to the new rows, and which the
 three entries record in place: `trace_xdata_refs.py` finds 6 sites for

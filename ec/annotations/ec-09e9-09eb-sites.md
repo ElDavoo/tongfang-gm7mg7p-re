@@ -17,7 +17,8 @@ Windows service's power-mode write, `0x96AD`, `0x83FF`, and the ASL that
 publishes to the NVIDIA platform controller — is four hops and is drawn once,
 here, in §4. `0x09E9` has **two** direct writers and a different question; it
 is walked here for the reconciliation but is deliberately **not** given a
-`registers.yaml` row in this change (§6).
+`registers.yaml` row in this change (§6). (It carries `XDATA_09E9` now, from
+[`ec-09e9-writers.md`](ec-09e9-writers.md).)
 
 **None of that is a live test.** These are statements about an 8-instruction
 linear window around each site, plus the routine each one sits in, plus the
@@ -390,6 +391,15 @@ reach the hardware"), and its status stays **not run**.
   why **`0x09E9` gets no `registers.yaml` row in this change**. It is also the
   byte `0x83FF` syncs into `0x0788` (site `0x8425`, the compare this routine
   is named for), so it is not only a `0x0743`-shaped question.
+  **ANSWERED since (issue #597), in
+  [`ec-09e9-writers.md`](ec-09e9-writers.md); the two sentences above are left
+  as they were written.** The two writers turn out to gate on `0x0743` bit 2 in
+  *complementary* senses, so they disagree only where that bit is clear and
+  `0x0490` bit 0 is set — one cell, not a race. `0x09E9` now carries
+  `XDATA_09E9` at `present-untested`. Which of the two stores wins that cell is
+  a scheduling question the image does not answer, and **stays open**. The same
+  file follows `0x0788` to ASL `_Q83` and `^^^^NPCF.UOCT`, so the byte reaches
+  the NVIDIA platform controller one hop ahead of this file's §4 chain.
 - **`0x83D6`'s callers, and whether the ring is pushed with the gate open.**
   §3 bounds its DPTR and nothing more; what pushes it, and when, is not
   established.
