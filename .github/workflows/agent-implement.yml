@@ -258,18 +258,8 @@ jobs:
         # half-finished Claude run and push whatever was left on disk.
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          # Keep plugin/subagent aliases on the same provider and model.
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
-          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # TEMPORARY diagnostic: the action's default output filtered out the reason
           # the run ended, leaving only `is_error: true` with no result text. This
           # dumps every Claude message, tool result included, so a tool result that
@@ -341,8 +331,8 @@ jobs:
             Do not commit, push, or touch git. Leave your work in the working tree; the
             workflow commits it.
           claude_args: >-
-            --model stealth/space-bunny-alpha
-            --effort max
+            --model opus
+            --effort medium
             --dangerously-skip-permissions
             --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
@@ -377,17 +367,8 @@ jobs:
         continue-on-error: true
         timeout-minutes: 55  # the merge gate's review gets 60; the first one here timed out at 30
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
-          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             You are reviewing a change before its pull request is opened, for issue
             #${{ inputs.issue }}. Another agent wrote it; you did not, and you have none of its
@@ -409,8 +390,8 @@ jobs:
             delete any file, and do not touch git: anything you change is discarded after you
             finish. Return the verdict only.
           claude_args: >-
-            --model stealth/space-bunny-alpha
-            --effort max
+            --model opus
+            --effort medium
             --dangerously-skip-permissions
             --max-turns 150
             --allowedTools "Read,Glob,Grep,Bash"
@@ -450,17 +431,8 @@ jobs:
         continue-on-error: true
         timeout-minutes: 45
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
-          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             A change for issue #${{ inputs.issue }} is in the working tree, uncommitted, and a
             reviewer has found problems in it before its pull request is opened. Another agent
@@ -481,8 +453,8 @@ jobs:
 
             Do not commit, push, or touch git. Leave your work in the working tree.
           claude_args: >-
-            --model stealth/space-bunny-alpha
-            --effort max
+            --model sonnet
+            --effort medium
             --dangerously-skip-permissions
             --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
@@ -506,17 +478,8 @@ jobs:
         continue-on-error: true
         timeout-minutes: 55  # the merge gate's review gets 60; the first one here timed out at 30
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
-          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             You are reviewing a change before its pull request is opened, for issue
             #${{ inputs.issue }}. Another agent wrote it; you did not, and you have none of its
@@ -538,8 +501,8 @@ jobs:
             delete any file, and do not touch git: anything you change is discarded after you
             finish. Return the verdict only.
           claude_args: >-
-            --model stealth/space-bunny-alpha
-            --effort max
+            --model opus
+            --effort medium
             --dangerously-skip-permissions
             --max-turns 150
             --allowedTools "Read,Glob,Grep,Bash"
@@ -579,17 +542,8 @@ jobs:
         continue-on-error: true
         timeout-minutes: 45
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env:
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
-          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with:
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             A change for issue #${{ inputs.issue }} is in the working tree, uncommitted, and a
             reviewer has found problems in it before its pull request is opened. Another agent
@@ -610,8 +564,8 @@ jobs:
 
             Do not commit, push, or touch git. Leave your work in the working tree.
           claude_args: >-
-            --model stealth/space-bunny-alpha
-            --effort max
+            --model sonnet
+            --effort medium
             --dangerously-skip-permissions
             --max-turns 300
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"

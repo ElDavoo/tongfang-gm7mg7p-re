@@ -112,18 +112,8 @@ jobs:
         # looking finished. The `fix` job below is skipped automatically once this job fails.
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env: &verdict_env
-          ANTHROPIC_BASE_URL: https://openrouter.ai/api
-          ANTHROPIC_AUTH_TOKEN: ${{ secrets.OPENROUTER_API_KEY }}
-          # Keep plugin/subagent aliases on the same provider and model.
-          ANTHROPIC_DEFAULT_OPUS_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_SONNET_MODEL: stealth/space-bunny-alpha
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_SUBAGENT_MODEL: stealth/space-bunny-alpha
-          CLAUDE_CODE_EFFORT_LEVEL: max
-          CLAUDE_CODE_MAX_CONTEXT_TOKENS: 950000
         with: &verdict_with
-          anthropic_api_key: ${{ secrets.OPENROUTER_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             You are the merge gate for pull request #${{ github.event.pull_request.number }},
             which implements issue #${{ steps.ctx.outputs.issue }}. It was written by an agent.
@@ -279,8 +269,8 @@ jobs:
           # request has a second channel nothing reads, and can say something the verdict does
           # not.
           claude_args: >-
-            --model stealth/space-bunny-alpha
-            --effort max
+            --model opus
+            --effort medium
             --dangerously-skip-permissions
             --allowedTools "Task,Read,Glob,Grep,Bash(git:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(rg:*),Bash(jq:*),Bash(find:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(sort:*),Bash(uniq:*),Bash(diff:*)"
             --disallowedTools "Write,Edit,Bash(gh pr review:*),Bash(gh pr merge:*),Bash(gh pr edit:*),Bash(gh pr comment:*),Bash(gh api:*),Bash(gh workflow:*),Bash(gh run:*),Bash(gh secret:*),Bash(gh ruleset:*),Bash(curl:*),Bash(wget:*),Bash(nc:*),Bash(ssh:*),Bash(scp:*),Bash(git push:*),Bash(git remote:*),Bash(git config:*),WebFetch,WebSearch"
@@ -298,7 +288,6 @@ jobs:
         if: steps.verdict.outcome != 'success' || steps.verdict.outputs.conclusion != 'success'
         continue-on-error: true
         uses: anthropics/claude-code-action@1f291e1cfe0f5fc21db2aef19af844591600ade7 # v1
-        env: *verdict_env
         with: *verdict_with
 
       - name: Record a stall
@@ -469,7 +458,7 @@ jobs:
     uses: ./.github/workflows/agent-fix.yml
     secrets:
       AGENT_PUSH_TOKEN: ${{ secrets.AGENT_PUSH_TOKEN }}
-      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     with:
       pr: ${{ github.event.pull_request.number }}
       issue: ${{ needs.review.outputs.issue }}
