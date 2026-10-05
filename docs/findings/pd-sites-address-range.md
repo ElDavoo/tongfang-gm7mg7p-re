@@ -168,6 +168,19 @@ That is the whole of what changed in the arithmetic, and the figures above are
 unchanged on the committed image: `0x1FFF1` is still the boundary, `0x3000E` is
 still the realised peak and `0x3002C` is still the ceiling.
 
+**Correction (2026-10-05, issue #1014): the premise assertion above has been
+deleted, and the peak figures are now a record rather than a description.**
+`site_rows()`'s listing loop is bounded at the region end, so the floor it
+rested on is gone: the last read comes from `pd_bounds()` and not from the
+bytes past `0x30000`. `erased_band_holds()` went with it rather than standing as
+a check whose stated claim backs nothing, and the `python3 ec/tools/
+check_image_map.py <image>` named in the paragraph above is where the `all 0xFF`
+claim is asserted now — it puts the band to that test and refuses one whose
+bytes do not satisfy it. The doctored-image table below was measured against
+the assertion as it stood and is kept as the record of what it showed; the
+peak column's figures are the pre-change walk's. The `0x1FFF1` boundary does
+not move, for the reason the table already gives.
+
 **What a doctored image does, measured, because "the premise is now asserted"
 is worth nothing if nothing else would have moved anyway.** One byte changed at
 `0x30000` of a copy of the firmware:
@@ -178,6 +191,14 @@ is worth nothing if nothing else would have moved anyway.** One byte changed at
 | `0x00` `nop` | **red** | `0x3000E` | unchanged |
 | `0x74` `mov a,#imm` (2 bytes) | **red** | `0x3000F` | unchanged |
 | `0x90` `mov dptr,#imm` (3 bytes) | **red** | `0x30010` | unchanged |
+
+(Every figure in the middle column is the pre-change listing's. After issue
+#1014's bound the peak is `0x2FFFF` in all four rows, because the region's end
+and not the byte at `0x30000` decides where the listing stops. The premise still
+goes red in every case, but from the tool that owns the claim rather than from
+this one: `python3 ec/tools/check_image_map.py` on each of the three copies
+refuses `0x30000` by name and exits 1, while `pd_index_geometry.py --self-test`
+is green on all three.)
 
 Three things are visible there and worth separating. The **premise** goes red in
 every case, which is the change #861 was for. The **peak** moves by one or two
@@ -263,12 +284,19 @@ guessing at a question the bytes do not answer.
   read at `0x20000-0x2FFFF`, and from there the window's furthest possible read
   is bounded at `0x3002C` by the code rather than by this image's spare bytes —
   a different and stronger sentence than the one row 10 carried. It is still
-  **not** "cannot raise", and a *legal* address's reads do still leave the
-  region: `--sites 0xFFFF` starts in-region at `0x2FFFF` and its last read
-  starts at file `0x3000E`, 14 bytes past the region's last byte. The realised
-  peak on this image remains `0x3000E`, a property of these bytes, and the
-  `0x3002C` ceiling remains arithmetic. What the check removed is the
-  *unbounded* direction, and only that.
+  **not** "cannot raise", and a *legal* address's reads did still leave the
+  region: `--sites 0xFFFF` started in-region at `0x2FFFF` and its last read
+  started at file `0x3000E`, 14 bytes past the region's last byte. The realised
+  peak on this image was `0x3000E`, a property of these bytes, and the
+  `0x3002C` ceiling was arithmetic. What the check removed is the *unbounded*
+  direction, and only that.
+  **Correction (2026-10-05, issue #1014): the listing loop is now bounded at the
+  region end, so a legal address's reads no longer leave the region.**
+  `site_rows()` takes both ends of `pd_bounds()` and stops at `0x30000`, naming
+  the end in its own stop reason; `--sites 0xFFFF` now reads one instruction,
+  at `0x2FFFF`. The `--callers` half of this bullet is unchanged and still
+  standing: its argument is still unchecked. See
+  [`site-rows-window-bound.md`](site-rows-window-bound.md).
 - **It does not make `--callers` consistent with `--sites`.** Measured above:
   `--callers 0x1FFFF` **exits 0** and prints a three-row byte-scan caller list.
   It has no traceback to replace, and its output is the over-counting the module
@@ -405,6 +433,13 @@ on. The middle one still stands: `site_rows` is the census's row 10.)*
   `0x1FFF1` and `0x23478` are each refused with the region and both ranges named.
   It does not pin that the *message wording* is the best wording; it pins that
   the message keeps naming what a reader needs.
+  **Correction (2026-10-05, issue #1014): the first of those three facts is
+  gone and the pin says the opposite now.** The range it asserted described the
+  pre-change listing. `--sites 0xFFFF` is pinned to stop at the region's last
+  byte with a stop naming `0x30000` — a bound rather than a range, so a window
+  that walked further would now go red — and a mid-region anchor is pinned to
+  the full `SITE_WINDOW` beside it so the bound cannot pass by stopping too
+  early. The `0x1FFF1` and `0x23478` refusals are unchanged and still pinned.
 - **No suite was added.** The tool's own `--self-test` is the established idiom
   for this tool, and a committed `test_*.py` would need a row in
   `../../tools/README.md`'s table and a corrected suite total in two long shared

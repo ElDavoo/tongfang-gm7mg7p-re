@@ -11926,9 +11926,21 @@ unresolvable and **0** are `>= 0x10000`. So `print_helpers()` now calls
 instead of a bare `IndexError`; `chain_from`'s internal calls pass for free.
 **The sibling question is answered the same way** — an out-of-region address is
 a caller error, rejected at the CLI — and the `site_rows` listing loop itself
-is left alone on purpose, because its contract is a fixed `SITE_WINDOW`-long
+was left alone on purpose, because its contract is a fixed `SITE_WINDOW`-long
 window whose end is the answer, which is the whole difference between it and a
-walk that ends when something stops it; that loop is the named follow-up.
+walk that ends when something stops it; that loop was the named follow-up.
+**Retracted 2026-10-05, issue #1014:** the window contract is not the difference
+it was taken to be — the count bounds the work and the region end bounds the
+window, exactly as it bounds the two walks above — and the listing is now bounded
+at `pd_bounds()` with the same two stops and the same vocabulary. The sharper
+reason is the column: `--sites 0xFFFF` printed the fill past `0x30000` as
+runtime `0x10000`–`0x1000e`, and `pd_bounds()` puts the region at
+`0x0000-0xFFFF`, so none of those was a PD runtime address. `site_rows()` now
+stops at `0x2FFFF` and names `0x30000`, the pin that measured the read moved
+rather than deleted, and the premise assertion the pin rested on went with it to
+where the map is asserted. The argument above is left standing as the record of
+what this section believed; see
+[`docs/findings/site-rows-window-bound.md`](findings/site-rows-window-bound.md).
 **Sixteen modes are byte-identical against the pre-change file from `99c01938`,
 and all five committed CSVs regenerate byte for byte**; the one output that moved
 is `--helpers 0xFFFF`, 24 listing lines to 1, reported as a **correction** — the
