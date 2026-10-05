@@ -32,8 +32,8 @@ prints one line, and that line is the source of truth for every figure below:
 
 ```
   2849 call-target seed(s) derived, 478 the predicate fires on (92
-  mid-instruction, 242 entry-under-walk, 144 unread), 102 census row(s) named
-  no bank and were not seeded
+  mid-instruction, 242 entry-under-walk, 144 unread), 102 distinct target(s)
+  named no bank and were not seeded
 ```
 
 A "seed" is one `(program, target)` pair, because a common-area target is seeded

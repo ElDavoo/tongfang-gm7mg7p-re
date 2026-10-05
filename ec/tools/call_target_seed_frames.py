@@ -36,10 +36,10 @@ fires on, the walk decides which of the three applies:
                        listing survives today.
   `unread`             the predicate fires but there is no committed listing to
                        compare against and no walk to settle it. Named, not
-                       decided. These are the majority of the affected seeds and
-                       saying so is the point: "the predicate fires" is not
-                       "the entry is wrong", and the blind spot is a class
-                       rather than an absence.
+                       decided, and the point of publishing them rather than
+                       filtering is that "the predicate fires" is not "the entry
+                       is wrong", and the blind spot is a class rather than an
+                       absence.
 
 **"Majority" is a stated choice among named alternatives, not a result.** The
 walk is `disasm8051.converges_from()`, which returns how many of its 24 anchors
@@ -464,7 +464,7 @@ def summary_line(rows, total, unattributed):
     that prints this line."""
     tally = collections.Counter(r["verdict"] for r in rows)
     return ("%d call-target seed(s) derived, %d the predicate fires on "
-            "(%s), %d census row(s) named no bank and were not seeded"
+            "(%s), %d distinct target(s) named no bank and were not seeded"
             % (total, len(rows),
                ", ".join("%d %s" % (tally[v], v) for v in VERDICTS if tally[v]),
                unattributed))
