@@ -152,6 +152,25 @@ range is.
     not a claim that the exemption would be wrong in general. The same census
     turned up a live defect in this file's *walk*, which is fixed rather than
     written up: see `LIST_ITEM` and `units()`.
+  * *Where a quoted paragraph happened to be wrapped.* `line.strip()` takes a
+    blockquote's indentation but not its `>`, so a sentence boundary inside a
+    quote used to be recognised only where the marker did not fall between the
+    period and the next capital: the same text read as one unit or two on the
+    strength of where an author wrapped it, with no change in the words.
+    `TERMINATOR` now carries `>`, so a wrap point that lands on the marker is a
+    boundary like any other. Stripping the marker before the join -- the other
+    way to make the wrap irrelevant -- was measured and **not adopted**: with the
+    `>` gone `LIST_ITEM` can see the `-` of a quoted tight list, so a quote
+    splits into one unit per item, and in `xdata-06c2-06db-timers.md` that
+    separates a cluster id from the addresses it governs and the address item is
+    passed over for making no membership claim. An attribution the walk holds
+    today stops being held. Both readings report no disagreement over the
+    committed corpus, so coverage decided it and the verdicts could not.
+    `docs/findings/blockquote-terminator-wrap.md` records the measurement. What
+    is *not* decided here is whether a blockquoted correction should be a unit of
+    its own: a quotation's membership claims arguably belong to the source it
+    quotes rather than to this repository's prose, and that is a question about
+    what the gate is for rather than a wrapping defect.
   * *Anything outside the three roots*, and any address the census does not
     know, so a code address that collides with an XDATA one is not examined.
 
@@ -298,7 +317,15 @@ CLAUSE_BREAK = re.compile(r"[;:.()]")
 # The trailing set matters in a corpus written as wrapped prose inside list
 # items and tables: without the `-` and `|` here, one list item's sentence runs
 # on into the next item's and drags its addresses along with it.
-TERMINATOR = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*_|-])")
+#
+# `>` is here for the same reason, and `line.strip()` is why it was missing:
+# stripping takes a blockquote's indentation but not its marker, so a boundary
+# inside a quoted paragraph was recognised only where the `>` did not land
+# between the period and the next capital -- the same text read as one unit or
+# two on the strength of where an author wrapped it. Carrying the marker is the
+# fix that keeps the wrap irrelevant; stripping it before the join was measured
+# and not adopted, see the docstring and `docs/findings/blockquote-terminator-wrap.md`.
+TERMINATOR = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*_|>-])")
 
 # A range, which is what anchors a census row's columns. §5 writes it
 # `` `0x030E`-`0x1809` ``, one backtick per address, so it is only recognisable
