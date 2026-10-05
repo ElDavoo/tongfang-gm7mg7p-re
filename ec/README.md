@@ -602,9 +602,10 @@ into `r2 -a 8051` with no stitching needed.
   population. `python3 tools/bucket_c_codemap.py ../firmware/GMxMGxx_11.800
   --check` re-derives the committed `annotations/bucket-c-codemap.csv` and diffs
   it; `--self-test` holds the refusals, and `--spans` emits the reached-span set
-  for issue #20. Three verdicts — reached-by-walk, not-reached, unknown — each
-  with a named reason, and every count a count *of this walk from this seed
-  set*. The write-up is
+  for issue #20 — every descent the walk made, not the seed set alone, under a
+  `#` header saying which population the file covers. Three verdicts —
+  reached-by-walk, not-reached, unknown — each with a named reason, and every
+  count a count *of this walk from this seed set*. The write-up is
   [`../docs/findings/bucket-c-codemap.md`](../docs/findings/bucket-c-codemap.md).
 - **`tools/code_map.py`** — the whole main EC image the tool above covers one
   region of: a worklist descent from the vector table and the BL51 bank-switch
