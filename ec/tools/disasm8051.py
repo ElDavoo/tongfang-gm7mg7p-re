@@ -433,6 +433,21 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
     if 0x08 <= op <= 0x0F:
         return f"inc  r{op - 0x08}"
     if 0xA8 <= op <= 0xAF:
+        # `MOV Rn,direct` -- the operand is a byte address, and the rendering
+        # says so by carrying no `#`, exactly as the `0x88` row below prints
+        # `mov 0x82,r0` and the `0xE5`/`0xF5` rows print `mov a,0x82`. Two of
+        # the three readings this block had in the tree spelled the operand as
+        # something else: `XCH A,Rn` at one byte, which would leave no operand
+        # at all, and `MOV Rn,#data`, which is the `0x78` row and would need a
+        # `#` here. The committed listings settle it -- every instruction start
+        # in this block is followed by a row two bytes on and none by a row one
+        # byte on, and the operand bytes are dominated by `0x82`/`0x83`, which
+        # Ghidra transcribes as `DPL`/`DPH` and r2 as `dpl`/`dph`.
+        # `a8af_operand_role.py` re-derives both halves and
+        # `../../docs/findings/a8-af-block-length-and-operand.md` has the
+        # measurement. The block's length is 2 in `OPCODE_LEN` and was always
+        # right; `0xC8`-`0xCF` below is the one-byte `XCH A,Rn` this row was
+        # once mistaken for.
         return f"mov  r{op - 0xA8},0x{d[i + 1]:02x}"
     if op in (0xA6, 0xA7):
         # MOV @Ri,direct -- one row below `mov Rn,direct` above, and the one

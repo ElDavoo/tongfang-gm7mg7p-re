@@ -91,7 +91,7 @@ match at 0.50, 10 carrying a name
 ```
 
 Every cell of §4.4's four-row table is a projection of `/tmp/reg/map.csv`
-(`MAP_COLUMNS` at `xdata_register_map.py:390-393`), and this is the command that
+(`MAP_COLUMNS` at `xdata_register_map.py:505-507`), and this is the command that
 reads them off:
 
 ```console

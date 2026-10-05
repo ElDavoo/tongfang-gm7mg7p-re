@@ -48,6 +48,24 @@ eight by name. The rows are left visible, and the fix is in
 `SPOT_CHECKS`, which had no entry anywhere in the block — the gap that let a
 256-byte literal keep a block wrong.)*
 
+*(Corrected 2026-10-05, issue #1154. **The eight rows above are a transcription
+error in `MCS51_LEN`, not a firmware departure from the manual — and the
+correction above mistook which.** It read `0xA8`-`0xAF` as carrying `XCH A,Rn`'s
+1 byte. That instruction is at `0xC8`-`0xCF`, which this table still carries at
+1 correctly; `0xA8`-`0xAF` is `MOV Rn,direct`, and the manual's length for it is
+2. So the honest headline is not "8 rows where the manual contradicts all three
+tools" but "8 rows where the manual was mis-transcribed", and the row is now 2
+in both tables. `--divergence` exits 0.
+
+Neither the framing nor the operand needed a fourth decoder to settle it, and
+that is the part worth keeping: the committed listings frame every instruction
+start in the block two bytes on and none one byte on, and read the operand byte
+as a `direct` address. `a8af_operand_role.py` derives both from the corpus
+alone and `a8-af-block-length-and-operand.md` has the measurement, including
+what it does and does not show. The block is still *named* by `--divergence`,
+under `CORRECTED_MANUAL_ROWS`, because a corrected row and a row that was never
+in question look identical from the outside.*
+
 ## The two decoders, and why the listings are the primary one
 
 **The committed Ghidra listings.** `ec/decompiled/` holds Ghidra 12.1.3's own

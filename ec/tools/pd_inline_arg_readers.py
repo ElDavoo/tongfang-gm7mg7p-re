@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
-"""Who reads the `??82` XDATA cells `lcall 0x104D` fills in, counted per program
-and per direction -- and, on this image, the written answer that none does.
+"""Who reads the XDATA cells `lcall 0x104D` fills in, counted per program and
+per direction.
+
+**The cells moved (2026-10-05, issue #1154), and so did the answer.** This tool
+was written against the `??82` cells -- one per XDATA page, low byte always
+`0x82` -- and reported the written answer that *none* of them is read. Both
+halves of that came from reading the byte at `0x104D` as `mov r0,#0x82`, a
+constant the helper substitutes for the caller's DPL. `0xA8`-`0xAF` is
+`mov Rn,direct`, so the instruction is `mov r0,DPL`: the helper saves the
+caller's DPTR into R0:B and restores it before the store, and the deposits land
+on the caller's own pointers. The cells are now whatever those were, they are
+not confined to one low byte, and -- the substantive consequence -- several of
+them *are* read, because they are ordinary registers the PD image reads
+constantly where `??82` was a page cell nothing referenced.
+
+The two findings below still hold and are still what this tool is for; what
+changed is which addresses they are about. `../../docs/findings/pd-inline-arg-readers.md`
+carries the correction beside the numbers it replaces.
 
 `../../docs/findings/pd-inline-arg-trampoline.md` §5 gives the cells and stops:
 "What reads those cells was not traced." The issue that followed (#1142) measured
@@ -14,9 +30,11 @@ follows, and nothing in a count knows it. Decoded, the single `0x0A82` site in
 the PD image is `mov dptr,#0x0a82 / mov a,r7 / movx @dptr,a / inc dptr / ...` --
 a *writer*, walking three consecutive bytes. It is already annotated
 `store_4bytes_to_0a82 [writer]` in `../annotations/ghidra-functions.csv`. So
-`0x0A82` is 174 deposits against **no** identified reader, not one.
+`0x0A82` was 174 deposits against **no** identified reader, not one. That cell
+is no longer among the deposits -- see the header -- but the rule stands and is
+what the per-direction columns below enforce.
 
-**A site in `bank0` is not a site in the PD image.** `0x0782`'s eleven sites are
+**A site in `bank0` is not a site in the PD image.** `0x0782`'s eleven sites were
 all in the main EC, a separate program with its own XDATA map
 (`../annotations/pd-xdata-overlap.md`); none of them is a consumer of the 107
 values the PD image writes there. `../annotations/pd-xdata-span-sites.csv` already
@@ -37,10 +55,13 @@ names no cell and is counted separately; `entries()` is its measurement.
 
 **An independent second census agrees, which is what makes the zero a result.**
 `../annotations/xdata-registers.csv` is built from the Ghidra decompile rather
-than from a byte scan, so it has different blind spots, and over the same cells
-it reads `0x0A82` as 0 reads against writes and has no row at all for `0x0882`.
-Two methods whose blind spots differ, converging on "no PD-side reader", is the
-strongest statement this evidence carries; neither method alone is.
+than from a byte scan, so it has different blind spots. Over the retired `??82`
+cells it read `0x0A82` as 0 reads against writes and had no row at all for
+`0x0882`; two methods whose blind spots differ, converging on "no PD-side
+reader", was the strongest statement that evidence carried. Neither method
+alone was, and over the corrected cells the two no longer converge on a zero --
+several cells have PD-side reads this sweep counts and the decompile census
+does not contradict.
 
 **Every zero here is "not found by this method".** It is not a claim that the
 firmware cannot contain a consumer, and `../../CLAUDE.md`'s calibration rule and
@@ -63,7 +84,7 @@ from disasm8051 import OPCODE_LEN
 from trace_xdata_refs import (PD_MARKER, REGIONS, check_table, classify,
                               region_of, repo_path, sites_for, walk_why)
 
-from pd_inline_arg_sites import DEST_LOW, TRAMPOLINE
+from pd_inline_arg_sites import TRAMPOLINE
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SITES_CSV = os.path.join(HERE, os.pardir, "annotations",

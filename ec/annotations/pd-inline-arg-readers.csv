@@ -1,10 +1,48 @@
 dest,deposits,mov_dptr_sites,mov_dptr_reads,mov_dptr_writes,mov_dptr_by_region,dptr_halves,dptr_from_accumulator,pd_side_reads,reason
-0x0A82,174,1,0,2,pd-image=1,0,0,0,"1 pd-image MOV DPTR site(s), none of them a read"
-0x0782,107,11,11,3,bank0=11,0,0,0,no pd-image site by any of the three cell sweeps
-0x0882,92,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
-0x0482,7,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
-0xFF82,7,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
-0x0082,3,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
-0x0382,2,8,2,0,bank1=8,0,0,0,no pd-image site by any of the three cell sweeps
-0x1282,1,0,0,0,,0,0,0,no pd-image site by any of the three cell sweeps
-0x0982,1,2,2,0,bank1=2,0,0,0,no pd-image site by any of the three cell sweeps
+0x0A98,131,128,0,0,pd-image=128,0,0,0,"128 pd-image MOV DPTR site(s), none of them a read"
+0x07D0,79,254,160,12,pd-image=254,0,0,160,pd-side reads found: 160
+0x083D,28,39,2,11,bank1=3;pd-image=36,0,0,1,pd-side reads found: 1
+0x0A8F,26,28,0,0,pd-image=28,0,0,0,"28 pd-image MOV DPTR site(s), none of them a read"
+0x0803,19,142,91,5,bank1=3;pd-image=139,0,0,90,pd-side reads found: 90
+0x0A6D,12,16,0,0,pd-image=16,0,0,0,"16 pd-image MOV DPTR site(s), none of them a read"
+0x080F,12,33,7,5,bank0=3;bank1=2;pd-image=28,0,0,5,pd-side reads found: 5
+0x0841,12,15,0,1,bank1=1;pd-image=14,0,0,0,"14 pd-image MOV DPTR site(s), none of them a read"
+0x07D6,9,142,90,21,pd-image=142,0,0,90,pd-side reads found: 90
+0x07D1,6,76,48,17,pd-image=76,0,0,48,pd-side reads found: 48
+0x0815,6,17,7,2,bank0=2;pd-image=15,0,0,5,pd-side reads found: 5
+0x0410,3,6,0,0,bank1=1;pd-image=5,0,0,0,"5 pd-image MOV DPTR site(s), none of them a read"
+0x07CF,3,55,38,13,pd-image=55,0,0,38,pd-side reads found: 38
+0x07D4,3,70,47,13,bank0=2;pd-image=68,0,0,46,pd-side reads found: 46
+0x07DA,3,53,26,10,bank0=1;pd-image=52,0,0,26,pd-side reads found: 26
+0x0821,3,8,1,1,bank1=2;pd-image=6,0,0,0,"6 pd-image MOV DPTR site(s), none of them a read"
+0x0301,2,2,1,1,pd-image=2,0,0,1,pd-side reads found: 1
+0x080C,2,29,14,9,bank0=4;bank1=3;pd-image=22,0,0,12,pd-side reads found: 12
+0x0408,2,9,0,0,bank1=2;pd-image=7,0,0,0,"7 pd-image MOV DPTR site(s), none of them a read"
+0x0A52,2,26,10,13,bank0=4;common=13;pd-image=9,0,0,0,"9 pd-image MOV DPTR site(s), none of them a read"
+0x080D,2,78,59,19,bank1=4;pd-image=74,0,0,57,pd-side reads found: 57
+0x0832,2,89,58,36,bank0=4;bank1=23;pd-image=62,0,0,31,pd-side reads found: 31
+0xFFFC,2,14,0,0,pd-image=14,0,0,0,"14 pd-image MOV DPTR site(s), none of them a read"
+0xFFF4,2,1,0,0,pd-image=1,0,0,0,"1 pd-image MOV DPTR site(s), none of them a read"
+0x0805,1,9,6,2,bank1=3;pd-image=6,0,0,5,pd-side reads found: 5
+0x07C4,1,8,4,1,bank0=5;pd-image=3,0,0,0,"3 pd-image MOV DPTR site(s), none of them a read"
+0x0429,1,2,0,0,pd-image=2,0,0,0,"2 pd-image MOV DPTR site(s), none of them a read"
+0x1235,1,1,0,0,pd-image=1,0,0,0,"1 pd-image MOV DPTR site(s), none of them a read"
+0x0867,1,15,5,10,bank0=9;pd-image=6,0,0,3,pd-side reads found: 3
+0x07DB,1,21,12,11,pd-image=21,0,0,12,pd-side reads found: 12
+0x0400,1,8,0,1,bank1=4;pd-image=4,0,0,0,"4 pd-image MOV DPTR site(s), none of them a read"
+0x00C0,1,9,5,4,bank0=6;pd-image=3,0,0,0,"3 pd-image MOV DPTR site(s), none of them a read"
+0x00C8,1,3,0,0,pd-image=3,0,0,0,"3 pd-image MOV DPTR site(s), none of them a read"
+0xFF04,1,11,10,12,pd-image=11,0,0,10,pd-side reads found: 10
+0x081B,1,9,0,1,bank1=1;pd-image=8,0,0,0,"8 pd-image MOV DPTR site(s), none of them a read"
+0x081F,1,7,1,2,bank1=1;pd-image=6,0,0,1,pd-side reads found: 1
+0x0AC7,1,3,0,0,pd-image=3,0,0,0,"3 pd-image MOV DPTR site(s), none of them a read"
+0x07D2,1,47,38,15,pd-image=47,0,0,38,pd-side reads found: 38
+0x0834,1,60,24,6,bank1=35;pd-image=25,0,0,22,pd-side reads found: 22
+0xFF0E,1,5,0,2,pd-image=5,0,0,0,"5 pd-image MOV DPTR site(s), none of them a read"
+0xFFC4,1,2,0,2,pd-image=2,0,0,0,"2 pd-image MOV DPTR site(s), none of them a read"
+0x0008,1,7,0,0,pd-image=7,0,0,0,"7 pd-image MOV DPTR site(s), none of them a read"
+0x0827,1,12,2,5,bank0=6;bank1=1;pd-image=5,0,0,0,"5 pd-image MOV DPTR site(s), none of them a read"
+0x07D8,1,34,20,10,bank0=1;pd-image=33,0,0,20,pd-side reads found: 20
+0x0984,1,6,3,2,bank0=3;pd-image=3,0,0,0,"3 pd-image MOV DPTR site(s), none of them a read"
+0x0ACB,1,1,0,0,pd-image=1,0,0,0,"1 pd-image MOV DPTR site(s), none of them a read"
+0x0ACF,1,1,0,0,pd-image=1,0,0,0,"1 pd-image MOV DPTR site(s), none of them a read"

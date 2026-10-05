@@ -380,19 +380,30 @@ def test_site(d: bytes, region: str, off: int, rt: int, target: int, pd_verified
 def _dptr_write(op: int, imm, imm2) -> bool:
     """Does this instruction store into DPL (0x82) or DPH (0x83)?
 
-    Four forms name the `direct` byte in the second position -- `mov direct,#imm`
-    (0x75), `mov direct,Rn` (0x88-0x8F), `mov direct,@Ri` (0xA8-0xAF) and
-    `mov direct,A` (0xF5) -- and `mov direct,direct` (0x85) in the third.
-    Catching only `mov 0x82,A` is how a CODE pointer ends up read as an XDATA
-    register: at 0x9444 the bank1 arms hand 0x93B6/0x93E6 to r2/r1 and rebuild
-    DPTR from them with `mov dph,r2 ; mov dpl,r1`, so the register forms are
-    exactly the ones this arm needs.
+    Three forms name the `direct` byte in the second position as a
+    *destination* -- `mov direct,#imm` (0x75), `mov direct,Rn` (0x88-0x8F) and
+    `mov direct,A` (0xF5) -- and `mov direct,direct` (0x85) names it in the
+    third. Catching only `mov 0x82,A` is how a CODE pointer ends up read as an
+    XDATA register: at 0x9444 the bank1 arms hand 0x93B6/0x93E6 to r2/r1 and
+    rebuild DPTR from them with `mov dph,r2 ; mov dpl,r1`, so the register forms
+    are exactly the ones this arm needs.
+
+    **`0xA8`-`0xAF` was in this list and was wrong.** It was read here as
+    `mov direct,@Ri` -- storing *into* the byte -- which made every
+    `0xA8`-`0xAF` instruction whose operand is `0x82` or `0x83` a DPTR write.
+    The block is `MOV Rn,direct`: it loads a register *from* that address, so
+    DPTR is a source and is left alone. That is not a cosmetic renaming; it is
+    the difference between an arm attributing a store to `0x0A82` and
+    attributing it nowhere, and this arm's whole job is not to invent an
+    address. `a8af_operand_role.py` derives the reading from the committed
+    listings and `../../docs/findings/a8-af-block-length-and-operand.md`
+    carries the measurement.
 
     Whatever the source register, DPTR becomes unknown rather than known. Two
     immediate `mov` forms could in principle be composed back into an address,
     and tracking that is more machinery than the error it would prevent is
     worth: "unattributed" is the safe direction, and a wrong address is not."""
-    if op == 0x75 or 0x88 <= op <= 0x8F or 0xA8 <= op <= 0xAF or op == 0xF5:
+    if op == 0x75 or 0x88 <= op <= 0x8F or op == 0xF5:
         return imm in DPTR_REGS
     if op == 0x85:
         return imm2 in DPTR_REGS
