@@ -64,6 +64,14 @@ prints the current one, which is the figure to re-derive:
     one anchor collide in both orders while each applies alone. So the call
     folds into that file and the write-up names what was asked for beside what
     was prepared, per `CLAUDE.md` §4a-4d.
+  * `agent-gates-bank-attribution-self-test.patch` -- the filename issue #1081
+    asked for, declined for that same reason and re-measured for this tool
+    rather than inherited from the entries above it:
+    `bank_attribution.py` takes `<image> --self-test` and wants the same tail,
+    so a standalone cut applies alone and then collides with the fold in both
+    orders. Its call folds into that file beside the others and
+    `docs/findings/bank-attribution-gate-arm.md` names what was asked for
+    beside what was prepared.
 
 `HISTORICAL` below is that opt-out, keyed on the patch **name** and enumerated
 here rather than marked in the prose. The alternative the issue offers -- a
@@ -158,6 +166,7 @@ HISTORICAL = {
     "agent-gates-claims-and-testdata.patch",
     "agent-gates-check-history-checkouts.patch",
     "agent-gates-audit-call-targets-self-test.patch",
+    "agent-gates-bank-attribution-self-test.patch",
 }
 
 # The prepared changes in `docs/ci/` that are not `.patch`. One entry today,
