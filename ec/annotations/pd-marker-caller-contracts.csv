@@ -41,6 +41,7 @@ pd_pop_order_oracle.py,print_pd_siblings,imported,silent,,,
 pd_pop_order_oracle.py,main,imported,refuse,return 1,stderr,
 pd_site_clusters.py,require_pd,imported,refuse,NotPdImage,,
 pd_site_clusters.py,self_test,imported,assert,,,
+pd_store_back_dptr.py,pd_verified,imported,predicate,,,self_test() refuse; main() refuse
 r1r2_predecessor.py,main,imported,silent,,,
 register_ref_table.py,main,imported,refuse,return 1,stderr,
 run_entry_map.py,self_test,imported,refuse,return 1,stderr,
