@@ -7704,6 +7704,24 @@ the graph booking `9A78` as a caller — it books `DEA5`, and sides with the
 comment's denial of its own site. The split, the verdicts and every site address
 reproduced.)*
 
+*(Correction, 2026-10-05, issue #1268, to the gap-scan figures above and to
+nothing else in this section.)* **The numerator of "15 of the 90" is drawn from
+the gap scan's population and the denominator is not, and only the numerator was
+ever missing its partition.** The 15 come from `ec/ghidra/gap-citation-scan.csv`
+filtered on `neighbour_edge`, and that population is the union of all three
+buckets `citations()` returns — so a pair the citation gate had **refused**, a
+data frame or a cross-program collision, was among the rows a `no-transfer`
+verdict was read off, which is not evidence about a comment because there was no
+code claim for a window to fail to support. The 90 is the `cited_by == inbound`
+count in `call-graph-callees.csv`, and **`cited_by` is a kept-citation figure by
+construction**: `build()` is handed the kept bucket alone, so `rejected` and
+`undecided` never reach a `cited_by` (`call_graph.build()` / `_row`). Every row
+of the gap-scan CSV now carries a `why` column naming the partition, and **both
+`boundary-cut` pairs turn out to be pairs the gate kept** while the one
+`not-code` pair is a refused one. **The fifteen rows, the 9 / 6 split, and every
+conclusion above stand**, and the denominator needed no partition — it never had
+one to lose. [`findings/citation-gap-why-partition.md`](findings/citation-gap-why-partition.md).
+
 ## 39. `spelled_as` is a union across programs, and the CSV now says which half is which (2026-09-25, issue #709)
 
 The write-up is `docs/findings/xdata-spelled-as-union.md`; this is the
