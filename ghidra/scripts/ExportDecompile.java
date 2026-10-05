@@ -122,7 +122,7 @@ public class ExportDecompile extends GhidraScript {
             int size = (int) f.getBody().getNumAddresses();
             bodyBytes += size;
             String name = f.getName();
-            String seedBasis = basis.get(addrHex.toUpperCase());
+            String seedBasis = basis.get(basisKey(program, addrHex));
             if (seedBasis == null) {
                 seedBasis = "auto";
             }
@@ -263,11 +263,33 @@ public class ExportDecompile extends GhidraScript {
                 }
                 String[] f = line.split(",", -1);
                 if (f.length >= 3) {
-                    m.put(f[1].trim().toUpperCase().replace("0X", ""), f[2].trim());
+                    m.put(basisKey(f[0], f[1]), f[2].trim());
                 }
             }
         }
         return m;
+    }
+
+    /**
+     * The seed-basis map's key: the program and the address together.
+     *
+     * The address alone is not an identity here. The EC's three programs share
+     * one 64 KiB space, so the PD image's `0x0012` and the common area's
+     * `0x0012` are two different functions, and a map keyed on the address
+     * recorded whichever program's row the CSV wrote last -- a property of the
+     * row order, not of the program being exported. Normalising both halves
+     * here keeps the write side and the lookup site from disagreeing about the
+     * padding; the BIOS writes eight digits because `Address.toString()`
+     * zero-pads to the address space's width, and `0x4F8` would never match
+     * `000004F8`.
+     *
+     * TongFang has the same method, and ExportListing.java calls that one, so
+     * fixing only this copy would leave the `.c` and the `.asm` disagreeing
+     * about the same address.
+     */
+    private static String basisKey(String program, String addr) {
+        return program.trim() + " " + addr.toUpperCase()
+            .replace("0X", "").replace("CODE:", "");
     }
 
     /** `label.<program name>` when the driver supplied one, else the file stem. */

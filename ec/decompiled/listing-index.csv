@@ -23,13 +23,13 @@ bank0,1954,load_dptr_92f7_tail_jump_1114,6,annotation,yes,yes,bank-switch,hand-d
 bank0,1978,trampoline_bank1_a710,6,annotation,yes,yes,bank-switch,hand-decoded,ec/decompiled/bank0/1978.asm; ec/decompiled/bank0/1978.c,,bank0/1978.asm
 bank0,197E,trampoline_bank1_a6f7,6,annotation,yes,yes,bank-switch,hand-decoded,ec/decompiled/bank0/197E.asm; ec/decompiled/bank0/197E.c,,bank0/197E.asm
 bank0,2A6C,clear_4c_bits_4_5_7,15,annotation,yes,yes,writer,hand-decoded,ec/decompiled/bank0/2A6C.asm; ec/decompiled/bank0/2A6C.c,,bank0/2A6C.asm
-bank0,2BD5,event_id_latch_and_bit_merge,222,call-target,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/2BD5.asm; ec/decompiled/bank0/2BD5.c,,bank0/2BD5.asm
+bank0,2BD5,event_id_latch_and_bit_merge,222,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/2BD5.asm; ec/decompiled/bank0/2BD5.c,,bank0/2BD5.asm
 bank0,397D,call_3894_then_jmp_2de3,6,annotation,yes,yes,forwarder,hand-decoded,ec/decompiled/bank0/397D.asm; ec/decompiled/bank0/397D.c,,bank0/397D.asm
-bank0,3A60,cascade_gate_170a_1709_1708,108,call-target,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/3A60.asm; ec/decompiled/bank0/3A60.c,,bank0/3A60.asm
+bank0,3A60,cascade_gate_170a_1709_1708,108,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/3A60.asm; ec/decompiled/bank0/3A60.c,,bank0/3A60.asm
 bank0,3AD6,write_10_2007_clear_1302_set_1300,26,annotation,yes,yes,writer,hand-decoded,ec/decompiled/bank0/3AD6.asm; ec/decompiled/bank0/3AD6.c,,bank0/3AD6.asm
 bank0,445E,stage_and_commit_0a56_block,188,annotation,yes,yes,state,hand-decoded,ec/decompiled/bank0/445E.asm; ec/decompiled/bank0/445E.c,,bank0/445E.asm
 bank0,4777,stage_0a54_0a55_then_dispatch,26,annotation,yes,yes,state,hand-decoded,ec/decompiled/bank0/4777.asm; ec/decompiled/bank0/4777.c,,bank0/4777.asm
-bank0,4B1F,dec_a_store_and_advance_dptr,3,call-target,yes,yes,writer,hand-decoded,ec/decompiled/bank0/4B1F.asm; ec/decompiled/bank0/4B1F.c,,bank0/4B1F.asm
+bank0,4B1F,dec_a_store_and_advance_dptr,3,annotation,yes,yes,writer,hand-decoded,ec/decompiled/bank0/4B1F.asm; ec/decompiled/bank0/4B1F.c,,bank0/4B1F.asm
 bank0,530E,stage_009a_dispatch_to_4bb0,32,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/530E.asm; ec/decompiled/bank0/530E.c,,bank0/530E.asm
 bank0,5349,dispatch_to_4c5d,27,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/5349.asm; ec/decompiled/bank0/5349.c,,bank0/5349.asm
 bank0,537F,stage_0094_block_dispatch_4d96,48,annotation,yes,yes,dispatch,hand-decoded,ec/decompiled/bank0/537F.asm; ec/decompiled/bank0/537F.c,,bank0/537F.asm
@@ -44,11 +44,11 @@ bank0,705B,write_byte_offset_by_tag_r3,34,annotation,yes,yes,writer,hand-decoded
 bank0,708F,div_r6r4_by_r5_16bit,85,annotation,yes,yes,math,hand-decoded,ec/decompiled/bank0/708F.asm; ec/decompiled/bank0/708F.c,,bank0/708F.asm
 bank0,724B,normalize_sign_pair_4byte,54,annotation,yes,yes,math,hand-decoded,ec/decompiled/bank0/724B.asm; ec/decompiled/bank0/724B.c,,bank0/724B.asm
 bank0,8000,clear_1654_block_load_1900,22,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8000.asm; ec/decompiled/bank0/8000.c,,bank0/8000.asm
-bank0,8016,write_1900_twice_set_1901,7,call-target,no,yes,writer,hand-decoded,ec/decompiled/bank0/8016.asm; ec/decompiled/bank0/8016.c,,bank0/8016.asm
+bank0,8016,write_1900_twice_set_1901,7,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8016.asm; ec/decompiled/bank0/8016.c,,bank0/8016.asm
 bank0,801D,load_a0_fall_into_801f,2,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/801D.asm; ec/decompiled/bank0/801D.c,,bank0/801D.asm
 bank0,801F,store_1901,1,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/801F.asm; ec/decompiled/bank0/801F.c,,bank0/801F.asm
 bank0,8020,write_15_to_1902,6,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8020.asm; ec/decompiled/bank0/8020.c,,bank0/8020.asm
-bank0,8026,write_bcb6_result_to_1906,11,call-target,no,yes,writer,hand-decoded,ec/decompiled/bank0/8026.asm; ec/decompiled/bank0/8026.c,,bank0/8026.asm
+bank0,8026,write_bcb6_result_to_1906,11,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8026.asm; ec/decompiled/bank0/8026.c,,bank0/8026.asm
 bank0,8038,index_table_base,2,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/8038.asm; ec/decompiled/bank0/8038.c,,bank0/8038.asm
 bank0,8044,ajmp_into_83ff_tail,2,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/8044.asm; ec/decompiled/bank0/8044.c,,bank0/8044.asm
 bank0,8048,unresolved_midstream_bytes,12,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/8048.asm; ec/decompiled/bank0/8048.c,,bank0/8048.asm
@@ -56,7 +56,7 @@ bank0,8054,index_case_00,21,annotation,no,yes,writer,hand-decoded,ec/annotations
 bank0,805B,index_table_default,3,call-target,no,yes,,,,,bank0/805B.asm
 bank0,806C,store_byte_through_0a59_into_0600,40,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/806C.asm; ec/decompiled/bank0/806C.c,,bank0/806C.asm
 bank0,8094,index_case_01,67,annotation,no,yes,writer,hand-decoded,ec/annotations/bank-call-audit.md,,bank0/8094.asm
-bank0,80D7,index_case_02,67,call-target,no,yes,writer,hand-decoded,ec/annotations/bank-call-audit.md,,bank0/80D7.asm
+bank0,80D7,index_case_02,67,annotation,no,yes,writer,hand-decoded,ec/annotations/bank-call-audit.md,,bank0/80D7.asm
 bank0,811A,index_case_03,67,annotation,no,yes,writer,hand-decoded,ec/annotations/bank-call-audit.md,,bank0/811A.asm
 bank0,815D,index_case_04,64,annotation,no,yes,writer,hand-decoded,ec/annotations/bank-call-audit.md,,bank0/815D.asm
 bank0,819D,index_case_05,66,annotation,no,yes,writer,hand-decoded,ec/annotations/bank-call-audit.md,,bank0/819D.asm
@@ -86,7 +86,7 @@ bank0,8F0F,store_a_to_dptr_then_075c_and_notify,17,annotation,no,yes,writer,hand
 bank0,8F20,state_0817_dispatch,187,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/8F20.asm; ec/decompiled/bank0/8F20.c,,bank0/8F20.asm
 bank0,8FDB,state_0817_fallthrough,61,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/8FDB.asm; ec/decompiled/bank0/8FDB.c,,bank0/8FDB.asm
 bank0,9000,ljmp_703d,3,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/9000.asm; ec/decompiled/bank0/9000.c,,bank0/9000.asm
-bank0,9006,read_dptr_byte,1,call-target,no,yes,reader,hand-decoded,ec/decompiled/bank0/9006.asm; ec/decompiled/bank0/9006.c,,bank0/9006.asm
+bank0,9006,read_dptr_byte,1,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/9006.asm; ec/decompiled/bank0/9006.c,,bank0/9006.asm
 bank0,9007,word_nonzero_check_tail,6,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/9007.asm; ec/decompiled/bank0/9007.c,,bank0/9007.asm
 bank0,900D,clear_081e_after_c2a2,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/900D.asm; ec/decompiled/bank0/900D.c,,bank0/900D.asm
 bank0,9015,advance_dptr_to_081f,1,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/9015.asm; ec/decompiled/bank0/9015.c,,bank0/9015.asm
@@ -295,7 +295,7 @@ bank0,BB88,sub_19_from_0857,8,annotation,no,yes,math,hand-decoded,ec/decompiled/
 bank0,BB90,store_be16_a,9,annotation,no,yes,writer,hand-decoded,ec/annotations/charge-target-derating.md,,bank0/BB90.asm
 bank0,BB99,store_a_then_1906_init,1,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BB99.asm; ec/decompiled/bank0/BB99.c,,bank0/BB99.asm
 bank0,BB9A,init_1906_to_9f,10,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BB9A.asm; ec/decompiled/bank0/BB9A.c,,bank0/BB9A.asm
-bank0,BBA4,mask_0476_with_1f,7,call-target,no,yes,writer,hand-decoded,ec/decompiled/bank0/BBA4.asm; ec/decompiled/bank0/BBA4.c,,bank0/BBA4.asm
+bank0,BBA4,mask_0476_with_1f,7,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BBA4.asm; ec/decompiled/bank0/BBA4.c,,bank0/BBA4.asm
 bank0,BBAB,clear_084f_bit0,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BBAB.asm; ec/decompiled/bank0/BBAB.c,,bank0/BBAB.asm
 bank0,BBB3,store_code_byte_to_08c0,10,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BBB3.asm; ec/decompiled/bank0/BBB3.c,,bank0/BBB3.asm
 bank0,BBBD,store_code_byte_to_08c3,10,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BBBD.asm; ec/decompiled/bank0/BBBD.c,,bank0/BBBD.asm
@@ -461,7 +461,7 @@ bank0,C48F,clear_160a_bit0,8,annotation,no,yes,writer,hand-decoded,ec/decompiled
 bank0,C497,set_160a_bit1,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C497.asm; ec/decompiled/bank0/C497.c,,bank0/C497.asm
 bank0,C49F,FUN_CODE_c49f,8,call-target,no,no,,,,,bank0/C49F.asm
 bank0,C4A7,set_160a_bit2,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/C4A7.asm; ec/decompiled/bank0/C4A7.c,,bank0/C4A7.asm
-bank0,C4AF,FUN_CODE_c4af,8,annotation,no,no,,,,,bank0/C4AF.asm
+bank0,C4AF,FUN_CODE_c4af,8,call-target,no,no,,,,,bank0/C4AF.asm
 bank0,C4C9,FUN_CODE_c4c9,8,call-target,no,no,,,,,bank0/C4C9.asm
 bank0,C4D1,FUN_CODE_c4d1,8,call-target,no,no,,,,,bank0/C4D1.asm
 bank0,C4D9,test_166a_bit7_inverted,13,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C4D9.asm; ec/decompiled/bank0/C4D9.c,,bank0/C4D9.asm
@@ -472,7 +472,7 @@ bank0,C55F,FUN_CODE_c55f,94,call-target,no,no,,,,,bank0/C55F.asm
 bank0,C5BD,FUN_CODE_c5bd,94,call-target,no,no,,,,,bank0/C5BD.asm
 bank0,C8C5,select_0027_0028_from_five_probes,93,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C8C5.asm; ec/decompiled/bank0/C8C5.c,,bank0/C8C5.asm
 bank0,C9FF,kbd_status_from_0826_low_bits,30,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/C9FF.asm; ec/decompiled/bank0/C9FF.c; ec/annotations/registers.yaml,,bank0/C9FF.asm
-bank0,CA1D,FUN_CODE_ca1d,1,annotation,no,no,,,,,bank0/CA1D.asm
+bank0,CA1D,FUN_CODE_ca1d,1,call-target,no,no,,,,,bank0/CA1D.asm
 bank0,CA1E,set_support2_bit5_and_bios_oem2_bit6,15,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/CA1E.asm; ec/decompiled/bank0/CA1E.c; ec/annotations/registers.yaml,,bank0/CA1E.asm
 bank0,CA2D,clear_kbd_status_bit1_return_0826,12,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/CA2D.asm; ec/decompiled/bank0/CA2D.c; ec/annotations/registers.yaml,,bank0/CA2D.asm
 bank0,CA39,dptr_from_r7_plus_00d0,3,annotation,no,yes,math,hand-decoded,ec/decompiled/bank0/CA39.asm; ec/decompiled/bank0/CA39.c,,bank0/CA39.asm
@@ -609,10 +609,10 @@ bank0,E024,store_r6_r7_to_046c_046d,9,annotation,no,yes,writer,hand-decoded,ec/d
 bank0,E02D,mul_r7_by_8,6,annotation,no,yes,math,hand-decoded,ec/decompiled/bank0/E02D.asm; ec/decompiled/bank0/E02D.c,,bank0/E02D.asm
 bank0,E033,FUN_CODE_e033,12,call-target,no,no,,,,,bank0/E033.asm
 bank0,E03F,set_09c1_09c3_from_dptr,17,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/E03F.asm; ec/decompiled/bank0/E03F.c,,bank0/E03F.asm
-bank0,E054,store_a_to_dptr_e054,2,call-target,no,yes,writer,hand-decoded,ec/decompiled/bank0/E054.asm; ec/decompiled/bank0/E054.c,,bank0/E054.asm
+bank0,E054,store_a_to_dptr_e054,2,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/E054.asm; ec/decompiled/bank0/E054.c,,bank0/E054.asm
 bank0,E064,copy_043e_to_1511,7,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/E064.asm; ec/decompiled/bank0/E064.c; ec/annotations/registers.yaml,,bank0/E064.asm
 bank0,E06F,copy_dptr_to_1511_discard_arith,6,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/E06F.asm; ec/decompiled/bank0/E06F.c,,bank0/E06F.asm
-bank0,E090,copy_dptr_plus_1_to_1511,9,call-target,no,yes,copy,hand-decoded,ec/decompiled/bank0/E090.asm; ec/decompiled/bank0/E090.c,,bank0/E090.asm
+bank0,E090,copy_dptr_plus_1_to_1511,9,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/E090.asm; ec/decompiled/bank0/E090.c,,bank0/E090.asm
 bank0,E0C3,store_a_or_3c_at_dptr,12,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/E0C3.asm; ec/decompiled/bank0/E0C3.c,,bank0/E0C3.asm
 bank0,E0D3,inc_indirect_then_store_3c_at_dptr,8,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/E0D3.asm; ec/decompiled/bank0/E0D3.c,,bank0/E0D3.asm
 bank0,E0FE,FUN_CODE_e0fe,75,call-target,no,no,,,,,bank0/E0FE.asm
@@ -640,7 +640,7 @@ bank0,E64A,gate_05_09_then_0f80_bit1_clear,38,annotation,no,yes,gate,hand-decode
 bank0,E670,gate_poll_0f80_bit4,65,annotation,no,yes,gate,hand-decoded,ec/decompiled/bank0/E670.asm; ec/decompiled/bank0/E670.c,,bank0/E670.asm
 bank0,E6B1,init_args_then_e51e_e4fe_16,67,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/E6B1.asm; ec/decompiled/bank0/E6B1.c,,bank0/E6B1.asm
 bank0,E6F4,FUN_CODE_e6f4,46,call-target,no,no,,,,,bank0/E6F4.asm
-bank0,E722,FUN_CODE_e722,150,annotation,no,no,,,,,bank0/E722.asm
+bank0,E722,FUN_CODE_e722,150,auto,no,no,,,,,bank0/E722.asm
 bank0,E7B8,FUN_CODE_e7b8,3,call-target,no,no,,,,,bank0/E7B8.asm
 bank0,E7BB,FUN_CODE_e7bb,12,auto,no,no,,,,,bank0/E7BB.asm
 bank0,E7C7,r7_zero_ret_2,3,annotation,no,yes,gate,hand-decoded,ec/decompiled/bank0/E7C7.asm; ec/decompiled/bank0/E7C7.c,,bank0/E7C7.asm
@@ -704,7 +704,7 @@ bank0,F0CA,store_a_read_0fa0_then_set_0a56_block,18,annotation,no,yes,writer,han
 bank0,F0DC,store_a_0f_80_and_r6_0f,4,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/F0DC.asm; ec/decompiled/bank0/F0DC.c,,bank0/F0DC.asm
 bank0,F0E0,store_0f_80_at_dptr_plus1,4,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/F0E0.asm; ec/decompiled/bank0/F0E0.c,,bank0/F0E0.asm
 bank0,F0E4,store_80_and_setup_regs,9,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/F0E4.asm; ec/decompiled/bank0/F0E4.c,,bank0/F0E4.asm
-bank0,F0ED,set_0f60_88_and_0a56_0f_60,2,call-target,no,yes,writer,hand-decoded,ec/decompiled/bank0/F0ED.asm; ec/decompiled/bank0/F0ED.c,,bank0/F0ED.asm
+bank0,F0ED,set_0f60_88_and_0a56_0f_60,2,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/F0ED.asm; ec/decompiled/bank0/F0ED.c,,bank0/F0ED.asm
 bank0,F0EF,store_a_to_0f60_and_set_0a56,4,annotation,no,yes,unresolved,hand-decoded,ec/decompiled/bank0/F0EF.asm; ec/decompiled/bank0/F0EF.c,,bank0/F0EF.asm
 bank0,F0F3,set_0a56_to_0f_60,11,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/F0F3.asm; ec/decompiled/bank0/F0F3.c,,bank0/F0F3.asm
 bank0,F0FE,write_fe_5a_a5_then_read_0fa0,9,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/F0FE.asm; ec/decompiled/bank0/F0FE.c,,bank0/F0FE.asm

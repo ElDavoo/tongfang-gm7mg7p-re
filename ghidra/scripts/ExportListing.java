@@ -125,7 +125,7 @@ public class ExportListing extends GhidraScript {
             Address entry = f.getEntryPoint();
             String addrHex = TongFang.addrKey(entry.toString());
             String name = f.getName();
-            String seedBasis = basis.get(addrHex);
+            String seedBasis = basis.get(TongFang.basisKey(program, addrHex));
             if (seedBasis == null) {
                 seedBasis = "auto";
             }
