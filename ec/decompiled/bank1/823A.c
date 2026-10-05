@@ -4,16 +4,17 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Same shape as 0x818A and 0x8261 -- call 0x8CEC (`gate_then_copy_2200_to_075f`), fold bit 4 of
-   0x0472 into another bit of the same byte, assemble 0x0457's low three -- but this one folds bit 4
-   into **bit 3** (`orl A,#0x08`) and loads **0b011** into 0x0457 (`anl A,#0xf8` / `orl A,#0xfb`).
-   The three routines therefore differ only in which bit of 0x0472 they move and which constant they
-   leave in 0x0457, which is the strongest evidence here that the field is a small enumerated state
-   rather than a flag; **nothing read here says what any of the four values means.** It then calls
-   0x1984 (`trampoline_to_c10c`) and 0x19A8 (`trampoline_to_c118`), testing R7 after each: a zero R7
-   from the first jumps to 0x8225, a zero from the second jumps to 0x8238, and both nonzero stores
-   0x83 into R7 and calls 0x19A2 (`trampoline_to_cf96`). The return value is never loaded, so what
-   the caller receives is whatever the last `lcall` left in A.
+/* Same shape as 0x818A and 0x8261 -- call 0x8CEC (`gate_then_copy_2200_to_075f`), rewrite 0x0472,
+   assemble 0x0457's low three -- but this one sets **bit 3** of 0x0472 (`anl A,#0x10` / `orl
+   A,#0x08`, so bit 3 is set whatever bit 4 held, bit 4 passes through and the other six bits go to
+   zero) and loads **0b011** into 0x0457 (`anl A,#0xf8` / `orl A,#0xfb`). The three routines
+   therefore differ only in which bit of 0x0472 they set alongside the preserved bit 4, and which
+   constant they leave in 0x0457, which is the strongest evidence here that the field is a small
+   enumerated state rather than a flag; **nothing read here says what any of the four values
+   means.** It then calls 0x1984 (`trampoline_to_c10c`) and 0x19A8 (`trampoline_to_c118`), testing
+   R7 after each: a zero R7 from the first jumps to 0x8225, a zero from the second jumps to 0x8238,
+   and both nonzero stores 0x83 into R7 and calls 0x19A2 (`trampoline_to_cf96`). The return value is
+   never loaded, so what the caller receives is whatever the last `lcall` left in A.
    type: state
    evidence: ec/decompiled/bank1/823A.asm; ec/decompiled/bank1/823A.c; ec/annotations/registers.yaml
    basis: hand-decoded

@@ -41,16 +41,18 @@ reproduces.**
 The `0x0472` write beside each site is worth naming per routine rather than by
 position, because the four are not the same kind of write.
 `set_0472_20_and_0457_low3_101` (bank1 `0x8190`) stores the constant `0x20`
-into `0x0472` whole — `mov A,#0x20 / movx @DPTR,A`, no mask and no `orl` — so it
-is not a bit move at all. The other three each do a one-bit move inside `0x0472`
-first, `anl A,#0x10 / orl A,#0xNN`: `clear_0457_low3_and_dispatch_0800_bit7`
-(bank1 `0x81CC`-`0x81CE`) moves bit 4 into bit 0, `set_0472_08_and_0457_low3_011`
-(bank1 `0x8241`-`0x8243`) into bit 3, and
-`set_0472_20_and_0457_low3_101_then_gate` (bank1 `0x8265`-`0x8267`) into bit 5.
+into `0x0472` whole — `mov A,#0x20 / movx @DPTR,A`, no mask and no `orl`. The
+other three each rewrite `0x0472` as `anl A,#0x10 / orl A,#0xNN`, which **sets
+their bit whether or not bit 4 was set** and leaves bit 4 as it was, the other six
+bits going to zero: `clear_0457_low3_and_dispatch_0800_bit7` (bank1
+`0x81CC`-`0x81CE`) sets bit 0, `set_0472_08_and_0457_low3_011` (bank1
+`0x8241`-`0x8243`) sets bit 3, and
+`set_0472_20_and_0457_low3_101_then_gate` (bank1 `0x8265`-`0x8267`) sets bit 5.
 Those same three are the ones that clear bits 0-2 of `0x0457` and load `0b000`,
-`0b011` and `0b101` respectively, so **three of the four routines change one bit
-of one byte and load a constant into a three-bit field of another, and the
-fourth only clears.**
+`0b011` and `0b101` respectively, so **three of the four routines rewrite one
+byte of `0x0472` around a single bit — set, with bit 4 preserved and six bits
+cleared — and load a constant into a three-bit field of another, and the fourth
+only clears.**
 
 A field that four routines load four different constants into is a small
 enumerated state rather than a flag. That is the strongest reading the shape

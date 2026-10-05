@@ -4,14 +4,15 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* The third of the 0x0472/0x0457 trio. It stores 0x0472 = (bit 4 moved into **bit 5**, `anl
-   A,#0x10` / `orl A,#0x20`) and then loads **0b101** into 0x0457's low three bits, the same
-   constant 0x818A loads. After the store it calls 0x8AE5 (`probe_159a_19f0_0983_then_dispatch`) and
-   branches on carry: carry set calls 0x19AE (`trampoline_to_cfa9`) and returns; carry clear tests
-   bit 0 of 0x097C, then bit 0 of 0x097F, then a zero R7 from 0x1990 (`trampoline_to_c391`), and any
-   of those three returning to the caller ends the routine. Only when all three are clear does it
-   fall out of the bottom. **The three gate bytes are the same ones 0x818A tests**, which is what
-   makes 0x818A and this routine a pair rather than two independent readers of them.
+/* The third of the 0x0472/0x0457 trio. It rewrites 0x0472 with `anl A,#0x10` / `orl A,#0x20`, which
+   sets **bit 5** whether or not bit 4 was set and leaves bit 4 as it was (the other six bits go to
+   zero), and then loads **0b101** into 0x0457's low three bits, the same constant 0x818A loads.
+   After the store it calls 0x8AE5 (`probe_159a_19f0_0983_then_dispatch`) and branches on carry:
+   carry set calls 0x19AE (`trampoline_to_cfa9`) and returns; carry clear tests bit 0 of 0x097C,
+   then bit 0 of 0x097F, then a zero R7 from 0x1990 (`trampoline_to_c391`), and any of those three
+   returning to the caller ends the routine. Only when all three are clear does it fall out of the
+   bottom. **The three gate bytes are the same ones 0x818A tests**, which is what makes 0x818A and
+   this routine a pair rather than two independent readers of them.
    type: state
    evidence: ec/decompiled/bank1/8261.asm; ec/decompiled/bank1/8261.c; ec/annotations/registers.yaml
    basis: hand-decoded
