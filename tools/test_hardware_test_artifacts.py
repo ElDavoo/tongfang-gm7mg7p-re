@@ -107,6 +107,17 @@ HELD = {
                 ("## 7.", "joined by the operator's wall clock"),
         },
     },
+    "battery-pl-limit-effect.md": {
+        # Two passes, two `ec_timer_capture.py --csv` captures, and nothing
+        # else, for the `pl-clear-0741-gate.md` reason: §3's `ecmem.py
+        # read`/`write` calls print to stdout and §5's restore writes
+        # registers rather than files. No allowance, because the host-side
+        # clock and package-power readings §4 grades on are the operator's
+        # tool and no command here produces them -- §2 asks which tool and §6
+        # says they belong in the report's prose.
+        "command_producers": True,
+        "hand_saved": {},
+    },
     "ctgp-dben-07c4-bit3.md": {
         "command_producers": True,
         "hand_saved": {},

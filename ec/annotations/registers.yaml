@@ -2762,6 +2762,8 @@ registers:
       unrun procedure that would settle it. status: unchanged, because none of
       this is behavioural evidence.
 
+      2026-10-05 (issue #1228): every direct read of these three addresses found by that method is a presence test that skips the store when the value is zero, so a zero here means "no override" and not a limit of zero watts. Method: docs/findings/battery-pl-default-and-zero-semantics.md. status: unchanged.
+
   - name: MANUAL_FAN_CTRL (power mode / fan mode)
     addr: 0x0751
     sources: [uniwill-laptop(EC_ADDR_MANUAL_FAN_CTRL), ecspec-3.1.6.0(ADDR_MAFAN_CONTROL_BYTE),
@@ -3278,6 +3280,8 @@ registers:
       docs/hardware-tests/mode-defaults-variant-read.md, and it has not been
       run. Nothing here changes the status above: a derived value agreeing with
       a recorded one is consistency, not a measurement.
+
+      2026-10-05 (issue #1228): 0x07A7-0x07AA is also the battery PL default block (ECSpec's ADDR_BATTERYSAVER_* group starts at 1959) and there is no fourth ADDR_TURBO_PL*_DEFAULT_VALUE in the tree; the battery PL write consults none of them and writes a literal 0. Method: docs/findings/battery-pl-default-and-zero-semantics.md. status: unchanged.
 
   - name: MODE_TCC_OFFSET_DEFAULTS
     addr: [0x07D8, 0x07D9, 0x07DA]
