@@ -860,8 +860,10 @@ def main(argv=None):
     print(f"0x0751 currently 0x{orig:02X}; control arm, then writing "
           f"0x{target:02X}, holding {hold:g}s each, sweeping every "
           f"{interval:g}s")
-    print("  no interval here is validated (#94 owns making these tools safe "
-          "by default): if the fans audibly change, stop and raise it")
+    print("  no interval here is validated: manual_fan_ctrl_probe.py is one "
+          "of the tools #94 leaves unpaced, where ec_watch.py now sleeps "
+          "--gap-ms after every read. If the fans audibly change, stop and "
+          "raise it")
     if args.level_block:
         print(f"  level block: {len(LEVEL)} more addresses, {len(addrs)} ECRR "
               f"reads per sweep; 0x0860-0x086E and 0x06E6, and nothing there "

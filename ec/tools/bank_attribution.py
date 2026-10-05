@@ -25,8 +25,21 @@ which becomes a new entry point, which is the whole mechanism and is what lets
 the closure reach 0x888C from 0x92F7. Stopped: `ret`/`reti` end a flow; an
 `lcall`/`ljmp` onto a trampoline entry or a stub is a bank switch and not an
 intra-bank edge (the other bank already has that target as a seed, so following
-it would let a closure claim code the linker says is in the other bank); and
-`jmp @a+dptr` is a computed target no byte-derived walk can resolve.
+it would let a closure claim code the linker says is in the other bank).
+
+**Three edge kinds reach past what the bytes alone give, and all three are
+`dispatch_edges.py`'s work rather than this file's.** A `jmp @a+dptr` is a
+computed target no byte-derived walk can resolve, so `descend()` stops there --
+but the walk's arrival at the dispatch is the evidence, and the table the site
+reads is what resolves it, so the table's rows are seeded once the site is
+inside the closure. An `index-table` edge is the same move for the common-area
+`?C?CCASE` reader at 0x7151, which dispatches into banked code this closure
+could not otherwise reach. Both seed a *row or target address* and let
+`descend()` derive where it goes, so they are control-flow edges the walk
+follows rather than targets this file asserts. **A table edge is a table
+edge**: the reader pops the return address into DPTR, so the table's address is
+never an immediate and the edge is read out of data, never proved by control
+flow. §8 carries the same caveat beside the numbers.
 
 **What is deliberately not a seed, and named rather than quietly dropped:** the
 reset vector and the interrupt vectors. They are common-area entry points no
@@ -81,6 +94,7 @@ import collections
 import csv
 import sys
 
+import dispatch_edges
 from audit_call_targets import AUDITED, bucket_of, survey
 from disasm8051 import mnemonic
 from find_banks import find_stubs
@@ -170,7 +184,20 @@ def closure(d: bytes, bank: int, seeds, max_depth: int = MAX_DEPTH,
     routine dispatches to in turn -- is outside the attribution. That is not a
     detail: the `?C?CCASE` reader at 0x7151 that dispatches all 15 of this
     image's inline index tables (bank-call-audit.md 9, 10) is itself common
-    area, and its handlers are only reachable through it.
+    area, and its handlers are only reachable through it. `dispatch_edges.py`
+    is how the index tables get past that: it reads their table->target mapping
+    out of `index-table-entries.csv` and seeds each banked target as an entry
+    point of its own right.
+
+    **The worklist is a fixpoint, and it has to be.** A dispatch-table edge is
+    only added once its `jmp @a+dptr` is inside the walk, because a table
+    nothing reached must not put bytes in the closure. That makes the edge set
+    depend on the walk and the walk on the edge set, and on this image the
+    dependency is real rather than theoretical: the 0xEFE8 table's first row
+    lands on a wrapper that loads DPTR for a *second* table, so seeding the
+    first is what makes the second's dispatch site reachable at all. So the
+    loop re-asks for edges whenever the worklist drains, and stops when a pass
+    adds none.
     """
     region = f"bank{bank}"
     reached = collections.Counter()
@@ -183,38 +210,62 @@ def closure(d: bytes, bank: int, seeds, max_depth: int = MAX_DEPTH,
     # than a reported result.
     pending = collections.deque((t, "trampoline", None) for t in sorted(seeds))
     done = set()
-    while pending:
-        start, kind, frm = pending.popleft()
-        if start in done:
-            continue
-        done.add(start)
-        entries[start] = (kind, frm)
-        arm = descend(d, region, start, None, max_depth, max_insns, True)
-        for _start, insns in arm.blocks:
-            for pc, _text in insns:
-                # A block can leave the bank window -- a rel8 branch from
-                # within 128 bytes of 0x8000 reaches the common area, and
-                # offset_for_runtime() resolves it there rather than refusing.
-                # The common area is mapped in every bank, so attributing those
-                # bytes to one of them would be a claim about a region no bank
-                # owns.
-                if pc >= BANK_FLOOR:
-                    reached[pc] += 1
-                    who[pc].add(start)
-        for why in arm.ends:
-            if why.startswith(CUTS):
-                cuts[why.split(" at ")[0]].add(start)
-        for callee in dict.fromkeys(arm.callees):
-            if callee < BANK_FLOOR:
-                common[callee].add(start)
-            elif offset_for_runtime(callee, region) is not None:
-                pending.append((callee, "call", start))
+    while True:
+        while pending:
+            start, kind, frm = pending.popleft()
+            if start in done:
+                continue
+            done.add(start)
+            entries[start] = (kind, frm)
+            arm = descend(d, region, start, None, max_depth, max_insns, True)
+            for _start, insns in arm.blocks:
+                for pc, _text in insns:
+                    # A block can leave the bank window -- a rel8 branch from
+                    # within 128 bytes of 0x8000 reaches the common area, and
+                    # offset_for_runtime() resolves it there rather than
+                    # refusing. The common area is mapped in every bank, so
+                    # attributing those bytes to one of them would be a claim
+                    # about a region no bank owns.
+                    if pc >= BANK_FLOOR:
+                        reached[pc] += 1
+                        who[pc].add(start)
+            for why in arm.ends:
+                if why.startswith(CUTS):
+                    cuts[why.split(" at ")[0]].add(start)
+            for callee in dict.fromkeys(arm.callees):
+                if callee < BANK_FLOOR:
+                    common[callee].add(start)
+                elif offset_for_runtime(callee, region) is not None:
+                    pending.append((callee, "call", start))
+        # The worklist has drained, so every dispatch site this walk can reach
+        # is now decided and the edges are known. `frm` is the site rather than
+        # None: entry_chain() reads a None as a seed the linker wrote down, and
+        # a table handler counted among those would be a false claim about the
+        # linker in the one section that separates the two.
+        fresh = [(e["addr"], e["kind"], e["site"])
+                 for e in dispatch_edges.edges(d, region, reached)
+                 if e["addr"] not in done]
+        if not fresh:
+            break
+        pending.extend(fresh)
     return reached, who, entries, cuts, common
 
 
 def entry_chain(entries, addr):
     """The entry-point chain that reaches `addr`, seeds first. Stops at the
-    seed, whose `frm` is None."""
+    seed, whose `frm` is None.
+
+    A table edge's `frm` is the site that dispatched it, not a seed, so the
+    chain for one of those addresses ends at the dispatch: it is a hop from a
+    `jmp @a+dptr` or an `lcall 0x7151`, not from a name the linker wrote down.
+    That is the whole reason the `frm` is set rather than left None -- a table
+    handler must not read as depth-0 in the histogram -- and it is also why the
+    histogram reports those two populations apart rather than as one depth
+    figure. Splicing the site's own chain back in would make the number larger
+    without making it more meaningful: `who` maps an address to *every* entry
+    point that decoded it, so there is no one chain to splice, and picking
+    among them would report an arbitrary walk's depth as the row's.
+    """
     out = [addr]
     while out[-1] in entries:
         _kind, frm = entries[out[-1]]
@@ -306,16 +357,25 @@ def print_closure(closures, seeds) -> None:
     print()
     print("An address is attributed to a bank when a walk seeded from that")
     print("bank's own seeds decodes it. `entry points` counts the trampoline")
-    print("seeds plus the same-bank call targets they led to, each descended")
-    print("once; `runs` is how many contiguous spans those addresses fall into.")
+    print("seeds plus everything the walk derived from them, each descended once;")
+    print("`runs` is how many contiguous spans those addresses fall into.")
     print()
-    print("| bank | seeds | entry points | call-derived | addresses | runs |")
-    print("|---|---:|---:|---:|---:|---:|")
+    print("| bank | seeds | entry points | call-derived | table-derived | "
+          "addresses | runs |")
+    print("|---|---:|---:|---:|---:|---:|---:|")
     for bank in sorted(closures):
         reached, _who, entries, _cuts, _common = closures[bank]
-        derived = sum(1 for kind, _frm in entries.values() if kind == "call")
-        print(f"| `bank{bank}` | {len(seeds[bank])} | {len(entries)} | {derived} "
+        kinds = collections.Counter(kind for kind, _frm in entries.values())
+        print(f"| `bank{bank}` | {len(seeds[bank])} | {len(entries)} "
+              f"| {kinds['call']} "
+              f"| {sum(n for k, n in kinds.items() if k != 'call' and k != 'trampoline')} "
               f"| {len(reached)} | {len(runs_of(reached))} |")
+    print()
+    print("`table-derived` is the split the two dispatch mechanisms need: an")
+    print("entry point a `?C?CCASE` table named, and one a `jmp @a+dptr` table")
+    print("named. Both are read out of data rather than walked to, so they carry")
+    print("section 8's caveat and an ordinary same-bank call target does not --")
+    print("the regions CSV's `sources` column keeps them apart per run.")
     print()
     print("How many distinct entry points decode each attributed address. One")
     print("path is the common case and is not evidence of anything on its own;")
@@ -428,21 +488,45 @@ def print_headline(pairs, closures) -> None:
     # with every number in it derived here.
     own = [p for p in amb
            if p["target"] in closures[int(p["region"][-1])][2]]
+    # Split before the histogram, not after it. A table-derived entry point's
+    # chain ends at the dispatch that named it rather than at a seed, so
+    # counting it in the same depth figure would report "one hop from a name the
+    # linker wrote down" for an address whose `frm` is a `jmp @a+dptr`. The two
+    # are printed as the two populations they are, which is also what keeps the
+    # seed count below a count of linker-written seeds.
+    tabled = [p for p in own
+              if closures[int(p["region"][-1])][2][p["target"]][0] != "call"
+              and closures[int(p["region"][-1])][2][p["target"]][0] != "trampoline"]
     depth = collections.Counter()
     for p in own:
+        if p in tabled:
+            continue
         bank = int(p["region"][-1])
         depth[len(entry_chain(closures[bank][2], p["target"])) - 1] += 1
+    walked = len(own) - len(tabled)
     shallow = depth[0] + depth[1]
     deepest = max(depth, default=0)
     print(f"  {len(own)} of the {len(amb)} have the target as an entry point of the")
-    print("  caller's own closure, which is the strongest sub-class: a seed the")
-    print(f"  linker wrote down ({depth[0]}), or a same-bank call target one to")
-    print(f"  {deepest} hops from one ({len(own) - depth[0]}). Those hops are")
-    print("  measured, each chain walked back to the seed that reaches it:")
+    print("  caller's own closure, which is the strongest sub-class. Split by how")
+    print("  the entry point was reached, because the two are not the same claim:")
     print()
-    print("    " + "  ".join(f"{k}: {depth[k]}" for k in sorted(depth)))
+    print(f"    {walked} reached by control flow -- a seed the linker wrote down")
+    print(f"      ({depth[0]}), or a same-bank call target one to {deepest} hops")
+    print("      from one. Those hops are measured, each chain walked back to the")
+    print("      seed that reaches it:")
     print()
-    print(f"    {shallow} at one hop or fewer, {len(own) - shallow} at two or more")
+    print("      " + "  ".join(f"{k}: {depth[k]}" for k in sorted(depth)))
+    print()
+    print(f"      {shallow} at one hop or fewer, {walked - shallow} at two or more")
+    if tabled:
+        print()
+        print(f"    {len(tabled)} reached through a dispatch table, which is a")
+        print("      different claim: the target is an entry point because a table")
+        print("      named it, read out of data rather than followed as control")
+        print("      flow. Each is one hop from the site that named it, and the")
+        print("      sites are the `jmp @a+dptr` and `lcall 0x7151` addresses of")
+        print("      section 7. They are not counted as seeds and not counted in")
+        print("      the depth histogram above.")
     print()
 
 
@@ -479,19 +563,38 @@ def print_check(pairs) -> None:
 def print_handoff(d, closures, seeds, tramp) -> None:
     """The site issue #48 was opened for: bank-1 runtime 0xDFD0's
     `lcall 0x888C`, whose `handoff->write` verdict rests on the same-bank
-    assumption plus one hand decode (pd-xdata-overlap.md 2)."""
+    assumption plus one hand decode (pd-xdata-overlap.md 2).
+
+    **Correction, 2026-10-04 (issue #1079): the call site is now reached, so
+    this section's original "the two halves answer differently" no longer
+    holds, and the difference it pointed at is gone.** Seeding the dispatch
+    tables brought `0xDEE8` into the closure and the walk ran from there
+    through `0xDFD0`, where it had stopped before. Both halves now answer the
+    same way, which is a real change to what this file can say about the
+    *caller* side -- and it still proves nothing, for the reason the last
+    paragraph gives. The wrong reading is left visible in the prose below
+    rather than edited away, per CLAUDE.md's calibration rule.
+    """
     site, target, bank = 0xDFD0, 0x888C, 1
     print("## 6. The `0x04A6` handoff at bank-1 `0xDFD0`")
     print()
-    reached, _who, entries, _cuts, _common = closures[bank]
+    reached, who, entries, _cuts, _common = closures[bank]
     print(f"  the call site 0x{site:04X} (`lcall 0x{target:04X}`) is "
           f"{'inside' if site in reached else 'OUTSIDE'} bank 1's closure")
     print(f"  the target 0x{target:04X} is {'inside' if target in reached else 'OUTSIDE'} "
           f"bank 1's closure and "
           f"{'inside' if target in closures[0][0] else 'outside'} bank 0's")
+    if site in reached:
+        callers = sorted(who.get(site, ()))
+        print(f"  the call site is reached by entry point(s) "
+              f"{', '.join(f'0x{a:04X}' for a in callers)} -- it was not reached "
+              f"before the dispatch tables were seeded")
+        for a in callers:
+            print(f"    0x{a:04X} itself along "
+                  f"{' -> '.join(f'0x{x:04X}' for x in entry_chain(entries, a))}")
     if target in reached:
         chain = entry_chain(entries, target)
-        print(f"  reached from entry point(s) "
+        print(f"  the target is reached from entry point(s) "
               f"{' -> '.join(f'0x{a:04X}' for a in chain)}")
         for a in chain:
             if a not in seeds[bank]:
@@ -500,19 +603,28 @@ def print_handoff(d, closures, seeds, tramp) -> None:
             print(f"  0x{a:04X} is a seed: trampoline(s) "
                   f"{', '.join(f'0x{e:04X}' for e in names)} name it")
     print()
-    print("The two halves answer differently, and the difference is the point.")
-    print("The closure reaches the *target* from a bank-1 seed, so the 16-bit")
-    print("store pd-xdata-overlap.md 2 decoded by hand is attributed to bank 1")
-    print("by this closure as well as by that hand decode -- a second line of")
-    print("evidence, and it agrees. It does not reach the *call site*, so the")
-    print("caller side is unchanged: 0xDFD0 being bank-1 code is still the")
-    print("assumption plus the hand decode, and no amount of the target's")
-    print("attribution settles it.")
+    print("Both halves now answer the same way, and that is what this section")
+    print("records. The closure reaches the *target* from a bank-1 seed, so the")
+    print("16-bit store pd-xdata-overlap.md 2 decoded by hand is attributed to")
+    print("bank 1 by this closure as well as by that hand decode -- a second")
+    print("line of evidence, and it agrees. It now also reaches the *call site*,")
+    print("which it did not before, so on this file's evidence 0xDFD0 is no")
+    print("longer only \"the assumption plus the hand decode\": a walk from a")
+    print("bank-1 entry point decodes those bytes.")
+    print()
+    print("What that does not do is settle which bank is mapped when the CPU")
+    print("arrives there. A same-bank and a cross-bank reading of the same three")
+    print("call bytes are the same three bytes in the window they are read from,")
+    print("so reaching the site says those bytes are reachable from bank 1's")
+    print("seeds -- not that bank 1 is selected at run time. That gap is")
+    print("unchanged by this section's result, and it is the whole of the")
+    print("reason the closure had to be built.")
     print()
     print("Neither half turns \"assumed\" into \"proved\". The walk has no")
     print("function-boundary recovery, so every attribution here is")
-    print("\"attributed by this closure\"; and a negative is a statement about")
-    print("this closure's coverage, never about 0x888C or 0xDFD0 themselves.")
+    print("\"attributed by this closure\"; and where a half is still negative it")
+    print("is a statement about this closure's coverage, never about 0x888C or")
+    print("0xDFD0 themselves.")
     print()
     for region in ("bank1", "bank0"):
         off = offset_for_runtime(site, region)
@@ -539,7 +651,7 @@ def print_handoff(d, closures, seeds, tramp) -> None:
     print()
 
 
-def print_cuts(closures, seeds) -> None:
+def print_cuts(d: bytes, closures, seeds) -> None:
     print("## 7. The bounds that fired, and the blind spots that remain")
     print()
     print("A walk that stops is a statement about the walk, so every bound is")
@@ -562,13 +674,16 @@ def print_cuts(closures, seeds) -> None:
     print()
     print("The other half of the accounting: calls that leave the bank window. A")
     print("target below 0x8000 is common area, mapped in every bank, so this")
-    print("closure records it and follows nothing. What that costs is larger than")
-    print("the count suggests. The `?C?CCASE` reader at 0x7151 dispatches all 15")
-    print("of this image's inline index tables (bank-call-audit.md 9, 10; every")
-    print("one of the 15 sites in index-table-entries.csv is an `lcall 0x7151`),")
-    print("and it is itself common area -- so all 15 handlers are out of reach")
-    print("of this closure unless some other path reaches them too. Eleven of the")
-    print("15 dispatch sites sit inside bank0's window, four in the common area.")
+    print("closure records it and follows nothing. The `?C?CCASE` reader at")
+    print("0x7151 dispatches all 15 of this image's inline index tables")
+    print("(bank-call-audit.md 9, 10; every one of the 15 sites in")
+    print("index-table-entries.csv is an `lcall 0x7151`) and is itself common")
+    print("area, so the tables are read out of the CSV and seeded as edges")
+    print("rather than walked to -- dispatch_edges.py's first job. Eleven of the")
+    print("15 sites sit inside bank0's window and four in the common area; only")
+    print("the eleven can name a banked target, and the four common-area tables")
+    print("are unattributable by construction because they dispatch within the")
+    print("region every bank maps and no bank owns.")
     print()
     for bank in sorted(closures):
         common = closures[bank][4]
@@ -579,17 +694,40 @@ def print_cuts(closures, seeds) -> None:
               + (", most-called "
                  + ", ".join(f"0x{a:04X} x{len(eps)}" for a, eps in top) if top else ""))
     print()
+    print("The `jmp @a+dptr` tables are the same move read from the bytes rather")
+    print("than from a CSV. `descend()` still stops at the dispatch -- it is a")
+    print("computed target and this walk does not resolve one -- but the walk's")
+    print("arrival at the site is the evidence, and dispatch_edges.py seeds the")
+    print("table's row addresses so descend() derives the targets itself.")
+    print()
+    for bank in sorted(closures):
+        tables = dispatch_edges.dispatch_tables(d, f"bank{bank}")
+        idle = dispatch_edges.unreachable(d, f"bank{bank}", closures[bank][0])
+        short = dispatch_edges.truncated_tables(d, f"bank{bank}")
+        if not tables:
+            print(f"  bank{bank}: no `mov dptr`-based dispatch table in this window")
+            continue
+        print(f"  bank{bank}: {len(tables) - len(idle)} of {len(tables)} "
+              f"dispatch table(s) are reached and fire; {len(idle)} are not"
+              + (f", first at 0x{min(t['site'] for t in idle):04X}" if idle else ""))
+        for t in short:
+            print(f"    0x{t['site']:04X}: the `anl` mask admits {t['masked']} "
+                  f"indices but the table has {t['rows']} `ljmp` row(s) from "
+                  f"0x{t['base']:04X}; the rest are not seeded")
+    print()
+    print("The tables that do not fire are a coverage statement and not a claim")
+    print("that the table is absent -- the enumeration is a shape scan, and")
+    print("section 7's last bullet says what that costs.")
+    print()
     print("Named blind spots, none of which this tool closes:")
     print()
-    print("  * `jmp @a+dptr` is a computed target no byte-derived walk can")
-    print("    resolve, and bank1's closure stops at seven of them: 0x8A6B,")
-    print("    0x98E4, 0x99DF, 0x9B02, 0x9E36, 0xC82F and 0xEFE7. The two read")
-    print("    by hand are the dispatch idiom bank-call-audit.md 9 reads at the")
-    print("    common-area 0x7151, with the table base in a `mov dptr,#table`")
-    print("    rather than popped off the stack -- and a jump table is exactly the")
-    print("    thing a byte-derived walk cannot enumerate. bank0's closure stops")
-    print("    at none; that is a property of which routines its seeds reach, not")
-    print("    evidence that bank0 has no dispatch.")
+    print("  * A table edge is a table edge, not control flow the firmware")
+    print("    proved. The `?C?CCASE` reader pops the return address into DPTR,")
+    print("    so the table's address is never an immediate and every index")
+    print("    target here is read out of data. What it adds is reachability")
+    print("    under the table's own framing and nothing stronger.")
+    print("  * The four common-area index tables dispatch below 0x8000, so no")
+    print("    bank owns their handlers and no closure can attribute them.")
     print("  * The reset vector and the interrupt vectors are not seeds, so")
     print("    whatever they reach is outside both closures. This is the single")
     print("    change most likely to move the residue in section 4.")
@@ -600,9 +738,12 @@ def print_cuts(closures, seeds) -> None:
     print("  * A call into the common area is not a failure of the walk and is")
     print("    not an attribution: the common area is mapped in every bank, so")
     print("    no bank owns those bytes.")
-    print("  * The seeds are byte-derived too. audit_call_targets.trampolines()")
-    print("    finds them by shape, and a shape match inside a data table would")
-    print("    be indistinguishable here from a real one.")
+    print("  * The seeds are byte-derived too, and so are the dispatch shapes:")
+    print("    audit_call_targets.trampolines() finds the seeds by shape and")
+    print("    dispatch_edges.py finds the tables by shape, so a shape match")
+    print("    inside a data table would be indistinguishable here from a real")
+    print("    one. That is why a table whose mask admits more indices than it")
+    print("    has `ljmp` rows is reported above rather than padded to the mask.")
     print()
     print("Nothing in this file was measured on hardware. No register was read")
     print("back, no capture was taken, and no `status:` in")
@@ -623,31 +764,64 @@ def bounds_for(eps, cuts):
     return sorted(why for why, cut_eps in cuts.items() if eps & cut_eps)
 
 
-def write_regions_csv(closures, seeds) -> int:
-    """One row per attributed contiguous run per bank.
+def regions_rows(closures):
+    """The regions table as dicts, one per attributed contiguous run per bank.
 
     The entry-point columns are what a later region map (#50) needs and a
     per-address list cannot give it: how many independent paths reach the run,
-    how many of those start at a name the linker wrote down, and which bounds
-    fired for the walks that covered it. `bounds` is bounds_for() over those
-    walks, so a run whose entry points hit a bound is a run whose right-hand
-    edge is the walk's decision and not the image's, and a run with none is not
-    labelled by a bound that fired somewhere else in the bank.
+    how many of those start at a name the linker wrote down, which kinds of
+    edge seeded them, and which bounds fired for the walks that covered it.
+    `bounds` is bounds_for() over those walks, so a run whose entry points hit
+    a bound is a run whose right-hand edge is the walk's decision and not the
+    image's, and a run with none is not labelled by a bound that fired
+    somewhere else in the bank.
+
+    `sources` is the sorted set of edge kinds among the entry points covering
+    the run, and it is the column that keeps the two dispatch mechanisms
+    separable downstream. Without it a run reached from a `?C?CCASE` table and
+    a run reached only from ordinary calls are the same row, and the first is
+    a reachability under a table's own framing while the second is not --
+    §8's standing caveat applies to one and not the other. The column was
+    added when the tables became edges; the file has no Python consumer (the
+    census beside this tool reads `index.csv` and `task-call-table.csv`), so
+    a consumer that grew one should read `sources` rather than infer the
+    mechanism from `seed_entries`.
+
+    `tramp_seeds` is not a field: --self-test checks `seed_entries` against
+    the runs whose `sources` has no `trampoline` in it, which is the pair that
+    would break if a future edit let a table edge count as a seed.
     """
-    w = csv.writer(sys.stdout)
-    w.writerow(["bank", "start", "end", "bytes", "entry_points", "seed_entries",
-                "min_paths", "max_paths", "bounds"])
+    out = []
     for bank in sorted(closures):
         reached, who, entries, cuts, _common = closures[bank]
         for start, end in runs_of(reached):
             addrs = [a for a in range(start, end) if a in reached]
             paths = [reached[a] for a in addrs]
             eps = {e for a in addrs for e in who[a]}
-            seeded = sum(1 for e in eps if entries[e][0] == "trampoline")
-            bounds = bounds_for(eps, cuts)
-            w.writerow([f"bank{bank}", f"0x{start:04X}", f"0x{end:04X}",
-                        len(addrs), len(eps), seeded, min(paths), max(paths),
-                        " ; ".join(bounds)])
+            kinds = {entries[e][0] for e in eps}
+            out.append({"bank": f"bank{bank}", "start": f"0x{start:04X}",
+                        "end": f"0x{end:04X}", "bytes": len(addrs),
+                        "entry_points": len(eps),
+                        "seed_entries": sum(1 for e in eps
+                                            if entries[e][0] == "trampoline"),
+                        "min_paths": min(paths), "max_paths": max(paths),
+                        "bounds": " ; ".join(bounds_for(eps, cuts)),
+                        "sources": sorted(kinds)})
+    return out
+
+
+REGION_COLUMNS = ("bank", "start", "end", "bytes", "entry_points",
+                  "seed_entries", "min_paths", "max_paths", "bounds", "sources")
+
+
+def write_regions_csv(closures, seeds) -> int:
+    """The regions table on stdout, in REGION_COLUMNS' order. The rows come
+    from regions_rows() so the file and --self-test cannot disagree."""
+    w = csv.writer(sys.stdout)
+    w.writerow(REGION_COLUMNS)
+    for row in regions_rows(closures):
+        w.writerow([(" ".join(row[c]) if c == "sources" else row[c])
+                    for c in REGION_COLUMNS])
     return 0
 
 
@@ -735,41 +909,85 @@ NEGATIVE = {
     "table": (0x8039, 0x8054),   # half-open: the rest of the 28-byte table
 }
 
-# The two of bank1's seven `jmp @a+dptr` sites the write-up describes rather
-# than just lists, as (address, the `mov dptr,#table` three bytes above the
-# dispatch that the walk stops on). Both were read in `r2 -a 8051` against a
-# make_bank_image.py bank-1 image; the seventh and the rest are named by the
-# tool and not characterised.
+# Two of bank1's `jmp @a+dptr` sites, as (the `mov dptr,#table` six bytes above
+# the dispatch, the `mov dptr` three bytes). Both were read in `r2 -a 8051`
+# against a make_bank_image.py bank-1 image. These two are the ones this file
+# pins by hand; the rest are enumerated by dispatch_edges.py from the same
+# bytes, and enumerating them is what put them in the closure at all.
 DISPATCH = ((0x8A65, b"\x90\x8a\x45"), (0x98DE, b"\x90\x98\xb4"))
+
+# The `0xEFE7` determination, pinned here as well as in dispatch_edges.py
+# because the claim this file used to make about it -- that it was one of seven
+# blind spots -- is the claim that changed. It is not a byte-scan artefact: the
+# `73` at 0xEFE7 is the last byte of the 14-byte routine at 0xEFDA that
+# ec/decompiled/index.csv already names `dispatch_index_3x_from_byte_00`, the
+# table it dispatches is loaded by `mov dptr,#0xefe8` at 0xEF9A two instructions
+# before the `lcall 0xEFDA` at 0xEF9D, and row 14 of that table is the
+# `ljmp 0xF040` at 0xF012 that the same inventory independently names
+# `table_efe8_row14_ljmp_f040`. The bytes are the pin and the listing is not,
+# for the reason the negative below gives: ec/decompiled/*.asm is a regenerable
+# export, so a later annotation redrawing these bytes is not a regression.
+# dispatch_edges.py --self-test asserts all four halves; what is asserted here
+# is that the closure now *reaches through* the table, which is the behaviour
+# that changed and the only part a reader of this file cannot re-derive from
+# the sibling's output.
+EFE7 = {
+    "bank": 1,
+    "jmp": 0xEFE7,
+    "jmp_bytes": b"\x73",
+    "routine": (0xEFDA, 14),        # half-open span of the dispatcher itself
+    "load": 0xEF9A,
+    "load_bytes": b"\x90\xef\xe8",
+    "base": 0xEFE8,
+    "rows": 16,                     # the dispatcher's own `anl 0x00,#0x0f`
+    "row14": 0xF012,
+    "row14_bytes": b"\x02\xf0\x40",
+}
 
 # The four verdicts over all the bucket-B pairs and over the both-banks-live
 # ones. A different dump re-derives them rather than inheriting this image's
 # answer, which is the whole point of pinning them.
+#
+# **The direction of the move is not all one way, and the pins are the only
+# place that shows it.** Seeding the dispatch tables took the residue from 398
+# to 89 and the agreeing class from 568 to 614, which is the coverage the
+# tables were added for. It also took `still ambiguous` from 115 to 510, and
+# that is the number to read next to the others: a pair the closure could not
+# separate before and cannot separate now is not a pair it has decided, and a
+# target that this change newly reaches in *both* banks is exactly what an
+# ambiguous verdict means. `contradicting` fell from 207 to 75 for the same
+# reason -- some of those targets are now reached on the calling bank's side
+# too. So this is more coverage and a weaker separation on the pairs that were
+# already ambiguous, not a verdict on the same-bank assumption, and §8 says so
+# beside the numbers rather than in a footnote.
 PAIR_PINS = {
-    "all": (573, 207, 115, 410),
-    "both_live": (568, 207, 115, 398),
+    "all": (625, 75, 510, 95),
+    "both_live": (614, 75, 510, 89),
     "populations": (1305, 1288),
 }
 
 # The 17 pairs outside the 1288: zero contradictions among the 11
 # own-live/other-erased pairs, and zero attributions among the 6 both-erased.
+# Unchanged by the table edges, and that is the load-bearing part: these are
+# the populations that would catch a broken walk rather than a real cross-bank
+# call, so their holding is evidence the new edges did not corrupt anything.
 CHECK_PINS = (11, 0, 6, 0)
 
 # The regions CSV's `bounds` column, per bank: the runs a stopped walk reaches,
-# and the runs in all. The two differ by an order of magnitude, and that gap is
-# the pin. `cuts` is every reason that fired *anywhere* in the bank, so a
-# consumer -- or a future edit to bounds_for() -- that unions it over a run
-# reports all 9662 rows as bound-limited when 603 are. Pinned per run because
-# the per-address figures §5 already prints (849 of 12694, 115 of 4159) do not
-# constrain it: a run of 1 byte and a run of 40 both count once.
-CUT_RUNS = ((535, 7006), (68, 2656))
+# and the runs in all. `cuts` is every reason that fired *anywhere* in the bank,
+# so a consumer -- or a future edit to bounds_for() -- that unions it over a run
+# reports every row as bound-limited when far fewer are. Pinned per run because
+# the per-address figures §5 prints do not constrain it: a run of 1 byte and a
+# run of 40 both count once.
+CUT_RUNS = ((535, 8244), (135, 7889))
 
 # The closures' own sizes, reported rather than pinned. They are a property of
 # this image's bounds, and a pin here would fail a correct tool over a
 # different dump -- the seed census and the four verdicts above are the pins
-# that mean something independent of how much a walk happened to cover.
-CLOSURE_SIZE = (12694, 4159)
-ENTRY_POINTS = (816, 182)
+# that mean something independent of how much a walk happened to cover. The
+# figure this file's own docstring and §2 print is derived here, not stored.
+CLOSURE_SIZE = (14830, 12258)
+ENTRY_POINTS = (1010, 669)
 
 
 def self_test(d: bytes) -> int:
@@ -892,6 +1110,35 @@ def self_test(d: bytes) -> int:
               f"`{d[jmp_off]:02x}` = `{mnemonic(d, jmp_off, addr + 6)}`"
               + ("" if ok else f" -- expected `{raw.hex(' ')}` and 0x73"))
 
+    # The 0xEFE7 determination, at the point the change is actually about: this
+    # closure used to stop there and now walks through the table. dispatch_edges
+    # .py --self-test pins the bytes that make 0xEFE7 a dispatch; what is
+    # asserted here is the consequence -- the table's rows are entry points and
+    # the `ljmp` behind them is followed -- so a future edit that drops the
+    # table edges fails here rather than silently reverting the finding.
+    reached1, entries1 = closures[EFE7["bank"]][0], closures[EFE7["bank"]][2]
+    table_rows = [EFE7["base"] + 3 * i for i in range(EFE7["rows"])]
+    seeded = [a for a in table_rows if entries1.get(a, ("",))[0].startswith("dispatch")]
+    check(len(seeded) == len(table_rows) and all(a in reached1 for a in table_rows),
+          f"bank1 reaches all {len(table_rows)} rows of the 0x{EFE7['base']:04X} "
+          f"table, each seeded as a `dispatch-*` entry point with `frm` the "
+          f"0xEFE7 site that named it -- so the site is dispatched through "
+          f"rather than a blind spot"
+          + ("" if len(seeded) == len(table_rows) else
+             f" -- only {len(seeded)} seeded"))
+    check(entries1.get(EFE7["row14"]) == ("dispatch-shared", EFE7["load"] + 3),
+          f"and row 14 is the `ljmp 0xF040` the committed inventory already "
+          f"names `table_efe8_row14_ljmp_f040`, reached by descend() following "
+          f"the row rather than by this file asserting a target"
+          + ("" if entries1.get(EFE7["row14"]) == ("dispatch-shared", EFE7["load"] + 3)
+             else f" -- got {entries1.get(EFE7['row14'])}"))
+    # And the handler the walk derives from it, which is the part no table
+    # lookup in this file could have asserted.
+    check(0xF040 in reached1,
+          f"so 0xF040 -- the ljmp target behind row 14 -- is inside bank1's "
+          f"closure, reached by the walk following the row's `ljmp`"
+          + ("" if 0xF040 in reached1 else " -- not reached"))
+
     pairs = pair_rows(rows, closures)
     got = tuple(tally(pairs)[v] for v in VERDICTS)
     check(got == PAIR_PINS["all"],
@@ -945,6 +1192,27 @@ def self_test(d: bytes) -> int:
           f"by a walk that stopped, so the other {got_runs[0][1] - got_runs[0][0]} "
           f"and {got_runs[1][1] - got_runs[1][0]} carry no bound at all"
           + ("" if got_runs == CUT_RUNS else f" -- expected {CUT_RUNS}"))
+
+    # `seed_entries` counts linker-written seeds, and only those, while
+    # `sources` names every kind of edge that reached the run. Asserted against
+    # the regions CSV's own rows rather than a restatement of the predicate,
+    # because the two columns are the whole calibration a region map reads and
+    # a future edit could widen one without touching the other. The check that
+    # matters is the pair: a run with a table edge in `sources` must have its
+    # table edges *excluded* from `seed_entries`.
+    rows_csv = list(regions_rows(closures))
+    table_only = [r for r in rows_csv if r["sources"] != ["trampoline"]
+                  and "trampoline" not in r["sources"]]
+    check(table_only and all(r["seed_entries"] == 0 for r in table_only),
+          f"the regions CSV's `seed_entries` counts linker-written seeds and "
+          f"nothing else: {len(table_only)} of its {len(rows_csv)} runs are "
+          f"reached only through a table edge and every one of them reports "
+          f"zero seeds, while `sources` still names the mechanism"
+          + ("" if table_only and all(r["seed_entries"] == 0 for r in table_only)
+             else f" -- {[r['start'] for r in table_only if r['seed_entries']][:4]}"))
+    check(all(r["seed_entries"] <= r["entry_points"] for r in rows_csv),
+          "and no run counts more seeds than entry points, so the column "
+          "cannot exceed the population it is a subset of")
 
     for bank, want, entries_want in zip((0, 1), CLOSURE_SIZE, ENTRY_POINTS):
         got_size = len(closures[bank][0])
@@ -1000,7 +1268,7 @@ def main() -> int:
     print_headline(pairs, closures)
     print_check(pairs)
     print_handoff(d, closures, seeds, tramp)
-    print_cuts(closures, seeds)
+    print_cuts(d, closures, seeds)
     return 0
 
 
