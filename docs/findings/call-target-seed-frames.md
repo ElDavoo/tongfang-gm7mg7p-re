@@ -39,7 +39,7 @@ prints one line, and that line is the source of truth for every figure below:
 A "seed" is one `(program, target)` pair, because a common-area target is seeded
 into both bank programs on purpose and `seed_rows()` de-duplicates per program.
 The distinct addresses behind the 478 are fewer, since a common-area address
-appears once per bank; both are reported here rather than only the flattering one.
+appears once per bank.
 
 The 102 is bucket C, and it is reported beside the other figures rather than
 folded into them. It counts distinct targets; `call_target_seeds()`'s own
@@ -72,7 +72,7 @@ by listing name is the one that carries the argument:
 
 | verdict | seeds | what it means |
 |---|---|---|
-| `mid-instruction` | 92 | the walk steps over the address and a committed listing sits there, so that listing's first instruction is a decode of a byte inside the record named in the `covering_record` column |
+| `mid-instruction` | 92 | no majority of the walk's anchors lands *on* the address and a committed listing sits there, so that listing's first instruction is a decode of a byte inside the record named in the `covering_record` column |
 | `entry-under-walk` | 242 | a majority of the walk's anchors land *on* the address, so the framing and the predicate disagree and the seed may be a real entry |
 | `unread` | 144 | the predicate fires, there is no committed listing, and no walk settles it — named, not decided |
 
@@ -176,7 +176,7 @@ count. Both were caught by the frame table below, not by arithmetic.
 one only where both bank programs agree on its address, name and size, and keeps
 both bank-scoped rows where they disagree. `bank0 0x031C` and `bank0 0x703A` are
 common-area addresses that kept theirs, and a lookup on the folded name alone finds
-no listing at either — it filed 21 seeds that do have one as `unread`. The tool
+no listing at either, filing seeds that do have one as `unread`. The tool
 looks the address up rather than the folded name, which is what
 `listing_at()` documents.
 

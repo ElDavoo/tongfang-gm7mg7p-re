@@ -19,12 +19,15 @@ carries the target's own covering record rather than the row's.
 **Three answers, and the third is the honest one.** For each seed the predicate
 fires on, the walk decides which of the three applies:
 
-  `mid-instruction`    no linear walk from the region floor lands on the
-                       address, and every one steps over it, so under every
-                       framing the window offers the address is interior to an
-                       instruction. A committed listing at that address is
-                       therefore a listing whose first instruction is a decode
-                       of the covering record's operand or displacement.
+  `mid-instruction`    no *majority* of the anchors lands on the address --
+                       at least half of them step over it -- and a committed
+                       listing sits there to be wrong about, so that listing's
+                       first instruction is a decode of the covering record's
+                       operand or displacement byte. It is a majority test and
+                       not a unanimous one: a minority of anchors landing here
+                       is what `0x1706`'s 2 of 24 is, and `bank1 0xF018` is
+                       the population's only tie, so this class does not mean
+                       no walk reaches the address.
   `entry-under-walk`   a majority of the walks *do* land on the address, so the
                        framing and the predicate disagree and the seed may be a
                        real entry after all. `common 0x012F` is the worked
@@ -252,12 +255,12 @@ def verdict_for(onto, over, has_listing):
 
     `entry-under-walk` when a majority of the anchors land on the address, on
     `converges_from()`'s own reading of its pair -- "read the pair, not either
-    half", and the pair is (onto, over). `mid-instruction` when the walk steps
-    over it and a committed listing exists for the address to be wrong about.
-    `unread` when it does not, which is the residual: the predicate fires, and
-    nothing committed is there to be wrong. Which class is the largest is a
-    property of the population and `--check` prints it; it is not a property of
-    the rule.
+    half", and the pair is (onto, over). `mid-instruction` when no majority
+    lands on it -- at least half step over -- and a committed listing exists
+    for the address to be wrong about. `unread` when it does not, which is the
+    residual: the predicate fires, and nothing committed is there to be wrong.
+    Which class is the largest is a property of the population and `--check`
+    prints it; it is not a property of the rule.
 
     The ordering matters and is why `0x012F` is in `--self-test`: a rule that
     tested the listing first would file a real entry whose bytes happen to trip
