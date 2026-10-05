@@ -187,10 +187,12 @@ Two of those EC tools need a file from outside that directory, and both want
   present-but-broken copy does, and why the refusal is a refusal. **§3's three
   watchers carry the flag**, so this is the one file a staged directory has to
   bring for the procedure to start.
-- `manual_fan_ctrl_probe.py --self-test` reaches for the same grader by the
-  repository layout alone, so a staged copy runs the probe fine and the
-  self-test not at all. That is a known gap rather than a designed one; the
-  natural fix is for it to share the lookup above.
+- `manual_fan_ctrl_probe.py --self-test` takes that same ordered lookup rather
+  than a path of its own, so the copy staged above is what its mark set is
+  checked against too, and it refuses by name when none of the places holds
+  it. It loads the grader rather than carrying a copy of §3's rules, which is what
+  makes the self-test worth running at the box: a mark set the grader would
+  refuse is a red row here rather than a green run found at the grading.
 
 Copying the grader beside a tool is an operator action at staging time, not a
 second committed copy: a duplicate in the tree is the drift that loading it
