@@ -46,6 +46,14 @@ open. **No citing comment was edited and no listing was re-read to get here.**
 this file no longer measures.** Every figure the *Re-deriving* transcripts print
 moved with it, and this table is the whole of the delta — each right-hand cell
 is a measurement, `python3 ec/tools/citation_gap_scan.py` for all but the last:
+**Corrected 2026-10-05, issue #1268: those two constants no longer exist**, so
+this paragraph describes a tool that does not measure 96 / 121 either. They were
+replaced by `EXPECT_CUT_PAIRS` / `EXPECT_NOT_CODE_PAIR` /
+`EXPECT_COMMON_NONZERO_CITER` — named pairs, not counts — and `--self-test`
+asserts the population is the one the committed annotations propose rather than
+that it has a size. **The table and the transcripts are unchanged and still
+drifted from a run of the tool**, which is what the correction at the top of
+this file is for.
 
 | figure | as written above | on this tree |
 |---|---|---:|
@@ -64,8 +72,8 @@ is a measurement, `python3 ec/tools/citation_gap_scan.py` for all but the last:
 **Everything else the split rests on is untouched, which is the point worth
 keeping.** `boundary-cut` is still 2 and still `bank1,E5D6` and `common,3459`,
 `not-code` is still 1, the 10 `common` citers are the same 10, the
-bank-scope-nearer count is still 0, and `--self-test` still runs its 47
-assertions. **The non-zero-gap table below loses exactly one row, `pd,39E7`,
+bank-scope-nearer count is still 0, and `--self-test` still passes. **The
+non-zero-gap table below loses exactly one row, `pd,39E7`,
 whose only named callee was the now-named `pd 0x39E6`** — so 13 rows becomes 12
 and 14 pairs becomes 13. The other two retired pairs were zero-gap, which is
 why the zero-gap figures fall by two rather than three.
@@ -95,6 +103,38 @@ statement is inside a dated per-merge record for #560 and quotes a population
 *as it was measured then* — the shape
 [`no-append-logs.md`](no-append-logs.md) exists to stop growing. A reader
 following either is sent here.
+
+*** CORRECTION 2026-10-05 (issue #1268), leaving every figure above as it was
+written.*** **Every split in this file pools three populations that disagree
+about whether the pair is a code citation at all, and the partition is now on
+every row.** `citation_gap_scan.py` took its pairs from all three buckets
+`citations()` returns — `kept`, `undecided` and `rejected` — and `classify()`
+derived the verdict from the bytes alone, so the rejection reason never reached
+`ec/ghidra/gap-citation-scan.csv` or the report. A `no-transfer` on a `rejected`
+pair is **not** evidence about a comment: `citations()` had already read the
+mention as a data frame or a cross-program collision, so there was no code claim
+for a window to fail to support. The `why` column carries
+`"<partition>:<reason>"` on every row and the report prints the split with a
+gloss on each partition, before any verdict. **The verdicts did not move** —
+`boundary-cut` is still 2, `no-transfer` 118, `not-code` 1 — but **both
+`boundary-cut` pairs are `kept` pairs and the single `not-code` pair is a
+refused one**, which the pooled tally cannot show. The reading, the three
+pairs #489 retired, and the fall-through are in
+[`citation-gap-why-partition.md`](citation-gap-why-partition.md).
+
+**`EXPECT_ROWS`/`EXPECT_PAIRS` are gone, not re-pinned.** The two paragraphs
+above that describe them are stale in the same way as the figures they carry:
+the tool asserts **relations** — that the population is the one the committed
+annotations propose, that each verdict is read off its own pair's window, and
+that the `boundary-cut` and `not-code` cases are the *named* pairs rather than a
+tally of them — because a pinned row, pair or per-verdict tally is a value the
+next merge has to edit and a stale one is a false failure on a tree that is
+merely bigger. The claim those paragraphs were making, that the population is
+the one the tool's predicate proposes over the committed tables, is still
+asserted; only the figure form of it is gone. **The same correction applies to
+the two other places in this file that name those constants**, and to the count
+of `--self-test` assertions in the paragraph above, which is likewise a value
+every merge has to edit and is not restated here.
 
 ## The lead: 86 of the 99 rows have no gap at all
 
@@ -374,7 +414,13 @@ The tool rebuilds the population with the **same predicate**
 `docs/findings/citing-listing-evidence.md` used — a citing row whose listing
 yields nothing from `citation_callers.transfers()`, minus the rows the
 `is_fill` veto already refuses — over the same three buckets `citations()`
-partitions, and **fails `--self-test` if the count is not 99 / 124**.
+partitions, and ~~**fails `--self-test` if the count is not 99 / 124**~~.
+**Corrected 2026-10-05, issue #1268: no count is pinned.** `--self-test`
+re-derives the population from the committed tables through the predicate this
+paragraph states and asserts the two agree, which is the claim; a figure would
+be a value the next merge has to edit. **The three buckets are not one
+population** and are now named per row — see
+[`citation-gap-why-partition.md`](citation-gap-why-partition.md).
 
 **The predicate is a transfer-line test and it has to be.** Keying instead on
 the *resolved* target set — a listing whose transfers resolve to nothing — gives
@@ -408,10 +454,12 @@ absorbed into the other:
    transfers to nothing — which is the predicate. A new comment on a function
    that reaches nothing is exactly a population row.
 
-`EXPECT_ROWS`/`EXPECT_PAIRS` in the tool are pinned to **this** tree, and
-that is the number every figure in this file uses. Corrected in place rather
-than carried forward, for the reason `citing-listing-evidence.md` carries two
-corrections of its own.
+~~`EXPECT_ROWS`/`EXPECT_PAIRS` in the tool are pinned to **this** tree, and
+that is the number every figure in this file uses.~~ **Corrected 2026-10-05,
+issue #1268: those two constants do not exist in the tool.** It asserts the
+population is the one its predicate proposes over the committed annotations,
+not that it has a size. Corrected in place rather than carried forward, for the
+reason `citing-listing-evidence.md` carries two corrections of its own.
 
 **`common` citers, and the one consequence of reading "that program" as the
 citing row's own scope.** 10 of the 99 rows are `common` citers (`common,0EF3`,

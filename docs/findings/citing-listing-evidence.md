@@ -361,6 +361,31 @@ on this tree. The full table of what moved is in
 [`citation-gap-scan.md`](citation-gap-scan.md), and the two `boundary-cut` pairs
 this page names by name — `bank1,E5D6` and `common,3459` — are unchanged.
 
+*** CORRECTION 2026-10-05 (issue #1268), leaving every figure above as it was
+written.*** **The split those figures pool is three populations, and two of
+them were never code citations.** The correction above fixed the *size* of the
+population; this fixes its *composition*, and both stand. `citation_gap_scan.py`
+draws its pairs from all three buckets `citations()` returns and derived a
+verdict from the bytes alone, so the `why` a pair was refused for never reached
+its CSV or its report. **A `no-transfer` on a pair the citation gate had already
+refused is not evidence about a comment** — there was no code claim for a
+window to fail to support — and the pooled "2 / 118 / 1" this page quotes reads
+as one finding when most of it is a window described in terms of a mention that
+was never a claim. The `why` column is on every row now, the report prints the
+split with a gloss on each partition before any verdict, and **both
+`boundary-cut` pairs turn out to be pairs `citations()` *kept*** while the one
+`not-code` pair is a refused one — which is what a verdict about corroboration
+should look like and which the pooled tally cannot show. The reading is in
+[`citation-gap-why-partition.md`](citation-gap-why-partition.md).
+
+**The three retired pairs above are answered there, and they are not missing —
+they are collisions.** `pd 0x06EA` cited by `bank0 0xD045` names XDATA, and
+`pd 0xE930` cited by `bank1 0xE924` is a `pd`-image address that merely shares
+bank1's number; only `pd 0x39E6` cited by `pd 0x39E7` is a same-program
+relationship, and it is a fall-through. All three are absent from the table on
+this tree, which is the `FUN_` predicate the correction above describes, not a
+gap in the reading.
+
 ## Re-deriving
 
 Four commands, run from the repository root. The first and second come from the

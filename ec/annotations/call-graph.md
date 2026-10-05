@@ -588,6 +588,26 @@ across the measurement this section records. The correction in full, with the
 rest of what moved, is
 [`../../docs/findings/citation-gap-scan.md`](../../docs/findings/citation-gap-scan.md).
 
+**Corrected 2026-10-05, issue #1268: the composition, where the correction above
+corrected the size.** The 121 pairs that gate's corroboration arm cannot reach
+are the union of all three buckets `citations()` returns, and `classify()`
+derived each verdict from bytes with the bucket discarded. **A `no-transfer` on
+a pair the citation gate had already refused is not evidence about a comment** —
+`citations()` had read the mention as a data frame or a cross-program collision,
+so there was no code claim for a window to fail to support — and the **"32
+pairs" and the "15" are quoted without saying which bucket they sit in**: both
+are counted over that pooled population. The **90 is not**, and did not need to
+be: it is the `cited_by == inbound` count in this file's own CSV, and `cited_by`
+is `len(citing)` over a kept-only dict, because `build()` is handed the kept
+bucket alone (`../tools/call_graph.py`'s `build()` / `_row`), so `rejected` and
+`undecided` never reach it. Every row of `ec/ghidra/gap-citation-scan.csv` now
+carries a `why` column naming the partition, and **both `boundary-cut` pairs are
+pairs `citations()` kept** while the one `not-code` pair is a refused one. **The
+fifteen rows, the 9 / 6 split, and the conclusions above are unchanged** — they
+are read against the kept citation, which is the same point the previous
+paragraph makes.
+[`../../docs/findings/citation-gap-why-partition.md`](../../docs/findings/citation-gap-why-partition.md).
+
 **No register `status:` changed and no behavioural test was run.** Naming a
 helper is not a finding about a register, so `registers.yaml` and
 `ghidra/xdata-symbols.csv` are untouched. Nothing here was observed on
