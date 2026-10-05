@@ -16,7 +16,7 @@ other two:
 |---|---|---|---|
 | `0x119C` `dispatch_code_table` | 3 | 9 | at 4 — straddling entries |
 | `0x11C2` `dispatch_code_table_2byte_key` | 4 | 16 | at 4 — its own width |
-| `0x11EF` *(unnamed)* | 6 | 3 | not at all |
+| `0x11EF` `dispatch_code_table_4byte_key_r4r7` | 6 | 3 | not at all |
 
 The widths are derived, not declared: `pd_index_tables.py`'s `entry_stride()`
 counts the `inc dptr` run feeding the branch that returns to each reader's own
@@ -163,6 +163,10 @@ on what an entry means, so no figure here moves either way.
   needs a `name_basis` that CSV's vocabulary accepts. Both this write-up and
   `ec/annotations/pd-image.md` cite it by address alone; adding the row is a
   separate naming issue.
+  > **Superseded, 2026-10-05, by issue #1120.** The row was added, so the name
+  > exists: `pd,11EF` is `dispatch_code_table_4byte_key_r4r7`, and `ec/decompiled/pd/11EF.asm`
+  > and `11EF.c` come with it. The address-only citations above were true when
+  > written and the name above is the one to use now.
 - **What its entries mean.** Nothing here decodes an entry. The census keeps
   reporting `opens_a_pool_entry`, which asks only whether the first `movc` reads
   text.
@@ -170,6 +174,15 @@ on what an entry means, so no figure here moves either way.
   carries the main EC's rule over another stride and says so per row, and that
   stays. The analogy to `decode_table()` is about the census's own window, not
   about that column.
+  > **Superseded, 2026-10-05, by issue #1120.** It does not stay. The stride is a
+  > per-reader parameter of `decode_table()` now, and `pd_index_tables.py` passes
+  > each reader its own, so `pd-index-table-spans.csv`'s `well_formed` column is a
+  > statement about the table in every row, and that file's `reader_stride`
+  > column — the reason it has one — now says which width each row was decoded
+  > at. `pd_image_census.py`'s window is still a separate quantity from
+  > `pd_index_tables.py`'s stride, and the two remain unrelated numbers that
+  > happen to be equal. See
+  > [`pd-reader-entry-layouts.md`](pd-reader-entry-layouts.md).
 - **Anything behavioural.** No table here is claimed to execute, no register is
   read, and no `status:` in `ec/annotations/registers.yaml` moves. Every input
   is `ec/firmware/GMxMGxx_11.800`, already committed.

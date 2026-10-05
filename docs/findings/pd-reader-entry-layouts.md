@@ -265,12 +265,18 @@ as one that does. The whole of this page is a reading of bytes.
 
 ## Two different fours
 
-`pd_index_tables.py`'s stride 4 for `0x11C2` and `pd_image_census.py`'s
-`INLINE_TABLE_BYTES = 4` are **unrelated quantities that happen to be equal.**
-The first is the width of one dispatch record; the second is how many inline
-argument bytes follow an `lcall` to the PD image's `0x104D`, read as a pool
-entry. They are not the same number and neither was derived from the other.
+`pd_index_tables.py`'s stride 4 for `0x11C2` and the 4 bytes `pd_image_census.py`
+reads inline after each call site are **unrelated quantities that happen to be
+equal.** The first is the width of one dispatch record; the second is how many
+inline argument bytes follow an `lcall` to the PD image's `0x104D`, read as a
+pool entry. They are not the same number and neither was derived from the other.
 Naming the difference here is so that a later reader does not merge them.
+
+The second is **not a constant**, and
+[`pd-code-table-inline-width.md`](pd-code-table-inline-width.md) gives it a
+constant name that nothing in the tree carries. It is `CODE_TABLE_ENTRY_WIDTHS`'s
+entry for the target — a per-dispatcher lookup, and the reason the two
+quantities can drift apart.
 
 ## What this does not say
 

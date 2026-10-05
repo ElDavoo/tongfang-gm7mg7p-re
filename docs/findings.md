@@ -13215,6 +13215,33 @@ is a statement about a table only where the stride is 3. **322 bytes of the PD
 image are read as table data** by this method and the full 28-row census is
 committed, failures included.
 
+> **Corrected 2026-10-05, issue #1120.** The claims above about `0x11EF`'s name
+> and about what the `well_formed` column is a statement about are no longer true
+> of this tree, and one of them carried a figure.
+>
+> - **`0x11EF` is named.** It is `dispatch_code_table_4byte_key_r4r7`, from a
+>   `pd,11EF` row in `../ec/annotations/ghidra-functions.csv`, and it is listed
+>   and decompiled like the other two. "Nothing in the tree names it" was a true
+>   account of the tree before that row landed.
+> - **`well_formed` is no longer the main EC's rule over another layout.** The
+>   stride is a per-reader parameter now: `pd_index_tables.py` hands each reader
+>   its own into `decode_table()`, so every row is decoded and judged at the
+>   width its own reader walks, and the column is a statement about the table in
+>   every row rather than only where the stride is 3. The `reader_stride` column
+>   above is still what makes that readable, and it is now the width the row was
+>   decoded at rather than a caveat on the column.
+> - **The byte figure is withdrawn rather than replaced here.** It is a property
+>   of the committed PD image and this change moves it, so the number to quote is
+>   `pd_index_tables.py`'s `TABLE_DATA_BYTES`, which `--self-test` prints and
+>   pins. The per-reader account, the tables each width now decodes and the one
+>   row that still fails are in
+>   [`findings/pd-reader-entry-layouts.md`](findings/pd-reader-entry-layouts.md).
+> - So the two `0x11C2` spans the next paragraph calls well-formed "under the
+>   wrong rule" are real tables read at their own reader's width. The reasoning
+>   that supported them — the main EC's 3-byte rule, which `0x119C` does walk —
+>   was never sound and is not needed now; both tables pass under the rule their
+>   own reader walks.
+
 **What the PD verdict is worth is weaker than the same verdict reads in the
 main EC, and that is a property of the region.** `malformed()`'s "resolves
 inside the caller's own region" test means *banked* in the main EC and only
