@@ -15,7 +15,7 @@ constant in `decode_index_table.py` rather than something a caller supplied.
 That is what this page closes, and what it establishes is:
 
 - **One rule fits all three readers:** two target bytes at entry offsets +0/+1,
-  then `stride - 1` key bytes, compared most significant first. A 3-byte entry
+  then `stride - 2` key bytes, compared most significant first. A 3-byte entry
   has one key byte, a 4-byte entry two, a 6-byte entry four.
 - **The terminator does not scale with any of that.** It is a zero target pair
   — the same two bytes that carry every entry's target — followed by a 2-byte
@@ -204,6 +204,17 @@ something a caller counts, and the three tables' targets (`0x2532`, `0x2511`,
 `0x2E22`…`0x2D76`, `0xBD01`, `0xBD3B`) are CODE addresses in the flat PD image.
 **What the counter indexes is not decoded here.** All three tables' handlers are
 targets this page identifies and does not walk.
+
+Naming `0x11EF` is what lets two other committed tables say something about it.
+`pd_no_ret_fallthrough.csv`'s `0x11C2` row carried an empty fall-through-name
+cell, because the address it falls into had no listing to name; it now reads
+`dispatch_code_table_4byte_key_r4r7`, and `0x11EF` has a row of its own. And
+`pd_call-targets.csv` reclassifies three byte-scan sites — `0x11F6`, `0x120A`
+and `0x120E` — from `mid-instruction` of `0x11C2` to `operand` of `0x11EF`,
+which is listed, so their `in_listing` cell goes with it. Both files are
+regenerated from their tools rather than edited. Neither says anything about
+control flow the walk had not already decoded: a listing changes which function
+a byte falls *inside*, and that is all a name is.
 
 ## The one row that still fails: `0x242C5`
 

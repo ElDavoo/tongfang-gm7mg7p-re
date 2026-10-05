@@ -277,9 +277,9 @@ file_offset,runtime,candidate,verdict,target,enclosing,in_listing,ends,frame_ont
 0x211B8,0x11B8,byte-scan,operand,0x9368,0x119C,yes,,0,24,not listed
 0x211CA,0x11CA,byte-scan,operand,0x7401,0x11C2,yes,,0,24,not listed
 0x211DE,0x11DE,byte-scan,operand,0x93B5,0x11C2,yes,,0,24,not listed
-0x211F6,0x11F6,byte-scan,mid-instruction,0x7401,0x11C2,no,,0,24,not listed
-0x2120A,0x120A,byte-scan,mid-instruction,0x936C,0x11C2,no,,0,24,not listed
-0x2120E,0x120E,byte-scan,mid-instruction,0x7403,0x11C2,no,,0,24,not listed
+0x211F6,0x11F6,byte-scan,operand,0x7401,0x11EF,yes,,0,24,not listed
+0x2120A,0x120A,byte-scan,operand,0x936C,0x11EF,yes,,0,24,not listed
+0x2120E,0x120E,byte-scan,operand,0x7403,0x11EF,yes,,0,24,not listed
 0x21290,0x1290,byte-scan,operand,0xEF60,0x128D,yes,,0,24,not listed
 0x212F7,0x12F7,byte-scan,mid-instruction,0x93F6,0x12C5,no,,0,24,not listed
 0x21310,0x1310,byte-scan,mid-instruction,0x93F2,0x12C5,no,,0,24,not listed

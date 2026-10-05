@@ -26,7 +26,7 @@ pointer off the return address the same way. The entry stride is read off each
 reader's own body by `entry_stride()` rather than assumed, and
 `decode_table()` is handed it, so **every row's `well_formed` column is a
 statement about the table in that row** at its own reader's own layout. What an
-entry looks like at each width -- two target bytes and `stride - 1` key bytes,
+entry looks like at each width -- two target bytes and `stride - 2` key bytes,
 and a terminator and default that stay four bytes wide at all three -- is
 established from the readers' own compare chains in
 `docs/findings/pd-reader-entry-layouts.md`, which is also where `0x11EF`'s
@@ -76,7 +76,7 @@ FIRMWARE = f"{HERE}/../firmware/GMxMGxx_11.800"
 # columns sit exactly where the two case columns were -- because at 4 and 6
 # bytes an entry has no single case byte, and a 4-byte entry's second key byte
 # read as a case value is what put most of the 0x11C2 rows' keys out of order.
-# The key is the whole of the `stride - 1` bytes the reader compares, most
+# The key is the whole of the `stride - 2` bytes the reader compares, most
 # significant first, so the column is wider at the wider strides and
 # `self_test` checks that this list differs from the main EC's only by the two
 # renames.
@@ -356,7 +356,7 @@ def self_test(d: bytes) -> int:
           "readers")
 
     # The whole census as a value, so a different dump re-derives it rather
-    # than inheriting it. The key column is `stride - 1` bytes wide, so the
+    # than inheriting it. The key column is `stride - 2` bytes wide, so the
     # pinned values differ in width between the three readers.
     got = tuple((r["runtime"], stride, s["file_offset"], s["frame_onto"],
                  None if t is None else (len(t["entries"]), t["file_offset"],

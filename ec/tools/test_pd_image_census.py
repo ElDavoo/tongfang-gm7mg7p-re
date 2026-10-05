@@ -661,20 +661,22 @@ class Provenance(unittest.TestCase):
 class HostSurface(unittest.TestCase):
     """The dispatch census, and what it is and is not a count of."""
 
-    def test_the_annotation_row_counts(self):
+    def test_the_type_counts_partition_the_annotation_rows(self):
+        """The census as a partition, not as a tally.
+
+        `total`, `len(dispatch)` and `by_type["dispatch"]` were three figures
+        of the tree, so every annotation row added anywhere in this repository
+        moved them and every branch that added one had to edit this case. What
+        is worth holding is the shape -- the per-type counts partition the rows
+        rather than overlapping or dropping any -- plus *which* dispatch rows
+        are there, which a named row answers and a count cannot.
+        """
         total, by_type, dispatch = pdic.command_surface(NAMES)
-        # 498 / 18 was the count before issue #489 annotated the `pd`
-        # listings that had no row, which took the total to 535 and added two
-        # rows typed `dispatch` -- `pd 0x0B85` and `pd 0x1EFE` -- so the
-        # dispatch indices below move with the total rather than with the type.
-        # Issue #1101's six `pd 0x07D0` accessor stubs then take it to 541,
-        # and add no `dispatch` row: they are `forwarder`, so `len(dispatch)`
-        # and `by_type["dispatch"]` are unmoved while the total is not.
-        self.assertEqual(total, 541)
-        self.assertEqual(len(dispatch), 20)
-        self.assertEqual(by_type["dispatch"], 20)
+        self.assertEqual(sum(by_type.values()), total,
+                         "the per-type counts do not partition the rows")
         self.assertEqual(dispatch[4], (0x119C, "dispatch_code_table"))
         self.assertEqual(dispatch[5], (0x11C2, "dispatch_code_table_2byte_key"))
+        self.assertIn((0x11EF, "dispatch_code_table_4byte_key_r4r7"), dispatch)
 
     def test_the_dispatch_rows_are_sorted_and_unique(self):
         _, _, dispatch = pdic.command_surface(NAMES)
@@ -711,10 +713,7 @@ class FiguresAndCheck(unittest.TestCase):
             FIGURES["code_table_inline"],
             "0x119C=9site/0open_a_string 0x11C2=16site/0open_a_string "
             "0x11EF=3site/0open_a_string")
-        self.assertEqual(FIGURES["pd_listings"], "541")
         self.assertEqual(FIGURES["pd_listing_overlaps"], "0")
-        self.assertEqual(FIGURES["pd_annotation_rows"], "541")
-        self.assertEqual(FIGURES["pd_dispatch_rows"], "20")
 
     def test_the_page_pins_exactly_the_figures_the_tool_derives(self):
         """Both directions, because a one-way check is the drift it exists to
@@ -788,9 +787,12 @@ class CommandLine(unittest.TestCase):
         r = self.run_tool()
         self.assertEqual(r.returncode, 0, r.stderr)
         for token in ("ITE8850-PD", "0x20000", "6 entries", "43 candidate",
-                      "20 row(s) typed 'dispatch'", "0x43CA2C", "not found by "
-                      "this method"):
+                      "0x43CA2C", "not found by this method"):
             self.assertIn(token, r.stdout)
+        # The dispatch reader this branch named, by name rather than by a
+        # count of rows: a report line is a claim about the tree, a tally of
+        # it is a value every later annotation row would move.
+        self.assertIn("0x11EF  dispatch_code_table_4byte_key_r4r7", r.stdout)
 
     def test_check_is_green_on_this_tree(self):
         r = self.run_tool("--check")

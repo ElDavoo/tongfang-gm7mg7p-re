@@ -32,7 +32,7 @@ entry by one byte and puts a phantom `sjmp` at the table's head.
 
 **That width is a parameter, not a constant, and `ENTRY_LEN` is this module's
 default rather than the family's.** The PD image's three dispatchers walk 4- and
-6-byte entries -- two target bytes at +0/+1 and then `stride - 1` key bytes --
+6-byte entries -- two target bytes at +0/+1 and then `stride - 2` key bytes --
 so `decode_table()` takes the stride its caller derived with `entry_stride()`
 from the reader in question, and `0x7151` is what `ENTRY_LEN` names. What does
 *not* scale with the stride is the end of the table: the terminator is a zero
@@ -402,7 +402,7 @@ def decode_table(d: bytes, off: int, stride: int = ENTRY_LEN):
     bytes.
 
     `stride` defaults to `ENTRY_LEN`, this module's own reader's width. An
-    entry is two target bytes at +0/+1 then `stride - 1` key bytes, compared
+    entry is two target bytes at +0/+1 then `stride - 2` key bytes, compared
     most significant first by the reader's compare chain, and the key is the
     whole of them as an int, so a 4-byte or a 6-byte entry reads the same way
     as a 3-byte one. `case` is kept alongside `key` at `ENTRY_LEN` alone,
