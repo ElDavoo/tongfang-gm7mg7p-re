@@ -520,10 +520,15 @@ admitted real drift would show the same way.
 sentence still says, and the new bound sentence makes no membership claim at
 all. The `0xD96C` loop's own execution trace (recipe 4 under "Reproducing
 this") puts `0x0800` on the store arm, so **the boot-path clear stores `0x00`
-at `0x0800`, a byte the `main-ec-0630` cluster names** — 3 addresses, 4
-references, `functions_touched` 2, one of them
-`bank1:0x8DBC=write_05_to_06c4_after_1984_check [gate]`, `co_reading` 0 and
-`co_reading_dominant` `no`.
+at `0x0800`, a byte the `main-ec-0800` cluster names**, a cluster of its own.
+
+> **Updated 2026-10-04, issue #175.** This sentence read "a byte the
+> `main-ec-0630` cluster names — 3 addresses, 4 references, `functions_touched`
+> 2, one of them `bank1:0x8DBC=write_05_to_06c4_after_1984_check [gate]`,
+> `co_reading` 0 and `co_reading_dominant` `no`". #175 seeded routines that
+> read `0x0800`, and the re-derived census splits it from `0x0630` and `0x06C4`
+> (still `main-ec-0630`) into a one-address cluster, `main-ec-0800`. The store
+> itself is unchanged; only which cluster the census puts the byte in moved.
 
 That is a **static co-membership reading from the committed image and the
 committed census**, and three things about it are not claimed:

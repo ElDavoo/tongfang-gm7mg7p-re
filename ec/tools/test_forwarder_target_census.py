@@ -91,8 +91,11 @@ ORACLE = {
              'bank1': ('operand', 'C0A8', 0xC10B)},    # `bank1,1984`
     0xC389: {'bank0': ('entry', 'C389', 0xC389),
              'bank1': ('operand', 'C352', 0xC387)},    # `bank1,19B4`, cross-bank
-    0xAA04: {'bank0': ('no-listing', None, None),
-             'bank1': ('entry', 'A9B4', 0xAA04)},      # `bank1,1A14`, cross-bank
+    0xAA04: {'bank0': ('entry', 'AA04', 0xAA04),
+             'bank1': ('entry', 'A9B4', 0xAA04)},      # `bank1,1A14`; bank0 gained
+                                                       # its own `AA04` export, so
+                                                       # the two banks no longer
+                                                       # answer differently here
     0xC0AD: {'bank0': ('entry', 'C0AD', 0xC0AD),
              'bank1': ('operand', 'C0A8', 0xC0AC)},
     0x8294: {'bank0': ('entry', '8294', 0x8294),
@@ -104,11 +107,11 @@ ORACLE = {
 # The two banks' differing answers for one address, named separately so the
 # negative control reads as a control rather than as two table rows that happen
 # to disagree. Both shapes are here on purpose: `C389` is an operand byte in
-# one bank and an entry in the other, and `AA04` has no listing at all in one
-# and is an instruction start inside another listing in the other. A classifier
-# that dropped the bank argument would answer one class for both banks; one
-# that dropped the listing argument would answer `entry` for all sixteen cells.
-CROSS_BANK_CONTROL = (0xC389, 0xAA04)
+# one bank and an entry in the other, and `8294` is an entry in one bank and has
+# no listing at all in the other. A classifier that dropped the bank argument
+# would answer one class for both banks; one that dropped the listing argument
+# would answer `entry` for all sixteen cells.
+CROSS_BANK_CONTROL = (0xC389, 0x8294)
 
 # The common-area finding, as bytes rather than as arithmetic. `0x198A` is
 # `bank1,198A`'s address, and the pair is the whole of it: the forwarder's six

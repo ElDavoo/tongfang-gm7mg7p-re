@@ -5,6 +5,7 @@ bank0,B4A8,bank0,B5D2,no-transfer,0,B5D3,B5D3,900602,,,,,,0,0,no,24,0
 bank0,B5D3,bank0,B736,no-transfer,0,B737,B737,12b9d8,0xB737 lcall 0xb9d8,,,,,0,0,no,24,0
 bank0,B737,bank0,B82E,no-transfer,0,B83B,B83B,12b9d8,0xB83B lcall 0xb9d8,,,,,0,0,no,24,0
 bank0,C26E,bank0,C278,no-transfer,16,C285,C295,901605e04408f022901605e054f7f022901665,,,,,bank0:9334 lcall,0,0,no,24,0
+bank0,C5BD,bank1,8624,no-transfer,0,8637,8637,90043e,,,,,,0,0,no,24,0
 bank0,D5DB,bank0,D5D4,no-transfer,0,D5DB,D5DB,901304,,,,,bank0:D5DB ljmp,0,0,no,24,0
 bank0,DFA0,bank0,E010,no-transfer,0,E014,E014,b40115,,,,,bank0:DFDF lcall,0,0,no,24,0
 bank0,DFA0,bank0,E014,no-transfer,0,E020,E020,fd12df,,,,,bank0:DFDF lcall,0,0,yes,22,2

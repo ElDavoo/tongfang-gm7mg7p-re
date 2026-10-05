@@ -162,6 +162,7 @@ bank0,A7C8,FUN_CODE_a7c8,match,373bb5893c4f1a3d,69,0,,sdas8051 05.50.4+NoICE+SDC
 bank0,A844,update_0476_flags,match,27bfe3b032a21d16,100,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,A96B,clear_073f_and_0899,match,6a897cfbf509b568,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,A97B,dispatch_on_06e6_and_0741,match,7b75df159ea32358,69,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,AA04,compare_0404_0405_pair_against_0436_0437,match,8f5fe4f1df66d4b4,68,0,,sdas8051 02.00
 bank0,AA90,call_2990_1e1a_fixed_sequence,match,1152f9151a790312,23,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,AAC6,advance_0d14_state,match,8bbf01b13d61647d,88,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,AB6D,shared_noop_ret,assembler-gap,b8f13374c6a2662b,1,0,no bytes emitted at AB6D,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -470,6 +471,9 @@ bank0,C4F0,write_40_to_dptr_then_read_1601,match,a35831c7d4074bd1,5,0,,sdas8051 
 bank0,C4F8,read_074c_low_nibble,match,bab70f1c044d2727,4,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C55F,FUN_CODE_c55f,match,a8f9bfb8d7f71ee7,49,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C5BD,FUN_CODE_c5bd,match,70615e999eb85db0,49,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank0,C700,flip_0751_bit6_when_r7_zero_and_0440_nonzero,match,374f20755e17f020,10,0,,sdas8051 02.00
+bank0,C711,store_r7_to_0a54,match,f802274020583c8c,4,0,,sdas8051 02.00
+bank0,C717,fan_mode_from_0440_into_0741_0751,match,b5a1f1dbd21ebe28,39,0,,sdas8051 02.00
 bank0,C8C5,select_0027_0028_from_five_probes,match,d3dc777d5e1ff001,56,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,C9FF,kbd_status_from_0826_low_bits,match,f1cb89fe3420068e,19,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank0,CA1D,FUN_CODE_ca1d,match,faa41325fe36129c,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -858,9 +862,17 @@ bank1,8096,dec_06d9_only_if_both_calls_return_zero,match,ab8345d9bdfc8437,11,0,,
 bank1,80AA,dec_timers_06da_08e4_055f_09ce_070b,match,52a6585cdb687d77,27,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,80D6,clear_0460_0468_when_0706_reaches_zero,match,3f10eb0028c6c11b,14,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,80EF,dec_timers_and_set_expiry_flags,match,568b19ec2439686a,94,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,818A,store_20_to_0472_and_fd_to_0457_then_gate,match,d877b8e2b4d9f481,30,0,,sdas8051 02.00
+bank1,81C5,clear_0457_low3_and_dispatch_0800_bit7,match,5100bd4da799f14d,43,0,,sdas8051 02.00
 bank1,8202,clear_0801_bit5_then_call_19a2_84,match,49d4bbddb1f556ff,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,820F,and_r7_results_into_carry,match,ee3acaeb810676fe,10,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,823A,store_fb_to_0457_and_set_0472_bit3_keep4,match,bd473838822fc12d,21,0,,sdas8051 02.00
+bank1,8261,store_fd_to_0457_and_set_0472_bit5_keep4_then_gate,match,5eb09b2a6ae38b6f,26,0,,sdas8051 02.00
 bank1,8300,clear_and_set_xdata_flag_bits,match,50b30f92e7c08241,33,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,833E,zero_0750_0756_78_then_85c1_and_two_19b4,match,3f0334dca2ca9f22,10,0,,sdas8051 02.00
+bank1,8354,zero_045a_then_reset_0459_bit3_and_0456_low5,match,6560ccfbf2c66ebe,80,0,,sdas8051 02.00
+bank1,83F0,set_075e_bit1,match,bfaced2dede8b368,5,0,,sdas8051 02.00
+bank1,83F8,clear_0801_bit6_073c_low2_086f_bit3_then_e5,match,61a49aeb1be04ddb,16,0,,sdas8051 02.00
 bank1,8418,zero_1510_and_clear_xdata_flag_bits,match,6bd58171b5e3f268,32,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,84E5,table_bytes_disassembled_as_code_84e5,partial,62e6942f68331900,4,1,"1 of 5 instruction(s) unchecked, first: ajmp 0x8300",sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,8500,table_bytes_disassembled_as_code_8500,match,14c7ffd6b5a53e0f,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -871,6 +883,15 @@ bank1,85AE,clear_1c15_1c16_set_1c11_ff,match,58ea005445b481ee,10,0,,sdas8051 05.
 bank1,85C1,init_0818_081f_byte_set,match,b5537af5ae7e08a4,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,85E9,call_19c0_then_19c6,match,a5a43d3256b67a26,3,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,85F0,call_19c0,match,12afeacbfc3446f7,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,85F4,ret,match,bb7dca4d56ae333b,1,0,,sdas8051 02.00
+bank1,85F5,call_86c4_then_table_f13f_by_r5_to_1501,match,d6bb98f18897060a,7,0,,sdas8051 02.00
+bank1,8602,zero_1501,match,def9f25617e69994,4,0,,sdas8051 02.00
+bank1,8609,store_db_to_045f_and_set_04ff_bit5,match,68ecf584700e335b,8,0,,sdas8051 02.00
+bank1,8617,zero_045f,match,85339cf71824261c,4,0,,sdas8051 02.00
+bank1,861E,call_19a2_with_r7_84,match,1d75a35808b194a4,3,0,,sdas8051 02.00
+bank1,8624,write_55_aa_7fe_7ff_and_zero_07fd,match,0951f0ada07cb187,10,0,,sdas8051 02.00
+bank1,8637,copy_043e_to_1501,match,01f9c2fd8b5e1ceb,5,0,,sdas8051 02.00
+bank1,8640,copy_043f_to_1501,match,ff8905ac8c9f7783,5,0,,sdas8051 02.00
 bank1,86C4,FUN_CODE_86c4,match,1411c1b75a5a06d3,17,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,87CA,set_1033_bits_if_0450_is_28,match,338aa95c2eaf4b54,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,87DD,copy_code_a691_a693_to_xdata,match,753a87bada1313d9,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1165,6 +1186,7 @@ bank1,B98D,threshold_dispatch_0438_by_0491,match,17f5af0103623ab2,83,0,,sdas8051
 bank1,BA43,gate_chain_to_0491_bit0,match,f00eaca1e06bee11,49,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BABF,stage_0577_against_0834_0836,match,bc99523cdcb6e5c4,52,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BB3D,forward_to_bd20_bb3d,assembler-gap,55757f4ff44aac70,1,0,no bytes emitted at BB3D,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,BB40,stage_0834_from_0403_threshold_and_0497,match,0aed28183129e3d3,46,0,,sdas8051 02.00
 bank1,BBA4,FUN_CODE_bba4,match,52957ca6dd20bd1b,45,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BC05,FUN_CODE_bc05,match,c6ff22c99fe25de1,74,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,BCAA,set_0494_bit1,match,bdac95238fe002f5,5,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1343,6 +1365,7 @@ bank1,E5A7,copy_code_pair_to_3e0_plus_r7,match,182e4dfdf6cb15b8,30,0,,sdas8051 0
 bank1,E5D6,FUN_CODE_e5d6,match,421e297ee2674e3b,66,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E656,dptr_from_0491_031c_then_step_0e,match,54f8c391a71f9cd3,62,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E6CB,decrement_0365_and_0368_if_nonzero,match,f9953cc1f63484b0,11,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,E6DC,read_0404_0405_into_r1r2_then_mul_and_clamp,match,ef2ee5c4b4186801,31,0,,sdas8051 02.00
 bank1,E722,write_r1_to_tmod_and_jump_8801,match,687e0931d09c890e,2,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E768,ret_no_op,match,a2ef36ec5caccc15,1,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,E769,clamp_r2r1_to_0420_above_3c0b,match,0b0eb8a9e0c32ee4,15,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
@@ -1411,6 +1434,9 @@ bank1,F290,if_06cd_zero_set_02_set_06ff_20,match,73f13b3ca6959a2a,16,0,,sdas8051
 bank1,F2AD,if_06cd_zero_set_02_set_06ff_40,match,0514e30496dc83b0,16,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,F2CA,dec_0443_low3_unless_0440_5_6_7,match,b40c276ee8e817c5,20,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,F2F3,inc_0443_low3_unless_0440_5_6_7,match,5961a81e351165dd,21,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
+bank1,F31F,gate_06e6_01_and_0440_nonzero_then_set_06ff_bit3,match,bce885a7ab0994c4,11,0,,sdas8051 02.00
+bank1,F334,gate_06e6_01_and_0440_nonzero_then_set_06ff_bit2,match,ed2866bf28216860,11,0,,sdas8051 02.00
+bank1,F349,gate_06e6_01_and_0440_nonzero_then_set_06ff_bit1,match,3fa4c0b46b39ff91,11,0,,sdas8051 02.00
 bank1,F3B8,if_04fe_bit7_clear_call_f3d7_f416_f436,match,af843a8c549d3b68,7,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,F3C9,set_r3_22_or_44_from_0456_bit6,match,b36fc349b08af64a,8,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14
 bank1,F3D7,store_scaled_quotient_0449,match,b26a92c74c16add0,32,0,,sdas8051 05.50.4+NoICE+SDCCmods-WIP-R14

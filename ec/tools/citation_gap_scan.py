@@ -111,9 +111,19 @@ SLACK = 3
 # becoming a second copy of the decoder's coverage.
 UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 
-# Known answers, measured on the committed tree and asserted in --self-test.
-# They are literals here rather than read out of the committed CSV, so a listing
-# or annotation edit that moves one fails instead of quietly re-basing the claim.
+# Known answers, asserted in --self-test **as relationships rather than as
+# figures.** The census this tool prints moves every time an export is added, so
+# a pinned row, pair or per-verdict tally here is a value the next merge has to
+# edit, and a stale one is a false failure on a tree that is merely bigger. What
+# --self-test holds instead is that the population is the one the committed
+# tables propose, that each verdict is read off its own pair's window, and that
+# the `boundary-cut` and `not-code` cases are the *named* pairs and not a tally
+# of them -- which pins strictly more than a count did, because a count permits
+# any set of the same size. The figures belong to
+# `docs/findings/citation-gap-scan.md`, which quotes them beside the command
+# that prints them, and a literal that stops moving is a number nobody edits.
+#
+# **The predicate has never been the same twice, and it moves both ways.**
 #
 # **The plan stage measured 100 rows / 114 pairs.** The predicate is unchanged --
 # the same `transfers()`-yields-nothing test on the citing listing, minus the rows
@@ -142,40 +152,23 @@ UNASSIGNED = (0x06, 0x07, 0x16, 0x17)
 #     which naming the callee does not decide. They want their own reading.
 #
 # `docs/findings/citation-gap-scan.md` carries the correction in place.
-EXPECT_ROWS = 95
-EXPECT_PAIRS = 120
-# The second cut is `common,3459` cited by `common,355E` -- #603's own rank-1
-# tranche row, whose one-`ret` listing is followed by 25 bytes before the next
-# common entry, and whose `ljmp 0x3459` sits at that boundary. It is the
-# zero-gap case the write-up describes, turning out to carry a real transfer.
-EXPECT_CUT = 2
-EXPECT_NOT_CODE = 1
-EXPECT_NO_TRANSFER = 117
-# The issue's premise is the exception: 84 of the 96 citing rows have a
-# zero-byte window, so for most of the population the question is the head of
-# the neighbouring export rather than bytes stranded between two. 108 of the
-# 121 pairs, counting a comment that names three callees three times.
-EXPECT_ZERO_GAP_ROWS = 84
-EXPECT_ZERO_GAP_PAIRS = 108
-# Pairs where the callee's edge list already books a same-scope transfer under a
-# *different* function -- the graph attributing to a neighbour what the comment
-# attaches elsewhere. Up on #603 for the same reason the cut count is: the
-# tranche's rows are `common`, and the six new citers each name callees whose
-# inbound already sits on a neighbour.
-EXPECT_NEIGHBOUR_EDGE = 31
-EXPECT_COMMON_CITERS = 10
-# How many of the common citers have a zero-byte window. This used to be all of
-# them, and saying so was the point: a common listing abutting the next common
-# entry is why the scope-boundary worry never bit. #603's `common,355E` breaks
-# it -- a one-`ret` row with 25 bytes before the next common entry -- so the
-# figure is a count and the exception is named in the assert that reads it.
-EXPECT_COMMON_ZERO_GAP = 9
+#
+# The `boundary-cut` pairs, named rather than counted: the issue's worked case,
+# and `common,3459` cited by `common,355E` -- #603's own rank-1 tranche row,
+# whose one-`ret` listing is followed by 25 bytes before the next common entry,
+# and whose `ljmp 0x3459` sits at that boundary. It is the zero-gap case the
+# write-up describes, turning out to carry a real transfer.
+EXPECT_CUT_PAIRS = {("bank1", "E5D6", "bank1", "E57E"),
+                    ("common", "3459", "common", "355E")}
+# The `not-code` pair, named for the same reason: the assertion below reads its
+# window in full, and this is what says no second pair lands there.
+EXPECT_NOT_CODE_PAIR = ("common", "1300", "bank0", "3AD6")
+# The one `common` citer that does *not* abut the next common entry. That every
+# other `common` listing does is why the scope-boundary worry never bit; #603's
+# `common,355E` breaks it -- a one-`ret` row with 25 bytes before the next
+# common entry -- so the exception is the one thing here worth naming, and how
+# many of the rest abut is not.
 EXPECT_COMMON_NONZERO_CITER = "355E"
-# Of the common citers, how many have a bank-scope entry nearer than the common
-# one. The common window is the common scope's boundary by construction, and at
-# runtime the executing bank's is the one that exists; this is that consequence
-# counted rather than silently resolved. Zero on this tree.
-EXPECT_COMMON_SHORTER_IN_BANK = 0
 
 Context = collections.namedtuple("Context", "index edges listings pairs")
 
@@ -707,19 +700,37 @@ def self_test():
                 "keeps walk() for the unassigned flag and the truncated column "
                 "rather than for the bounds check")
 
-    # The population, and the pins the write-up quotes.
+    # The population, as the two-way identity it is rather than as a pair of
+    # pinned figures: re-derived here from the committed `call-graph-callees.csv`
+    # and `ghidra-functions.csv` through the predicate `population()`'s own
+    # docstring states, so an annotation edit that moves the population has to
+    # move this. Which rows the filter keeps is the whole claim, and it is
+    # checked both ways -- a row it wrongly drops fails here as surely as one it
+    # wrongly keeps.
     ctx = context()
     pop_rows, pop_pairs = population(ctx)
     citers = set(pop_rows)
-    assert_that(len(citers) == EXPECT_ROWS,
-                "the population reproduces %d citing rows (measured %d)"
-                % (EXPECT_ROWS, len(citers)))
-    assert_that(len(pop_pairs) == EXPECT_PAIRS,
-                "and %d (callee, citer) pairs over them (measured %d)"
-                % (EXPECT_PAIRS, len(pop_pairs)))
+    with open(cg.ANNOTATIONS, newline="") as f:
+        ann = list(csv.DictReader(f, strict=True))
+    commented = {(r["scope"], cc.norm_addr(r["addr"]))
+                 for r in ann if r.get("comment")}
+    proposed = set()
+    for key in {citer for _callee, citer in ctx.pairs}:
+        listing = os.path.join(cg.DECOMPILED, key[0], key[1] + ".asm")
+        if (key in commented and os.path.isfile(listing)
+                and not list(cc.transfers(listing))
+                and not cc.is_fill(listing)):
+            proposed.add(key)
+    assert_that(proposed == citers and proposed,
+                "the population is exactly the citers the committed annotations "
+                "carry a comment for whose listing yields no transfer and is not "
+                "a fill run -- the two refusals `population()` names")
+    assert_that(set(pop_pairs) == {p for p in ctx.pairs if p[1] in citers},
+                "and the pairs are exactly the ones the graph proposes over "
+                "those rows: none dropped by the filter, none invented")
     assert_that({p[1] for p in pop_pairs} == citers,
-                "every pair's citing row is in the row set, so the two numbers "
-                "describe one population and cannot be read as contradicting")
+                "every pair's citing row is in the row set, so the two describe "
+                "one population and cannot be read as contradicting")
     assert_that(len({(p[0], p[1]) for p in pop_pairs}) == len(pop_pairs),
                 "and the pairs are distinct")
 
@@ -728,11 +739,14 @@ def self_test():
     # resolves to no index row, and those rows are the whole of the difference.
     alt_rows, alt_pairs = resolved_empty_population(ctx)
     extra = set(alt_rows) - citers
-    assert_that(len(alt_rows) == EXPECT_ROWS + 2
-                and len(alt_pairs) == EXPECT_PAIRS + 2,
-                "the resolved-target predicate gives %d rows / %d pairs against "
-                "the transfer-line predicate's %d / %d"
-                % (len(alt_rows), len(alt_pairs), EXPECT_ROWS, EXPECT_PAIRS))
+    assert_that(set(pop_pairs) < set(alt_pairs)
+                and set(alt_rows) - citers == extra
+                and set(alt_pairs) - set(pop_pairs)
+                == {p for p in alt_pairs if p[1] in extra},
+                "the resolved-target predicate's population is this one's plus "
+                "exactly the rows it adds and exactly the pairs over them -- and "
+                "never narrower, since a listing carrying no transfer line at all "
+                "resolves no target either")
     assert_that(extra == {("bank1", "8802"), ("bank1", "E954")},
                 "and the two rows it adds are %s -- each carries a transfer "
                 "line whose target resolves to no index row, which is why the "
@@ -748,10 +762,31 @@ def self_test():
     for r in live:
         by_verdict[r["verdict"]].append(r)
 
-    # The worked example the issue names, and the census it sits in.
+    def pair_key(r):
+        return (r["callee_scope"], r["callee_addr"],
+                r["citer_scope"], r["citer_addr"])
+
+    def row_of(verdict, key):
+        """The classified row for one *named* pair, or a blank one.
+
+        The blocks below read their case by name rather than by position, so a
+        pair that is renamed or loses its verdict has to be a second failing
+        assertion rather than an `IndexError` that stops the run before the
+        ones after it are reached.
+        """
+        return next((r for r in by_verdict[verdict] if pair_key(r) == key),
+                    collections.defaultdict(lambda: "0"))
+
+    # The worked example the issue names, and the census it sits in. The set of
+    # cut pairs is named rather than counted: a count would license any two
+    # pairs, this says which two, and it is also what keeps the `common`
+    # exception below and this one the same claim.
     cut = [r for r in by_verdict["boundary-cut"]]
-    assert_that(len(cut) == EXPECT_CUT, "%d boundary-cut pair(s)" % EXPECT_CUT)
-    e57e = cut[0]
+    assert_that({pair_key(r) for r in cut} == EXPECT_CUT_PAIRS,
+                "the `boundary-cut` verdict lands on the two named pairs -- "
+                "bank1,E5D6 cited by bank1,E57E, and common,3459 cited by "
+                "common,355E -- and on no third")
+    e57e = row_of("boundary-cut", ("bank1", "E5D6", "bank1", "E57E"))
     # Oracle: bank-call-targets.csv:5766 reads
     # `0x16580,bank1,0xE580,lcall,0xE5D6,B,24,0,,,entry,entry` and bank1/E57E.asm
     # is a single `push 0x07`, so the listing ends at 0xE580 and the lcall is
@@ -783,9 +818,11 @@ def self_test():
                 "all -- which is why the window runs 3 past the boundary")
 
     # The one `not-code` pair, and the one `no-transfer` pair read in full.
-    assert_that(len(by_verdict["not-code"]) == EXPECT_NOT_CODE,
-                "%d not-code pair(s)" % EXPECT_NOT_CODE)
-    nc = by_verdict["not-code"][0]
+    assert_that({pair_key(r) for r in by_verdict["not-code"]}
+                == {EXPECT_NOT_CODE_PAIR},
+                "the `not-code` verdict lands on the one named pair, "
+                "common,1300 cited by bank0,3AD6, and on no second")
+    nc = row_of("not-code", EXPECT_NOT_CODE_PAIR)
     assert_that(nc["citer_scope"] == "bank0" and nc["citer_addr"] == "3AD6",
                 "the not-code pair's citing row is bank0,3AD6")
     assert_that(nc["end"] == "3AF0" and nc["next"] == "445E",
@@ -803,8 +840,15 @@ def self_test():
                 "`mnemonic()` its six `0x42`/`0x43`/`0x52`/`0x53`/`0x62`/`0x63` "
                 "cases; the disagreement between the two counts, which is what "
                 "this case is for, is the same either side of that change")
-    assert_that(len(by_verdict["no-transfer"]) == EXPECT_NO_TRANSFER,
-                "%d no-transfer pairs" % EXPECT_NO_TRANSFER)
+    assert_that(all((r["verdict"] == "not-code") == bool(int(r["unassigned"]))
+                    and (r["verdict"] == "no-transfer")
+                    == (r["hit_site"] == "" and not int(r["unassigned"]))
+                    for r in live),
+                "every pair's verdict is read off its own window: `not-code` "
+                "exactly when the walk landed on a byte the MCS-51 map assigns "
+                "to no instruction, and `no-transfer` exactly when that is not "
+                "the case and the window resolved no transfer to the named "
+                "callee -- a per-pair property, not a share of the population")
     zero = [r for r in by_verdict["no-transfer"]
             if r["citer_scope"] == "bank0" and r["citer_addr"] == "B5B2"]
     assert_that(len(zero) == 1 and zero[0]["gap"] == "0"
@@ -819,25 +863,56 @@ def self_test():
                 "read from the window, not from the byte column: the neighbour's "
                 "head is `mov DPTR,#0x089C`, not a call to 0xB4A8")
 
-    # The three verdicts partition, and the shape figures the write-up quotes.
-    assert_that(sum(len(v) for v in by_verdict.values()) == len(live)
-                == EXPECT_PAIRS,
-                "the three verdicts partition all %d pairs" % len(live))
-    assert_that(sum(1 for r in live if r["gap"] == "0") == EXPECT_ZERO_GAP_PAIRS
-                and len({(r["citer_scope"], r["citer_addr"]) for r in live
-                         if r["gap"] == "0"}) == EXPECT_ZERO_GAP_ROWS,
-                "%d of %d pairs (%d rows) have a zero-byte window, so the "
-                "question for most of the population is the head of the "
-                "neighbouring export"
-                % (EXPECT_ZERO_GAP_PAIRS, len(live), EXPECT_ZERO_GAP_ROWS))
-    assert_that(sum(1 for r in live if r["neighbour_edge"])
-                == EXPECT_NEIGHBOUR_EDGE,
-                "%d pairs' callee is already reached from the same scope under "
-                "another function" % EXPECT_NEIGHBOUR_EDGE)
-    assert_that(sum(1 for r in live if r["transfers"]) == 12,
-                "12 windows carry a transfer that lands somewhere other than "
-                "the named callee -- reported per pair, not pooled with the "
-                "112 that carry none")
+    # The three verdicts partition, and the shapes the write-up's figures describe.
+    assert_that(len(live) == len(pop_pairs)
+                and {r["verdict"] for r in live} == set(by_verdict)
+                and sum(len(v) for v in by_verdict.values()) == len(live),
+                "the three verdicts partition the population exactly: it "
+                "classifies the pairs `population()` returned, every pair "
+                "carries one of the three, and none is left unclassified")
+    zero_gap_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
+                     if r["gap"] == "0"}
+    abut_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
+                 if r["next"] and int(r["next"], 16) == listing_end(
+                     os.path.join(cg.DECOMPILED, r["citer_scope"],
+                                  r["citer_addr"] + ".asm"))}
+    assert_that(zero_gap_rows and zero_gap_rows == abut_rows
+                and all(int(r["next"], 16) - int(r["end"], 16) == int(r["gap"])
+                        for r in live if r["next"]),
+                "a zero-byte window is a shape, not a tally: the citing rows the "
+                "report reads a zero `gap` for are exactly the ones whose listing "
+                "ends where the next export in their own scope begins, read back "
+                "from the committed listings -- which is why for those rows the "
+                "question is the head of the neighbouring export")
+
+    def booked_under_another(r):
+        """The callee's inbound edges booked from the citing row's own scope
+        under a *different* function -- what the `neighbour_edge` column is."""
+        return [edge for edge in ctx.edges.get(
+            (r["callee_scope"], r["callee_addr"]), ())
+            if edge[0] == r["citer_scope"] and edge[1] != r["citer_addr"]]
+
+    booked = {pair_key(r) for r in live if booked_under_another(r)}
+    assert_that(booked and booked == {pair_key(r) for r in live
+                                      if r["neighbour_edge"]}
+                and all(r["neighbour_edge"]
+                        in {"%s:%s %s" % e for e in booked_under_another(r)}
+                        for r in live if r["neighbour_edge"]),
+                "the `neighbour_edge` column is filled for exactly the pairs "
+                "whose callee the graph already reaches from the same scope under "
+                "another function, and names one of those edges -- the graph "
+                "attributing to a neighbour what the comment attaches here")
+    carries = [r for r in live if r["transfers"]]
+    assert_that(carries
+                and all(r["hit_site"] == "" for r in carries
+                        if r["verdict"] != "boundary-cut")
+                and all("0x%04X %s" % (int(r["hit_site"], 16), r["hit_text"])
+                        in r["transfers"].split("; ")
+                        for r in carries if r["hit_site"]),
+                "some windows do carry a transfer, and where one does it lands "
+                "somewhere other than the named callee -- \"a transfer is there, "
+                "but not the one named\" stays a reading of its own, reported "
+                "per pair rather than pooled with the windows that carry none")
     assert_that(all(int(r["db"]) == 0 for r in live if r["verdict"] != "not-code"),
                 "no window outside the `not-code` pair has a `db` at an "
                 "instruction start, which is why the looser `db` form of the "
@@ -859,10 +934,19 @@ def self_test():
                         for r in pd_row),
                 "and a `pd` citer against its own image: pd,1041 ends 0x104D and "
                 "the next pd entry is 0x104D")
-    assert_that(len({(r["citer_scope"], r["citer_addr"]) for r in live
-                     if r["citer_scope"] == "common"}) == EXPECT_COMMON_CITERS,
-                "%d `common` citers, whose window is the common scope's boundary"
-                % EXPECT_COMMON_CITERS)
+    live_by_scope = by_scope_of(ctx)
+    common_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
+                   if r["citer_scope"] == "common"}
+    common_boundary = {key: next_entry(live_by_scope, "common", int(key[1], 16))
+                       for key in common_rows}
+    assert_that(common_rows and all(
+        b is not None and r["next"] == "%04X" % b
+        for r in live if r["citer_scope"] == "common"
+        for b in [common_boundary[(r["citer_scope"], r["citer_addr"])]]),
+        "every `common` citer's next entry is the next *common*-scope export, "
+        "so its window is the common scope's boundary rather than the "
+        "executing bank's -- which is the reading the whole `common` scope "
+        "split exists to report on")
     # ... and the consequence of reading "the next exported entry in that
     # program" as the citing row's own scope, counted rather than resolved.
     by_scope = {"common": [0x05E7], "bank0": [0x05E6, 0x05E8, 0x9CA6],
@@ -875,29 +959,25 @@ def self_test():
                 and nearer_in_bank(by_scope, "bank0", 0x9C48, 0x9CA6) == "",
                 "and reports nothing when no bank entry is nearer, or the citer "
                 "is not a `common` one")
-    common_rows = {(r["citer_scope"], r["citer_addr"]) for r in live
-                   if r["citer_scope"] == "common"}
     common_zero = {k for k in common_rows
                    if all(r["gap"] == "0" for r in live
                           if (r["citer_scope"], r["citer_addr"]) == k)}
     common_nonzero = common_rows - common_zero
-    assert_that(len(common_zero) == EXPECT_COMMON_ZERO_GAP
-                and common_nonzero == {("common", EXPECT_COMMON_NONZERO_CITER)},
-                "%d of the %d `common` citers are zero-gap and the only one "
-                "that is not is common,%s -- the second `boundary-cut`, so the "
-                "common listing that abuts its neighbour is the exception here "
-                "rather than the rule"
-                % (EXPECT_COMMON_ZERO_GAP, EXPECT_COMMON_CITERS,
-                   EXPECT_COMMON_NONZERO_CITER))
-    live_by_scope = by_scope_of(ctx)
-    shorter = sum(1 for r in live if r["citer_scope"] == "common"
-                  and nearer_in_bank(live_by_scope, "common",
-                                     int(r["citer_addr"], 16), int(r["next"], 16)))
-    assert_that(shorter == EXPECT_COMMON_SHORTER_IN_BANK,
-                "and the report's own count of them agrees: %d `common` citers "
-                "have a bank-scope entry nearer than the common boundary, which "
-                "is what the re-export would have to change for this to move"
-                % shorter)
+    assert_that(common_nonzero == {("common", EXPECT_COMMON_NONZERO_CITER)},
+                "every `common` citer's listing abuts the next common entry "
+                "except the one named here, common,%s -- which is the second "
+                "`boundary-cut`, so the abutting listing is the rule and this "
+                "row is the exception the assertion has to carry"
+                % EXPECT_COMMON_NONZERO_CITER)
+    nearer = [(r["citer_scope"], r["citer_addr"]) for r in live
+              if r["citer_scope"] == "common"
+              and nearer_in_bank(live_by_scope, "common",
+                                 int(r["citer_addr"], 16), int(r["next"], 16))]
+    assert_that(not nearer,
+                "and no `common` citer has a bank-scope entry nearer than the "
+                "common boundary -- the consequence of reading \"the next "
+                "exported entry in that program\" as the citing row's own "
+                "scope, reported rather than silently resolved, and empty here")
 
     # The report's own table, through the same render/compare `--check` runs.
     text = render(live)

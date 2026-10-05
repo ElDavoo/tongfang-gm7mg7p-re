@@ -234,6 +234,16 @@ edit is the one that landed.
   totals moved by #944's 22 cases and the suite with them, and **this issue
   changed no suite's case count** — the rename is a rename, which is why `30`
   above is the same number here.)*
+- The `{}` route above is now covered by a **second** suite rather than only by
+  this one. `name_clusters()` had no case at all, and both of its callers inside
+  the tool seed it with `load_cluster_names()` rather than with `{}` — so #959
+  added `ec/tools/test_xdata_name_clusters_route.py` for the seeded route and
+  **left this case and its `{}` route untouched**. The `{}` route is what the
+  restatement above is about and its comment says so; replacing it would delete
+  the case the restatement exists for and the derived exhibits it is the record
+  of. Both routes are correct and disagreeing by construction is the design, so
+  the disagreement is only assertable while both exist. See
+  [`xdata-name-clusters-seeded-route.md`](xdata-name-clusters-seeded-route.md).
 - `ec/annotations/registers.yaml` is untouched. No register's status moved, and
   nothing here is a live register observation.
 - Nothing was re-derived or renamed at the census level. The `main-ec-NNN` ranks
