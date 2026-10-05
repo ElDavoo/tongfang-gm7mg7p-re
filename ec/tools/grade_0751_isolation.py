@@ -765,10 +765,14 @@ CONTEXT = (
 # is in no row, and what this tool knows about it is that no row was written
 # -- not that it did not move. §3's own pacing note puts a number on the
 # interval and declines to put one on the sweep: `--interval` is slept
-# *between sweeps*, one sweep of the three watchers is 448 ECRR reads, and
-# issue #94 owns how long that takes. So the per-byte period is `--interval`
-# plus a duration nothing here measures, and the wider bracket that closes
-# part of it is `--dump-pair` -- complementary, not stronger.
+# *between sweeps*, one sweep of the three watchers is 448 ECRR reads, and how
+# long that takes is still not measured here. `ec_watch.py` now also sleeps
+# `--gap-ms` between its own reads (#94), which is a conservative default taken
+# from a sibling board rather than a figure measured on this machine, and
+# `manual_fan_ctrl_probe.py`, which those three watchers run beside, is still
+# unpaced. So the per-byte period is `--interval` plus a duration nothing here
+# measures, and the wider bracket that closes part of it is `--dump-pair` --
+# complementary, not stronger.
 #
 # The parenthetical token beside the figures (`(0 changes)`) is left as it is:
 # it counts what the report counted, which is true, and two committed cases
