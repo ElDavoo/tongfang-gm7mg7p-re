@@ -11,9 +11,10 @@
    bit 4, and calls 0x163C with R5=0x84, but only when bits 3 and 4 of 0x07C4 differ from each other
    or either byte of 0x07D4/0x07D5 differs from 0x09EA/0x09EB. 0x09EA and 0x09EB have entries in
    ec/annotations/registers.yaml (XDATA_09EA, XDATA_09EB, both present-untested) as of issue #264,
-   each with one direct writer, at 0x96F8 and 0x9700 in this image's 0x96AD; 0x09E9 still has no
-   entry, so what this routine copies out of it is not determined here. The byte it is synced into,
-   0x0788, is carried there as CTWA at present-untested (issue #30,
+   each with one direct writer, at 0x96F8 and 0x9700 in this image's 0x96AD; 0x09E9 carries
+   XDATA_09E9, also present-untested, with two direct writers rather than one --
+   ec/annotations/ec-09e9-writers.md reconciles them and traces what this copy reaches. The byte it
+   is synced into, 0x0788, is carried there as CTWA at present-untested (issue #30,
    ec/annotations/dsdt-ecmg-field-sweep.md).
    type: state
    evidence: ec/decompiled/bank0/83FF.asm; ec/decompiled/bank0/83FF.c; ec/annotations/registers.yaml
@@ -38,8 +39,8 @@ void sync_0788_and_07d4_from_09e9(void)
     WHMS = WHMS & 0xbf;
     load_dptr_88f0_tail_jump_1114(0x85);
   }
-  if (DAT_EXTMEM_09e9 != CTWA) {
-    CTWA = DAT_EXTMEM_09e9;
+  if (XDATA_09E9 != CTWA) {
+    CTWA = XDATA_09E9;
     load_dptr_88f0_tail_jump_1114(0x83);
   }
   if (((CTGP_DB_CTRL & 1) != 0) &&

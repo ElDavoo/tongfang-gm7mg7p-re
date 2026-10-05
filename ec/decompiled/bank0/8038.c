@@ -33,8 +33,8 @@ void index_table_base(char *param_1)
     WHMS = WHMS & 0xbf;
     load_dptr_88f0_tail_jump_1114(0x85);
   }
-  if (DAT_EXTMEM_09e9 != CTWA) {
-    CTWA = DAT_EXTMEM_09e9;
+  if (XDATA_09E9 != CTWA) {
+    CTWA = XDATA_09E9;
     load_dptr_88f0_tail_jump_1114(0x83);
   }
   if (((CTGP_DB_CTRL & 1) != 0) &&

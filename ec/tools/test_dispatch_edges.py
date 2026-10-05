@@ -284,12 +284,20 @@ class ClosureIntegrationTests(unittest.TestCase):
             self.assertEqual(linker_named, seeds[bank])
 
     def test_a_table_derived_entry_point_names_a_real_site(self):
+        """What is left after the non-table kinds are set aside is exactly the
+        table-derived entry points, so `de.KINDS` is the whole of what they may
+        be. `common` joins `call` and `trampoline` in the skip for what it is:
+        a common-area callee this closure followed as a same-bank continuation,
+        named by the entry point that reached it rather than read out of a table.
+        Widening `de.KINDS` instead would admit a provenance value that module
+        never emits and deflate its own self-test, which asserts every edge it
+        produces is one of them."""
         seeds = ba.seeds_for(ba.survey(D)[2])
         for bank in (0, 1):
             _reached, _who, entries, _cuts, _common = ba.closure(
                 D, bank, seeds[bank])
             for addr, (kind, frm) in entries.items():
-                if kind in ("call", "trampoline"):
+                if kind in ("call", "trampoline", "common"):
                     continue
                 self.assertIsNotNone(frm, f'0x{addr:04X} ({kind})')
                 self.assertIn(kind, de.KINDS)
