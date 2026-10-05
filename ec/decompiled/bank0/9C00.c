@@ -23,7 +23,7 @@ void clear_09e9_unless_0743_bit2(void)
   
   copy_code_table_into_0730_07a7(7);
   if ((CTGP_DB_CTRL >> 2 & 1) != 1) {
-    DAT_EXTMEM_09e9 = 0;
+    XDATA_09E9 = 0;
   }
   puVar1 = &DAT_EXTMEM_08ad;
   if ((DAT_EXTMEM_08ad & 1) != 1) {
