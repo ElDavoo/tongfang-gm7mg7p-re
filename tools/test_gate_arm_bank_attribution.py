@@ -30,14 +30,21 @@ borrowed. The one thing this file *does* import is
 rather than a test helper precisely because it is the authority on what a gate
 claim is; see `DocstringClaimTests`.
 
-**Why this arm is not redundant with a committed suite, which the sibling's
-was.** `ec/tools/test_dispatch_edges.py` imports `bank_attribution` and drives
-it as a subprocess, but only with `--regions-csv` and `--pairs-csv`; nothing in
-the tree runs `--self-test`. Measured on the committed tree, breaking `main()`'s
-`if args.self_test: return self_test(d)` makes the shipped command exit 0 having
-printed the tool's own report and no `self-test passed` line, while both of
-those suites stay green; forcing one hand-decoded pin's condition false turns
-the command red while they stay green again. Both rows are in
+**What is not exercised by any committed suite is the shipped command.** That
+is narrower than "the checks are unasserted", and the difference is measured.
+`ec/tools/test_bank_attribution_common_follow.py` is committed, is found by
+`tools/run-tests.sh`, runs in CI, and `TheSelfTest::test_it_passes` calls
+`self_test()` in-process over the committed image and asserts the status -- so
+the stub decoding, the seed census and the hand-decoded pins, all of them checks
+*inside* `self_test()`, are already red on a sweep that breaks any of them.
+`ec/tools/test_dispatch_edges.py` imports `bank_attribution` and drives it as a
+subprocess, but only with `--regions-csv` and `--pairs-csv`. Measured on the
+committed tree, breaking `main()`'s `if args.self_test: return self_test(d)`
+makes the shipped command exit 0 having printed the tool's own report and no
+`self-test passed` line, and every one of those suites stays green, because
+none of them goes through `main()`, `argparse` or the exit status; forcing one
+hand-decoded pin's condition false turns the command red and
+`TheSelfTest::test_it_passes` with it. Both rows are in
 `docs/findings/bank-attribution-gate-arm.md`; the mutation table below is the
 same one.
 

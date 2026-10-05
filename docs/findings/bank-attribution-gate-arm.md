@@ -20,22 +20,21 @@ So: **one arm, folded into `agent-gates-reassembly-bound-check.patch`.** The cor
 
 **A consequence worth stating, because the issue says otherwise.** The issue carries an edit to `tools/test_agent_gates_patches.py`'s `PATCHES` list on the grounds that a new patch file turns that suite red. That clause holds only under the reading this measurement rejects: no new file exists, so the list is unchanged. What replaces it is a retention suite of its own, below.
 
-## What the arm buys — and it is more than the sibling's
+## What the arm buys, and how that compares with the sibling's
 
-The sibling fold's first cut claimed its arm was "what first notices a different dump", and `audit-call-targets-gate-arm.md` retracts that: `ec/tools/test_audit_call_targets.py` is committed, is found by `tools/run-tests.sh`, and already asserts the status its self-test returns. **That retraction does not transfer here, and the difference was measured rather than assumed.**
+The sibling fold's first cut claimed its arm was "what first notices a different dump", and `audit-call-targets-gate-arm.md` retracts that: `ec/tools/test_audit_call_targets.py` is committed, is found by `tools/run-tests.sh`, and already asserts the status its self-test returns. **That retraction does not transfer here, and the difference was measured rather than assumed** — but the difference is not the one an earlier cut of this section claimed, and naming it correctly is what the measurement below turns on.
 
-There is no `ec/tools/test_bank_attribution.py`. `ec/tools/test_dispatch_edges.py` imports the module and drives it as a subprocess, but only with `--regions-csv` and `--pairs-csv`. Measured on the committed tree:
+There is no `ec/tools/test_bank_attribution.py`. `ec/tools/test_dispatch_edges.py` imports the module and drives it as a subprocess, but only with `--regions-csv` and `--pairs-csv`. The checks themselves are not unasserted, though: `ec/tools/test_bank_attribution_common_follow.py` is committed, is found by `tools/run-tests.sh`, runs in CI's `tests` job, and `TheSelfTest::test_it_passes` calls `self_test()` in-process over the committed image and asserts the status. The stub→bank decoding, the seed census and both hand-decoded pins are checks *inside* `self_test()`, so that one assertion covers all three. Measured on the committed tree:
 
-| mutation to `bank_attribution.py` | shipped `--self-test` | `test_dispatch_edges.py` | `test_census_closure_functions.py` |
-|---|---|---|---|
-| `main()`'s `if args.self_test: return self_test(d)` no longer calls `self_test()` | exits 0, printing the tool's report with no `self-test passed` line | **green** | **green** |
-| one hand-decoded pin's condition forced false | exits 1 | **green** | **green** |
+| mutation to `bank_attribution.py` | shipped `--self-test` | `test_dispatch_edges.py` | `test_census_closure_functions.py` | `test_bank_attribution_common_follow.py` |
+|---|---|---|---|---|
+| `main()`'s `if args.self_test: return self_test(d)` no longer calls `self_test()` | exits 0, printing the tool's report with no `self-test passed` line | **green** | **green** | **green** |
+| one hand-decoded pin's condition forced false | exits 1 | **green** | **green** | **red** — `TheSelfTest::test_it_passes` |
 
-Both mutations were made on a copy of the committed tree, and neither was left
-in it. **So the stub decoding, the seed census and the hand-decoded pins are
-proven by `ec/annotations/bank-attribution.md` and by nothing else in this
-repository** — which is the gap the issue describes, and unlike the sibling's it
-is real.
+Neither mutation was left in the tree, and the last column's cells were measured
+rather than carried over from the first two. **So the checks are already asserted in CI, transitively, and what nothing committed exercises is the shipped command's path** through `main()`, `argparse` and the exit status — `TheSelfTest` calls `self_test()` in-process and reaches none of the three, which is why the first row leaves it green. That is the gap the issue describes, and it is the gap this arm closes.
+
+An earlier cut of this section generalised from the two suites its table named to the whole tree, and concluded the checks were "proven by `ec/annotations/bank-attribution.md` and by nothing else in this repository." That was wrong in the way CLAUDE.md's calibration rule is about: it had measured the two suites it named and read the result as a census of the suites it did not. The distinction that survives measurement is the shipped-command path, not the absence of any committed assertion — which is the same ground the sibling's retraction stands on, so this arm adds what the sibling's adds rather than more than it, and the earlier "unlike the sibling's" framing is withdrawn on both counts.
 
 The first row is the sharp one, and **catching it takes both halves of what the arm reads.** A command that exits 0 having printed its report is green to `|| rc=1`, so the landed call writes the command's stdout to `$scratch` and greps it for the `self-test passed` line the tool prints on success. What the row measures is the tool falling through to its ordinary report path, not silence — so the failure a reader meets is a full, plausible-looking account of the image on stdout and a green gate, and that is the more dangerous of the two shapes precisely because nothing looks broken. (`return 0` in place of the dispatch does print nothing and is caught the same way; it is a different mutant and it is not the one named above.) The second row is caught by the status on its own. `tools/test_gate_arm_bank_attribution.py::ArmBehaviourTests` runs the landed block against a stub for each row rather than leaving this table to be the only evidence, the same arrangement the sibling suite uses for its own.
 

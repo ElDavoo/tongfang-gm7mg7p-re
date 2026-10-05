@@ -188,19 +188,31 @@
 # on, which is the tool's own opening paragraph and is not what these two checks
 # are for.
 #
-# What `bank_attribution.py --self-test` buys, and what it does not. **Unlike
-# the call above, this one is not redundant with a committed suite, and that was
-# measured rather than inherited.** There is no `ec/tools/test_bank_attribution.py`;
+# What `bank_attribution.py --self-test` buys, and what it does not. **An
+# earlier cut of this header said this call "is not redundant with a committed
+# suite" and that the pins, the stub decoding and the seed census "are proven by
+# `ec/annotations/bank-attribution.md` and by nothing else". That was wrong, and
+# it is corrected here rather than dropped: it had measured two suites and read
+# the result as a census of the tree.**
+# `ec/tools/test_bank_attribution_common_follow.py` is committed, is found by
+# `tools/run-tests.sh`, runs in CI, and `TheSelfTest::test_it_passes` calls
+# `self_test()` in-process over the committed image and asserts the status --
+# so the stub decoding, the seed census and the hand-decoded pins, all of which
+# are checks *inside* `self_test()`, are already asserted in CI. Measured by
+# mutation on the committed tree, forcing one hand-decoded pin's condition false
+# turns that suite red on `TheSelfTest::test_it_passes`.
 # `ec/tools/test_dispatch_edges.py` imports the module and drives it as a
-# subprocess, but only with `--regions-csv` and `--pairs-csv`. Nothing in the tree
-# runs `--self-test`: on the committed tree, breaking `main()`'s
-# `if args.self_test: return self_test(d)` makes the shipped command exit 0
-# having printed the tool's own report and no `self-test passed` line, while
-# both of those suites stay green; forcing one
-# of the hand-decoded pins false turns the command red while they stay green
-# again. So the pins, the stub decoding and the seed census are proven by
-# `ec/annotations/bank-attribution.md` and by nothing else, which is what this
-# arm is for.
+# subprocess, but only with `--regions-csv` and `--pairs-csv`.
+#
+# What this call adds is the same narrower thing the call above adds, not more:
+# it runs the SHIPPED COMMAND as a process, where every one of those suites
+# calls `self_test()` in-process and so never goes through `main()`, `argparse`
+# or the exit status. Breaking `main()`'s `if args.self_test: return
+# self_test(d)` leaves all of them green, and **the transcript assertion is
+# what catches it**: the command exits 0 having printed the tool's own report
+# with no `self-test passed` line on it, which an arm reading only `|| rc=1`
+# calls green -- so the call greps the transcript for its `self-test passed`
+# line as well as reading the status. That gap is what this arm is for.
 #
 # It still does not settle the banking assumption the tool exists to attack. The
 # closure's four verdicts over both populations are re-derived from the committed
