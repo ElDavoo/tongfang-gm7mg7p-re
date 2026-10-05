@@ -254,6 +254,48 @@ def line_of(path: str, lineno: int) -> str:
     return lines[lineno - 1] if 0 < lineno <= len(lines) else ""
 
 
+def resolve_how(path: str, lineno: int, want: str):
+    """(how, the line `resolve` picked, every line carrying `want`).
+
+    The sibling `resolve()` is built on, and the reason it exists: `resolve()`
+    answers *which line*, and drops the question of *how it decided*, which is
+    the question a citation whose claim is about a position cannot afford to
+    drop. Four answers, and the third is the one a bare `ok` was hiding:
+
+      * ``exact`` -- the recorded number is itself a carrying line, so the text
+        and the number agree and nothing had to be chosen;
+      * ``moved`` -- one line carries the text and it is not the recorded one.
+        The text found its own line; the number is a stale hint and the reader
+        is told the new one;
+      * ``ambiguous`` -- several lines carry the text and the recorded number
+        names none of them, so `resolve()`'s nearest-line fallback picked one
+        on distance alone. **Nothing is wrong and nothing is proven wrong**:
+        the claim may name the line it landed on perfectly. What is missing is
+        the one thing a pin whose claim is about a position needs -- a number
+        that can say which line is meant. Reported, never failed on; see
+        `ambiguous_citations`;
+      * ``gone`` -- no line carries the text, which is the claim failing and is
+        a different thing from the third, not a fourth way of saying it.
+        "Not found by this method" is not "ambiguous", and collapsing the two
+        would overclaim in the direction that hides a broken claim.
+
+    The split is the whole point, so it is worth being exact about what
+    ``ambiguous`` does *not* mean: it does not mean the citation is wrong, and
+    a tool that printed it in the same column as a failure would be making a
+    claim it has not earned. `docs/findings/0769-citation-ambiguity-and-what-a-red-means.md`
+    is the measurement, and `test_measure_mark_provenance_ambiguity.py` the
+    cases."""
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines()
+    hits = [n for n, text in enumerate(lines, 1) if want in text]
+    if not hits:
+        return "gone", None, hits
+    if 0 < lineno <= len(lines) and want in lines[lineno - 1]:
+        return "exact", lineno, hits
+    found = min(hits, key=lambda n: abs(n - lineno))
+    return ("moved" if len(hits) == 1 else "ambiguous"), found, hits
+
+
 def resolve(path: str, lineno: int, want: str):
     """The line that carries `want`, found by its text: `lineno` when that line
     still carries it, else the one line in the file that does, else the
@@ -266,15 +308,14 @@ def resolve(path: str, lineno: int, want: str):
     firmware work in it after the same pin drifted three times. The text is
     still the whole check, and a quoted text that is gone from the file is the
     claim failing. The number is a hint for a reader, and the tool prints the
-    line it found."""
-    with open(path, encoding="utf-8", errors="replace") as f:
-        lines = f.read().splitlines()
-    if 0 < lineno <= len(lines) and want in lines[lineno - 1]:
-        return lineno
-    hits = [n for n, text in enumerate(lines, 1) if want in text]
-    if not hits:
-        return None
-    return min(hits, key=lambda n: abs(n - lineno))
+    line it found.
+
+    Which of the four states of `resolve_how()` that answer falls in is not
+    visible here, and that is the deliberate limit of this signature: the
+    nearest-line fallback is a choice the caller may not be entitled to make
+    silently. A caller that holds a claim about a *position* asks
+    `resolve_how()` and is told."""
+    return resolve_how(path, lineno, want)[1]
 
 
 def row_sites():
@@ -743,6 +784,13 @@ CITATIONS = [
     ("windows/tools/test_manual_fan_ctrl_probe.py", 510,
      'if len(r) == 4 and r[1] == "MARK"]',
      "reader: the only exact-column-count filter in the tree"),
+    ("ec/tools/test_grade_0751_skip_rule.py", 136,
+     '`row[1] == "MARK"` branch. A `#` *annotation* line carries no `MARK` in',
+     "reader: the one place the tree writes down that `mark_labels_of`'s skip "
+     "rule and its `MARK` branch can drop the same row, which is the fact that "
+     "suite's fixture is built around -- a `#` annotation line is one the branch "
+     "drops alone, so a fixture of those cannot tell the rule from the branch. "
+     "A test assertion restating a reader's test, not a second reader"),
     # -- the spelling the literal scan cannot see ----------------------------
     ("windows/tools/test_ec_watch.py", 454,
      "self.assertEqual([r.split(',')[3] for r in rows if ',MARK,' in r],",
@@ -768,20 +816,57 @@ CITATIONS = [
     ("ec/tools/grade_0751_isolation.py", 1238, "if starts_with_bom(raw):",
      "read_capture refusing a byte-order mark before it decodes a byte of the "
      "buffer, which is what keeps the header out of the row shape's data rows"),
-    ("ec/tools/grade_0751_isolation.py", 1242, "if skippable_row(row):",
-     "read_capture calls that one skip rule rather than spelling it"),
+    # Each pin below quoted `if skippable_row(row):`, which the grader spells
+    # at every reader that takes that rule, so each was resolved by whichever
+    # spelling sat nearest its recorded number -- and two of them landed in a
+    # function their claim does not name, while the tool printed `ok` on both.
+    # The one claiming `read_capture` was right by ordering rather than by
+    # text. They now quote the line in each function that names the rule in
+    # words, which is text that carries its function with it: the quoted text
+    # is inside the reader, so it cannot resolve into another one and no number
+    # has to be right for it to. `ambiguous_citations()` prints the spellings.
+    #
+    # **What this trades, stated rather than left for a reader to find.** The
+    # call site was the evidence and a docstring is a statement about it, so a
+    # deletion of the call that left the prose would leave these green. What
+    # holds each reader's rule is named rather than assumed, and the naming is
+    # a measurement: deleting the call site and re-running the suite is what
+    # found that `mark_labels_of`'s had nothing behind it.
+    # `test_grade_0751_skip_rule.py` holds all three, each at its own call site,
+    # on a capture carrying a mark row an operator commented out -- a row the
+    # `#` test exists for and the only skippable row that is also a mark row,
+    # so nothing but the rule stands between it and a label the notice prints.
+    # `test_the_refusal_reasons_are_read_captures_own` holds
+    # `read_capture`'s and the partition's independently, and
+    # `skippable_row`'s own definition is pinned above. The alternative was to
+    # leave pins whose resolution depends on where a sixth identical line
+    # happens to be.
+    ("ec/tools/grade_0751_isolation.py", 1318,
+     "come from `rows_from_bytes`, the ones to drop from `skippable_row`, and",
+     "read_capture's docstring naming the one rule it drops rows by, so the "
+     "reader takes that rule rather than spelling it -- was pinned to the call "
+     "itself, whose text every reader that takes it shares"),
+    ("ec/tools/grade_0751_isolation.py", 1570,
+     "rule is `skippable_row`'s, which is the duplication #548 left and the row",
+     "mark_labels_of takes that one skip rule, so existing_mark_labels -- which "
+     "delegates its extraction to it -- cannot spell a second copy; its docstring "
+     "naming the rule, for the reason the call site was given up above"),
+    ("ec/tools/grade_0751_isolation.py", 1667,
+     "that same stream's `skippable_row`, so the shape is not spelled here a",
+     "and so does the partition, over the notice's own read -- "
+     "`partition_capture_rows`'s docstring naming the same rule, for the same "
+     "reason the others quote prose rather than a call they share"),
     ("ec/tools/grade_0751_isolation.py", 1413, "if len(row) < 4:",
-     "read_capture's only length test: a fifth column passes it"),
+     "the strict reader's only length test, which lives in `take_capture_row` "
+     "since #749 split that body out of `read_capture`: a fifth column passes "
+     "it. Was worded as `read_capture`'s, which is the function whose rule it "
+     "is and not the one the line is in -- the same shape of slip as the "
+     "skip-rule pins above, on a claim the ambiguity report had been hiding"),
     ("ec/tools/grade_0751_isolation.py", 1415,
      "ts, addr, old, new = row[0], row[1], row[2], row[3]",
      "explicit indexing, not an unpack of row -- the correction to the issue"),
     ("ec/tools/grade_0751_isolation.py", 1248,
      "def existing_mark_labels(path):", "existing_mark_labels"),
-    ("ec/tools/grade_0751_isolation.py", 1436, "if skippable_row(row):",
-     "mark_labels_of takes that one skip rule, so existing_mark_labels -- which "
-     "delegates its extraction to it -- cannot spell a second copy"),
-    ("ec/tools/grade_0751_isolation.py", 1531, "if skippable_row(row):",
-     "and so does the partition, over the notice's own read"),
     ("ec/tools/grade_0751_isolation.py", 1439,
      'out.append((row[0], row[3] if len(row) > 3 else ""))',
      "the (ts, label) pair: no position, and no fifth column either"),
@@ -886,11 +971,44 @@ def site_arity(sites, who: str) -> None:
                 "the same ValueError from a for-loop instead of naming it.")
 
 
+def ambiguous_citations() -> list:
+    """The citations whose recorded number cannot say which line is meant, as
+    `(path, lineno, found, hits, what)`.
+
+    **Reported, and never a failure.** A citation whose quoted text is carried
+    by several lines of its file and whose number names none of them has been
+    resolved by proximity, and a number that cannot name a line is exactly the
+    situation a claim about a *position* cannot be checked in. Failing it
+    would also be self-defeating: the text being present is the citation's
+    whole check since 2026-10-03, and a stale number is the state almost every
+    pin is in after any merge that grows a cited file above it. Making that an
+    exit-1 would redden every such merge -- the churn
+    `check_citation_lines.py`'s Rule 3 was rewritten to stop, arriving by the
+    citation table rather than by the CSV rows.
+
+    So this is a third column beside the rows and not a verdict on them: a
+    reader is told which lines were candidates and left to say which one the
+    claim is about. What *is* held is the claim, and it is held where the
+    claim can fail -- `test_measure_mark_provenance_ambiguity.py` asserts that
+    no committed citation whose text names a function resolves into a
+    different one."""
+    out = []
+    for path, lineno, want, what in CITATIONS:
+        how, found, hits = resolve_how(os.path.join(REPO, path), lineno, want)
+        if how == "ambiguous":
+            out.append((path, lineno, found, hits, what))
+    return out
+
+
 def check_citations(scan: set) -> list:
     """Every citation's problems: a line whose text has drifted, a row site
     the scan found and no citation names, and a row citation the scan no
     longer finds. Loud rather than quiet in all three, because each is a fact
-    the page's prose rests on."""
+    the page's prose rests on.
+
+    An ambiguous citation is deliberately *not* one of these three; it is
+    reported by `ambiguous_citations()` and printed beside these rather than
+    added to them, and `resolve_how()`'s docstring says why."""
     problems = []
     named = set()
     for path, lineno, want, what in CITATIONS:
@@ -1199,8 +1317,9 @@ def main(argv=None) -> int:
     scan = {(p, n) for p, n, _ in writers + readers}
     problems = check_citations(scan)
     for path, lineno, want, what in CITATIONS:
-        found = resolve(os.path.join(REPO, path), lineno, want)
-        mark = "ok " if found is not None else "GONE"
+        how, found, _hits = resolve_how(os.path.join(REPO, path), lineno, want)
+        mark = {"exact": "ok ", "moved": "ok*", "ambiguous": "ok?",
+                "gone": "GONE"}[how]
         print(f"   {mark}  {path}:{found if found is not None else lineno}  {what}")
     for problem in problems:
         print(f"   {problem}")
@@ -1211,6 +1330,17 @@ def main(argv=None) -> int:
     if problems:
         print(f"   {len(problems)} citation problem(s)", file=sys.stderr)
         return 1
+    print("   `ok` the quoted text is at the number; `ok*` one line carries it and\n"
+          "   the number is a stale hint, so the line shown is the one the text\n"
+          "   found; `ok?` several lines carry it and the number names none of\n"
+          "   them, so the line shown is the nearest rather than the one the claim\n"
+          "   is about. The last two are reported, not failed -- the text is\n"
+          "   present, which is the check since 2026-10-03 -- and the candidates\n"
+          "   behind every `ok?` are:")
+    for path, lineno, found, hits, what in ambiguous_citations():
+        carried = ", ".join(f"{repo_path(path)}:{n}" for n in hits)
+        print(f"     {carried}  (shown {found}, recorded {lineno})")
+        print(f"       {what}")
     print(f"   {len(CITATIONS)} citations resolve by their quoted text, the "
           f"row-site join closes both ways,\n   and "
           f"{' and '.join(repo_path(p) for p in args.page)} name every one "
