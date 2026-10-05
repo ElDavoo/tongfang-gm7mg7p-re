@@ -397,7 +397,7 @@ table.
 | `0x52`/`0x53` | `anl direct,a` / `anl direct,#data` | 2 / 3 | `0x86`/`0x87` | `mov direct,@Ri` | 2 |
 | | | | `0x96`/`0x97` | `subb a,@Ri` | 1 |
 | | | | `0xa5` | **unassigned** | — |
-| | | | `0xa6`/`0xa7` | `mov @Ri,#data` | 2 |
+| | | | `0xa6`/`0xa7` | `mov @Ri,direct` | 2 |
 | | | | `0xb6`/`0xb7` | `cjne @Ri,#data,rel` | 3 |
 | | | | `0xd4` | `da a` | 1 |
 | | | | `0xf4` | `cpl a` | 1 |
@@ -425,7 +425,20 @@ table.
 > first correction gave for rejecting it is not true. What that correction got
 > right, and what is why the number moved twice rather than once, is that the
 > enumeration underneath it was incomplete — that part stands.
-
+>
+> **Corrected on the `0xa6`/`0xa7` row, which was the wrong name rather than a
+> wrong count.** The row read `mov @Ri,#data`, which would make those two a second
+> spelling of the `0x76`/`0x77` pair already in this table and break the
+> symmetry with `0x86`/`0x87`. The manual assigns them `mov @Ri,direct` at 2
+> bytes, and three committed tools carried it that way before
+> [mnemonic-db-fallthrough-coverage.md](mnemonic-db-fallthrough-coverage.md)
+> named the pair: `iram_boot_sites.py`'s `RI_TABLE` puts the `#` on
+> `0x76`/`0x77` and not on `0xA6`/`0xA7`, `dptr_rebuild_forms.py` carries
+> `mov  @r0,direct`/`mov  @r1,direct`, and `verify_gap_text.py` annotates both
+> rows `# MOV @Ri,direct`. The Ghidra listings agree — `a7 f0` as `mov @R1, B`,
+> whose `B` is an SFR name and so cannot be an immediate, against `76 02` as
+> `mov @R0, #0x2` in the same corpus. The length, 2, was and is right.
+>
 > **Corrected.** "r2 gives every one of the 34 a name and marks `0xa5`
 > `type: \"invalid\"`" was read as r2 agreeing that all 34 are assigned. It does
 > the opposite: r2 names `0x96`/`0x97` `subb a,@Ri` and marks only `0xa5`
@@ -826,8 +839,9 @@ python3 ec/tools/opcode_coverage.py --csv /tmp/opcodes.csv
   *(That gap is now closed — `mnemonic()` names every value the manual assigns,
   and what reaches `db` is the one value it does not. The separate question
   stands: which of two names for a value the walk reached over data is right is
-  not answered here, and naming `0xA6`/`0xA7` after the listings did not settle
-  the manual's erratum row.)*
+  not answered here. Naming `0xA6`/`0xA7` `MOV @Ri,direct` was not a reading
+  against the manual — the manual assigns that too, and the `#data` name was this
+  table's own mis-transcription, corrected above.)*
 - **It does not say the framing is right.** That every length agrees means a
   linear walk stays in step, not that a walk starting at the right offset is
   decoding code rather than data. `converges_from()` is the framing evidence and

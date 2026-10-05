@@ -59,34 +59,34 @@ here and was not used.)
 
 | op | MCS-51 | len | renders as | listing row it was read from |
 |---|---|---:|---|---|
-| `0x06` | `INC @R0` | 1 | `inc  @r0` | `ec/decompiled/bank0/B065.asm:32` — `inc @R0` |
-| `0x07` | `INC @R1` | 1 | `inc  @r1` | `ec/decompiled/bank0/8048.asm:11` — `inc @R1` |
-| `0x16` | `DEC @R0` | 1 | `dec  @r0` | `ec/decompiled/bank0/2BD5.asm:13` — `dec @R0` |
-| `0x17` | `DEC @R1` | 1 | `dec  @r1` | `ec/decompiled/bank0/D091.asm:112` — `dec @R1` |
-| `0x26` | `ADD A,@R0` | 1 | `add  a,@r0` | `ec/decompiled/bank1/E9CE.asm:89` — `add A, @R0` |
-| `0x27` | `ADD A,@R1` | 1 | `add  a,@r1` | `ec/decompiled/bank1/E9CE.asm:78` — `add A, @R1` |
-| `0x36` | `ADDC A,@R0` | 1 | `addc a,@r0` | `ec/decompiled/bank0/D091.asm:118` — `addc A, @R0` |
-| `0x37` | `ADDC A,@R1` | 1 | `addc a,@r1` | `ec/decompiled/bank0/D091.asm:120` — `addc A, @R1` |
-| `0x46` | `ORL A,@R0` | 1 | `orl  a,@r0` | `ec/decompiled/bank1/EAC3.asm:16` — `orl A, @R0` |
-| `0x47` | `ORL A,@R1` | 1 | `orl  a,@r1` | `ec/decompiled/common/5A66.asm:57` — `orl A, @R1` |
-| `0x56` | `ANL A,@R0` | 1 | `anl  a,@r0` | `ec/decompiled/bank1/EAC3.asm:63` — `anl A, @R0` |
-| `0x57` | `ANL A,@R1` | 1 | `anl  a,@r1` | `ec/decompiled/bank1/8504.asm:32` — `anl A, @R1` |
-| `0x66` | `XRL A,@R0` | 1 | `xrl  a,@r0` | `ec/decompiled/bank0/A312.asm:38` — `xrl A, @R0` |
-| `0x67` | `XRL A,@R1` | 1 | `xrl  a,@r1` | `ec/decompiled/bank0/A312.asm:59` — `xrl A, @R1` |
-| `0x96` | `SUBB A,@R0` | 1 | `subb a,@r0` | `ec/decompiled/bank0/D434.asm:36` — `subb A, @R0` |
-| `0x97` | `SUBB A,@R1` | 1 | `subb a,@r1` | `ec/decompiled/common/6A02.asm:82` — `subb A, @R1` |
-| `0x72` | `ORL C,bit` | 2 | `orl  c,<bit>` | `ec/decompiled/pd/A890.asm:7` — `orl CY, 0x20` |
-| `0x82` | `ANL C,bit` | 2 | `anl  c,<bit>` | `ec/decompiled/bank0/8048.asm:10` — `anl CY, 0x31` |
-| `0x76` | `MOV @R0,#data` | 2 | `mov  @r0,#0x..` | `ec/decompiled/common/012F.asm:32` — `mov @R0, #0x2` |
-| `0x77` | `MOV @R1,#data` | 2 | `mov  @r1,#0x..` | `ec/decompiled/common/6A02.asm:77` — `mov @R1, #0xc0` |
-| `0xA6` | `MOV @R0,direct` | 2 | `mov  @r0,0x..` | `ec/decompiled/bank0/A663.asm:20` — `mov @R0, 0x9e` |
-| `0xA7` | `MOV @R1,direct` | 2 | `mov  @r1,0x..` | `ec/decompiled/bank1/E722.asm:7` — `mov @R1, 0x89` |
-| `0x86` | `MOV direct,@R0` | 2 | `mov  0x..,@r0` | `ec/decompiled/bank0/8653.asm:17` — `mov 0x81, @R0` |
-| `0x87` | `MOV direct,@R1` | 2 | `mov  0x..,@r1` | `ec/decompiled/pd/0D0D.asm:16` — `mov B, @R1` |
-| `0xB6` | `CJNE @R0,#data,rel` | 3 | `cjne @r0,#0x..,<rel>` | `ec/decompiled/bank1/E9CE.asm:30` — `cjne @R0, #0x1c, 0xe9e6` |
-| `0xB7` | `CJNE @R1,#data,rel` | 3 | `cjne @r1,#0x..,<rel>` | `ec/decompiled/bank1/EAC3.asm:101` — `cjne @R1, #0x33, 0xebac` |
-| `0xD4` | `DA A` | 1 | `da   a` | `ec/decompiled/bank0/D434.asm:30` — `da A` |
-| `0xF4` | `CPL A` | 1 | `cpl  a` | `ec/decompiled/bank0/D091.asm:12` — `cpl A` |
+| `0x06` | `INC @R0` | 1 | `inc  @r0` | `ec/decompiled/bank0/B065.asm` — `inc @R0` |
+| `0x07` | `INC @R1` | 1 | `inc  @r1` | `ec/decompiled/bank0/8048.asm` — `inc @R1` |
+| `0x16` | `DEC @R0` | 1 | `dec  @r0` | `ec/decompiled/bank0/2BD5.asm` — `dec @R0` |
+| `0x17` | `DEC @R1` | 1 | `dec  @r1` | `ec/decompiled/bank0/D091.asm` — `dec @R1` |
+| `0x26` | `ADD A,@R0` | 1 | `add  a,@r0` | `ec/decompiled/bank1/E9CE.asm` — `add A, @R0` |
+| `0x27` | `ADD A,@R1` | 1 | `add  a,@r1` | `ec/decompiled/bank1/E9CE.asm` — `add A, @R1` |
+| `0x36` | `ADDC A,@R0` | 1 | `addc a,@r0` | `ec/decompiled/bank0/D091.asm` — `addc A, @R0` |
+| `0x37` | `ADDC A,@R1` | 1 | `addc a,@r1` | `ec/decompiled/bank0/D091.asm` — `addc A, @R1` |
+| `0x46` | `ORL A,@R0` | 1 | `orl  a,@r0` | `ec/decompiled/bank1/EAC3.asm` — `orl A, @R0` |
+| `0x47` | `ORL A,@R1` | 1 | `orl  a,@r1` | `ec/decompiled/common/5A66.asm` — `orl A, @R1` |
+| `0x56` | `ANL A,@R0` | 1 | `anl  a,@r0` | `ec/decompiled/bank1/EAC3.asm` — `anl A, @R0` |
+| `0x57` | `ANL A,@R1` | 1 | `anl  a,@r1` | `ec/decompiled/bank1/8504.asm` — `anl A, @R1` |
+| `0x66` | `XRL A,@R0` | 1 | `xrl  a,@r0` | `ec/decompiled/bank0/A312.asm` — `xrl A, @R0` |
+| `0x67` | `XRL A,@R1` | 1 | `xrl  a,@r1` | `ec/decompiled/bank0/A312.asm` — `xrl A, @R1` |
+| `0x96` | `SUBB A,@R0` | 1 | `subb a,@r0` | `ec/decompiled/bank0/D434.asm` — `subb A, @R0` |
+| `0x97` | `SUBB A,@R1` | 1 | `subb a,@r1` | `ec/decompiled/common/6A02.asm` — `subb A, @R1` |
+| `0x72` | `ORL C,bit` | 2 | `orl  c,<bit>` | `ec/decompiled/pd/A890.asm` — `orl CY, 0x20` |
+| `0x82` | `ANL C,bit` | 2 | `anl  c,<bit>` | `ec/decompiled/bank0/8048.asm` — `anl CY, 0x31` |
+| `0x76` | `MOV @R0,#data` | 2 | `mov  @r0,#0x..` | `ec/decompiled/common/012F.asm` — `mov @R0, #0x2` |
+| `0x77` | `MOV @R1,#data` | 2 | `mov  @r1,#0x..` | `ec/decompiled/common/6A02.asm` — `mov @R1, #0xc0` |
+| `0xA6` | `MOV @R0,direct` | 2 | `mov  @r0,0x..` | `ec/decompiled/bank0/A663.asm` — `mov @R0, 0x9e` |
+| `0xA7` | `MOV @R1,direct` | 2 | `mov  @r1,0x..` | `ec/decompiled/bank1/E722.asm` — `mov @R1, 0x89` |
+| `0x86` | `MOV direct,@R0` | 2 | `mov  0x..,@r0` | `ec/decompiled/bank0/8653.asm` — `mov 0x81, @R0` |
+| `0x87` | `MOV direct,@R1` | 2 | `mov  0x..,@r1` | `ec/decompiled/pd/0D0D.asm` — `mov B, @R1` |
+| `0xB6` | `CJNE @R0,#data,rel` | 3 | `cjne @r0,#0x..,<rel>` | `ec/decompiled/bank1/E9CE.asm` — `cjne @R0, #0x1c, 0xe9e6` |
+| `0xB7` | `CJNE @R1,#data,rel` | 3 | `cjne @r1,#0x..,<rel>` | `ec/decompiled/bank1/EAC3.asm` — `cjne @R1, #0x33, 0xebac` |
+| `0xD4` | `DA A` | 1 | `da   a` | `ec/decompiled/bank0/D434.asm` — `da A` |
+| `0xF4` | `CPL A` | 1 | `cpl  a` | `ec/decompiled/bank0/D091.asm` — `cpl A` |
 
 Three of the renderings differ from the listing's spelling, and each difference
 is this module's own convention rather than a disagreement about the
@@ -128,32 +128,39 @@ leaving the fall-through looking like an oversight.
 `0xA5` is also the reason the `db` return stays. A decoder that printed nothing
 here would satisfy "these bytes are not data" vacuously.
 
-## `0xA6`/`0xA7`: recorded, not settled
+## `0xA6`/`0xA7`: the `#`, and the one row that disagrees
 
-The manual's opcode table has `0xA6`/`0xA7` as `MOV @Ri,#data`, which would make
-them a second spelling of `0x76`/`0x77` directly above in the encoding. The
-committed listings print **no `#`** and resolve the SFR name in the *source*
-position: `ec/decompiled/pd/0D70.asm` has `a7 f0` at `0D81` as `mov @R1, B`, and
-`B` is `0xF0`, an SFR in `BIT_SFR`.
+The manual assigns this row `MOV @Ri,direct` at 2 bytes — the same reading the
+committed listings give, and the `#data` form belongs to `0x76`/`0x77` directly
+above in the encoding. Reading `#data` onto `0xA6`/`0xA7` would both duplicate an
+existing opcode and break the map's symmetry with `0x86`/`0x87`
+(`MOV direct,@Ri`), which the listings read the other way round.
 
-Two things make that row evidence rather than decoration. The exporter does
-print `#` for an immediate — the same listings write `0x76` as `mov @R0, #0x2`
-at `ec/decompiled/common/012F.asm` — so the omission is the tool
+Two things make the listings' missing `#` evidence rather than decoration. The
+exporter does print `#` for an immediate — the same listings write `0x76` as
+`mov @R0, #0x2` at `ec/decompiled/common/012F.asm` — so the omission is the tool
 distinguishing the two forms rather than a formatting habit. And it resolves the
-byte to an SFR *name*, which an immediate byte would never be given.
+byte to an SFR *name*, which an immediate byte would never be given:
+`ec/decompiled/pd/0D70.asm` has `a7 f0` at `0D81` as `mov @R1, B`, and `B` is
+`0xF0`, an SFR in `BIT_SFR`.
 
-This table follows the listings, because the listings are the oracle every other
-name here came from; the manual's row is left standing beside it rather than
-overwritten.
+**The disagreement is not between the manual and the listings, and this document
+previously said it was.** It is between the manual and one mis-transcribed row —
+the `0xa6`/`0xa7` row of the set table in `opcode-table-coverage.md`'s
+text-comparison section, which is corrected in place. Three committed tools
+already carried `direct` for these two values before this change, each in a
+table of its own: `iram_boot_sites.RI_TABLE` puts the `#` on `0x76`/`0x77` and
+not on `0xA6`/`0xA7`, `dptr_rebuild_forms.py` carries `mov  @r0,direct` and
+`mov  @r1,direct`, and `verify_gap_text.py` annotates both rows
+`# MOV @Ri,direct` in a table of manual-given direct operands. The wrong claim
+was this document's own, and it is what made a settled reading look open.
 
-Nothing in this tree can arbitrate the two. Both readings are two bytes with the
-same operand positions, so `opcode_coverage.py --divergence` is blind to the
-disagreement by construction — its `MCS51_LEN` carries the listings' length and
-so cannot see a length question. This is the same posture
-`direct-address-opcode-rendering.md` takes on the `direct`/accumulator dual
-encoding and `disasm8051.py` takes on `0xA0`/`0xB0`: an unresolved reading,
-stated rather than settled by fiat. **Nothing downstream should read the choice
-made here as evidence that the encoding is settled.**
+What this tree cannot do is check the rendering *by length*, which is a limit on
+the decoder's own output rather than a question about the encoding. Both forms
+are two bytes over the same operand positions, and `opcode_coverage.py
+--divergence` reads `MCS51_LEN`, which carries lengths and no names, so it is
+blind to the distinction by construction. The name here came from the listings,
+as every other name in this document did.
 
 ## The contradiction this surfaces in two other tools
 
@@ -204,19 +211,24 @@ from their generators (`audit_call_targets.py --csv`/`--paged-csv`/
 and diffed; every change is confined to those two columns — no row was added,
 dropped or reordered.
 
-**That list was too short, and the test suite is what caught it.** Naming the
-opcodes also reaches committed tables whose generator each carries a
-decoder-rendered cell in a different column: `computed-dptr-sites.csv` and
-`xdata-addc-dph-residual-sites.csv` in a `window` column,
-`pd-direct-offset-sites.csv` in a `note`, and `pd-no-ret-fallthrough.csv` in
-`succ_first`. Each is one row, each re-cut from its own tool
+**That list was illustrative, not exhaustive, and the full set is a diff.**
+Naming the opcodes reaches every committed table that carries its text, in
+whatever column its generator chose — the audit tables in `earlier_record`, the
+`window` column of `computed-dptr-sites.csv` and
+`xdata-addc-dph-residual-sites.csv`, the `note` of
+`pd-direct-offset-sites.csv`, the `succ_first` of
+`pd-no-ret-fallthrough.csv`, and the `earlier_record` cells of
+`call-target-seed-frames.csv`. Each was re-cut from its own tool
 (`computed_dptr_sites.py --csv`, `addc_dph_sites.py --csv`,
-`pd_direct_offset_sites.py --csv`, `pd_no_ret_fallthrough.py --csv`), and each
-now passes that tool's own `--check` byte for byte. The general rule this
-establishes: **a decoder rename reaches every committed table that carries its
-text, and enumerating them by hand from the tool that writes them is not enough**
-— `ec/tools/test_addc_dph_sites.py`'s committed-table case is what found the
-last of them, after the rest had already been re-cut.
+`pd_direct_offset_sites.py --csv`, `pd_no_ret_fallthrough.py --csv`,
+`call_target_seed_frames.py --check`) and now passes that tool's `--check` byte
+for byte.
+
+`git diff --name-only origin/main...HEAD -- 'ec/annotations/*.csv'` names the
+committed tables that moved, which is the set the writing tools cannot report
+because each knows only its own. `ec/tools/test_addc_dph_sites.py`'s
+committed-table case is what found the last of them, after the rest had already
+been re-cut.
 
 ## What naming the bytes broke, and the shape of it
 
@@ -261,7 +273,9 @@ the one the map assigns nothing".
   first-token agreement is what the new suite checks; it does not check that this
   module's `bit_name()` rendering or its lowercase registers match Ghidra's, and
   those are conventions rather than disagreements.
-- **Anything about the `0xA6`/`0xA7` erratum row**, for the reason above.
+- **The `0xA6`/`0xA7` rendering against anything but the listings.** The manual
+  and the listings agree on `MOV @Ri,direct`, but no check here compares this
+  module's output against the manual's *names*; `--divergence` reads lengths.
 - **The `0xA8`-`0xAF` three-way disagreement.** `walk_branch_arms.py` reads
   `mov direct,@Ri`, `disasm8051.py` prints `mov r0,0x..`, and
   `pd_inline_arg_sites.py` takes a third reading of the same eight bytes. Those

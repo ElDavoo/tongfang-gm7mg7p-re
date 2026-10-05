@@ -450,23 +450,24 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         # once mistaken for.
         return f"mov  r{op - 0xA8},0x{d[i + 1]:02x}"
     if op in (0xA6, 0xA7):
-        # MOV @Ri,direct -- one row below `mov Rn,direct` above, and the one
-        # reading in this file that is *recorded rather than settled*. The
-        # manual's opcode table has this row as `MOV @Ri,#data`, which would
-        # make 0xA6/0xA7 a second spelling of the 0x76/0x77 case above; the
-        # committed listings print no `#` and resolve the byte to an SFR *name*
-        # in the source position, `a7 f0` as `mov @R1, B` at
-        # ec/decompiled/pd/0D70.asm. That is a `direct` source and not an
-        # immediate, and it is not something a byte column alone could decide:
-        # the same exporter does print `#` for the 0x76 case above. The listings
-        # read the mirror row 0x86/0x87 below the other way round, so a decoder
-        # that took the wrong direction would swap the two.
-        # Both readings are the same two bytes and the same length; nothing in
-        # this tree can arbitrate them, so this follows the listings -- the
-        # oracle the rest of this table's names came from -- and the manual's row
-        # is left standing beside it. Same shape as the 0xA0/0xB0 comment above:
-        # an unresolved reading, stated rather than settled by fiat. The write-up
-        # is ../../docs/findings/mnemonic-db-fallthrough-coverage.md.
+        # MOV @Ri,direct -- one row below `mov Rn,direct` above. The manual
+        # assigns it this way too, so this row is not a reading taken against
+        # the manual: `MOV @Ri,#data` is the 0x76/0x77 case above, and reading
+        # it here would duplicate an existing opcode and break the symmetry with
+        # 0x86/0x87 below, which the listings read the other way round. The
+        # listings print no `#` and resolve the operand to an SFR *name* in the
+        # source position, `a7 f0` as `mov @R1, B` at ec/decompiled/pd/0D70.asm,
+        # and the same exporter does print `#` for the 0x76 case -- so the
+        # omission is the tool telling the two forms apart rather than a
+        # formatting habit. `iram_boot_sites.RI_TABLE`, `dptr_rebuild_forms.py`
+        # and `verify_gap_text.py` all carry `direct` for these two values
+        # independently.
+        # What nothing here can check is the rendering *by length*: both forms
+        # are two bytes over the same operand positions and `opcode_coverage`'s
+        # `MCS51_LEN` carries no names, so `--divergence` is blind to it by
+        # construction. That is a limit on this module's output, not a dispute
+        # about the encoding. The write-up is
+        # ../../docs/findings/mnemonic-db-fallthrough-coverage.md.
         return f"mov  @r{op - 0xA6},0x{d[i + 1]:02x}"
     if 0x88 <= op <= 0x8F:
         return f"mov  0x{d[i + 1]:02x},r{op - 0x88}"
@@ -478,8 +479,8 @@ def mnemonic(d: bytes, i: int, addr: int = None) -> str:
         # oracle rather than from the encoding. The listings settle it here --
         # `mov 0x81, @R0` at ec/decompiled/bank0/8653.asm, and `mov B, @R1` at
         # ec/decompiled/pd/0D0D.asm, whose `B` is an SFR name and so cannot be
-        # an immediate. (The mirror image at `0xA6`/`0xA7` is not settled by the
-        # same evidence; see the comment on that row.)
+        # an immediate. (The mirror image at `0xA6`/`0xA7` is read the same way,
+        # `direct` in the source position; see the comment on that row.)
         return f"mov  0x{d[i + 1]:02x},@r{op - 0x86}"
     if op == 0xE5:
         return f"mov  a,0x{d[i + 1]:02x}"
