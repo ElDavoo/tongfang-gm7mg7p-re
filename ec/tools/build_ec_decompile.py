@@ -76,6 +76,16 @@ import second_copy_census
 # imports nothing from here, so the four stay independently runnable.
 import c_header_provenance
 
+# The `(program, addr)` derivation behind the index's `seed_basis` column, and
+# the check that every committed row records its own program's row. Imported
+# rather than inlined for the reason the four above are: the exporter is what
+# writes the column, so the thing that decides what the column should say is one
+# implementation, not a reading of it in two places. One-way for the same
+# reason -- it imports nothing from here -- so the five stay independently
+# runnable and this module's `--check` and the projection's own CLI cannot
+# disagree about the derivation.
+import seed_basis_projection
+
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # The shared Ghidra layer's project-owner helper. Imported rather than restated
@@ -2218,19 +2228,28 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           len(_p) == 2 and "does not contain the name" in _p[0]
           and "still contains the placeholder" in _p[1], str(_p))
 
-    # The known answers, on the committed files, as relations rather than a
-    # total. The row count used to be pinned here, and every seeded routine
-    # moved it: the comment above the pin had grown a paragraph per seed. A
-    # seed is the point of the annotation layer, so the count is not a
-    # property worth failing on; that the three files agree with each other
-    # is. `wc -l`-style totals are `--check`'s output, not an assertion.
-    check("EC: the manifest records as many functions as index.csv has rows, "
-          "across 4 programs",
-          len(_ir) > 0 and len(_mr) == 4
+    # The known answers, on the committed files. These used to be the
+    # repository's function census written out as literals, one figure per
+    # tranche, and every landing export had to edit them; that is the line
+    # CLAUDE.md's "No totals of the repository's own text" is about, and
+    # bit #1169's fourth time. The properties those literals were standing in
+    # for are asserted below instead, recomputed from the committed files, so
+    # the check still goes red when a re-export breaks an agreement -- and does
+    # not go red when one legitimately adds a function. What the history was
+    # for is kept where it belongs: `docs/findings/pd-07d0-accessor-stubs.md`
+    # for the `pd` accessor stubs, and git log -p here for the rest.
+    check("EC: the manifest's per-program function counts sum to index.csv's "
+          "rows, across the 4 documented programs",
+          len(_mr) == 4
           and sum(int(r["functions"]) for r in _mr) == len(_ir),
-          "%d row(s), %d manifest row(s)" % (len(_ir), len(_mr)))
-    check("EC: listing-index.csv has the same number of rows as index.csv",
-          len(_lr) == len(_ir), "%d vs %d row(s)" % (len(_lr), len(_ir)))
+          "%d row(s), %d manifest row(s), manifest sum %d"
+          % (len(_ir), len(_mr), sum(int(r["functions"]) for r in _mr)))
+    check("EC: listing-index.csv carries the same (program, addr) set as "
+          "index.csv",
+          len(_lr) == len(_ir)
+          and {(r["program"], r["addr"]) for r in _lr}
+          == {(r["program"], r["addr"]) for r in _ir},
+          "%d listing row(s) against %d index row(s)" % (len(_lr), len(_ir)))
     check("EC: the manifest's program set is the index's, with no label mapping "
           "in between",
           {r["program"] for r in _mr} == {r["program"] for r in _ir}
@@ -2243,7 +2262,8 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: addresses are uniformly 4 bare hex digits in both indexes, so "
           "string and int (program, addr) keys agree",
           all(len({(r["program"], r["addr"]) for r in rows})
-              == len({(r["program"], int(r["addr"], 16)) for r in rows}) == len(rows)
+              == len({(r["program"], int(r["addr"], 16)) for r in rows})
+              == len(rows)
               for rows in (_ir, _lr)))
     # The annotation layer's two committed CSVs, the same way. 1,769 records
     # and not the 1,771 the follow-up issue quoted: the file is 1,772 physical
@@ -2299,11 +2319,16 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # A `common`-scoped row at an address both banks carry, so it is the shape
     # #603's 37 were, and it moves annotations_applied and functions_named below
     # the same way and for the same reason.
-    check("EC: annotations/ghidra-functions.csv is 1,963 records, no short row "
-          "and no duplicate (scope, addr)",
-          len(_ann) == 1963 and not structure_problems("ghidra-functions.csv", _ann,
-                                                       annotation_key, "(scope, addr)"),
-          "%d record(s)" % len(_ann))
+    # The soundness of the file, not its size: no short row and no duplicate
+    # (scope, addr) is what a merge can break, and a record count is what a
+    # merge legitimately moves.
+    check("EC: annotations/ghidra-functions.csv is sound -- no short row and no "
+          "duplicate (scope, addr)",
+          not structure_problems("ghidra-functions.csv", _ann,
+                                 annotation_key, "(scope, addr)"),
+          "%d record(s), %d problem(s)"
+          % (len(_ann), len(structure_problems("ghidra-functions.csv", _ann,
+                                               annotation_key, "(scope, addr)"))))
     # The function layer's three counters, on the committed files, which is where
     # docs/findings.md §18's corrected figures come from. The history of each
     # pin, because these are the numbers that move on purpose:
@@ -2364,17 +2389,17 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # which is `common`-scoped and so is handed to both bank programs, moving
     # both by one and `common` with bank0 for the reason #603's 37 did; `pd`
     # stays at 541, that row being EC-scoped.
-    # ... and then 829 -> 830 with issue #337's one `bank0 0xC118` row, an
-    # EC-scoped seed like #603's, so `common` borrows bank0's 830 with it and
-    # no bank's own figure moves.
-    _want_applied = {"bank0": 830, "bank1": 725, "pd": 541}
-    check("EC: the manifest's annotations_applied is what the exporter's reports "
-          "said -- 830 / 725 / 541 across the three programs, with `common` "
-          "borrowing bank0's",
-          {r["program"]: int(r["annotations_applied"]) for r in _mr
-           if r["program"] in _want_applied} == _want_applied
-          and next(int(r["annotations_applied"]) for r in _mr
-                   if r["program"] == "common") == 830,
+    # The property is the one the manifest can be wrong about: `common` is
+    # de-duplicated out of both bank programs, so its annotations_applied is
+    # bank0's rather than its own, and MANIFEST_PROGRAM_SOURCE is where that is
+    # decided. The three figures themselves move with every tranche, so they are
+    # not asserted.
+    check("EC: the manifest's `common` annotations_applied is bank0's, which is "
+          "what the de-dup makes it (MANIFEST_PROGRAM_SOURCE)",
+          next(int(r["annotations_applied"]) for r in _mr
+               if r["program"] == "common")
+          == next(int(r["annotations_applied"]) for r in _mr
+                  if r["program"] == "bank0"),
           str({r["program"]: r["annotations_applied"] for r in _mr}))
     check("EC: annotations_unmatched is 0 for all four programs, measured rather "
           "than written as a literal",
@@ -2409,16 +2434,20 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     # read the same way in a manifest and are not the same fact. The write-up is
     # docs/findings/cased-in-reserved-namespace.md; the population is derived by
     # ec/tools/second_copy_census.py --check.
-    # ... and then bank0 from 698 to 699, with the sum to 1,970, for issue
-    # #337's one `bank0 0xC118` row: a seed that takes the index's
-    # `annotated` from no to yes, which is the ordinary direction.
-    _want_named = {"bank0": 699, "bank1": 594, "common": 136, "pd": 541}
+    # functions_named is *defined* as the index's annotated=yes count per
+    # program, so that is what is asserted -- the derivation, recomputed here,
+    # rather than a figure transcribed from a run. The per-program numbers are
+    # what every tranche moves and are not asserted.
+    _want_named = {p: sum(1 for r in _ir if r["program"] == p
+                          and r.get("annotated") == "yes")
+                   for p in {r["program"] for r in _ir}}
     check("EC: functions_named is the index's own annotated=yes count per "
-          "program, 699 / 594 / 136 / 541, summing to 1,970",
+          "program, recomputed rather than transcribed",
           {r["program"]: int(r["functions_named"]) for r in _mr} == _want_named
-          and sum(_want_named.values()) == 1970
           and not annotation_ledger_mismatches(_mr, _ir, _ann),
-          str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2]))
+          "manifest %s against index %s; ledger %s"
+          % ({r["program"]: r["functions_named"] for r in _mr}, _want_named,
+             str(annotation_ledger_mismatches(_mr, _ir, _ann)[:2])))
     # The two-way ledger on the committed files, which is the whole substance of
     # the §18 correction. 0 and 0, and they close the arithmetic exactly:
     # 1,961 rows - 0 applied-but-unflagged + 7 named-without-a-row = 1,968.
@@ -2493,8 +2522,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
           "predates the row",
           _abu == [],
           str([(r["program"], r["addr"]) for r, _bk in _abu]))
-    check("EC: the two ledger directions close the arithmetic -- 1,963 - 0 + 7 "
-          "= the 1,970 functions named",
+    check("EC: the two ledger directions close the arithmetic -- the CSV rows, "
+          "less the rows the index disagrees with, plus the names no row wrote, "
+          "is the functions the manifest names",
           len(_ann) - len(_abu) + len(_nwr) == sum(_want_named.values()),
           "%d - %d + %d = %d, not %d"
           % (len(_ann), len(_abu), len(_nwr),
@@ -2544,9 +2574,9 @@ def self_test(fw, pd, rows, b0, b1, pdseeds, unattributed, args, work):
     check("EC: a raw and a normalised key count the same on both annotation "
           "CSVs, so normalising cannot merge two distinct keys",
           len({(r["scope"], r["addr"]) for r in _ann})
-          == len({annotation_key(r) for r in _ann}) == 1963
+          == len({annotation_key(r) for r in _ann}) == len(_ann)
           and len({(r["file_offset"], r["target"]) for r in _ct})
-          == len({call_target_key(r) for r in _ct}) == 5998)
+          == len({call_target_key(r) for r in _ct}) == len(_ct))
 
     # The common-area de-dup, on synthetic rows. A PD-image function that shares
     # an address, a name and a size with the EC's must survive it: the PD is a
@@ -4894,6 +4924,24 @@ def check(work):
              "index row names" % (len(_pres) - 5))
     print("  presence: %d index row(s) paired to the function their .c declares, "
           "across %d distinct file(s)" % (_c_rows, _c_read))
+    # `seed_basis` names how the entry point was found, so it is a reading of the
+    # seed set and it is per PROGRAM: the common area is seeded into both bank
+    # programs on purpose, and the two banks can disagree about one address. The
+    # exporter's readBasis() used to key on the address alone, which made the
+    # column a function of the CSV's row order; seed_basis_projection holds the
+    # derivation and both indexes' mismatches, and the exposure is printed either
+    # way so a green run still shows which addresses a collision could reach.
+    # Asserted immediately above the header check because that check consumes
+    # this column -- it is what decides which .c carry the boundary caveat.
+    _sbp_basis, _sbp_dupes, _sbp = seed_basis_projection.committed_basis(
+        index_rows=rows, listing_rows=listing_rows,
+        census=_read["bank-call-targets.csv"])
+    for problem in _sbp[:5]:
+        fail(problem)
+    if len(_sbp) > 5:
+        fail("... and %d more seed-basis disagreement(s)" % (len(_sbp) - 5))
+    print("  seed basis: %s"
+          % seed_basis_projection.exposure_line(_sbp_basis, _sbp))
     # `_cdig`, not `_cd`: the cross-decoder report below binds that name, and
     # one function's two unrelated locals should not share a spelling.
     _cdig = verify_c_digests()

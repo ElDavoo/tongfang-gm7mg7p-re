@@ -125,7 +125,7 @@ stale and are corrected in this section's second dated block below:**
 which the `MOV DPTR,#imm16` rule cannot reach, so §8's row is now 9 EC-side
 sites and `read 4 / write 4`. The census counts
 **C-level occurrences** of the address in the decompiled text, which is the
-`refs: 17` of `ec/annotations/xdata-registers.csv:817`. The 14/2/0/1 below
+`refs: 17` of the `0x0860` row of `ec/annotations/xdata-registers.csv`. The 14/2/0/1 below
 is the bucketing of those 17, not a rival count of the 7 — and **not a rival
 count of the 9 either**, because a site the census cannot see contributes to
 neither the numerator nor the denominator here.

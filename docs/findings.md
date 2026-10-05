@@ -5410,7 +5410,7 @@ hands back, and it needs a function seed.
 
 **The reading itself.** 37 of the 43 are countdowns the same twenty
 instructions walk over, 6 are what four of them do at zero, and the two the
-clustering cut into `main-ec-128` and `main-ec-214` (`0x06C6`, `0x06CD`) are
+clustering cut into `countdown-06c6` and `countdown-06cd` (`0x06C6`, `0x06CD`) are
 countdowns the same routine decrements. The block is gated twice — on
 `0x0440` (43 read sites, no direct `MOV DPTR` writer, value not established —
 its one writer is the CODE-table scatter at bank1 `0xA530` that stores `0x00`
@@ -6449,13 +6449,16 @@ second path to the int0 forwarder — but it exists because the byte scan found
 `01 03` there, not because the vector table does. Whether either is a genuine
 second copy is not established by the bytes alone.
 
-**Also measured while writing it, and left alone here.** `pd-index-callers.csv`
-has five rows of which **four** are `status: unresolved`, not all five; the fifth
-found literals in a caller's frame, none in a register that site indexes on
-(the status is a function of the intersection, not of the presence of literals —
-corrected in place under
-[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md),
-which carries the vocabulary and what each value does not claim).
+**Also measured while writing it, and left alone here.** No row of
+`pd-index-callers.csv` resolves a caller: the row carrying literals found them
+in a caller's frame, none in a register that site indexes on (the status is a
+function of the intersection, not of the presence of literals), and the rows
+carrying none say `unresolved` or `frame too short to say` — corrected in place
+under
+[`findings/pd-callers-status-intersection.md`](findings/pd-callers-status-intersection.md)
+and
+[`findings/pd-caller-frame-quality.md`](findings/pd-caller-frame-quality.md),
+which carry the vocabulary and what each value does not claim.
 `ec/annotations/bank-call-audit.md`'s own note that
 the BL51 stub at `0x1100` is reached by "350 of the 403 trampolines in
 `0x1150`-`0x1ABC`" is a range-restricted count from the exporter and is not the
@@ -6489,6 +6492,23 @@ only swapped which program's answer it borrowed. It is the same class of
 address-space confusion as §12, one row wide. **The fix is to key `readBasis()`
 on `(program, addr)`**, and it is not made here because it would restate the
 basis column across the whole index and wants its own verification.
+
+**Correction (2026-10-05, issue #393), and the paragraph above is half right
+for a reason that has since aged out.** The vector walk still returns no
+`0x12`, but "`seed_rows()` builds no PD seed at that address **at all**" stopped
+being true: `seed_rows()` also seeds from `annotation_seeds()`, and a `pd`-scoped
+row at `0x0012` exists (`ff_filler_not_a_function_0012`), so the PD program is
+seeded there on its own row. `pd 0x0012` therefore records `annotation` both
+before and after the fix, and for the first time for a reason belonging to the
+PD image rather than to the EC. The borrow this paragraph describes was real
+when written; what it was borrowed *from* is no longer the whole of it. The fix
+is made — in both copies of `readBasis()`, since `ExportListing.java` calls
+`TongFang`'s — and the per-address verdicts, the corrected population and the
+`--check` assertion are in
+[`findings/seed-basis-program-key.md`](findings/seed-basis-program-key.md).
+Two things this paragraph did not know: the affected set is not the 55 addresses
+the issue that filed it measured, and no row anywhere in the tree has moved for
+the reason given above.
 
 **The shape census is held to a recount now (2026-09-25, issue #630).** §2's
 shape-census paragraph states 160 `type: unresolved` rows and 279 names over six

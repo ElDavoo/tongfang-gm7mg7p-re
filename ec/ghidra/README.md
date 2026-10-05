@@ -488,6 +488,17 @@ why the 702 instructions in rows whose listing parse had no entry are inside the
 45,394 of both. On `02.00` those 702 *were* compared and matched. The two
 figures being equal is two properties cancelling, not a third property holding.
 
+**The 26 rows issue #175 added are `02.00` rows too, spliced the same way.**
+They are the listings `ec/annotations/ghidra-functions.csv` gained when the
+`0x0400-0x045F` coverage gaps were seeded, and every one of them reads `match`
+with 0 unchecked. They came from this tool's `--emit-csv` output on a runner
+whose `sdas8051` reports `02.00`, merged into the committed report rather than
+produced by `--report`, so the rest of the report keeps the `05.50.4` measurement.
+**That is the splice, not a path through `--report`**, and it is what
+`refuses_committed_report` refuses to be; the `assembler` column is the record of
+which build answered which row, and a run under the pinned toolchain is still
+what would re-measure them.
+
 **Adding a listing therefore cannot be finished on a runner, and the gap is
 narrower than it looks.** `verify_reassembly.py:check` fails any listing in
 `../decompiled/listing-index.csv` that has no row in `reassembly.csv`, so a

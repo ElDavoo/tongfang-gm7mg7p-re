@@ -758,14 +758,6 @@ NOT_IN_TREE = {
             "(0x420,0x60,...)` at pd/34A5.c:18 -- the callee is not a "
             "consecutive-pair accessor, so issue #279's `movx` discriminator "
             "does not reach it",
-    # registers.yaml records four EC-side sites, all read-modify-writes, at
-    # bank1 0x8190, 0x81D1, 0x8246 and 0x826A -- in the gaps between the
-    # exported functions 0x80EF, 0x8202, 0x820F and 0x8300. Seeding that
-    # routine needs `--mode rebuild-project`, which this change does not do.
-    # That is a gap in coverage, not a statement about the byte.
-    0x0457: "in a routine no export covers: four bank1 read-modify-writes at "
-            "0x8190/0x81D1/0x8246/0x826A, between the exported functions "
-            "0x80EF, 0x8202, 0x820F and 0x8300",
     # No token, no name, no hex literal in any decompiled body and no "
     # `mov DPTR,#0x726` in any committed .asm. The registers.yaml note is the
     # record of what was tried: a driver write was accepted and the bit moved,
@@ -4002,14 +3994,34 @@ def self_test(args) -> int:
     # they hold vacuously: every hand name is `seeded` onto its own cluster, so
     # there is no duplicate to refuse and none to leave unwritten. A gate that
     # cannot fail is not a gate, so the duplicate rule is driven once on the
-    # shape it exists for -- `flag-pair-0442`'s two addresses split into two
+    # shape it exists for -- a two-address name's two addresses split into two
     # one-address clusters, each scoring exactly CARRY_MIN_JACCARD against the
     # pair -- and the committed census's green is read as "no case here" rather
-    # than as "the rule holds". The fixture is the committed row for that key,
-    # read out of the CSV rather than spelled as addresses, so it cannot drift
-    # away from the membership the names file actually names.
-    pair_key = "kb07a0f522a7d"
-    pair_row = next((r for r in old_rows if r.get("cluster_key") == pair_key), None)
+    # than as "the rule holds".
+    #
+    # The fixture is **the named committed row of exactly two addresses**, not
+    # one named key. Both are read out of the CSV rather than spelled as
+    # addresses, but only the shape survives a re-derivation: a census
+    # re-derivation re-keys every membership whose boundary moved, so a fixture
+    # pinned to a `cluster_key` goes stale the next time the membership it names
+    # changes, and it then names a row of one address, which is not the shape
+    # this check exists to drive. Naming the shape rather than the key is what
+    # "cannot drift away from the membership the names file actually names"
+    # needs to mean.
+    #
+    # Two addresses and not "more than one" because the split has to score
+    # exactly CARRY_MIN_JACCARD: a singleton against a 2-address pair is 1/2,
+    # which is the threshold, while against a 3-address row it is 1/3 and
+    # nothing is claimed at all, so a wider row would drive `none` rather than
+    # the refusal under test. The census partitions its addresses (checked
+    # above), so a singleton can only ever match the row it was split out of --
+    # there is no second named row for it to tie with, which is what makes the
+    # duplicate rather than a tie. Sorted by key so the fixture is the same row
+    # on every run; if a future census has no such row this reports that it
+    # found none rather than passing vacuously.
+    pair_row = next((r for r in sorted(old_rows, key=lambda r: r.get("cluster_key", ""))
+                     if (r.get("cluster_name") or "").strip()
+                     and len(r.get("addrs", "").split()) == 2), None)
     split = []
     if pair_row is not None:
         pair_addrs = pair_row.get("addrs", "").split()
@@ -4017,15 +4029,18 @@ def self_test(args) -> int:
             split.append({"cluster_id": f"main-ec-{900 + i}",
                           "cluster_key": f"ksplit{i:011d}",
                           "addrs": a})
+    pair_name = (pair_row or {}).get("cluster_name", "").strip()
     dup_names, dup_report = carry_names(old_rows, load_cluster_names(), split)
-    dup_outcomes = [r["how"] for r in dup_report if r["name"] == "flag-pair-0442"]
+    dup_outcomes = [r["how"] for r in dup_report if r["name"] == pair_name]
     check(f"the duplicate rule fires on the shape it is for: a two-address name "
-          f"whose addresses {pair_key} names split into one cluster each, every "
-          f"one of them at exactly CARRY_MIN_JACCARD, so the name is written to "
-          f"neither rather than to both (outcomes: "
+          f"({pair_name or 'none found'}, "
+          f"{(pair_row or {}).get('cluster_key', 'no key')}) whose addresses "
+          f"split into one cluster each, every one of them at exactly "
+          f"CARRY_MIN_JACCARD, so the name is written to neither rather than to "
+          f"both (outcomes: "
           f"{', '.join(dup_outcomes) or 'none recorded'}; written: "
           f"{len(dup_names)})",
-          pair_row is not None and len(pair_row.get("addrs", "").split()) > 1
+          pair_row is not None
           and dup_outcomes == ["duplicate"] * len(split) and not dup_names)
     # Scoped to the **committed** census, which is what the names file is
     # anchored to and what every `cluster_key`/`cluster_name` citation in the
