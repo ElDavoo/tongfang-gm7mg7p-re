@@ -39,8 +39,7 @@ was attempted, nothing ran on the machine.
 `../../docs/findings/pd-inline-arg-trampoline.md` §5 gave the destinations and
 stopped: "What reads those cells was not traced." This is that answer. It is
 per row of the census, each with the reason it is empty — and after the
-correction above many rows are not empty, though a majority still are, and the
-reads are concentrated in a few heavily-deposited cells.
+correction above several of those rows do carry a read.
 
 ## 1. The measurement, and the two mistakes in the count it replaces
 
