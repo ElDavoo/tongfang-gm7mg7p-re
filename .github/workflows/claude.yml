@@ -97,7 +97,7 @@ jobs:
           # prompt: 'Update the pull request description to include a summary of changes.'
 
           claude_args: >-
-            --model opus
+            --model haiku
             --effort medium
             --dangerously-skip-permissions
 

@@ -912,16 +912,21 @@ files, re-copy it rather than patching around it here.
 ## Model selection (local override; OpenRouter trial ended 2026-10-05)
 
 Every `claude-code-action` step authenticates with `secrets.CLAUDE_CODE_OAUTH_TOKEN`
-through the action's `claude_code_oauth_token` input, and runs at
-`--effort medium`. The model depends on the stage:
+through the action's `claude_code_oauth_token` input, and every step uses
+`--model haiku`. The effort level depends on the stage:
 
-| Stage | Model |
+| Stage | Effort |
 |---|---|
-| `agent-fix.yml` (fix rounds after review, including the escalation round; also reached from `agent-fix-ci.yml`) | `sonnet` |
-| `agent-implement.yml` pre-review fix steps | `sonnet` |
-| `agent-followups.yml` | `sonnet` |
-| `agent-conflicts.yml` | `sonnet` |
-| everything else: plan, implement, pre-review, review verdict, `claude.yml` | `opus` |
+| `agent-plan.yml` plan | `medium` |
+| `agent-implement.yml` implement | `high` |
+| `agent-implement.yml` pre-review 1 and 2 (reviews) | `xhigh` |
+| `agent-implement.yml` pre-review fix 1 and 2 | `high` |
+| `agent-review.yml` verdict | `high` |
+| `agent-fix.yml` fix (also reached from `agent-fix-ci.yml`; the second attempt reuses it) | `high` |
+| `agent-fix.yml` fix, escalation round | `xhigh` |
+| `agent-conflicts.yml` conflict resolution | `medium` |
+| `agent-followups.yml` follow-ups | `medium` |
+| `claude.yml` mentions | `medium` |
 
 Both callers of the reusable `agent-fix.yml` forward `CLAUDE_CODE_OAUTH_TOKEN`,
 and that workflow requires it. No `ANTHROPIC_DEFAULT_*_MODEL`,

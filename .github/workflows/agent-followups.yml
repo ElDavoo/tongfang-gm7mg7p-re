@@ -270,7 +270,7 @@ jobs:
             Do not write or edit any file, and do not call `gh` yourself. Return the structured
             output only; a separate step creates the issues from it.
           claude_args: >-
-            --model sonnet
+            --model haiku
             --effort medium
             --dangerously-skip-permissions
             --max-turns 60

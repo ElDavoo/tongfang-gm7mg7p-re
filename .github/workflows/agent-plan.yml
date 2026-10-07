@@ -418,7 +418,7 @@ jobs:
 
             Do not write any code. Do not edit any file. Return the structured output only.
           claude_args: >-
-            --model opus
+            --model haiku
             --effort medium
             --dangerously-skip-permissions
             --allowedTools "Read,Glob,Grep,Bash(git:*),Bash(rg:*),Bash(jq:*),Bash(find:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(wc:*),Bash(sort:*),Bash(uniq:*),Bash(diff:*)"

@@ -307,8 +307,8 @@ jobs:
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
-            --model sonnet
-            --effort medium
+            --model haiku
+            --effort high
             --dangerously-skip-permissions
             --max-turns 240
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"
@@ -379,8 +379,8 @@ jobs:
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
-            --model sonnet
-            --effort medium
+            --model haiku
+            --effort xhigh
             --dangerously-skip-permissions
             --max-turns 400
             --allowedTools "Read,Write,Edit,Glob,Grep,Bash"

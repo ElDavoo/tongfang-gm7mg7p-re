@@ -280,7 +280,7 @@ jobs:
 
             Do not commit or push. Leave your work in the working tree.
           claude_args: >-
-            --model sonnet
+            --model haiku
             --effort medium
             --dangerously-skip-permissions
             --max-turns 400
