@@ -251,7 +251,9 @@ jobs:
           # OpenRouter, not a subscription window, so the budget is throughput, not quota. The
           # ceiling that matters is the account's 20 concurrent Actions jobs on the Free plan,
           # shared with CI's three jobs per push: past it, runs queue rather than fail.
-          MAX_PARALLEL_AGENTS: '16'
+          # LOCAL CHANGE (2026-10-08): 16 -> 2, with agent-conflicts.yml. Set while Actions are
+          # re-enabled after a pause, so the first sweeps start a couple of runs at a time.
+          MAX_PARALLEL_AGENTS: '2'
           # LOCAL CHANGE (2026-09-26): slots held back from the conflict, review and follow-up
           # sweeps for the two queue sweeps. All five shared one decrementing budget, the
           # opportunistic three run first, and they took all of it -- on every recent run both
@@ -268,7 +270,8 @@ jobs:
           # account's 20-job ceiling, so a conflict run waited 90 minutes in the queue, an
           # implement job six hours, and every review behind them. Intake is what fills the
           # pool and the merge path is what empties it, so intake gets a fixed share.
-          MAX_INTAKE_RUNS: '6'
+          # LOCAL CHANGE (2026-10-08): 6 -> 1, for the same reason as MAX_PARALLEL_AGENTS.
+          MAX_INTAKE_RUNS: '1'
         run: |
           set -euo pipefail
 
