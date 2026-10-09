@@ -69,6 +69,7 @@ bank0,8399,FUN_CODE_8399,match,c06088ad041d9084,43,0,,sdas8051 02.00
 bank0,83D6,ring_push_0990,match,c98a8ad0e400d040,27,0,,sdas8051 02.00
 bank0,83FF,sync_0788_and_07d4_from_09e9,match,8abdfc5fa99cb4c6,80,0,,sdas8051 02.00
 bank0,849C,return_trampoline_83ff,match,5a01e3ccc5a11d2d,1,0,,sdas8051 02.00
+bank0,8590,probe_channel_logic,match,1a358aa7a449bf09,15,0,,sdas8051 02.00
 bank0,8648,clear_200b,match,20fad9ab1eea354a,9,0,,sdas8051 02.00
 bank0,8653,seed_fan_table_base,match,e63a161c3d725bbd,98,0,,sdas8051 02.00
 bank0,8749,mode_tick_084c_07a5_09ee,match,15190a3cf265badc,165,0,,sdas8051 02.00

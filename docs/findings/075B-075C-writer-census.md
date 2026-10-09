@@ -90,4 +90,4 @@ $ bash tools/run-tests.sh
 ```
 
 The two CSVs are committed; `--check` is not run per commit until a human
-lands the gate, which is `docs/ci/agent-gates-075B-075C-writer-census.patch`.
+lands the gate, which is `docs/ci/agent-gates-0751-writer-census.patch`.

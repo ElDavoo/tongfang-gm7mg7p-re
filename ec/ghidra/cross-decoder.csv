@@ -65,6 +65,7 @@ bank0,8398,return_trampoline_8294,annotation,0,,,,vacuous
 bank0,83D6,ring_push_0990,annotation,4,09BF,09BF,,agree
 bank0,83FF,sync_0788_and_07d4_from_09e9,annotation,2,080F,080F,,agree
 bank0,849C,return_trampoline_83ff,annotation,0,,,,vacuous
+bank0,8590,probe_channel_logic,annotation,6,,,,vacuous
 bank0,8648,clear_200b,annotation,8,200B,200B,,agree
 bank0,8653,seed_fan_table_base,annotation,8,08E6,08E6,,agree
 bank0,8749,mode_tick_084c_07a5_09ee,annotation,0,,,,vacuous
