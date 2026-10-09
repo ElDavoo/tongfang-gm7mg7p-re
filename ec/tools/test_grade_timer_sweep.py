@@ -117,6 +117,39 @@ def one_capture_contradicting_itself(dirpath, address=0x0635, levels=(0x14, 0x04
     return str(path)
 
 
+def two_captures_with_unprinted(dirpath, intervals, levels, unprinted_levels,
+                                baseline_at=(0, 0)):
+    """Two captures including an unprinted address in the baseline.
+
+    Similar to `two_captures()` but allows specifying levels for unprinted
+    addresses. The unprinted address is written to the `# baseline` line but
+    is not in the watched addresses list.
+    """
+    paths = []
+    for i, interval in enumerate(intervals):
+        t0, stop = 0.05 + 20 * i, 5.0 + 20 * i
+        rows = reload_cycle(t0, 0.1, stop, start=levels[i][gts.RELOAD])
+        rows += countdown(0x0635, 20, t0 + 0.02, 0.1, stop)
+        path = dirpath / f'part{i}.csv'
+        # Combine printed and unprinted levels
+        all_levels = dict(levels[i])
+        all_levels.update(unprinted_levels[i])
+        # Write baseline for all levels, but only watch the printed ones
+        with open(path, 'w') as f:
+            f.write(HEADER)
+            watched = [0x0635, gts.RELOAD]
+            f.write(f"# interval {interval}s  seconds {stop}  {len(watched)} addresses: "
+                    + " ".join(f"{a:#06x}" for a in watched) + "\n")
+            f.write(f"# baseline {ts(baseline_at[i])}: "
+                    + " ".join(f"0x{a:04X}=0x{all_levels[a]:02X}" for a in sorted(all_levels)) + "\n")
+            f.write("ts,addr,old,new\n")
+            for t, a, o, n in sorted(rows):
+                f.write(f"{ts(t)},0x{a:04X},0x{o:02X},0x{n:02X}\n")
+            f.write(f"# ended {ts(stop)}  constructed\n")
+        paths.append(str(path))
+    return paths
+
+
 def two_captures(dirpath, intervals, levels, baseline_at=(0, 0)):
     """Two captures of the same sweep either side of a suspend, and their paths.
 
@@ -627,6 +660,41 @@ class Grading(unittest.TestCase):
                       '1 addresses watched', out)
         self.assertNotIn('union', out)
         self.assertNotIn('stated by', out)
+
+    def test_unprinted_address_disagreement_is_not_refused(self):
+        # An unprinted address disagreement cannot damage a report because
+        # `grade()` never prints a line for it. So the refusal should not fire
+        # on unprinted addresses, even if two captures disagree on them.
+        # 0x0751 is an unprinted address (not in PRE, POST, SIDE, GATE, or RELOAD).
+        printed = {0x0635: 20, gts.RELOAD: 9}
+        unprinted_first = {0x0751: 0x10}
+        unprinted_second = {0x0751: 0x11}
+        first, second = two_captures_with_unprinted(
+            self.dir, [0.01, 0.01],
+            [printed, printed],
+            [unprinted_first, unprinted_second],
+            baseline_at=(0, 20))
+        rc, out, err = run_quietly(first, second)
+        self.assertEqual(rc, 0,
+                        'disagreement on unprinted address 0x0751 should not refuse')
+        self.assertEqual(err, '')
+        self.assertIn('period / step = 10.00', out)
+
+    def test_printed_address_disagreement_still_refuses(self):
+        # A disagreement on a printed address (one that `grade()` prints a line
+        # for) must still cause refusal, to ensure the fix is selective.
+        # 0x06D6 (RELOAD) is printed and is watched by two_captures().
+        first_level = {0x0635: 20, gts.RELOAD: 9}
+        second_level = {0x0635: 20, gts.RELOAD: 4}
+        first, second = two_captures(self.dir, [0.01, 0.01],
+                                     [first_level, second_level],
+                                     baseline_at=(0, 20))
+        rc, out, err = run_quietly(first, second)
+        self.assertEqual(rc, 1, 'disagreement on printed address should still refuse')
+        self.assertIn('0x06D6', err)
+        self.assertIn('0x09', err)
+        self.assertIn('0x04', err)
+        self.assertEqual(out, '')
 
 
 class CommittedPairAgainstTheSuite(unittest.TestCase):
