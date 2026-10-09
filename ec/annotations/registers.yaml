@@ -3117,7 +3117,8 @@ registers:
       uniwill-acpi.c, so whether upstream defines 0x075B at all is open.
       Grepping its EC_ADDR_* defines settles it. The 0x0751 note above
       is what pointed at the two bytes, and its own "fan PWM" wording for
-      them is corrected there.
+      them is corrected there. All three write sites store blind (see
+      docs/findings/075B-075C-writer-census.md).
 
   - name: MAIN_FAN_R_DUTY (fan duty, published to the Control Center)
     addr: 0x075C
@@ -3187,7 +3188,8 @@ registers:
       not recoverable by it from the committed captures. The
       named next step is the live one in
       docs/findings/fan-duty-channel-075b-075c.md -- hold or unplug one
-      fan and watch which byte stops moving -- and it is not run here.
+      fan and watch which byte stops moving -- and it is not run here. Both
+      write sites store blind (see docs/findings/075B-075C-writer-census.md).
 
       Adjacent to it, GetEcGpuFanRpm's pairing is in doubt, which is a
       fact about the vendor's code rather than about this register.
