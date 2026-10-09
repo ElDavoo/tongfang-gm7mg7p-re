@@ -149,8 +149,7 @@ BLIND_CLASSES = (ENTRY_IS_BRANCH, NO_XDATA_NAMED, NAMED_PAST_FIRST_BRANCH,
 # run. A bucket name a reader has to look up is a bucket name nobody reads.
 CLASS_REASONS = {
     NO_XDATA_NAMED:
-        "the C names no XDATA address at all, so there is no address in "
-        "question -- not a blind spot, and not an absence either",
+        "the C names no XDATA address at all",
     ENTRY_IS_BRANCH:
         "the export's entry is a branch, so the window stops on instruction "
         "one by design and the body is past it",
@@ -175,6 +174,8 @@ _ANNOTATION_FIELD = re.compile(r"^[ \t]*type:[ \t]", re.M)
 # though it were an instruction -- `asm_opening_bytes()`'s rule and its reason.
 _ASM_LINE = re.compile(r"^[0-9A-Fa-f]{4}\s+([0-9A-Fa-f]{2}|-)\s+"
                        r"([0-9A-Fa-f]{2}|-)\s+([0-9A-Fa-f]{2}|-)\s+(\S+)\s*(.*)$")
+# MOVX opcodes that access XDATA memory
+_MOVX_OPCODES = {0xE0, 0xE2, 0xE3, 0xF0, 0xF2, 0xF3}
 
 
 def repo_path(path):
@@ -342,6 +343,61 @@ def blind_rows(fw, strip=strip_header_comment):
     return rows
 
 
+def has_movx_in_extent(fw, program, addr, size):
+    """True if the function's extent contains any MOVX instruction."""
+    if not size:
+        return False
+    file_off = file_offset(program, addr)
+    limit = file_off + size
+    for i, raw, _text in disasm8051.decode(fw, file_off, size, addr=addr,
+                                          stop_at_flow=False):
+        if i >= limit:
+            break
+        if raw[0] in _MOVX_OPCODES:
+            return True
+    return False
+
+
+def names_intmem(text):
+    """True if the text contains a DAT_INTMEM_ reference."""
+    return "DAT_INTMEM_" in text
+
+
+def has_annotation_mismatch_comment(out_file):
+    """True if the C file has an annotation comment indicating a mismatch between
+    the decompiled C body and the actual listing instructions.
+
+    Looks for annotations (marked by type: field) containing language like:
+    - "does not match"
+    - "does not show"
+    - "is not in"
+    - "is not shown"
+    Indicating the decompiled C code differs from what the listing shows.
+    """
+    if not out_file or out_file.startswith("("):
+        return False
+    path = os.path.join(OUTDIR, out_file.replace(".asm", ".c"))
+    if not os.path.isfile(path):
+        return False
+    with open(path, errors="replace") as f:
+        content = f.read()
+    # Find the annotation comment (marked by type: field)
+    for m in _BLOCK_COMMENT.finditer(content):
+        if _ANNOTATION_FIELD.search(m.group()):
+            comment = m.group()
+            # Look for various phrases indicating mismatch between C and listing
+            mismatch_phrases = [
+                "does not match",
+                "does not show",
+                "is not in",
+                "is not shown",
+                "appear nowhere",
+            ]
+            if any(phrase in comment for phrase in mismatch_phrases):
+                return True
+    return False
+
+
 def census(rows):
     """{class: n} over BLIND_CLASSES, every key present."""
     counts = dict.fromkeys(BLIND_CLASSES, 0)
@@ -349,6 +405,44 @@ def census(rows):
         if row["blind"]:
             counts[row["blind"]] += 1
     return counts
+
+
+def measure_no_xdata_named_subpopulations(rows, fw, listing_index):
+    """Measure the composition of the no-xdata-named class.
+
+    Returns (movx_count, intmem_count, mismatch_count).
+    """
+    movx_count = 0
+    intmem_count = 0
+    mismatch_count = 0
+
+    no_xdata_rows = [r for r in rows if r["blind"] == NO_XDATA_NAMED]
+
+    for row in no_xdata_rows:
+        program, addr_hex = row["program"], row["addr"]
+        listed = listing_index.get((program, addr_hex))
+
+        if listed is None:
+            continue
+
+        addr = int(addr_hex, 16)
+        size = int(listed["size"])
+        out_file = listed["out_file"]
+
+        # Check for MOVX in extent
+        if has_movx_in_extent(fw, program, addr, size):
+            movx_count += 1
+
+        # Check for DAT_INTMEM_ reference
+        body = c_body(out_file, strip_header_comment)
+        if body and names_intmem(body):
+            intmem_count += 1
+
+        # Check for annotation mismatch comment
+        if has_annotation_mismatch_comment(out_file):
+            mismatch_count += 1
+
+    return movx_count, intmem_count, mismatch_count
 
 
 def census_line(rows):
@@ -625,10 +719,18 @@ def report(rows, path=BLINDNESS):
     return path
 
 
-def print_census(rows):
+def print_census(rows, fw=None, listing_index=None):
     print(census_line(rows))
     for cls in BLIND_CLASSES:
         print("  %-22s %s" % (cls, CLASS_REASONS[cls]))
+    # Measure sub-populations of no-xdata-named if we have the data
+    if fw is not None and listing_index is not None:
+        movx_count, intmem_count, mismatch_count = measure_no_xdata_named_subpopulations(
+            rows, fw, listing_index)
+        print("  no-xdata-named sub-populations:")
+        print("    %d rows with MOVX in function extent" % movx_count)
+        print("    %d rows naming DAT_INTMEM_" % intmem_count)
+        print("    %d rows with annotation mismatch comment" % mismatch_count)
 
 
 def main(argv=None):
@@ -659,6 +761,7 @@ def main(argv=None):
         return self_test(fw)
 
     rows = blind_rows(fw)
+    listing_index = {(r["program"], r["addr"]): r for r in read_index(LISTING_INDEX)}
     # Before anything is written or compared: a row that fell in no class is
     # this tool's own failure, and committing a sidecar that quietly omits one
     # is the shape of error the sidecar exists to remove.
@@ -692,12 +795,12 @@ def main(argv=None):
             return 1
         print("  %d row(s) recomputed, every cell agreeing with %s"
               % (compared, repo_path(sidecar)))
-        print_census(rows)
+        print_census(rows, fw, listing_index)
         return 0
 
     if args.report:
         print("cross_decoder_blindness.py: wrote %s" % repo_path(report(rows, sidecar)))
-    print_census(rows)
+    print_census(rows, fw, listing_index)
     return 0
 
 
