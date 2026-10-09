@@ -55,11 +55,9 @@ left six unmoved:
 
 ```console
 $ python3 ec/tools/test_pd_07d0_caller_arms.py
-  Ran 11 tests; OK.
 $ python3 ec/tools/call_graph.py --check
-call-graph-callees.csv: 1854 rows, no diff
+call-graph-callees.csv: no diff
 $ python3 ec/tools/verify_reassembly.py --check
-  listing digests: 2747 compared against the committed report, 0 disagreement(s)
 ```
 
 ## Sources
