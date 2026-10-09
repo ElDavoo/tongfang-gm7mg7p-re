@@ -4,12 +4,22 @@
 // Machine output carrying this repository's symbols. Not the vendor's source.
 
 
-/* Helper called by the 0x888D handler when the 0x0F5F table selector is 2, annotated in the listing
-   as yielding base + 0x00. Its own body is not decoded there, so the role is read off the call site
-   only
+/* Copies XDATA 0x08E6 and 0x08E7 into XDATA 0x0A47 and 0x0A48 as a big-endian pair: reads 0x08E6,
+   saves it in R7, reads 0x08E7, sets DPTR to 0x0A47, exchanges A with R7 so 0x08E6 lands first,
+   stores, increments DPTR, and stores R7, which is 0x08E7. It takes no argument and returns nothing
+   in A -- A holds 0x08E7 on exit, so a caller reading A gets the low byte rather than a status.
+   That makes it the no-argument twin of 0xBCCB (store_be16_of_08e6_and_arg_to_0a47), which takes
+   the low byte from its argument instead of from 0x08E7, and the pair at 0x0A47/0x0A48 is what both
+   of them write. Corrected 2026-10-05 (issue #397): this row carried basis inferred, with the role
+   and the base + 0x00 offset both read off the 0x888D call site rather than off the routine;
+   neither survives the committed listing, because these instructions compute no offset at all --
+   they copy two bytes, and the only arithmetic on either is the inc DPTR that walks the destination
+   pointer across the pair. The name is left as it is, since renaming it here would fork the
+   generated CSVs and the decompiled .c header off this one row until the next --mode
+   rebuild-project. What the pair is read as downstream is docs/findings/fan-ramp-control-loop.md.
    type: math
-   evidence: ec/annotations/manual-fan-ctrl-0751.md
-   basis: inferred  <- reading, not a fact read out of the binary
+   evidence: ec/decompiled/bank0/BC4F.asm; ec/decompiled/bank0/BC4F.c
+   basis: hand-decoded
    name_basis: code-shape */
 
 void fan_table_base_offset_helper(void)

@@ -9,13 +9,13 @@
    type: writer
    evidence: ec/decompiled/bank0/E024.asm; ec/decompiled/bank0/E024.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void store_r6_r7_to_046c_046d(undefined1 param_1,undefined1 param_2)
 
 {
-  DAT_EXTMEM_046c = param_1;
-  DAT_EXTMEM_046d = param_2;
+  SECOND_FAN_RPM_0 = param_1;
+  SECOND_FAN_RPM_1 = param_2;
   return;
 }
 

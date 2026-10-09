@@ -573,7 +573,7 @@ bank0,DF78,scale_r7_by_8_then_set_09c1_09c3,agree,
 bank0,DFDF,gate_06e6_then_store_0464,agree,
 bank0,E010,load_06e6,agree,
 bank0,E014,branch_on_06e6_eq_1,vacuous,entry-is-branch
-bank0,E020,move_a_to_r5_and_call_dfa0,vacuous,no-literal-named
+bank0,E020,move_a_to_r5_and_call_dfa0,vacuous,no-xdata-named
 bank0,E024,store_r6_r7_to_046c_046d,agree,
 bank0,E02D,mul_r7_by_8,vacuous,no-literal-named
 bank0,E033,FUN_CODE_e033,agree,

@@ -28,7 +28,7 @@ void forwarder_to_ad8b(void)
     }
     return;
   }
-  if (((DAT_EXTMEM_04a0 >> 5 & 1) != 1) && (DAT_EXTMEM_0494 == '\0')) {
+  if (((XDATA_04A0 >> 5 & 1) != 1) && (DAT_EXTMEM_0494 == '\0')) {
     read_xdata_pair_to_r3r4(0x518);
     read_xdata_pair_to_r1r2(0x546);
     cmp_r3r4_against_r1r2_16bit();

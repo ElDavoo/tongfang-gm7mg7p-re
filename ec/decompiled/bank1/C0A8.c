@@ -28,11 +28,11 @@ void FUN_CODE_c0a8(void)
   else if (((DAT_EXTMEM_0499 >> 1 & 1) == 1) && (DAT_EXTMEM_0579 != -1)) {
     DAT_EXTMEM_0579 = DAT_EXTMEM_0579 + '\x01';
   }
-  bVar1 = DAT_EXTMEM_04be == -1;
-  DAT_EXTMEM_04be = DAT_EXTMEM_04be + '\x01';
-  bVar4 = DAT_EXTMEM_04bf + bVar1;
-  if (!CARRY1(DAT_EXTMEM_04bf,bVar1)) {
-    DAT_EXTMEM_04bf = bVar4;
+  bVar1 = XDATA_04BE_COUNTER_B_0 == -1;
+  XDATA_04BE_COUNTER_B_0 = XDATA_04BE_COUNTER_B_0 + '\x01';
+  bVar4 = XDATA_04BE_COUNTER_B_1 + bVar1;
+  if (!CARRY1(XDATA_04BE_COUNTER_B_1,bVar1)) {
+    XDATA_04BE_COUNTER_B_1 = bVar4;
   }
   bVar2 = 4;
   bVar3 = DAT_EXTMEM_057b;
@@ -42,7 +42,8 @@ void FUN_CODE_c0a8(void)
   }
   cVar5 = '\0';
   cmp_r3r4_against_r1r2_16bit
-            (DAT_EXTMEM_04be,bVar4,(char)((ushort)bVar3 * 0x3c),(char)((ushort)bVar3 * 0x3c >> 8));
+            (XDATA_04BE_COUNTER_B_0,bVar4,(char)((ushort)bVar3 * 0x3c),
+             (char)((ushort)bVar3 * 0x3c >> 8));
   if (cVar5 < '\0') {
     DAT_EXTMEM_049c = DAT_EXTMEM_049c & 0xf3 | bVar2;
   }

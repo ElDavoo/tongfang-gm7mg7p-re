@@ -6,17 +6,20 @@
 
 /* Same shape as the routine at 0xBD5D but over XDATA 0x046D/0x046C: clears the carry, subtracts
    0x64 from 0x046D, then subtracts 0x00 from 0x046C through the borrow. Returns the low byte of
-   {0x046D,0x046C} minus 100 in A with the borrow in CY; neither address has an entry in
-   ec/annotations/registers.yaml.
+   {0x046D,0x046C} minus 100 in A with the borrow in CY. Both addresses now carry an entry in
+   ec/annotations/registers.yaml (SECOND_FAN_RPM, 0x046C/0x046D) as of issue #29; this comment said
+   otherwise until then. Note which half is which: 0x046D is the byte the constant comes off, so it
+   is the low byte here and in the pair at 0xBD5D, which is the opposite of what ECSpec's own names
+   for this pair say.
    type: math
    evidence: ec/decompiled/bank0/BD6B.asm; ec/decompiled/bank0/BD6B.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 char be16_046c_046d_minus_100(void)
 
 {
-  return DAT_EXTMEM_046c + (((DAT_EXTMEM_046d < 100) << 7) >> 7);
+  return SECOND_FAN_RPM_0 + (((SECOND_FAN_RPM_1 < 100) << 7) >> 7);
 }
 
 

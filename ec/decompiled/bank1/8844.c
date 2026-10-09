@@ -6,7 +6,21 @@
 
 /* If R7 is 0 it returns immediately with A unchanged. Otherwise it rotates the 16-bit pair R1:R2,
    R2 low, right by R7 bits, one bit per iteration through clr CY / rrc A on R2 then on R1, and
-   returns the new high byte R1 in A. No memory is touched.
+   returns the new high byte R1 in A. No memory is touched. *** CORRECTION 2026-10-04 (issue #1332)
+   *** An earlier version of this row said the routine rotates, and said R2 is the low byte. Both
+   are wrong, and the wrong wording is left standing above because the reason is the finding. The
+   routine shifts R1:R2 LOGICALLY RIGHT by R7 bits: the clr CY is the second instruction of the loop
+   body, so it runs at the top of every iteration, and the bit leaving the bottom of R1 sits in CY
+   when djnz jumps back to 0x8848 and is cleared before the high byte's rrc rather than re-entering
+   at the top of R2. A rotate would have to move R1 first; this moves R2 first because a right shift
+   consumes the high byte first. R1 is the LOW byte: 0x8886 read_xdata_pair_to_r1r2 does movx
+   A,@DPTR / mov R1,A / inc DPTR / movx A,@DPTR / mov R2,A, so R1 holds the byte at the lower
+   address, and 0x888C write_r1r2_to_xdata_pair stores them back in that same order. The routine's
+   NAME still says ror16 and is not renamed by this correction, since the name is carried into the
+   generated .c and the cross-decoder census; the body is a shift.
+   ec/tools/test_0436_capacity_ladder.py executes the committed 8844.asm instruction stream and
+   holds V>>n against ror16 on a value whose low bits are set, where the two disagree. Write-up:
+   docs/findings/0436-capacity-ladder.md.
    type: math
    evidence: ec/decompiled/bank1/8844.asm; ec/decompiled/bank1/8844.c
    basis: hand-decoded

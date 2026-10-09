@@ -7,13 +7,14 @@
 /* Reads the little-endian 16-bit word at XDATA 0x0834/0x0835 through the helper at 0x8898 and
    returns if both bytes are zero. Otherwise it writes 0x02 to XDATA 0x08E4, overwrites the same
    word with 0x0000 through the 16-bit store at 0x889E, and sets bit 0 of XDATA 0x0832. There is no
-   parameter in the listing, so the .c's extra param_1 test is not in these bytes. 0x0834, 0x08E4
-   and 0x0832 are not documented in ec/annotations/registers.yaml, so no meaning is claimed for
-   them.
+   parameter in the listing, so the .c's extra param_1 test is not in these bytes. The two bytes are
+   the word ec/annotations/registers.yaml names CHARGE_STAGE_WORD, which had no row for either
+   address when this comment was written; see issue #715. 0x08E4 is that file's XDATA_08E4; 0x0832
+   is not documented, so no meaning is claimed for it.
    type: writer
    evidence: ec/decompiled/bank1/BD20.asm; ec/decompiled/bank1/BD20.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void clear_0834_word_when_nonzero(char param_1)
 

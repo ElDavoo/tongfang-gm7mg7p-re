@@ -6,16 +6,18 @@
 
 /* Clears the carry, subtracts 0x64 (100) from XDATA 0x0465, then subtracts 0x00 from XDATA 0x0464
    through the borrow chain. The net effect is the big-endian 16-bit pair {0x0465,0x0464} minus 100,
-   low byte in A and borrow in CY; neither address has an entry in ec/annotations/registers.yaml.
+   low byte in A and borrow in CY. Both addresses now carry an entry in
+   ec/annotations/registers.yaml (MAIN_FAN_RPM, 0x0464/0x0465) as of issue #29; this comment said
+   otherwise until then.
    type: math
    evidence: ec/decompiled/bank0/BD5D.asm; ec/decompiled/bank0/BD5D.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 char be16_0464_0465_minus_100(void)
 
 {
-  return DAT_EXTMEM_0464 + (((DAT_EXTMEM_0465 < 100) << 7) >> 7);
+  return MAIN_FAN_RPM_0 + (((MAIN_FAN_RPM_1 < 100) << 7) >> 7);
 }
 
 

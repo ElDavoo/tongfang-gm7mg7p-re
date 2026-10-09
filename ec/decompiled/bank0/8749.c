@@ -46,9 +46,9 @@ void mode_tick_084c_07a5_09ee(char param_1)
     if (DAT_EXTMEM_084c != '\0') {
       gate_06e6_then_store_0464();
       if (DAT_EXTMEM_084c == '\x01') {
-        cVar1 = DAT_EXTMEM_0464;
-        if (DAT_EXTMEM_0464 == '\0') {
-          cVar1 = DAT_EXTMEM_0465;
+        cVar1 = MAIN_FAN_RPM_0;
+        if (MAIN_FAN_RPM_0 == '\0') {
+          cVar1 = MAIN_FAN_RPM_1;
         }
         if (cVar1 == '\0') {
           AP_OEM = AP_OEM | 0x20;
@@ -56,9 +56,9 @@ void mode_tick_084c_07a5_09ee(char param_1)
       }
       load_06e6();
       if (DAT_EXTMEM_084c == '\x01') {
-        cVar1 = DAT_EXTMEM_046c;
-        if (DAT_EXTMEM_046c == '\0') {
-          cVar1 = DAT_EXTMEM_046d;
+        cVar1 = SECOND_FAN_RPM_0;
+        if (SECOND_FAN_RPM_0 == '\0') {
+          cVar1 = SECOND_FAN_RPM_1;
         }
         if (cVar1 == '\0') {
           AP_OEM = AP_OEM | 0x20;

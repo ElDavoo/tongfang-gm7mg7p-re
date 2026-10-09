@@ -21,8 +21,8 @@ void load_06e6(undefined1 param_1)
   if (DAT_EXTMEM_06e6 == '\x01') {
     uVar1 = DAT_EXTMEM_1821;
     FUN_CODE_dfa0(DAT_EXTMEM_1820);
-    DAT_EXTMEM_046c = param_1;
-    DAT_EXTMEM_046d = uVar1;
+    SECOND_FAN_RPM_0 = param_1;
+    SECOND_FAN_RPM_1 = uVar1;
   }
   return;
 }

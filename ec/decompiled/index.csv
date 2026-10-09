@@ -314,7 +314,7 @@ bank0,BC14,init_0817_081e_081f_read_0815,18,annotation,no,yes,writer,hand-decode
 bank0,BC26,copy_0a53_to_0873_and_0a54_to_087b,17,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/BC26.asm; ec/decompiled/bank0/BC26.c,,bank0/BC26.c
 bank0,BC37,code_byte_sub_from_044c,8,annotation,no,yes,math,hand-decoded,ec/decompiled/bank0/BC37.asm; ec/decompiled/bank0/BC37.c; ec/annotations/registers.yaml,,bank0/BC37.c
 bank0,BC3F,store_a_then_clear_0824_bit7_and_0768_bit2,16,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/BC3F.asm; ec/decompiled/bank0/BC3F.c; ec/annotations/registers.yaml,,bank0/BC3F.c
-bank0,BC4F,fan_table_base_offset_helper,16,annotation,no,yes,math,inferred,ec/annotations/manual-fan-ctrl-0751.md,,bank0/BC4F.c
+bank0,BC4F,fan_table_base_offset_helper,16,annotation,no,yes,math,hand-decoded,ec/decompiled/bank0/BC4F.asm; ec/decompiled/bank0/BC4F.c,,bank0/BC4F.c
 bank0,BC5F,inc_09e4_and_return_new,8,annotation,no,yes,math,hand-decoded,ec/decompiled/bank0/BC5F.asm; ec/decompiled/bank0/BC5F.c,,bank0/BC5F.c
 bank0,BC67,store_code_byte_to_08ac_then_reload_dptr,10,annotation,no,yes,copy,hand-decoded,ec/decompiled/bank0/BC67.asm; ec/decompiled/bank0/BC67.c,,bank0/BC67.c
 bank0,BC71,read_0434_keep_0435_in_r4,10,annotation,no,yes,reader,hand-decoded,ec/decompiled/bank0/BC71.asm; ec/decompiled/bank0/BC71.c; ec/annotations/registers.yaml,,bank0/BC71.c
@@ -487,6 +487,8 @@ bank0,CA53,tick_06ea_against_period_in_0a56,49,annotation,no,yes,math,hand-decod
 bank0,CC3D,init_clear_00f5_and_1304_bit2,20,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/CC3D.asm; ec/decompiled/bank0/CC3D.c,,bank0/CC3D.c
 bank0,CC51,init_set_1304_bit4_and_clear_bit2,19,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/CC51.asm; ec/decompiled/bank0/CC51.c,,bank0/CC51.c
 bank0,CC64,init_06e6_1_clear_0743_07c5_and_07d5_ff,107,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/CC64.asm; ec/decompiled/bank0/CC64.c; ec/annotations/bank-call-audit.md; ec/annotations/ec-07c4-07d5-sites.md,,bank0/CC64.c
+bank0,CCCF,init_06e6_1_ccf,22,annotation,no,yes,init,hand-decoded,ec/annotations/task-call-table.csv; docs/findings/seed-cccf-cce5-discriminators.md,,bank0/CCCF.c
+bank0,CCE5,init_06e6_3,23,annotation,no,yes,init,hand-decoded,ec/annotations/task-call-table.csv; docs/findings/seed-cccf-cce5-discriminators.md,,bank0/CCE5.c
 bank0,CCFC,power_on_init_and_two_hang_paths,138,annotation,no,yes,init,hand-decoded,ec/decompiled/bank0/CCFC.asm; ec/decompiled/bank0/CCFC.c; ec/annotations/registers.yaml,,bank0/CCFC.c
 bank0,CDC3,FUN_CODE_cdc3,33,call-target,no,no,,,,,bank0/CDC3.c
 bank0,CDE4,walk_index_06e7_up_to_1e_table_6bca,83,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/CDE4.asm; ec/decompiled/bank0/CDE4.c,,bank0/CDE4.c

@@ -10,7 +10,7 @@
    type: logic
    evidence: ec/decompiled/bank1/C778.asm; ec/decompiled/bank1/C778.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void clear_0492_04a0_0524_0526_and_0497b5(void)
 
@@ -22,7 +22,7 @@ void clear_0492_04a0_0524_0526_and_0497b5(void)
     return;
   }
   DAT_EXTMEM_0492 = 0;
-  DAT_EXTMEM_04a0 = 0;
+  XDATA_04A0 = 0;
   DAT_EXTMEM_0524 = 0;
   DAT_EXTMEM_0526 = 0;
   DAT_EXTMEM_0497 = DAT_EXTMEM_0497 & 0xdf;

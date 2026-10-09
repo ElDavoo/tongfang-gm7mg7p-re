@@ -23,8 +23,8 @@ void gate_chain_to_0491_bit0(undefined1 param_1)
     mask_0491_with_c0();
     return;
   }
-  if ((((DAT_EXTMEM_0497 & 1) != 1) && (param_1 = DAT_EXTMEM_04a0, DAT_EXTMEM_0524 == BANK0_R1)) &&
-     ((DAT_EXTMEM_04a1 >> 6 & 1) != 0)) {
+  if ((((DAT_EXTMEM_0497 & 1) != 1) && (param_1 = XDATA_04A0, DAT_EXTMEM_0524 == BANK0_R1)) &&
+     ((XDATA_04A1 >> 6 & 1) != 0)) {
     FUN_CODE_bcb3();
     return;
   }
@@ -46,7 +46,7 @@ void gate_chain_to_0491_bit0(undefined1 param_1)
     mask_0491_with_c0();
     return;
   }
-  if ((DAT_EXTMEM_04a1 & 0x90) != 0) {
+  if ((XDATA_04A1 & 0x90) != 0) {
     mask_0491_with_c0();
     return;
   }
