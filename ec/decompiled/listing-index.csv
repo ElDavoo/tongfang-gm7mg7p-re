@@ -69,6 +69,7 @@ bank0,8399,FUN_CODE_8399,61,call-target,no,no,,,,,bank0/8399.asm
 bank0,83D6,ring_push_0990,41,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/83D6.asm; ec/decompiled/bank0/83D6.c,,bank0/83D6.asm
 bank0,83FF,sync_0788_and_07d4_from_09e9,157,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/83FF.asm; ec/decompiled/bank0/83FF.c; ec/annotations/registers.yaml,,bank0/83FF.asm
 bank0,849C,return_trampoline_83ff,1,annotation,no,yes,forwarder,hand-decoded,ec/decompiled/bank0/849C.asm; ec/decompiled/bank0/849C.c,,bank0/849C.asm
+bank0,8590,probe_channel_logic,26,annotation,no,yes,logic,hand-decoded,ec/decompiled/bank0/8590.asm; ec/decompiled/bank0/8590.c,,bank0/8590.asm
 bank0,8648,clear_200b,11,annotation,no,yes,writer,hand-decoded,ec/decompiled/bank0/8648.asm; ec/decompiled/bank0/8648.c,,bank0/8648.asm
 bank0,8653,seed_fan_table_base,165,annotation,no,yes,init,hand-decoded,ec/annotations/manual-fan-ctrl-0751.md,,bank0/8653.asm
 bank0,8749,mode_tick_084c_07a5_09ee,324,annotation,no,yes,state,hand-decoded,ec/decompiled/bank0/8749.asm; ec/decompiled/bank0/8749.c; ec/annotations/registers.yaml,,bank0/8749.asm

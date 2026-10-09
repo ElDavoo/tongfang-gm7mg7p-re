@@ -54,16 +54,16 @@ The per-function byte readings are the committed listings, one `.asm` and one
 Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
-- `exported functions` — 2750
-- `annotated function rows` — 1992
-- `rows the index marks annotated` — 1999
+- `exported functions` — 2751
+- `annotated function rows` — 1993
+- `rows the index marks annotated` — 2000
 - `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
 
 | program | exported | annotated | unannotated |
 |---|---|---|---|
-| `bank0` | 757 | 705 | 52 (7%) |
+| `bank0` | 758 | 706 | 52 (7%) |
 | `bank1` | 698 | 616 | 82 (12%) |
 | `pd` | 542 | 542 | 0 (0%) |
 | `common` | 753 | 136 | 617 (82%) |
@@ -630,9 +630,9 @@ The same four totals as §2, restated here so the remainder can be read on its
 own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
-- `exported functions` — 2750
-- `annotated function rows` — 1992
-- `rows the index marks annotated` — 1999
+- `exported functions` — 2751
+- `annotated function rows` — 1993
+- `rows the index marks annotated` — 2000
 - `unresolved rows` — 173
 
 **617 of the 753 common-area functions are unannotated, and that is still the
