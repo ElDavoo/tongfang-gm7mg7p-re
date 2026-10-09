@@ -2760,4 +2760,3 @@ pd,79B3,read_07d0_via_7b0d_01,match,54836fdd5020180b,9,0,,sdas8051 02.00
 pd,7A5A,read_07d0_via_7b0d_02,partial,b6b802636f30d7fc,23,2,"2 of 25 instruction(s) unchecked, first: ajmp 0x7890",sdas8051 02.00
 pd,842F,read_07d0_via_856f_01,match,f52c3e82ab5a574d,17,0,,sdas8051 02.00
 pd,844B,read_07d0_via_856f_02,partial,a882ed01866b8092,41,1,"1 of 42 instruction(s) unchecked, first: ajmp 0x8090",sdas8051 02.00
-pd,98A1,load_dptr_07d0,match,129c493224ca55d3,1,0,,sdas8051 02.00
