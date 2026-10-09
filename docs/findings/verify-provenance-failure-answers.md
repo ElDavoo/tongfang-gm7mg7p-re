@@ -160,6 +160,7 @@ the block; a table of pass marks is not.
 | the control-empty guard (`if not control:`) disabled | 2: the wrong-`--listings-from` case, and the `[]`/`None` case beside it |
 | the listings-moved guard (`if moved:`) disabled | 1: the listings-moved case |
 | the reports-differ guard (`if problems:`) disabled | 1: the reports-differ case |
+| `has_digest` validation disabled | 4: empty-col, garbage-col, no-col, base-has-col-remove |
 | `git_lines` answering `[]` instead of `None` on a failed command | 4: both INJECTED cases and both unreadable-report cases |
 | `repo=repo` dropped from the report's `git show` | 4: the PASS case, its supporting view, the unreadable-migration case, and the reports-differ case |
 | `repo=repo` dropped from the control `git diff` | 8, including the PASS and the listing diff's INJECTED case; the control diff's own stays green, because that shim answers on the window string and never reaches the real git |
@@ -205,6 +206,30 @@ live question.
 the *depth* claim over real clones of this repository at two depths; this holds
 the *failure returns*, and a seven-commit fixture cannot stand in for a clone
 depth. They are cross-referenced.
+
+## The distinction between absent and empty
+
+A migration can fail to add `listing_digest` in three ways: the column is
+entirely absent from the CSV header, the column header is present but every
+cell is empty, or the column header is present but every cell contains garbage
+data. The first and third are refused explicitly (status 1); the second is
+refused because a digest that would close the per-commit half of the gap has to
+be present and meaningful, and an empty string is neither. The mode's docstring
+says "*detecting a change is not verifying it*", and an empty cell is a cell
+that was never written with a digest, so a migration that has the column but
+never filled it in says nothing about whether the listing text moved.
+
+The fixture cases test four validation scenarios: `empty-col` and `garbage-col`
+both add the column but with invalid cells; `no-col` omits the column from the
+header entirely; `base-has-col-remove` has the base carry the column and the
+migration remove it. All four fail status 1, and the error message names which
+condition was found. The distinction exists in the code path: one branch checks
+the header presence (`has_digest` on each side), the other reads the cell
+values. A migration that has the header but not the digests is caught by the
+second check and printed as "the column is empty or invalid on N row(s)", while a
+migration that lacks the header entirely is caught by the first and printed as
+"does not have listing_digest". A base that already has the column is caught by
+the header check and printed as "the base already has listing_digest".
 
 ## What is not claimed
 

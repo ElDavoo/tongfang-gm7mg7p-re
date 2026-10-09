@@ -2387,6 +2387,38 @@ def verify_provenance(base, migration, listings_from=None, repo=REPO):
           % (identical, n_base, "yes" if has_digest[0] else "no",
              "yes" if has_digest[1] else "no"))
 
+    # The migration must add the column, not drop it or leave it absent. The base
+    # must not have it, and every digest cell in the migration must be non-empty.
+    if has_digest[0]:
+        print("  FAIL the base already has listing_digest: the column is not new, "
+              "so this is not a migration that added it.")
+        return 1
+    if not has_digest[1]:
+        print("  FAIL the migration does not have listing_digest: the column is "
+              "absent or was removed.")
+        return 1
+
+    # Check that all digest cells are non-empty and valid in the migration report.
+    # A valid digest is 16 hex characters (from digest_of() which returns
+    # hexdigest()[:16]). Empty or non-hex cells fail.
+    import io
+    import re
+    mig_reader = csv.DictReader(io.StringIO(reports["migration"]))
+    invalid_digests = []
+    for row in mig_reader:
+        digest = row.get("listing_digest", "").strip()
+        # Valid digest must be 16 hex characters.
+        if not digest or not re.fullmatch(r"[0-9a-fA-F]{16}", digest):
+            invalid_digests.append((row.get("program"), row.get("addr")))
+    if invalid_digests:
+        print("  FAIL the migration's listing_digest column is empty or invalid on "
+              "%d row(s):" % len(invalid_digests))
+        for prog, addr in invalid_digests[:20]:
+            print("    %s %s" % (prog, addr))
+        if len(invalid_digests) > 20:
+            print("    ... and %d more" % (len(invalid_digests) - 20))
+        return 1
+
     touched, why = git_lines("log", "--name-only", "--format=",
                              "%s..%s" % (base_sha, mig_sha), "--",
                              "ec/decompiled", repo=repo)
@@ -2542,6 +2574,39 @@ def build_provenance_fixture(root):
           "   stream, so a window that contains one of these has still moved no\n"
           "   listing. */\n")
     shas["migration"] = commit("migration: add listing_digest, and a .c beside it")
+
+    # Four windows with broken migrations: column added but empty, column added
+    # but garbage, column absent, or column removed from a base that had it.
+    # These test the branch that refuses migrations that don't add the column
+    # correctly.
+    empty_col_rows = [dict(r, listing_digest="") for r in mig_rows]
+    write(REPORT_REL, report_text(empty_col_rows, mig_fields))
+    shas["empty-col"] = commit("empty-col: migration adds column but every cell empty")
+
+    # Garbage that includes non-hex characters, so it's not a valid digest.
+    garbage_col_rows = [dict(r, listing_digest="NOTAHEXDIGEST!")
+                        for r in mig_rows]
+    write(REPORT_REL, report_text(garbage_col_rows, mig_fields))
+    shas["garbage-col"] = commit("garbage-col: migration adds column but every "
+                                "cell garbage")
+
+    # Migration skips the column entirely. Write rows without listing_digest.
+    no_col_rows = [dict((k, v) for k, v in r.items() if k != "listing_digest")
+                   for r in mig_rows]
+    write(REPORT_REL, report_text(no_col_rows, FIXTURE_FIELDS))
+    shas["no-col"] = commit("no-col: migration skips the listing_digest column")
+
+    # Base has the column, migration removes it (reverting the migration).
+    base_with_col_rows = [dict(r, listing_digest=digest_of(parse_listing(path)))
+                          for r, path in zip(base_rows, (first_path, second_path))]
+    write(REPORT_REL, report_text(base_with_col_rows, mig_fields))
+    shas["base-has-col"] = commit("base-has-col: base has the column")
+    # Now remove it in the next commit. Strip listing_digest from rows.
+    no_digest_rows = [dict((k, v) for k, v in r.items() if k != "listing_digest")
+                      for r in base_with_col_rows]
+    write(REPORT_REL, report_text(no_digest_rows, FIXTURE_FIELDS))
+    shas["base-has-col-remove"] = commit("base-has-col-remove: migration removes "
+                                         "listing_digest")
 
     # The three windows that are wrong in different ways. They are one line
     # rather than three branches because each case names the window it reads,
@@ -3233,6 +3298,37 @@ def self_test():
                 and "instructions_checked" in said and "0040" in said,
                 "a cell changed under the column fails with the count, the cell "
                 "and the row named (status %r)" % status)
+
+            # Four broken migrations where the column is added but invalid.
+            # Migration adds the column with all cells empty.
+            status, said = main_says(at("base", "empty-col"))
+            assert_that(
+                status == 1 and "listing_digest column is empty" in said
+                and "0040" in said,
+                "a migration with an empty listing_digest column fails, naming the "
+                "rows with empty cells (status %r)" % status)
+
+            # Migration adds the column with all cells garbage.
+            status, said = main_says(at("base", "garbage-col"))
+            assert_that(
+                status == 1 and "listing_digest column is empty" in said,
+                "a migration with a garbage listing_digest column fails: "
+                "non-hex is treated as empty (status %r)" % status)
+
+            # Migration skips the column entirely.
+            status, said = main_says(at("base", "no-col"))
+            assert_that(
+                status == 1 and "does not have listing_digest" in said,
+                "a migration that skips the listing_digest column fails, saying "
+                "the column is absent or was removed (status %r)" % status)
+
+            # Base has the column, migration removes it.
+            status, said = main_says(at("base-has-col", "base-has-col-remove"))
+            assert_that(
+                status == 1 and "already has listing_digest" in said,
+                "a migration that removes the listing_digest column from a base "
+                "that had it fails, saying the base already has the column "
+                "(status %r)" % status)
 
             # The two `git_lines is None` branches, and the only cases here that
             # are not end-to-end: a commit that resolves cannot make `git diff`
