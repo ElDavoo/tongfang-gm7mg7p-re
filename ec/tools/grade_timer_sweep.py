@@ -151,6 +151,14 @@ def merged_capture_refusal(nfiles, intervals, levels):
     state it, and one level per address that every file stating it gives the
     same value.
 
+    **Only addresses in the printed groups are checked.** The printed groups are
+    PRE, POST, SIDE, GATE, and RELOAD, the only addresses whose levels `grade()`
+    prints per-address lines for. A disagreement on an unprinted address has no
+    sentence to print and cannot damage a report, so `load()` filters `levels` to
+    this set before checking, and a `# baseline` entry for an unprinted address
+    is inert: it is read but does not reach this sentence and cannot refuse the
+    run.
+
     A function rather than a literal at the two places that need it, for
     `bom_refusal`'s reason: `load()` raises this sentence and `main()` prints
     it, and the warning an operator reads and the error the grading raises
@@ -362,8 +370,12 @@ def load(paths):
         WINDOWS.append((p, own_first, own_last))
     # Read once, refused once: every file has to be read before the question
     # can be asked, and a run that cannot be graded is refused before any of
-    # it is built rather than halfway through the report.
-    refusal = merged_capture_refusal(len(paths), INTERVALS, levels)
+    # it is built rather than halfway through the report. Filter levels to only
+    # include addresses in the printed groups, so a disagreement on an unprinted
+    # address cannot reach the refusal.
+    printed_addrs = set(PRE) | {RELOAD} | set(POST) | set(SIDE) | set(GATE)
+    filtered_levels = [(a, p, v) for a, p, v in levels if a in printed_addrs]
+    refusal = merged_capture_refusal(len(paths), INTERVALS, filtered_levels)
     if refusal is not None:
         raise ValueError(refusal)
     interval = INTERVALS[0][1] if INTERVALS else None
