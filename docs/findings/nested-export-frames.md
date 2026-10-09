@@ -249,9 +249,19 @@ measurements rather than restatements of the issue's list:
 ## 7. What `--check` refuses, and what it only reports
 
 Two conditions fail, and both are defects this method can decide: a committed
-listing whose opening bytes are **not the firmware's**, which would leave every
-verdict above a reading of a tree that is no longer there; and an edge whose
-bucket is outside the two above.
+listing whose **bytes are not the firmware's**, which would leave every verdict
+above a reading of a tree that is no longer there; and an edge whose bucket is
+outside the two above. The staleness check now walks the entire listing using
+`all_listing_bytes()` and compares every instruction's bytes and addresses
+against `ec/firmware/GMxMGxx_11.800`, detecting drift in any part of the
+listing. This covers listings that open at their row's address; listings that
+open below their address are also checked at their actual opening point, not
+at the row's own address.
+
+The extended check now covers every row that has an `.asm` file, including
+those whose listings open below their row address. The method still cannot
+reach the three rows with no `.asm` file at all; those are **not found by this
+method**.
 
 Two are **reported and never fail**, because this method cannot decide them and
 saying otherwise would be a claim it has not earned:
@@ -259,15 +269,13 @@ saying otherwise would be a claim it has not earned:
 - a row with **no committed listing** — the committed tree carries three, which
   `ec/decompiled/listing-index.csv` records as `(no-instructions)` with a `.c`
   and no `.asm`. That is a recorded state of the export, not a gap in it.
-- a listing that **opens somewhere other than** the row's own address, so its
-  opening bytes cannot be compared at that address. The committed tree carries
-  fourteen of these, and six of them go on to hold a nested row — every
-  container in §2's second bucket is one of them, and none of the first bucket's
-  is.
+- a listing whose opening bytes cannot be read at the row's own address because
+  it opens elsewhere. This method now checks such listings at their actual
+  opening point rather than refusing them entirely.
 
-A row in either class is **not found by this method**. It is never read as "not
-nested", and `--check` failing on it would be red on the tree the export itself
-produces, which is how a gate stops gating.
+A row in the first class is **not found by this method**. It is never read as
+"not nested", and `--check` failing on it would be red on the tree the export
+itself produces, which is how a gate stops gating.
 
 ## 8. What is not addressed here
 
