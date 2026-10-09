@@ -2747,3 +2747,16 @@ pd,F7B2,ret_only_f7b2,match,4b76264f20720e6d,1,0,,sdas8051 02.00
 pd,F7B3,ret_only_f7b3,match,78aeb75aa990df90,1,0,,sdas8051 02.00
 pd,F7B4,ret_only_f7b4,match,8f5350709f3a25d2,1,0,,sdas8051 02.00
 pd,F7B7,ret_only_f7b7,match,9ec81ca8a93b1854,1,0,,sdas8051 02.00
+pd,488F,read_07d0_via_4c12_01,match,a189be4afc434a02,9,0,,sdas8051 02.00
+pd,4932,read_07d0_via_4c12_02,partial,ca4144c74abd5fe5,5,1,"1 of 6 instruction(s) unchecked, first: ajmp 0x4890",sdas8051 02.00
+pd,496C,read_07d0_via_4c19_01,partial,c43f6b791a5bd081,7,1,"1 of 8 instruction(s) unchecked, first: acall 0x48f8",sdas8051 02.00
+pd,4989,read_07d0_via_4c19_02,partial,57d5ef63affae3d4,9,1,"1 of 10 instruction(s) unchecked, first: ajmp 0x4812",sdas8051 02.00
+pd,4AE9,read_07d0_via_4c20_01,match,f558930a7cf5b9cb,9,0,,sdas8051 02.00
+pd,5131,read_07d0_via_52ef_01,match,3bf15ba2eb96a21a,9,0,,sdas8051 02.00
+pd,51B2,read_07d0_via_52ef_02,partial,b6c077cd3235ebea,23,5,"5 of 28 instruction(s) unchecked, first: ajmp 0x5290",sdas8051 02.00
+pd,51E6,read_07d0_via_531f_01,match,a69dc235238d003d,10,0,,sdas8051 02.00
+pd,51FE,read_07d0_via_531f_02,match,ac96f53eef1baab7,6,0,,sdas8051 02.00
+pd,79B3,read_07d0_via_7b0d_01,match,54836fdd5020180b,9,0,,sdas8051 02.00
+pd,7A5A,read_07d0_via_7b0d_02,partial,b6b802636f30d7fc,23,2,"2 of 25 instruction(s) unchecked, first: ajmp 0x7890",sdas8051 02.00
+pd,842F,read_07d0_via_856f_01,match,f52c3e82ab5a574d,17,0,,sdas8051 02.00
+pd,844B,read_07d0_via_856f_02,partial,a882ed01866b8092,41,1,"1 of 42 instruction(s) unchecked, first: ajmp 0x8090",sdas8051 02.00

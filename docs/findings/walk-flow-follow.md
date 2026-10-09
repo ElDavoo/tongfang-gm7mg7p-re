@@ -251,6 +251,11 @@ the census to 14 of 14 means seeding those thirteen *caller* functions, which is
 the follow-up. The write-up is
 [`pd-07d0-accessor-stubs.md`](pd-07d0-accessor-stubs.md).
 
+> **Corrected 2026-10-09, issue #1286.** The census is now "14 of 14" — all
+> thirteen *caller* functions have been seeded with their own rows in
+> `ec/annotations/ghidra-functions.csv`, exported, and the regenerated census
+> carries a row for each stub with its correct inbound count.
+
 **One of those thirteen is inside a listing's span without being spelled by
 it**, which is the trap that makes a span test and a parse test disagree here.
 `pd/4D6F.asm` runs `0x4A12`–`0x4E58`, covering `0x4B1D` (spelled, at

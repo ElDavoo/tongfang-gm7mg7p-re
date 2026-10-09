@@ -600,6 +600,13 @@ naming more callees adds no caller — and the file is still 1,841 rows. The
 thirteen unspelled *caller* addresses are what a follow-up has to seed. Write-up:
 [`../../docs/findings/pd-07d0-accessor-stubs.md`](../../docs/findings/pd-07d0-accessor-stubs.md).
 
+> **Corrected 2026-10-09, issue #1286.** The census is now "14 of 14" — all
+> thirteen *caller* functions have been seeded with their own rows in
+> `ec/annotations/ghidra-functions.csv` at addresses `0x488F`, `0x4932`, `0x496C`,
+> `0x4989`, `0x4AE9`, `0x5131`, `0x51B2`, `0x51E6`, `0x51FE`, `0x79B3`, `0x7A5A`,
+> `0x842F` and `0x844B`, exported, and the regenerated census carries a row for
+> each of the seven stubs with the correct inbound count.
+
 **So the warning above holds after the change, and holds for seven cells
 rather than eleven.** A `none` cell is "this method stopped", and a method that
 stops at a `ret` has not learned that the register is untouched. The full

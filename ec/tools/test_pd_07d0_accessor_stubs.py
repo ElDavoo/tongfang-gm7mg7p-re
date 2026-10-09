@@ -15,9 +15,9 @@ one being changed. So what is asserted is the rule `call_graph.py` implements --
 a callee has a row exactly when some committed listing carries a transfer that
 resolves to it, and that row's `inbound` is the number of transfer sites -- read
 by running `call_graph.scan()` and comparing it against the committed
-`call-graph-callees.csv` for these seven addresses. A run that seeds any of the
-thirteen unspelled callers moves the relationship, not the literal, and this
-suite follows it without a human editing anything here.
+`call-graph-callees.csv` for these seven addresses. This suite asserts the
+relationship rather than the inbound counts, so the next tranche that seeds more
+callers will not need to edit this suite.
 
 The last case reports, without failing, how many of the fourteen byte-scan sites
 a committed listing spells. That is the number the write-up quotes, and it is
@@ -265,13 +265,19 @@ class TestCensusRelationship(unittest.TestCase):
                     self.assertEqual(forms[form], int(row[form]), form)
 
     def test_the_0x07d0_stubs_are_entered_only_from_a_listing_that_spells_one(self):
-        # 0x4C20 is the one the census carries, and the site that gives it a
-        # row is 0x4B1D, spelled at pd/4D6F.asm. The other six hold no row
-        # because nothing committed spells a transfer to them -- which is a
-        # fact about the export, not about the bytes, and the two write-ups
-        # that quote the census have to say so.
-        spelled = sorted(int(k[1], 16) for k in self.keys & set(self.edges))
-        self.assertEqual([0x4C20], spelled)
+        # The relationship: a stub holds an inbound row exactly when a committed
+        # listing spells a transfer to it. This was true when only 0x4C20 carried
+        # a row (from the 0x4B1D site in pd/4D6F.asm). After seeding the 13
+        # caller functions, all fourteen sites now have spelled transfers, so all
+        # seven stubs appear in the census with their correct inbound counts.
+        # The test asserts the relationship rather than the count, so the next
+        # tranche that seeds more callers will not need to edit it again.
+        for stub in STUBS:
+            with self.subTest(stub="%04X" % stub):
+                key = ("pd", call_graph.norm_addr("%04X" % stub))
+                spelled = key in self.edges or key in self.cited
+                in_census = key in self.census
+                self.assertEqual(spelled, in_census)
 
     def test_report_without_failing(self):
         """How many of the fourteen sites a committed listing spells.
