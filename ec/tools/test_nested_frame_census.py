@@ -320,9 +320,13 @@ class TheRefusals(unittest.TestCase):
         self.assertEqual(r["verdict"], census.UNREAD)
         self.assertIsNone(r["span"])
         self.assertTrue([p for p in census.notes(self.records) if "0600" in p])
-        # ... and it is not a failure, or `--check` would be red on a tree the
-        # export itself records this way.
-        self.assertEqual(census.failures(self.records, self.edges), [])
+        # ... and it is not a failure itself, or `--check` would be red on a tree
+        # the export itself records this way. (The fixture includes other stale
+        # entries for testing the extended guard, so we only check that 0600
+        # is not reported as a failure.)
+        failures_for_0600 = [p for p in census.failures(self.records, self.edges)
+                             if "0600" in p]
+        self.assertEqual(failures_for_0600, [])
 
     def test_a_frame_one_byte_past_a_listing_is_after_a_function(self):
         self.assertEqual(self.by_key[("common", "0501")]["verdict"],
@@ -337,6 +341,26 @@ class TheRefusals(unittest.TestCase):
         self.assertTrue([p for p in found if "the export is stale" in p], found)
         # Named, so a person reading a red run knows which row to re-export.
         self.assertTrue([p for p in found if "0110" in p], found)
+
+    def test_a_listing_whose_later_instructions_drift_is_caught(self):
+        # The new fixture: a listing whose first instruction matches but a
+        # later instruction differs. The extended guard walks the full listing
+        # and catches this, where the old guard that only checked opening bytes
+        # would have missed it.
+        found = census.failures(self.records, self.edges)
+        stale_messages = [p for p in found if "0700" in p and "stale" in p]
+        self.assertTrue(stale_messages,
+                        "the 0x0700 fixture should be caught as stale")
+
+    def test_a_listing_opening_below_its_row_and_stale_there_is_caught(self):
+        # The new fixture: a listing that opens at 0x07F0 but is assigned to
+        # row 0x0800. The listing's opening byte is corrupted in the firmware.
+        # The extended guard checks at the listing's actual opening point and
+        # catches this.
+        found = census.failures(self.records, self.edges)
+        stale_messages = [p for p in found if "0800" in p and "stale" in p]
+        self.assertTrue(stale_messages,
+                        "the 0x0800 fixture should be caught as stale")
 
 
 class WhatCheckFailsOn(unittest.TestCase):

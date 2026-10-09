@@ -101,12 +101,39 @@ import tempfile
 
 from second_copy_census import (FIRMWARE, bytes_of, is_backed, listing_bytes,
                                 norm_addr, read_csv, row_span)
+from citation_callers import iter_instructions
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EC = os.path.join(HERE, os.pardir)
 DECOMPILED = os.path.join(EC, "decompiled")
 INDEX_CSV = os.path.join(DECOMPILED, "index.csv")
 ANNOTATIONS = os.path.join(EC, "annotations", "ghidra-functions.csv")
+
+
+def all_listing_bytes(decompiled, program, addr):
+    """Every instruction in the committed listing at `addr`, as (addr, bytes).
+
+    Walk the `.asm` with `iter_instructions()` and yield the address and bytes
+    of every instruction. Unlike `listing_bytes()` which returns only the
+    opening bytes of the first instruction, this returns the complete data
+    for checking the entire listing against the firmware. Returns None if the
+    listing is not found.
+
+    The caller is responsible for comparing these bytes against the firmware.
+    """
+    path = os.path.join(decompiled, program, "%04X.asm" % addr)
+    if not os.path.isfile(path):
+        return None
+    out = []
+    for parts in iter_instructions(path):
+        instr_addr = int(parts[0], 16)
+        instr_bytes = bytearray()
+        for slot in parts[1:4]:
+            if slot == "-":
+                break
+            instr_bytes.append(int(slot, 16))
+        out.append((instr_addr, bytes(instr_bytes)))
+    return out if out else None
 
 # The per-row verdicts, and no fourth. `no-committed-listing` is not a verdict
 # about framing at all -- it is the refusal this method states for a row it
@@ -252,6 +279,10 @@ def census(index_rows, ann_rows, fw=None, decompiled=DECOMPILED):
         addr = int(key[1], 16)
         span = spans[key]
         found = edges_of(row, rows, spans) if span else []
+
+        # Collect all instruction data for staleness checking
+        full_listing = all_listing_bytes(decompiled, row["program"], addr)
+
         record = {
             "program": row["program"],
             "addr": key[1],
@@ -268,7 +299,25 @@ def census(index_rows, ann_rows, fw=None, decompiled=DECOMPILED):
             # and not just the population this report leads with.
             "listing": listing_bytes(decompiled, row["program"], addr),
             "image": bytes_of(fw, row["program"], addr, 3),
+            # All instruction data from the listing, as (addr, bytes) tuples,
+            # for complete staleness checking. This detects drift in any part
+            # of the listing, not just the opening bytes.
+            "full_listing": full_listing,
+            # Any mismatch found between listing and firmware for any instruction
+            "listing_stale": None,
         }
+
+        # Check all instructions in the listing against the firmware
+        if full_listing is not None:
+            for instr_addr, instr_bytes in full_listing:
+                fw_bytes = bytes_of(fw, row["program"], instr_addr,
+                                     len(instr_bytes))
+                if fw_bytes is None or fw_bytes != instr_bytes:
+                    # Found a mismatch - mark this listing as stale
+                    record["listing_stale"] = (instr_addr, instr_bytes,
+                                               fw_bytes if fw_bytes else b'')
+                    break
+
         if span is not None:
             if found:
                 record["verdict"] = "nested"
@@ -290,24 +339,35 @@ def population(records):
 def failures(records, edges):
     """What `--check` refuses, in two kinds and no more.
 
-    A committed listing whose opening bytes are not the firmware's is a stale
+    A committed listing whose bytes do not match the firmware's is a stale
     export, which would leave every verdict above a reading of a tree that is no
-    longer there. And an edge whose bucket is outside `BUCKETS` is a shape this
-    tool has no name for, which is a gap in the vocabulary rather than a row to
-    skip; a census that quietly filed it under one of the two would make the
-    split a list instead of a partition. That second guard cannot fire on the
-    walk as it stands -- a span that covers an address cannot start above it --
-    and it is here so that a change to the walk which made it reachable is
-    reported rather than silently mislabelled.
+    longer there. The check now walks the entire listing using
+    `all_listing_bytes()` and compares every instruction's bytes and addresses
+    against the firmware, detecting drift in any part of the listing. And an
+    edge whose bucket is outside `BUCKETS` is a shape this tool has no name for,
+    which is a gap in the vocabulary rather than a row to skip; a census that
+    quietly filed it under one of the two would make the split a list instead
+    of a partition. That second guard cannot fire on the walk as it stands --
+    a span that covers an address cannot start above it -- and it is here so
+    that a change to the walk which made it reachable is reported rather than
+    silently mislabelled.
 
     A row with no committed listing and a listing that opens somewhere else are
     *not* here. They are `notes()`.
     """
     out = []
     for r in records:
-        if r["listing"] is None or r["image"] is None:
+        # Check for staleness found during census (full listing comparison)
+        if r["listing_stale"] is not None:
+            instr_addr, listing_bytes, fw_bytes = r["listing_stale"]
+            out.append(
+                "%s %s %s: byte at 0x%04X is %s in the listing and %s in the "
+                "firmware; the export is stale, re-run it"
+                % (r["program"], r["addr"], r["name"], instr_addr,
+                   listing_bytes.hex(" "), fw_bytes.hex(" ")))
+        elif r["listing"] is None or r["image"] is None:
             continue                      # `notes()` reports it, and says why
-        if r["listing"] != r["image"][:len(r["listing"])]:
+        elif r["listing"] != r["image"][:len(r["listing"])]:
             out.append("%s %s %s: the committed listing opens with %s and the "
                        "firmware holds %s there; the export is stale, re-run it"
                        % (r["program"], r["addr"], r["name"],
@@ -636,6 +696,21 @@ def _fixture_tree(scratch):
     # A row with no listing at all: the export records it, this method cannot
     # read it, and neither reading has anything to say about it.
     add("common", 0x0600, [], "unlisted", no_listing=True)
+
+    # A listing whose later instructions change while the first stays the same:
+    # the opening bytes match but body drift is undetected by the old guard.
+    add("common", 0x0700, nops(0x0700, 2), "stale_body", backed=True)
+    # Corrupt the second instruction's byte in the firmware (not the listing)
+    # The listing will have [nop, nop] but the firmware will have [nop, <other>]
+    if len(image) > 0x0701:
+        image[0x0701] = 0x74  # Change second byte from nop (0x00) to mov
+
+    # A listing that opens below its row address and is stale at that point:
+    add("common", 0x0800, nops(0x07F0, 0x12), "below_stale", backed=True)
+    # Corrupt the first byte of this listing in the firmware only
+    if len(image) > 0x07F0:
+        image[0x07F0] = 0xFF  # Change opening byte from nop (0x00) to 0xFF
+
     return decompiled, bytes(image), rows, anns
 
 
@@ -854,13 +929,32 @@ def self_test() -> int:
               "than skipped, and is not failed on",
               keyed[("common", "0600")]["verdict"] == "no-committed-listing"
               and any("0600" in p for p in notes(got))
-              and not failures(got, gedges),
+              and not any("0600" in p for p in failures(got, gedges)),
               "got %s" % keyed[("common", "0600")]["verdict"])
         check("refusal: a frame one byte past a listing's end is "
               "`after-a-function`, not nested",
               keyed[("common", "0501")]["verdict"] == "after-a-function"
               and not keyed[("common", "0501")]["edges"],
               "got " + keyed[("common", "0501")]["verdict"])
+        # Extended guard: catch a listing whose later instructions drift while
+        # opening bytes stay the same. This would pass the old guard but fails
+        # the extended full-listing check.
+        nested, edges = population(got)
+        all_failures = failures(got, edges)
+        check("refusal: a listing whose body drifts (later instruction changes) "
+              "is caught as stale even if opening bytes match",
+              any("0700" in p and "the export is stale" in p
+                  for p in all_failures),
+              "got %r" % [p for p in all_failures if "0700" in p])
+
+        # Extended guard: catch a listing that opens below its row address and
+        # is stale at that opening point.
+        check("refusal: a listing that opens below its row address and is stale "
+              "at its opening point is caught",
+              any("0800" in p and "the export is stale" in p
+                  for p in all_failures),
+              "got %r" % [p for p in all_failures if "0800" in p])
+
         with open(os.path.join(decompiled, "common", "0110.asm"), "w") as f:
             f.write("; fixture\n0110     90 34 12 mov  dptr,#0x1234\n")
         # Re-read rather than reuse `got`: the records carry the listing's bytes
