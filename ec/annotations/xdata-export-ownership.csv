@@ -69,6 +69,7 @@ bank0/8399.c,bank0,8399,10,bank0/8399.c,8399,FUN_CODE_8399,no,1.00,10,1.00
 bank0/83D6.c,bank0,83D6,10,bank0/83D6.c,83D6,ring_push_0990,no,1.00,10,1.00
 bank0/83FF.c,bank0,83FF,15,bank0/83FF.c,83FF,sync_0788_and_07d4_from_09e9,no,1.00,15,1.00
 bank0/849C.c,bank0,849C,1,bank0/849C.c,849C,return_trampoline_83ff,no,1.00,1,1.00
+bank0/8590.c,bank0,8590,8,bank0/8590.c,8590,probe_channel_logic,no,1.00,8,1.00
 bank0/8648.c,bank0,8648,2,bank0/8648.c,8648,clear_200b,no,1.00,2,1.00
 bank0/8653.c,bank0,8653,37,bank0/8653.c,8653,seed_fan_table_base,no,1.00,37,1.00
 bank0/8749.c,bank0,8749,133,bank0/8749.c,8749,mode_tick_084c_07a5_09ee,no,1.00,133,1.00
