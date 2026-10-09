@@ -563,14 +563,15 @@ class ConsumerTests(unittest.TestCase):
         pd_verified = self.d[off:off + len(magic)] == magic
         hits = sr.scan(self.d, pd_verified)
 
-        # Every site is still counted: the four slots are the three counts
-        # plus the site list, and the list length is the file-wide count.
-        self.assertTrue(all(len(c[3]) == c[0] for c in hits.values()),
+        # Every site is still counted: the eight slots are the three counts,
+        # four framing counts, plus the site list, and the list length is the
+        # file-wide count.
+        self.assertTrue(all(len(c[7]) == c[0] for c in hits.values()),
                         "a site is no longer counted once per match")
         self.assertTrue(all(sum(c[:3]) >= 0 for c in hits.values()))
 
         # ...and at least one site is labelled, so the column is not vacuous.
-        labelled = sum(sr.sites_in_data_regions(c[3], self.regions)
+        labelled = sum(sr.sites_in_data_regions(c[7], self.regions)
                        for c in hits.values())
         self.assertGreater(labelled, 0,
                            "no MOV DPTR site in the whole image lands in a "
@@ -595,7 +596,7 @@ class ConsumerTests(unittest.TestCase):
         from trace_xdata_refs import PD_MARKER
         off, magic = PD_MARKER
         hits = sr.scan(self.d, self.d[off:off + len(magic)] == magic)
-        total, ec, pd, _sites = hits[0x0496]
+        total, ec, pd, framed_ec, unframed_ec, framed_pd, unframed_pd, sites = hits[0x0496]
         self.assertEqual((total, ec, pd), (6, 6, 0))
         self.assertGreater(ec, 0)
 
