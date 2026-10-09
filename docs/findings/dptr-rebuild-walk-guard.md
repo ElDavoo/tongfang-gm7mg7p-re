@@ -465,11 +465,16 @@ naming both misattributed sites) and needed no edit.
   rows**, which it emitted as `db 0x42` and `db 0x63` where the machine writes
   a byte address (§1). A real defect, held harmless here by the byte keying,
   and changing it would move text other tools' committed output depends on.
-  ~~**Follow-up issue.**~~ **Done 2026-09-29, issue #1294** — the six now
+  ~~**Follow-up issue.**~~ **Addressed by two issues: the six direct,A/direct,#data forms are #1294's scope; the 28 base-8051 opcodes that also fell through are #1390's.** Issue #1294 owns the
+  six (`0x42`, `0x43`, `0x52`, `0x53`, `0x62`, `0x63`), which now
   render as themselves, the four committed tables carrying that text have been
   re-cut from the tools, and the account is
   [`direct-address-opcode-rendering.md`](direct-address-opcode-rendering.md).
-  The byte keying this bullet was the reason for is unchanged and now rests on
+  Issue #1390 covers the other 28 (`0x06`, `0x07`, `0x16`, `0x17`, `0x26`,
+  `0x27`, `0x36`, `0x37`, `0x46`, `0x47`, `0x56`, `0x57`, `0x66`, `0x67`,
+  `0x72`, `0x76`, `0x77`, `0x82`, `0x86`, `0x87`, `0x96`, `0x97`, `0xA6`, `0xA7`,
+  `0xB6`, `0xB7`, `0xD4`, `0xF4`), documented in
+  [`disasm8051-base-opcodes.md`](disasm8051-base-opcodes.md). The byte keying this bullet was the reason for is unchanged and now rests on
   a stronger ground: the renderer was *free* rather than *wrong*, which is a
   better reason than a defect that could be fixed out from under a guard.
   The accumulator half of the same logical group
