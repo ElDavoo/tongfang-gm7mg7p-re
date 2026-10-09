@@ -35,6 +35,14 @@ absence -- the docs/findings.md 4c failure this header already cites.
 is a phantom", and a region not being listed is not a claim about its bytes
 either.
 
+Framing validation (see issue #1563): each site is tested against
+disasm8051.converges_from() to measure how many of the preceding 24 bytes
+decode onto it as an opcode boundary. Sites with converges_from() > 0 are
+framed (reachable by linear instruction decoding); sites with score 0 are
+unframed. Counts are reported per image and per site, labeled rather than
+filtered, so a future zero without labeled unframed sites reads as "not found
+by this method" rather than "absent" (per CLAUDE.md §4c).
+
 Usage:
     python3 scan_refs.py firmware.bin 0x07A6 0x07B9 0x0768
     python3 scan_refs.py firmware.bin --file registers.txt
@@ -45,6 +53,7 @@ import collections
 import sys
 
 from data_regions import load as load_data_regions, region_at
+from disasm8051 import converges_from
 from trace_xdata_refs import PD_MARKER, region_of
 
 # Which trace_xdata_refs.py regions are the EC firmware itself, as opposed
@@ -63,24 +72,35 @@ CAVEAT = (
 
 
 def scan(data: bytes, pd_verified: bool = True):
-    """addr -> [file-wide, EC-image, PD-image] direct reference counts.
+    """addr -> [total, ec, pd, framed_ec, unframed_ec, framed_pd, unframed_pd, sites]
 
     The sites themselves are kept alongside, because the data-region label is
     a property of a *site* and not of an address: the same register can be
-    referenced from code and from a table. A fourth slot carries the count of
-    that address's sites landing inside a listed region.
+    referenced from code and from a table. Framing counts track how many sites
+    are reachable by linear instruction decoding (converges_from() > 0) vs not
+    aligned by any linear walk (converges_from() == 0), per region.
     """
-    hits = collections.defaultdict(lambda: [0, 0, 0, []])
+    hits = collections.defaultdict(lambda: [0, 0, 0, 0, 0, 0, 0, []])
     for i in range(len(data) - 2):
         if data[i] == 0x90:
             counts = hits[(data[i + 1] << 8) | data[i + 2]]
             counts[0] += 1
-            counts[3].append(i)
+            counts[7].append(i)
             name = region_of(i, pd_verified)[0]
+            onto, over = converges_from(data, i)
+            is_framed = onto > 0
             if name in MAIN_EC_REGIONS:
                 counts[1] += 1
+                if is_framed:
+                    counts[3] += 1
+                else:
+                    counts[4] += 1
             elif name == PD_REGION:
                 counts[2] += 1
+                if is_framed:
+                    counts[5] += 1
+                else:
+                    counts[6] += 1
     return hits
 
 
@@ -128,9 +148,11 @@ def main() -> int:
     if args.all_0700:
         for a in range(0x0700, 0x0800):
             if hits.get(a):
-                total, ec, pd, sites = hits[a]
+                total, ec, pd, framed_ec, unframed_ec, framed_pd, unframed_pd, sites = hits[a]
                 labelled = sites_in_data_regions(sites, regions)
                 print(f"0x{a:04X} : {total:>4} refs   ec={ec:<4} pd={pd}"
+                      f"   framed_ec={framed_ec:<4} unframed_ec={unframed_ec:<4}"
+                      f"   framed_pd={framed_pd:<4} unframed_pd={unframed_pd:<4}"
                       f"   in_data_region={labelled}")
         return 0
 
@@ -149,7 +171,7 @@ def main() -> int:
         ap.error("give addresses as args, --file, or --all-0700")
 
     for label, a in targets:
-        total, ec, pd, sites = hits.get(a, [0, 0, 0, []])
+        total, ec, pd, framed_ec, unframed_ec, framed_pd, unframed_pd, sites = hits.get(a, [0, 0, 0, 0, 0, 0, 0, []])
         if ec:
             verdict = "referenced"
         elif pd:
@@ -160,6 +182,8 @@ def main() -> int:
         # (`refs=15`, `referenced`) are untouched by adding it.
         labelled = sites_in_data_regions(sites, regions)
         print(f"0x{a:04X}  refs={total:<5} ec={ec:<5} pd={pd:<5} {verdict}"
+              f"   framed_ec={framed_ec} unframed_ec={unframed_ec}"
+              f"   framed_pd={framed_pd} unframed_pd={unframed_pd}"
               f"   in_data_region={labelled}   {label}")
     return 0
 
