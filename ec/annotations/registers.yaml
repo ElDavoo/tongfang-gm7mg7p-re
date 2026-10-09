@@ -3025,10 +3025,16 @@ registers:
       the other 347, and 0x00 in all 297 paired samples of
       evidence/ec-watch/2026-09-23-power-mode-cycle-0700-07ff.csv. The 0x14
       is the offset the 0x8DE0 branch above produces, so the captures and
-      that hand-decode agree; what decides the branch is a four-way
-      comparison of 0x0460 and 0x0468 against 0x04 with 0x07 or 0x08 on bit 7
-      of 0x0751, which is not decoded here, and the 0x00 samples are the two
-      channels at the same value rather than a third offset. Individually
+      that hand-decode agree. The branch's arm (8EF0, 8EF8, or 8EFE) is
+      decided by the comparison at 8E92-8EC0, which reads 0x0460 and 0x0468
+      and branches on bit 7 of 0x0751. One of the two registers is in the
+      committed captures: evidence/ec-watch/2026-09-18-profile-switch-0400-07ff.csv
+      carries 0x0460 but not 0x0468. The arm decision can be partly
+      reconstructed; ec/tools/fan_pair_correlation.py --part arm shows that
+      on the 193 paired samples there, 0x0460 alone forces the arm on 72
+      (chain A) or 97 (chain B) of them, and the rest are consistent with some
+      0x0468 value. The 0x00 samples are the two channels at the same value
+      rather than a third offset. Individually
       the bytes span 0x075B 0x3C-0xC7 and 0x075C 0x32-0xC7 across the two
       captures. Halved that is 25-99.5 %, a duty span; the peak is 0xC7, one
       step below the 0xC8 the table calls 100 %. A span that reaches 200 in
@@ -3089,7 +3095,13 @@ registers:
       temperature register reads the two alike and names neither fan. The
       offset is two-valued rather than fixed and 0x8DE0's comparison
       chooses it, so that is not a claim that no register at all could
-      separate the pair; the committed captures name none. GPU_TEMP
+      separate the pair. The first register the comparison reads (0x0460) is
+      in the commits, which this note used to incorrectly state as "the
+      committed captures name none" — one of the two branch-deciding
+      registers is visible to the analysis, though the second (0x0468) is
+      not. The partial reconstructibility is in the preceding paragraph.
+      This does not name which physical fan either byte is; only the live
+      test at the machine does that. GPU_TEMP
       yields no coefficient at all: it moves 0x33-0x35 across
       that whole sweep, and a coefficient against a register that moved two
       counts describes a handful of coincidental samples rather than a

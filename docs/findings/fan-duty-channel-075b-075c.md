@@ -200,11 +200,20 @@ branch rather than about two fans in different thermal environments.
 The offset is two-valued rather than fixed, so this is not a claim that no
 register at all could separate the pair. `mask` is what `0x8DE0`'s comparison
 chooses, and a register carrying that branch decision could in principle read
-the two series differently; the committed captures name none, and the
-observation that would is §6's. What the anchors do establish is that the
-temperature route adds nothing — and both coefficients are *weak* in absolute
-terms anyway: duty follows temperature because the EC's fan curve is driven
-by temperature, and at r ≈ 0.5 neither byte is a clean readout of anything.
+the two series differently; **one of the two registers the branch reads is in
+the captures.** `2026-09-18-profile-switch-0400-07ff.csv` carries `0x0460`,
+which the arm chain reads at `8E92`/`8E95` (chain A) and `8EC2`/`8EC5` (chain
+B); the second register `0x0468` is in no capture. The branch is only partly
+decidable: on the captured 193 samples where both duty bytes are recorded,
+`0x0460` alone forces the arm at 72 (chain A) or 97 (chain B) of them, and
+the rest are consistent with some `0x0468` value, with none forbidden. This
+directly contradicts the earlier "the committed captures name none" —
+`ec/tools/fan_pair_correlation.py` reconstructs this with `--part arm`. The
+observation that would complete the decision is §6's. What the anchors do
+establish is that the temperature route adds nothing — and both coefficients
+are *weak* in absolute terms anyway: duty follows temperature because the
+EC's fan curve is driven by temperature, and at r ≈ 0.5 neither byte is a
+clean readout of anything.
 
 **`GPU_TEMP` is not measured, and the tool says so rather than printing a
 number.** It records four rows spanning `0x33`-`0x35` across the whole sweep.

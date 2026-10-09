@@ -650,8 +650,156 @@ def _fmt_span(span):
     return "0x%02X-0x%02X" % span if span[0] is not None else "not recorded"
 
 
+def arm_decision_chain_a(val_0460, val_0468):
+    """Which arm (8EF0, 8EF8, 8EFE) would be selected in chain A.
+
+    Returns 'offset' (8EF0, -0x14), 'copy' (8EF8), or 'clear' (8EFE).
+    The logic from ec/decompiled/bank0/8DE0.asm addresses 8E92-8EC0.
+    """
+    if 4 <= val_0460 <= 8:
+        if val_0468 < 9:
+            return 'offset'
+    if val_0468 < 4:
+        return 'copy'
+    elif val_0468 >= 9:
+        return 'copy'
+    elif val_0460 >= 9:
+        return 'copy'
+    else:
+        return 'offset'
+
+
+def arm_decision_chain_b(val_0460, val_0468):
+    """Which arm would be selected in chain B (0x0751 bit 7 clear, band 4..7).
+
+    Returns 'offset', 'copy', or 'clear'.
+    The logic from ec/decompiled/bank0/8DE0.asm addresses 8EC2-8EEE.
+    """
+    if 4 <= val_0460 <= 7:
+        if val_0468 < 8:
+            return 'offset'
+    if val_0468 < 4:
+        return 'copy'
+    elif val_0468 >= 8:
+        return 'copy'
+    elif val_0460 >= 8:
+        return 'copy'
+    else:
+        return 'offset'
+
+
+def infer_arm(duty_a, duty_b):
+    """Which arm would produce this (duty_a, duty_b) pair.
+
+    Returns 'offset' (duty_b == duty_a - 0x14), 'copy' (duty_b == duty_a),
+    'clear' (duty_b == 0), or 'unknown' (doesn't match any arm).
+    """
+    if duty_b == duty_a - 0x14:
+        return 'offset'
+    elif duty_b == duty_a:
+        return 'copy'
+    elif duty_b == 0:
+        return 'clear'
+    else:
+        return 'unknown'
+
+
+def arm_decision_analysis(rows):
+    """Analyze which arm the 0x8DE0 decision logic would select.
+
+    For each anchor (timestamp where both duty bytes exist), report how many
+    anchors 0x0460 alone determines the arm, how many are consistent with
+    some 0x0468 value, and how many the branch forbids.
+
+    0x0468 is optional; if absent, we infer the arm from the observed
+    (0x075B, 0x075C) pair and check consistency across all possible 0x0468.
+
+    Returns a dict per chain with keys 'forced', 'consistent', 'forbidden',
+    and 'reason' (if the analysis cannot proceed).
+    """
+    result_a = {
+        "chain": "A",
+        "samples": 0,
+        "forced": 0,
+        "consistent": 0,
+        "forbidden": 0,
+        "reason": "",
+    }
+    result_b = {
+        "chain": "B",
+        "samples": 0,
+        "forced": 0,
+        "consistent": 0,
+        "forbidden": 0,
+        "reason": "",
+    }
+
+    series_0460 = series(rows, 0x0460)
+    series_0468 = series(rows, 0x0468)
+    series_a = series(rows, DUTY_A)
+    series_b = series(rows, DUTY_B)
+
+    if not series_0460:
+        result_a["reason"] = "this capture records no row of 0x0460"
+        result_b["reason"] = "this capture records no row of 0x0460"
+        return result_a, result_b
+    if not series_a:
+        result_a["reason"] = "this capture records no row of 0x%04X" % DUTY_A
+        result_b["reason"] = "this capture records no row of 0x%04X" % DUTY_A
+        return result_a, result_b
+    if not series_b:
+        result_a["reason"] = "this capture records no row of 0x%04X" % DUTY_B
+        result_b["reason"] = "this capture records no row of 0x%04X" % DUTY_B
+        return result_a, result_b
+
+    dict_0460 = dict(series_0460)
+    dict_a = dict(series_a)
+    dict_b = dict(series_b)
+
+    anchors = sorted(set(dict_a) & set(dict_b))
+    if not anchors:
+        result_a["reason"] = "the two duty bytes share no timestamp"
+        result_b["reason"] = "the two duty bytes share no timestamp"
+        return result_a, result_b
+
+    for ts in anchors:
+        val_0460 = value_at(series_0460, ts)
+
+        if val_0460 is None:
+            continue
+
+        duty_a = dict_a[ts]
+        duty_b = dict_b[ts]
+        inferred = infer_arm(duty_a, duty_b)
+
+        if inferred == 'unknown':
+            continue
+
+        for result in (result_a, result_b):
+            result["samples"] += 1
+            chain_fn = arm_decision_chain_a if result["chain"] == "A" else arm_decision_chain_b
+
+            arms_for_all_0468 = set()
+            arms_for_some_0468 = set()
+
+            for test_0468 in range(256):
+                arm = chain_fn(val_0460, test_0468)
+                arms_for_all_0468.add(arm)
+                if arm == inferred:
+                    arms_for_some_0468.add(arm)
+
+            if len(arms_for_all_0468) == 1 and inferred in arms_for_all_0468:
+                result["forced"] += 1
+            elif inferred in arms_for_some_0468:
+                result["consistent"] += 1
+            else:
+                result["forbidden"] += 1
+
+    return result_a, result_b
+
+
 def report_capture(path):
-    """The three parts for one capture, as the dict the printers consume.
+    """The four parts for one capture, as the dict the printers consume.
 
     Both readings of the second tachometer are measured, not just the one the
     tool believes: `vendor_tach` is what the service's own read assembles and
@@ -666,6 +814,7 @@ def report_capture(path):
     for addr, label in ((CPU_TEMP, "CPU_TEMP"), (GPU_TEMP, "GPU_TEMP")):
         for duty_addr in (DUTY_A, DUTY_B):
             temps.append(temperature_correlation(rows, duty_addr, addr, label))
+    arm_a, arm_b = arm_decision_analysis(rows)
     return {
         "name": name,
         "path": path,
@@ -678,6 +827,8 @@ def report_capture(path):
         "temperatures": temps,
         "vendor_tach": tachometer_comparison(rows, TACH_VENDOR_SECOND),
         "ec_tach": tachometer_comparison(rows, TACH_EC_SECOND),
+        "arm_a": arm_a,
+        "arm_b": arm_b,
     }
 
 
@@ -688,7 +839,7 @@ def print_report(reports, part="all", shape_report=None):
     out("Every figure below is arithmetic over a CSV in evidence/ec-watch/. No\n"
         "register was read back and no machine was reached.\n")
 
-    if part in ("all", "duty"):
+    if part in ("all", "duty", "arm"):
         out("\n1. The paired difference, at the timestamps both bytes share\n")
         for rep in reports:
             out("  %s  (%d rows over %d timestamps)\n"
@@ -721,6 +872,31 @@ def print_report(reports, part="all", shape_report=None):
                     % (head, entry["r"], entry["samples"], entry["label"],
                        entry["temp_range"], entry["temp_min"],
                        entry["temp_max"]))
+
+    if part in ("all", "arm"):
+        out("\n4. The 0x8DE0 arm decision, reconstructed from 0x0460 and 0x0468\n")
+        for rep in reports:
+            out("  %s\n" % rep["name"])
+            for key in ("arm_a", "arm_b"):
+                arm = rep[key]
+                if arm["reason"]:
+                    out("    chain %s: %s\n" % (arm["chain"], arm["reason"]))
+                    continue
+                out("    chain %s: %d paired anchors\n" % (arm["chain"], arm["samples"]))
+                out("      0x0460 alone forces the arm at %d anchors\n"
+                    % arm["forced"])
+                out("      %d anchors are consistent with some 0x0468 value\n"
+                    % arm["consistent"])
+                out("      %d anchors the branch forbids\n" % arm["forbidden"])
+        out("\n  The arm decision from ec/decompiled/bank0/8DE0.asm is reconstructed\n"
+            "  at each timestamp by reading the registers forward from the\n"
+            "  carry-forward series. When 0x0460 alone determines the arm,\n"
+            "  the observed (0x075B, 0x075C) pair can be predicted from\n"
+            "  0x0460 alone. When the arm is consistent with some 0x0468,\n"
+            "  the pair could be produced if that 0x0468 value was recorded;\n"
+            "  when it is forbidden, no register value can produce what\n"
+            "  was observed, which names a different writer or a blind spot\n"
+            "  in this method.\n")
 
     if part in ("all", "tach"):
         out("\n3. The tachometer pairs, both readings of the second one\n")
@@ -1001,6 +1177,58 @@ def self_test():
             if "capture header" not in str(exc):
                 check("the wrong-header refusal did not say why: %s" % exc)
 
+        # Test the arm decision logic
+        if arm_decision_chain_a(0x05, 0x05) != 'offset':
+            check("chain A with 0x460=0x05, 0x468=0x05 should be offset")
+        if arm_decision_chain_a(0x05, 0x0A) != 'copy':
+            check("chain A with 0x460=0x05, 0x468=0x0A should be copy")
+        if arm_decision_chain_a(0x02, 0x05) != 'offset':
+            check("chain A with 0x460=0x02, 0x468=0x05 should be offset")
+        if arm_decision_chain_a(0x02, 0x03) != 'copy':
+            check("chain A with 0x460=0x02, 0x468=0x03 should be copy")
+
+        if arm_decision_chain_b(0x05, 0x05) != 'offset':
+            check("chain B with 0x460=0x05, 0x468=0x05 should be offset")
+        if arm_decision_chain_b(0x05, 0x09) != 'copy':
+            check("chain B with 0x460=0x05, 0x468=0x09 should be copy")
+        if arm_decision_chain_b(0x02, 0x05) != 'offset':
+            check("chain B with 0x460=0x02, 0x468=0x05 should be offset")
+        if arm_decision_chain_b(0x02, 0x03) != 'copy':
+            check("chain B with 0x460=0x02, 0x468=0x03 should be copy")
+
+        if infer_arm(0x50, 0x3C) != 'offset':
+            check("infer_arm for 0x50 - 0x3C = 0x14 should be offset")
+        if infer_arm(0x50, 0x50) != 'copy':
+            check("infer_arm for 0x50 == 0x50 should be copy")
+        if infer_arm(0x50, 0x00) != 'clear':
+            check("infer_arm for 0x00 should be clear")
+        if infer_arm(0x50, 0x40) != 'unknown':
+            check("infer_arm for unmatched difference should be unknown")
+
+        # Test arm decision analysis with missing 0x0460
+        bare_no_0460 = _capture(tmp, "no0460.csv", [
+            ("t1", DUTY_A, 0x40, 0x50),
+            ("t1", DUTY_B, 0x40, 0x3C),
+            ("t1", 0x0468, 0x05, 0x06),
+        ])
+        arm_a, arm_b = arm_decision_analysis(read_capture(bare_no_0460))
+        if not arm_a["reason"] or "0x0460" not in arm_a["reason"]:
+            check("missing 0x0460 should refuse by name: %s" % arm_a["reason"])
+
+        # Test arm decision analysis with both registers present
+        both = _capture(tmp, "both.csv", [
+            ("t1", DUTY_A, 0x40, 0x50),
+            ("t1", DUTY_B, 0x40, 0x3C),
+            ("t1", 0x0460, 0x05, 0x06),
+            ("t1", 0x0468, 0x05, 0x06),
+        ])
+        arm_a, arm_b = arm_decision_analysis(read_capture(both))
+        if arm_a["reason"]:
+            check("arm analysis with both registers present should not refuse: %s"
+                  % arm_a["reason"])
+        if not arm_a["samples"]:
+            check("arm analysis should have samples when both registers present")
+
     if problems:
         for problem in problems:
             print("fan_pair_correlation.py: %s" % problem, file=sys.stderr)
@@ -1008,8 +1236,9 @@ def self_test():
         return 1
     print("self-test passed: the paired difference reports a third value "
           "rather than averaging it, a missing address is a stated refusal "
-          "rather than a value, and a temperature too narrow to correlate "
-          "against yields no coefficient.")
+          "rather than a value, a temperature too narrow to correlate "
+          "against yields no coefficient, and the arm decision logic "
+          "correctly implements the branch at 8E92-8EC0.")
     return 0
 
 
@@ -1020,7 +1249,7 @@ def main(argv=None):
     parser.add_argument("--capture", action="append", metavar="PATH",
                         help="a capture to measure (default: the three "
                              "committed ones this tool is about)")
-    parser.add_argument("--part", choices=("all", "duty", "tach"),
+    parser.add_argument("--part", choices=("all", "duty", "tach", "arm"),
                         default="all", help="which parts to print")
     parser.add_argument("--self-test", action="store_true",
                         help="run the known answers over captures written to "
