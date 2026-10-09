@@ -35,6 +35,14 @@ absence -- the docs/findings.md 4c failure this header already cites.
 is a phantom", and a region not being listed is not a claim about its bytes
 either.
 
+The `framed` column labels how many sites at an address are reachable by
+decoding linearly from a preceding byte (converges_from() onto-count), and
+`unframed` labels sites that no linear walk reaches. It is a LABEL, not a
+filter: the reference count totals are unchanged and no site is dropped,
+because dropping unframed sites would make a future scan's zero look like
+absence. `unframed > 0` means this address has at least one site that is not
+aligned by a linear walk, never a claim about the site's actual nature.
+
 Usage:
     python3 scan_refs.py firmware.bin 0x07A6 0x07B9 0x0768
     python3 scan_refs.py firmware.bin --file registers.txt
@@ -46,6 +54,7 @@ import sys
 
 from data_regions import load as load_data_regions, region_at
 from trace_xdata_refs import PD_MARKER, region_of
+from disasm8051 import converges_from
 
 # Which trace_xdata_refs.py regions are the EC firmware itself, as opposed
 # to the PD image sharing the dump. Re-deriving that map (find_banks.py)
@@ -63,24 +72,36 @@ CAVEAT = (
 
 
 def scan(data: bytes, pd_verified: bool = True):
-    """addr -> [file-wide, EC-image, PD-image] direct reference counts.
+    """addr -> [file-wide, EC-image, PD-image, framed_ec, unframed_ec,
+               framed_pd, unframed_pd, [sites]] direct reference counts.
 
     The sites themselves are kept alongside, because the data-region label is
     a property of a *site* and not of an address: the same register can be
-    referenced from code and from a table. A fourth slot carries the count of
-    that address's sites landing inside a listed region.
+    referenced from code and from a table. Framing counts track how many sites
+    are reachable by linear decoding (framed, converges_from() onto > 0) versus
+    unreachable (unframed, converges_from() onto == 0), per image.
     """
-    hits = collections.defaultdict(lambda: [0, 0, 0, []])
+    hits = collections.defaultdict(lambda: [0, 0, 0, 0, 0, 0, 0, []])
     for i in range(len(data) - 2):
         if data[i] == 0x90:
-            counts = hits[(data[i + 1] << 8) | data[i + 2]]
+            addr = (data[i + 1] << 8) | data[i + 2]
+            counts = hits[addr]
             counts[0] += 1
-            counts[3].append(i)
+            counts[7].append(i)
             name = region_of(i, pd_verified)[0]
+            onto, _over = converges_from(data, i)
             if name in MAIN_EC_REGIONS:
                 counts[1] += 1
+                if onto > 0:
+                    counts[3] += 1
+                else:
+                    counts[4] += 1
             elif name == PD_REGION:
                 counts[2] += 1
+                if onto > 0:
+                    counts[5] += 1
+                else:
+                    counts[6] += 1
     return hits
 
 
@@ -128,9 +149,11 @@ def main() -> int:
     if args.all_0700:
         for a in range(0x0700, 0x0800):
             if hits.get(a):
-                total, ec, pd, sites = hits[a]
+                total, ec, pd, framed_ec, unframed_ec, framed_pd, unframed_pd, sites = hits[a]
                 labelled = sites_in_data_regions(sites, regions)
                 print(f"0x{a:04X} : {total:>4} refs   ec={ec:<4} pd={pd}"
+                      f"   framed_ec={framed_ec:<4} unframed_ec={unframed_ec:<4}"
+                      f"   framed_pd={framed_pd:<4} unframed_pd={unframed_pd:<4}"
                       f"   in_data_region={labelled}")
         return 0
 
@@ -149,7 +172,7 @@ def main() -> int:
         ap.error("give addresses as args, --file, or --all-0700")
 
     for label, a in targets:
-        total, ec, pd, sites = hits.get(a, [0, 0, 0, []])
+        total, ec, pd, framed_ec, unframed_ec, framed_pd, unframed_pd, sites = hits.get(a, [0, 0, 0, 0, 0, 0, 0, []])
         if ec:
             verdict = "referenced"
         elif pd:
@@ -160,7 +183,9 @@ def main() -> int:
         # (`refs=15`, `referenced`) are untouched by adding it.
         labelled = sites_in_data_regions(sites, regions)
         print(f"0x{a:04X}  refs={total:<5} ec={ec:<5} pd={pd:<5} {verdict}"
-              f"   in_data_region={labelled}   {label}")
+              f"   in_data_region={labelled}"
+              f"   framed_ec={framed_ec:<4} unframed_ec={unframed_ec:<4}"
+              f"   framed_pd={framed_pd:<4} unframed_pd={unframed_pd:<4}   {label}")
     return 0
 
 
