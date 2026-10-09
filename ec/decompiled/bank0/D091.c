@@ -26,8 +26,17 @@
    table; the targets it names are 0x500 higher than the table's. Per-address table:
    ec/annotations/xdata-086x-dispatch.md. The tail writes 0x0863 to 0x1C04, calls 0xD2CB on the byte
    at 0x0864, ANDs the result with 0xFE and passes it to 0xD2DA, spins on 0xD2BF until it returns
-   non-zero, then branches on 0xD319: a zero result stores A through the then-current DPTR and ljmps
-   to 0xD28E, a non-zero result ljmps to 0xD284.
+   non-zero, then branches on 0xD319: a zero result stores A to XDATA 0x0860 and ljmps to 0xD28E, a
+   non-zero result ljmps to 0xD284. CORRECTION 2026-10-03, issue #799: the store at 0x0D191 was
+   recorded above as going "through the then-current DPTR", which is true and was
+   load-bearing-by-omission: 0xD319 reloads DPTR with 0x0860 immediately before returning, so the
+   then-current DPTR IS 0x0860 and the instruction is a conditional store of 0x00 to that address --
+   a fourth writer of the byte, and one no MOV DPTR site accounts for, because the load is inside
+   the callee. The decompiled C does not show this: it binds DPTR to its pre-call value and charges
+   the store to pcVar4, which this same function sets to (code *)0x864.
+   ec/annotations/xdata-086x-dispatch-sites.csv books the site at 0x0D191 under --callee-column and
+   ec/tools/callee_dptr_sites.py resolves it; see docs/findings/callee-set-dptr-census-blindspot.md.
+   Reading A through the pre-call DPTR is left above rather than edited out.
    type: dispatch
    evidence: ec/decompiled/bank0/D091.asm; ec/decompiled/bank0/D091.c;
    ec/annotations/xdata-086x-dispatch.md

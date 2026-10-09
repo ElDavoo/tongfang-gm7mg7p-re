@@ -32,13 +32,13 @@ void FUN_CODE_bfbb(char param_1,byte param_2)
     else if (((DAT_EXTMEM_0491 >> 1 & 1) == 1) && (DAT_EXTMEM_0577 != -1)) {
       DAT_EXTMEM_0577 = DAT_EXTMEM_0577 + '\x01';
     }
-    bVar1 = DAT_EXTMEM_04ae == -1;
-    DAT_EXTMEM_04ae = DAT_EXTMEM_04ae + '\x01';
-    bVar3 = DAT_EXTMEM_04af + bVar1;
-    if (!CARRY1(DAT_EXTMEM_04af,bVar1)) {
-      DAT_EXTMEM_04af = bVar3;
+    bVar1 = XDATA_04AE_COUNTER_A_0 == -1;
+    XDATA_04AE_COUNTER_A_0 = XDATA_04AE_COUNTER_A_0 + '\x01';
+    bVar3 = XDATA_04AE_COUNTER_A_1 + bVar1;
+    if (!CARRY1(XDATA_04AE_COUNTER_A_1,bVar1)) {
+      XDATA_04AE_COUNTER_A_1 = bVar3;
     }
-    cVar2 = read_xdata_pair_to_b_and_a(0x834,DAT_EXTMEM_04ae,bVar3);
+    cVar2 = read_xdata_pair_to_b_and_a(0x834,XDATA_04AE_COUNTER_A_0,bVar3);
     if (cVar2 != '\0' || param_1 != '\0') {
       read_xdata_pair_to_r1r2(0x4ae);
       param_2 = 4;

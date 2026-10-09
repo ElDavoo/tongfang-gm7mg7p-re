@@ -10,7 +10,7 @@
    type: math
    evidence: ec/decompiled/bank0/DFDF.asm; ec/decompiled/bank0/DFDF.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void gate_06e6_then_store_0464(undefined1 param_1)
 
@@ -20,8 +20,8 @@ void gate_06e6_then_store_0464(undefined1 param_1)
   if (DAT_EXTMEM_06e6 == '\x01') {
     uVar1 = DAT_EXTMEM_181f;
     FUN_CODE_dfa0(DAT_EXTMEM_181e);
-    DAT_EXTMEM_0464 = param_1;
-    DAT_EXTMEM_0465 = uVar1;
+    MAIN_FAN_RPM_0 = param_1;
+    MAIN_FAN_RPM_1 = uVar1;
   }
   return;
 }

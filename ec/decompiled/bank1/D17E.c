@@ -33,7 +33,7 @@ void increment_0514_toward_0x64(void)
         DAT_EXTMEM_03c1 = 99;
         DAT_EXTMEM_0524 = 0x20;
         DAT_EXTMEM_0526 = 0x20;
-        DAT_EXTMEM_04a0 = 0x20;
+        XDATA_04A0 = 0x20;
         DAT_EXTMEM_0492 = 0x20;
         return;
       }

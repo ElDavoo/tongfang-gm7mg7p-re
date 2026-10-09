@@ -16,7 +16,7 @@
    type: state
    evidence: ec/decompiled/bank1/D0C4.asm; ec/decompiled/bank1/D0C4.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void update_0524_0526_4a0_and_0497_flags(char param_1,char param_2)
 
@@ -27,10 +27,10 @@ void update_0524_0526_4a0_and_0497_flags(char param_1,char param_2)
   char cVar3;
   
   DAT_EXTMEM_0526 = DAT_EXTMEM_0524;
-  DAT_EXTMEM_04a0 = DAT_EXTMEM_0524;
+  XDATA_04A0 = DAT_EXTMEM_0524;
   DAT_EXTMEM_0525 = 0;
   DAT_EXTMEM_0527 = 0;
-  DAT_EXTMEM_04a1 = 0;
+  XDATA_04A1 = 0;
   trampoline_to_c1e7();
   if (param_2 == '\0') {
     trampoline_to_d16f();
@@ -87,7 +87,7 @@ LAB_CODE_d136:
     DAT_EXTMEM_03c1 = 99;
     DAT_EXTMEM_0524 = 0x20;
     DAT_EXTMEM_0526 = 0x20;
-    DAT_EXTMEM_04a0 = 0x20;
+    XDATA_04A0 = 0x20;
     DAT_EXTMEM_0492 = 0x20;
   }
   return;

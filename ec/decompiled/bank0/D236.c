@@ -7,8 +7,17 @@
 /* The entry's first byte pair decodes as SETB of bit address 0x54, which is bit 4 of internal RAM
    byte 0x2A; A is then copied to R6 and 0xD304 is called. It then loops, loading DPTR with 0x1C35
    and calling 0xD2C2 until that call returns non-zero, and calls 0xD319 once. A zero result stores
-   A through the current DPTR and sjmps to 0xD28E, a non-zero result sjmps to 0xD284. The store of
-   the constant 1 that the .c shows as _a_4 is not in the listing.
+   A to XDATA 0x0860 and sjmps to 0xD28E, a non-zero result sjmps to 0xD284. CORRECTION 2026-10-03,
+   issue #799: the store at 0x0D249 was recorded above as going "through the current DPTR", which is
+   true and was silent on what the current DPTR is: 0xD319 reloads it with 0x0860 before returning,
+   so this is a conditional store of 0x00 to 0x0860, at an address the sweep books no site for
+   because the load is inside the callee. The decompiled C is the reason neither committed method
+   saw it, and it fails differently from the same shape in 0xD091: it binds the pointer to
+   &DAT_EXTMEM_1c35 and stores through it, so the store is charged to no address at all rather than
+   to the wrong one. Both stores are in the byte-for-byte terms of
+   docs/findings/callee-set-dptr-census-blindspot.md; reading A through the pre-call DPTR is left
+   above rather than edited out. The store of the constant 1 that the .c shows as _a_4 is not in the
+   listing.
    type: state
    evidence: ec/decompiled/bank0/D236.asm; ec/decompiled/bank0/D236.c
    basis: hand-decoded

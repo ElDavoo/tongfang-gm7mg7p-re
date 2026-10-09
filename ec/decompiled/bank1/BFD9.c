@@ -6,11 +6,12 @@
 
 /* Loads R1:R2 with 0x0000 and calls the 16-bit store at 0x888C twice, writing 0x0000 to XDATA
    0x04AE/0x04AF and then to XDATA 0x04BE/0x04BF. No read, no branch and no call other than those
-   two stores. 0x04AE and 0x04BE are not documented in ec/annotations/registers.yaml.
+   two stores. Both are now documented there, as XDATA_04AE_COUNTER_A and XDATA_04BE_COUNTER_B;
+   docs/findings/xdata-04a0-04ae-04be-words.md.
    type: writer
    evidence: ec/decompiled/bank1/BFD9.asm; ec/decompiled/bank1/BFD9.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void zero_04ae_and_04be(void)
 

@@ -20,7 +20,7 @@ void cmp_0404_vs_0518_then_store_0436(void)
   char in_PSW;
   
   set_carry_if_0404_0405_is_0201();
-  if ((in_PSW < '\0') && ((DAT_EXTMEM_04a0 >> 5 & 1) != 0)) {
+  if ((in_PSW < '\0') && ((XDATA_04A0 >> 5 & 1) != 0)) {
     return;
   }
   if (DAT_EXTMEM_051b == BANK0_R1) {

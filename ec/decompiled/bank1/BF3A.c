@@ -10,14 +10,19 @@
    to 0x0834/0x0835, and sets bit 0 of 0x0832; when the word is non-zero it only re-reads
    0x0834/0x0835 and compares it against 0x0522/0x0523, once or twice if bit 0 of 0x0497 is set,
    then returns without writing. The 16-bit compare at 0x8863 used by these guards returns 0 only
-   when its first operand is 0x0001 and sets carry when the first operand is the smaller, and the
-   branches here test carry in one place and the accumulator's bit 0 in another. 0x0522/0x0523 is
-   CHARGE_TARGET per ec/annotations/registers.yaml, but nothing in these instructions ties the
-   compares to that meaning; 0x08E2, 0x0832, 0x0834, 0x0836, 0x0497 and 0x0400 are not documented.
+   when its first operand is 0x0201 (R3=0x01, R4=0x02, the pair the sibling helper 0x887A
+   set_carry_if_r3r4_is_0102 tests the other way round) and sets carry when the first operand is the
+   smaller, and the branches here test carry in one place and the accumulator's bit 0 in another.
+   0x0522/0x0523 is CHARGE_TARGET_MV per ec/annotations/registers.yaml, but nothing in these
+   instructions ties the compares to that meaning; 0x0834/0x0835 and 0x0836/0x0837 are that file's
+   CHARGE_STAGE_WORD and CHARGE_STAGE_CMP_WORD, which had no rows when this comment was written; see
+   issue #715. 0x08E2, 0x0832 and 0x0497 are still not documented. The 0x0400 the clamp compares
+   against is not the register at that address: 0xBF42-0xBF47 build the immediate 0x0400 out of
+   DPTR's own bytes and read no XDATA.
    type: writer
    evidence: ec/decompiled/bank1/BF3A.asm; ec/decompiled/bank1/BF3A.c; ec/annotations/registers.yaml
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void guard_then_store_pair_0834(char param_1,undefined1 param_2,undefined1 param_3)
 

@@ -13,7 +13,7 @@ void FUN_CODE_b224(byte param_1,char param_2)
   XDATA_043C = 5;
   set_carry_if_0404_0405_is_0201();
   if (in_PSW < '\0') {
-    if ((DAT_EXTMEM_04a0 >> 5 & 1) != 1) {
+    if ((XDATA_04A0 >> 5 & 1) != 1) {
       read_xdata_pair_to_r3r4(0x404);
       read_xdata_pair_to_r1r2(0x518);
       sub_r1r2_from_r3r4();
