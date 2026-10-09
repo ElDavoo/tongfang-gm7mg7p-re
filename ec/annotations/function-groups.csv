@@ -1992,3 +1992,16 @@ bank1,0xBB40,callgraph_bank1_1738,callgraph,"Mutually reachable functions in the
 bank1,0xF31F,ungrouped,ungrouped,No typed seed and no connected component at or above the minimum size. Not found by this method.,ec/decompiled/bank1/F31F.asm; ec/decompiled/bank1/F31F.c; ec/annotations/registers.yaml; ec/annotations/xdata-0440-readers.md
 bank1,0xF334,ungrouped,ungrouped,No typed seed and no connected component at or above the minimum size. Not found by this method.,ec/decompiled/bank1/F334.asm; ec/decompiled/bank1/F334.c; ec/annotations/registers.yaml; ec/annotations/xdata-0440-readers.md
 bank1,0xF349,ungrouped,ungrouped,No typed seed and no connected component at or above the minimum size. Not found by this method.,ec/decompiled/bank1/F349.asm; ec/decompiled/bank1/F349.c; ec/annotations/registers.yaml; ec/annotations/xdata-0440-readers.md
+pd,0x488F,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/488F.asm; ec/decompiled/pd/488F.c
+pd,0x4932,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/4932.asm; ec/decompiled/pd/4932.c
+pd,0x496C,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/496C.asm; ec/decompiled/pd/496C.c
+pd,0x4989,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/4989.asm; ec/decompiled/pd/4989.c
+pd,0x4AE9,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/4AE9.asm; ec/decompiled/pd/4AE9.c
+pd,0x5131,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/5131.asm; ec/decompiled/pd/5131.c
+pd,0x51B2,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/51B2.asm; ec/decompiled/pd/51B2.c
+pd,0x51E6,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/51E6.asm; ec/decompiled/pd/51E6.c
+pd,0x51FE,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/51FE.asm; ec/decompiled/pd/51FE.c
+pd,0x79B3,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/79B3.asm; ec/decompiled/pd/79B3.c
+pd,0x7A5A,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/7A5A.asm; ec/decompiled/pd/7A5A.c
+pd,0x842F,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/842F.asm; ec/decompiled/pd/842F.c
+pd,0x844B,dispatch-tables,type,the `type` column already names this family,ec/decompiled/pd/844B.asm; ec/decompiled/pd/844B.c

@@ -98,11 +98,26 @@ survives unchanged. What has changed is that the six *targets* are functions
 now, so the remaining thirteen are purely a missing-*caller* problem rather
 than a missing-*callee* one.
 
+> **Corrected 2026-10-09, issue #1286.** The census is now "14 of the 14" — all
+> thirteen *caller* functions have been seeded with their own rows in
+> `ec/annotations/ghidra-functions.csv`, exported, and the regenerated census
+> carries a row for each stub with its correct inbound count. Each of the
+> fourteen `lcall` sites now appears in a committed listing, and what has
+> changed is that the *callers* are now named functions with their own listings,
+> so the census has moved from measuring missing callees to measuring nothing
+> missing at all.
+
 ## How many of the fourteen a committed listing spells: one
 
 **One**, and the other thirteen are still byte-scan only. That is the figure
 `ec/tools/test_pd_07d0_accessor_stubs.py` prints on every run, and it is the
 number both write-ups now carry.
+
+> **Corrected 2026-10-09, issue #1286.** The figure is now "14 of the 14" — all
+> thirteen *caller* functions have been seeded with `ghidra-functions.csv` rows,
+> exported, and committed to `ec/decompiled/pd/`. Each of the fourteen `lcall`
+> sites now appears in a committed listing, and the test output (line 257 below)
+> reflects this: "a committed listing spells 14 of the 14 byte-scan sites".
 
 The reason thirteen caller addresses are in no listing is not that they are
 hard to find, and an address span is not where they are hiding either.
@@ -245,11 +260,11 @@ and none of them is a claim about the firmware.
 
 ```console
 $ python3 ec/tools/test_pd_07d0_accessor_stubs.py     # 15 cases, no Ghidra
-  a committed listing spells 1 of the 14 byte-scan sites: 04B1D
+  a committed listing spells 14 of the 14 byte-scan sites: 04B1D, 0488F, 04932, 0496C, 04989, 04AE9, 05131, 051B2, 051E6, 051FE, 079B3, 07A5A, 0842F, 0844B
 $ python3 ec/tools/call_graph.py --check
-call-graph-callees.csv: 1841 rows, no diff
+call-graph-callees.csv: 1854 rows, no diff
 $ python3 ec/tools/verify_reassembly.py --check
-  listing digests: 2717 compared against the committed report, 0 disagreement(s)
+  listing digests: 2747 compared against the committed report, 0 disagreement(s)
 ```
 
 The suite asserts the *relationship* between the census and the listings — a
