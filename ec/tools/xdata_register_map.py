@@ -621,13 +621,14 @@ PAIR_UNION_ONLY = (0x04A3,)
 # **The four `both` rows whose union carries `pair-literal`, and what each half
 # actually is.** The CSV's one `spelled_as` column cannot say which program
 # contributed which token, and these are the rows where that is load-bearing:
-# three of them are genuinely `DAT_EXTMEM+pair-literal` *inside the main EC*,
-# and `0x04A3` is not. `(main-ec spellings, pd spellings)`.
+# three of them are genuinely `symbol+pair-literal` *inside the main EC*
+# (named as CHARGE_STAGE_WORD_* in the symbol table), and `0x04A3` is not.
+# `(main-ec spellings, pd spellings)`.
 PAIR_BOTH_PAIR_LITERAL = {
     0x04A3: (("pair-literal",), ("DAT_EXTMEM",)),
-    0x0834: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",)),
-    0x0835: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",)),
-    0x0836: (("DAT_EXTMEM", "pair-literal"), ("DAT_EXTMEM",)),
+    0x0834: (("symbol", "pair-literal"), ("DAT_EXTMEM",)),
+    0x0835: (("symbol", "pair-literal"), ("DAT_EXTMEM",)),
+    0x0836: (("symbol", "pair-literal"), ("DAT_EXTMEM",)),
 }
 # The two worked examples the issue asks for, as the exact multiset of resolved
 # sites rather than a bucket total. `0x0402` is the address whose decompile

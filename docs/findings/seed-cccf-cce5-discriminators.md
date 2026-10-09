@@ -13,7 +13,7 @@ Both entries are reached through the same trampoline story that `ec-07c4-07d5-si
 
 1. Far-call stubs in the common area (`0x1100` bank-select window) load DPTR with the bank-0 address
 2. Jump to the bank-0 select stub at `0x1100` with `ljmp`
-3. A direct `lcall` or `ljmp` scan of the EC image finds zero hits for either `0xCCCF` or `0xCCE5`, confirming they are reached only this way
+3. No direct `lcall` or `ljmp` references to either address are found in the task-call-table, confirming they are reached only through the far-call stubs documented below
 
 The task-call-table stubs are:
 
