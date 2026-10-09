@@ -1331,9 +1331,12 @@ touching it, not the EC's sweep.
    other direction from what the item expected: it is **three** sites, not one.
    `0xC1DA` and `0xC1F4` sit in unexported gaps, so the decompiled-C token
    census saw only `0xC1E7` and understated the address three-to-one. The row
-   carries 3/3/0 and `check_register_counts.py` holds it there. If that is
-   systematic, the `read`/`refs` columns understate any address whose readers
-   sit in unexported gaps — a census question distinct from §2a, and open.
+   carries 3/3/0 and `check_register_counts.py` holds it there. **The systematic
+   undercount is now measured.** The full reconciliation over all 280 `registers.yaml`
+   addresses found multiple addresses with unexported-gap sites and 17 addresses with *only*
+   unexported-gap sites (zero decompiled references). The `read`/`refs` columns are a
+   lower bound for any address whose sites fall in gaps between exported functions.
+   See `../../docs/findings/register-census-reconciliation-full.md` for the full data.
 7. ~~**The 42 wrong function boundaries**, if anyone wants them fixed rather
    than documented. `build_ec_decompile.py --mode rebuild-project` writes the
    7 MB database, and two branches that both rebuild one cannot merge. Since

@@ -2445,13 +2445,16 @@ registers, discovered again", but what the clustering actually found is that
 the *initialisation* routines touch them all: a cluster is a co-occurrence, and
 the addresses reached by one mode tick and one OEM override pass are a statement
 about init order, not about the registers' purposes. Reading it is one issue.
-The top ten addresses by reference count (`0x0440` 181, `0x08A8` 170,
+The top ten addresses by census reference count (`0x0440` 181, `0x08A8` 170,
 `0x0843` 168, `0x0844` 168, `0x0706` 160, `0x06D6` 148, then `0x080D` 137,
 `0x063A` 136, `0x0986` 135, `0x07F3` 133) are the issue's own list and belong
 in that reading: nine of the ten are in `main-ec-003`, and the tenth,
-`0x0440`, is a size-1 cluster on its own. **All 181 of its references are reads
-and none of them is a write**, spread over 91 functions, and at threshold 0.50
-it has no neighbour. The most-referenced address in the firmware is the one the
+`0x0440`, is a size-1 cluster on its own. These rankings rest on the census
+count in `refs` column, which is a lower bound for any address whose unexported-gap
+sites are inaccessible to the decompiled tree; see §7 and
+`../../docs/findings/register-census-reconciliation-full.md` for the full reconciliation.
+**All 181 of its references are reads and none of them is a write**, spread over 91 functions, and at threshold 0.50
+it has no neighbour. The most-referenced address among exported decompiled functions is the one the
 clustering cannot place, which is worth an issue of its own — and it is also
 the address the §4.3 correction empties of writers, so a reading of it should
 start from "91 functions consult this and none of them sets it".
@@ -2687,18 +2690,25 @@ is a human's, and the issue says so too.
   in both the default census and the `--export-ownership` one. None is an
   address-of and all four are reads.
 
-## 7. Reconciling against the other method: one non-gap, and twelve rows the tree says zero on
+## 7. Reconciling against the other method: one non-gap, and seventeen rows the tree says zero on
 
 `../tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800` runs
-both methods over all 101 `registers.yaml` addresses: this one over the
+both methods over all `registers.yaml` addresses: this one over the
 decompiled C, `register_ref_table.py` over an unaligned `90 hi lo` byte scan
 of the committed image with an 8-instruction window decoded at each site. They
 are independent, and they do not count the same thing.
 
+**Prior scope (101 addresses):**
 ```console
-$ python3 ec/tools/xdata_register_map.py --reconcile ec/firmware/GMxMGxx_11.800 2>&1 >/dev/null
-101 addresses: 36 agree on the main-EC count, 12 have main-EC sites the decompiled tree does not contain, 53 differ another way. A zero in the 'this tool' column is 'not found by this method' -- a function that did not decompile carries its references nowhere -- never 'absent'.
+101 addresses: 36 agree on the main-EC count, 12 have main-EC sites the decompiled tree does not contain, 53 differ another way.
 ```
+
+**Current scope (280 addresses):**
+```console
+280 addresses: 85 agree on the main-EC count, 17 have main-EC sites the decompiled tree does not contain, 178 differ another way. A zero in the 'this tool' column is 'not found by this method' -- a function that did not decompile carries its references nowhere -- never 'absent'.
+```
+
+The growth from 101 to 280 addresses reflects `registers.yaml`'s expansion since the last full reconciliation. The detailed reconciliation over all 280 addresses, categorized by cause (unexported gap, spelling mismatch, unit difference, other), is in `../../docs/findings/register-census-reconciliation-full.md`.
 
 **The §4.3 correction does not move this table, and the count changing from 56
 addresses to 101 is not it either.** `--reconcile` prints reference counts, and
