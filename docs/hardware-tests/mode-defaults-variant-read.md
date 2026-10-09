@@ -120,6 +120,24 @@ turn a write into a behaviour. If the question behind all of it is "can a
 Linux driver write `0x0751` and have the PLs follow", this read does not
 answer that; `manual-fan-ctrl-0751-isolation.md` is the procedure for it.
 
+**Dependencies and what cannot be determined here.** This procedure determines
+which of the seed arms last ran (Q2) and whether the fixed arm executed (Q1),
+both of which relate to understanding `0x07D3` (GFID) as the runtime discriminator
+for which copy of the mode routines (`0xABxx` or `0xC7xx`) is executing. However,
+fully characterizing the `0xC7xx` copy's behaviour is blocked by a separate issue:
+its thirteen stub-reached routines have no exported listing in the Ghidra project,
+and seeding them requires `--mode rebuild-project`. Until that seeding issue is
+resolved, a run where `0x07D3` indicates the `0xC7xx` side is active cannot say
+what that copy's routines would do or what bytes they would write.
+
+Additionally, `0x06E6` (one of the gate bytes distinguishing the two copies at the
+static level) is treated by open issue #1444 as a possible host mailbox gate. The
+gate byte `0x0440` is the only one shared between the two copies' entry conditions,
+and `registers.yaml` records an EC-side writer for it (`code_table_scatter_to_xdata`),
+so its value is not a fixed constant. A complete procedure would control for vendor
+driver state (bound versus unbound) to account for possible dynamic changes in these
+bytes, but the current procedure (§3) does not yet document that control.
+
 ## 5. Where the output goes
 
 Name the file the way the existing captures do, so the three samples are
