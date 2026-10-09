@@ -325,8 +325,8 @@ bank0,BD34,sub_dptr_byte_from_0867,agree,
 bank0,BD3D,sub_dptr_byte_from_0868,agree,
 bank0,BD46,be16_08a9_08aa_minus_0321,agree,
 bank0,BD54,store_be16_b,vacuous,no-xdata-named
-bank0,BD5D,be16_0464_0465_minus_100,agree,
-bank0,BD6B,be16_046c_046d_minus_100,agree,
+bank0,BD5D,be16_0464_0465_minus_100,disagree,
+bank0,BD6B,be16_046c_046d_minus_100,disagree,
 bank0,BD79,tail_call_7110_with_b6,vacuous,no-xdata-named
 bank0,BD7F,store_a_then_tail_call_7110_b6,vacuous,no-xdata-named
 bank0,BD8B,tier_250_eligible,agree,
@@ -461,6 +461,8 @@ bank0,CA53,tick_06ea_against_period_in_0a56,agree,
 bank0,CC3D,init_clear_00f5_and_1304_bit2,agree,
 bank0,CC51,init_set_1304_bit4_and_clear_bit2,vacuous,entry-is-branch
 bank0,CC64,init_06e6_1_clear_0743_07c5_and_07d5_ff,disagree,
+bank0,CCCF,init_06e6_1_ccf,vacuous,entry-is-branch
+bank0,CCE5,init_06e6_3,agree,
 bank0,CCFC,power_on_init_and_two_hang_paths,agree,
 bank0,CDE4,walk_index_06e7_up_to_1e_table_6bca,agree,
 bank0,CE37,walk_index_06e7_up_to_17_table_6c65,agree,
@@ -574,7 +576,7 @@ bank0,DFDF,gate_06e6_then_store_0464,agree,
 bank0,E010,load_06e6,agree,
 bank0,E014,branch_on_06e6_eq_1,vacuous,entry-is-branch
 bank0,E020,move_a_to_r5_and_call_dfa0,vacuous,no-xdata-named
-bank0,E024,store_r6_r7_to_046c_046d,agree,
+bank0,E024,store_r6_r7_to_046c_046d,disagree,
 bank0,E02D,mul_r7_by_8,vacuous,no-literal-named
 bank0,E033,FUN_CODE_e033,agree,
 bank0,E03F,set_09c1_09c3_from_dptr,agree,

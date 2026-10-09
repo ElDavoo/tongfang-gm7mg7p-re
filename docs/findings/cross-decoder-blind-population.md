@@ -22,7 +22,7 @@ changes no outcome, and touches no register status.
 
 ```
 $ python3 ec/tools/cross_decoder_blindness.py
-  the 1020 vacuous row(s) are 370 entry-is-branch, 489 no-xdata-named, 66 named-past-first-branch, 95 no-literal-named, out of 2086 sampled function(s) of which 1066 were compared
+  the 1021 vacuous row(s) are 371 entry-is-branch, 490 no-xdata-named, 66 named-past-first-branch, 94 no-literal-named, out of 2088 sampled function(s) of which 1067 were compared
   entry-is-branch        the export's entry is a branch, so the window stops on instruction one by design and the body is past it
   no-xdata-named         the C names no XDATA address at all
   named-past-first-branch the opening is real and names no address, and the function's own listing extent holds one the C does name: a match one branch too late
@@ -40,14 +40,8 @@ are read from, not from here.
 
 §14i records the same staleness once already, for the same reason — the sample
 grows as the annotation layer does, and every figure derived from it moves.
-The committed report is 2,057 rows today, not the 1,901/1,957 the issue and
-§14i quote. Splitting the 1,008 `vacuous` rows by the issue's own two axes:
-
-| | C names no XDATA address | C names one |
-|---|---|---|
-| **window empty (`insns`=0)** | 223 | **133** |
-| **window non-empty** | 493 | **159** |
-| | 716 | **292** |
+The committed report is 2,088 rows today, not the 1,901/1,957 the issue and
+§14i quote. Splitting the 1,021 `vacuous` rows by the issue's own two axes:
 
 The issue's shape carries over intact: rows whose C names no XDATA address
 outnumber the ones whose C does, and the smaller half is the population the
@@ -57,25 +51,26 @@ with the old figure beside it, per §4a-4d.
 
 What follows is the same split cut a second way: not "is the window empty" but
 "what is the absence made of". The two questions are not redundant, because
-223 of the 356 window-empty rows' C names nothing at all — their window is
-empty for two independent reasons, and only one of them is a blind spot.
+some of the 371 entry-is-branch rows (the window-empty rows) also have a C that
+names no XDATA address — their window is empty for two independent reasons,
+and only one of them is a blind spot.
 
 ## The four classes, and one worked example each
 
 | class | n | what it is |
 |---|---|---|
-| `entry-is-branch` | 370 | the byte at the function's entry is in `disasm8051.FLOW_OPCODES`, so the window is empty by construction and could be nothing else |
-| `no-xdata-named` | 489 | the `.c` names no XDATA address at all, though the function may touch XDATA through pointers or internal RAM |
+| `entry-is-branch` | 371 | the byte at the function's entry is in `disasm8051.FLOW_OPCODES`, so the window is empty by construction and could be nothing else |
+| `no-xdata-named` | 490 | the `.c` names no XDATA address at all, though the function may touch XDATA through pointers or internal RAM |
 | `named-past-first-branch` | 66 | the opening is real and names nothing, and the function's own listing extent holds a literal its C *does* name: a match one branch too late |
-| `no-literal-named` | 95 | the C names an address the function's own listing never loads into DPTR |
+| `no-literal-named` | 94 | the C names an address the function's own listing never loads into DPTR |
 
 `entry-is-branch` is decided first, and the order is the measurement rather
 than a preference. A decompile that names nothing still has an entry byte, and
 for a function whose entry is a branch the empty window is accounted for twice
 over — once by "the C names nothing", once and more strongly by "the window was
-never going to hold anything". Deciding it the other way round puts 223 of the
-356 in `no-xdata-named` and makes `insns`=0 stop meaning `entry-is-branch`,
-which is the identity the class exists to assert.
+never going to hold anything". Deciding it the other way round would move some
+rows from `entry-is-branch` to `no-xdata-named` and change what `insns`=0 means,
+which is why the class's identity depends on this decision order.
 
 ### `entry-is-branch` — `bank0 0x8FDB state_0817_fallthrough`
 
@@ -142,8 +137,8 @@ literal in the function*, not about a short one.
 
 ### `no-xdata-named` — composition and sub-populations
 
-The `.c` names no XDATA address at all. This is the largest class — 489 of the
-1,020 vacuous rows — and saying so plainly is the reason it is in the vocabulary:
+The `.c` names no XDATA address at all. This is the largest class — 490 of the
+1,021 vacuous rows — and saying so plainly is the reason it is in the vocabulary:
 a census that only counted the interesting ones would make the interesting ones
 look like the population. But the class is not one thing; it consists of three
 populations with different implications for the decompile:
@@ -172,7 +167,7 @@ populations with different implications for the decompile:
 
 ## The residue, and the split that is not made here
 
-`no-literal-named` is 95 rows, and the issue asked for it to be divided into
+`no-literal-named` is 94 rows, and the issue asked for it to be divided into
 *reached through a caller-supplied pointer* and *DPTR built by arithmetic from a
 base*. **That split is not made here**, and the reason is the same one
 `CROSS_DECODER_OUTCOMES` gives for leaving `disagree` as one bucket: guessing
@@ -245,7 +240,7 @@ the committed report now carries eight, the extra being `pd 0xE8D4`, also
 does not reach it. This census does not move that, and the way to say so is a
 number rather than a reassurance.
 
-Searching the 1,020 `vacuous` rows' decompiles for 0x07D0 **as a symbol the
+Searching the 1,021 `vacuous` rows' decompiles for 0x07D0 **as a symbol the
 body names**, two rows come back, and **both are `pd`** —
 `pd 0xA5B3 and_16bit_fields_write_07d2_07d3` and
 `pd 0xC398 set_r7_r5_from_iram_then_read_07d0`, both
@@ -274,11 +269,11 @@ follow `inc dptr` and the arms table's `dp_causes` column name the cause of
 each of the remainder; `walk_branch_arms.py --census` prints the vocabulary
 and the split.
 
-The case for it rests entirely on the 95. `named-past-first-branch` (66) would
-be closed by a longer window and nothing else; `no-xdata-named` (489) is not a
-blind spot for the majority of rows; `entry-is-branch` (370) is a window
+The case for it rests entirely on the 94. `named-past-first-branch` (66) would
+be closed by a longer window and nothing else; `no-xdata-named` (490) is not a
+blind spot for the majority of rows; `entry-is-branch` (371) is a window
 definition. **So the second method is worth exactly what the residue is worth**
-— 95 rows, of which a smaller fraction are in the PD image. That is the honest
+— 94 rows, of which a smaller fraction are in the PD image. That is the honest
 size of the case for a DPTR-tracking walk, and it is smaller than the issue
 expected.
 
@@ -300,10 +295,10 @@ rather than a different verdict. §14i is explicit that adding to that
 vocabulary is a decision rather than a detail, so the decision is recorded here
 — and it is "no".
 
-**Not following the branch's target.** The issue's alternative for the 370
+**Not following the branch's target.** The issue's alternative for the 371
 `entry-is-branch` rows is that the comparison should follow the branch rather
 than stop at it. That is the larger change: it redefines what the window is, so
-every one of the 2,086 committed rows moves and the baseline has to be
+every one of the 2,088 committed rows moves and the baseline has to be
 re-measured rather than re-derived. It is a separate issue, and nothing here
 depends on it — the classes describe the comparison as it is, which is what
 makes them a measurement of the committed ratchet rather than of a proposal.
