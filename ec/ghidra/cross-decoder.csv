@@ -325,8 +325,8 @@ bank0,BD34,sub_dptr_byte_from_0867,annotation,6,0867,0867,,agree
 bank0,BD3D,sub_dptr_byte_from_0868,annotation,6,0868,0868,,agree
 bank0,BD46,be16_08a9_08aa_minus_0321,annotation,7,08A9 08AA,08A9 08AA,,agree
 bank0,BD54,store_be16_b,annotation,8,,,,vacuous
-bank0,BD5D,be16_0464_0465_minus_100,annotation,7,0464 0465,0464 0465,,agree
-bank0,BD6B,be16_046c_046d_minus_100,annotation,7,046C 046D,046C 046D,,agree
+bank0,BD5D,be16_0464_0465_minus_100,annotation,7,0464 0465,,0464 0465,disagree
+bank0,BD6B,be16_046c_046d_minus_100,annotation,7,046C 046D,,046C 046D,disagree
 bank0,BD79,tail_call_7110_with_b6,annotation,1,,,,vacuous
 bank0,BD7F,store_a_then_tail_call_7110_b6,annotation,5,,,,vacuous
 bank0,BD8B,tier_250_eligible,annotation,6,09C9 09CA,09C9 09CA,,agree
@@ -461,6 +461,8 @@ bank0,CA53,tick_06ea_against_period_in_0a56,annotation,9,06EA 0A56,06EA 0A56,,ag
 bank0,CC3D,init_clear_00f5_and_1304_bit2,annotation,8,00F5 1304,00F5 1304,,agree
 bank0,CC51,init_set_1304_bit4_and_clear_bit2,annotation,0,,,,vacuous
 bank0,CC64,init_06e6_1_clear_0743_07c5_and_07d5_ff,annotation,23,0743 0788 07C5 07D5 200D,,0743 0788 07C5 07D5 200D,disagree
+bank0,CCCF,init_06e6_1_ccf,annotation,0,,,,vacuous
+bank0,CCE5,init_06e6_3,annotation,3,06E6,06E6,,agree
 bank0,CCFC,power_on_init_and_two_hang_paths,annotation,3,06E6,06E6,,agree
 bank0,CDE4,walk_index_06e7_up_to_1e_table_6bca,annotation,4,06E7,06E7,,agree
 bank0,CE37,walk_index_06e7_up_to_17_table_6c65,annotation,4,06E7,06E7,,agree
@@ -574,7 +576,7 @@ bank0,DFDF,gate_06e6_then_store_0464,annotation,2,06E6,06E6,,agree
 bank0,E010,load_06e6,annotation,2,06E6,06E6,,agree
 bank0,E014,branch_on_06e6_eq_1,annotation,0,,,,vacuous
 bank0,E020,move_a_to_r5_and_call_dfa0,annotation,1,,,,vacuous
-bank0,E024,store_r6_r7_to_046c_046d,annotation,6,046C,046C,,agree
+bank0,E024,store_r6_r7_to_046c_046d,annotation,6,046C,,046C,disagree
 bank0,E02D,mul_r7_by_8,annotation,4,,,,vacuous
 bank0,E033,FUN_CODE_e033,stride,8,09C0,09C0,,agree
 bank0,E03F,set_09c1_09c3_from_dptr,annotation,12,09C1,09C1,,agree

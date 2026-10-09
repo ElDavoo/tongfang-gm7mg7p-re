@@ -92,8 +92,8 @@ void threshold_dispatch_0438_by_0491(void)
     return;
   }
   if ((((DAT_EXTMEM_0497 & 1) != 1) && (DAT_EXTMEM_0524 == BANK0_R1)) &&
-     ((DAT_EXTMEM_04a1 >> 6 & 1) != 0)) {
-    FUN_CODE_bcb3(DAT_EXTMEM_04a0);
+     ((XDATA_04A1 >> 6 & 1) != 0)) {
+    FUN_CODE_bcb3(XDATA_04A0);
     return;
   }
   if ((DAT_EXTMEM_0493 & 0xa3) != 0) {
@@ -114,7 +114,7 @@ void threshold_dispatch_0438_by_0491(void)
     mask_0491_with_c0();
     return;
   }
-  if ((DAT_EXTMEM_04a1 & 0x90) == 0) {
+  if ((XDATA_04A1 & 0x90) == 0) {
     if ((DAT_EXTMEM_0705 & 0x80) == 0) {
       DAT_EXTMEM_0491 = DAT_EXTMEM_0491 & 0xc0 | 1;
       FUN_CODE_be10();

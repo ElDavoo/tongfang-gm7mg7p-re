@@ -21,14 +21,14 @@ void dispatch_0832_event_bits(void)
 {
   if ((DAT_EXTMEM_0832 >> 1 & 1) == 1) {
     DAT_EXTMEM_0832 = DAT_EXTMEM_0832 & 0xfd;
-    trampoline_to_85c6(0x12,0x15,0x8c,DAT_EXTMEM_0836,DAT_EXTMEM_0837);
+    trampoline_to_85c6(0x12,0x15,0x8c,CHARGE_STAGE_CMP_WORD_0,CHARGE_STAGE_CMP_WORD_1);
     clear_1c04_1c05_set_1c00_ff();
     write_5_to_0680();
     return;
   }
   if ((DAT_EXTMEM_0832 & 1) == 1) {
     DAT_EXTMEM_0832 = DAT_EXTMEM_0832 & 0xfe;
-    trampoline_to_85c6(0x12,0x14,0x8c,DAT_EXTMEM_0834,DAT_EXTMEM_0835);
+    trampoline_to_85c6(0x12,0x14,0x8c,CHARGE_STAGE_WORD_0,CHARGE_STAGE_WORD_1);
     clear_1c04_1c05_set_1c00_ff();
     write_5_to_0680();
     return;

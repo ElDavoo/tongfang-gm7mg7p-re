@@ -6,7 +6,16 @@
 
 /* Reads the byte at the caller's current DPTR, masks it with 0x7C and leaves the masked value in A.
    As a side effect it reloads DPTR with 0x0860 before returning, so a caller that relies on DPTR
-   surviving the call is affected. What the surviving bits 0x7C represent is not decoded.
+   surviving the call is affected. ADDENDUM 2026-10-03, issue #799: the sentence above called the
+   reload a side effect, and it is the whole function as far as its callers are concerned. Both
+   committed callers use it -- 0x0D18C and 0x0D244 lcall this routine, and each then stores A
+   through the DPTR it left behind, so the firmware stores 0x00 to XDATA 0x0860 at 0x0D191 and
+   0x0D249. Nothing in this repository's sweep or census reaches those bytes by either of its own
+   rules: at 0x0D191 and 0x0D249 the sweep finds no MOV DPTR,#0x0860 at all, its rule being a MOV
+   DPTR in the same function, and the census reads decompiled text where Ghidra bound DPTR to the
+   pre-call value. A third booked caller at 0x0D1E3 has the same shape and no listing; see
+   docs/findings/callee-set-dptr-census-blindspot.md. What 0x7C masks, and why the byte is cleared
+   here, is still not decoded. What the surviving bits 0x7C represent is not decoded.
    type: logic
    evidence: ec/decompiled/bank0/D319.asm; ec/decompiled/bank0/D319.c
    basis: hand-decoded

@@ -11,7 +11,7 @@
    type: state
    evidence: ec/decompiled/bank1/C4AF.asm; ec/decompiled/bank1/C4AF.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void reload_083e_when_0834_is_zero(char param_1)
 

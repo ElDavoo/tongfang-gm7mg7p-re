@@ -29,7 +29,7 @@ void latch_0490_bit3_or_bit7(void)
   if (bVar1 != 0) {
     if (bVar1 == 2) {
       if ((((DAT_EXTMEM_0492 == '\0') && ((DAT_EXTMEM_0493 & 0xa3) == 0)) &&
-          (DAT_EXTMEM_0494 == '\0')) && ((DAT_EXTMEM_04a1 & 0x90) == 0)) {
+          (DAT_EXTMEM_0494 == '\0')) && ((XDATA_04A1 & 0x90) == 0)) {
 LAB_CODE_c152:
         if ((DAT_EXTMEM_0490 >> 3 & 1) != 1) {
           clear_0834_word_when_nonzero();
@@ -40,7 +40,7 @@ LAB_CODE_c152:
     }
     else {
       if ((((bVar1 != 0x20) && (DAT_EXTMEM_0492 == '\0')) && ((DAT_EXTMEM_0493 & 0xa3) == 0)) &&
-         ((DAT_EXTMEM_0494 == '\0' && ((DAT_EXTMEM_04a1 & 0x90) == 0)))) goto LAB_CODE_c152;
+         ((DAT_EXTMEM_0494 == '\0' && ((XDATA_04A1 & 0x90) == 0)))) goto LAB_CODE_c152;
       if (((DAT_EXTMEM_049a == '\0') &&
           (((DAT_EXTMEM_049b & 0xa0) == 0 && (DAT_EXTMEM_049c == '\0')))) &&
          ((DAT_EXTMEM_04b1 & 0x90) == 0)) {

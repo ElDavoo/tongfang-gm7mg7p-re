@@ -14,11 +14,15 @@
    of XDATA 0x0832, then stores the 16-bit value 0x0180 to 0x0834/0x0835 and sets bit 0 of 0x0832.
    The two blocks at 0xBB7A and 0xBB8F that the XDATA 0x0539 and 0x0403 tests select are
    byte-identical, so that test has no observable effect; those blocks are not in this listing,
-   which ends at 0xBB3C.
+   which ends at 0xBB3C. The two words it stages and compares are ec/annotations/registers.yaml's
+   CHARGE_STAGE_WORD (0x0834/0x0835) and CHARGE_STAGE_CMP_WORD (0x0836/0x0837), which had no rows
+   when this comment was written; see issue #715. The names say the role these instructions show and
+   nothing beyond it: 0x0180, 0x0400 and 0x3138 are literals here, and nothing in them ties either
+   word to a unit.
    type: logic
    evidence: ec/decompiled/bank1/BABF.asm; ec/decompiled/bank1/BABF.c
    basis: hand-decoded
-   name_basis: code-shape */
+   name_basis: ec-register */
 
 void stage_0577_against_0834_0836(char param_1)
 

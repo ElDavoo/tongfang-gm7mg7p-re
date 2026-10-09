@@ -487,6 +487,8 @@ bank0/CA53.c,bank0,CA53,9,bank0/CA53.c,CA53,tick_06ea_against_period_in_0a56,no,
 bank0/CC3D.c,bank0,CC3D,6,bank0/CC3D.c,CC3D,init_clear_00f5_and_1304_bit2,no,1.00,6,1.00
 bank0/CC51.c,bank0,CC51,5,bank0/CC51.c,CC51,init_set_1304_bit4_and_clear_bit2,no,1.00,5,1.00
 bank0/CC64.c,bank0,CC64,20,bank0/CC64.c,CC64,init_06e6_1_clear_0743_07c5_and_07d5_ff,no,1.00,20,1.00
+bank0/CCCF.c,bank0,CCCF,7,bank0/CCCF.c,CCCF,init_06e6_1_ccf,no,1.00,7,1.00
+bank0/CCE5.c,bank0,CCE5,6,bank0/CCE5.c,CCE5,init_06e6_3,no,1.00,6,1.00
 bank0/CCFC.c,bank0,CCFC,22,bank0/CCFC.c,CCFC,power_on_init_and_two_hang_paths,no,1.00,22,1.00
 bank0/CDC3.c,bank0,CDC3,10,bank0/CDC3.c,CDC3,FUN_CODE_cdc3,no,1.00,10,1.00
 bank0/CDE4.c,bank0,CDE4,21,bank0/CDE4.c,CDE4,walk_index_06e7_up_to_1e_table_6bca,no,1.00,21,1.00

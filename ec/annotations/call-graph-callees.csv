@@ -24,6 +24,7 @@ common,3609,FUN_CODE_3609,no,bank1,3,3,0,0,0,2,1,1,common:2F1D
 common,4397,FUN_CODE_4397,no,bank1,3,3,0,0,0,1,1,1,common:43A5
 common,4AC4,FUN_CODE_4ac4,no,bank1,3,3,0,0,0,2,1,1,bank1:4874
 bank0,C26E,FUN_CODE_c26e,no,,2,2,0,0,0,2,2,1,bank0:C278
+bank0,C4C9,FUN_CODE_c4c9,no,,2,2,0,0,0,2,2,1,bank0:CC64
 bank0,D078,FUN_CODE_d078,no,,2,2,0,0,0,1,1,1,bank0:CFC6
 bank0,D673,FUN_CODE_d673,no,,2,0,0,0,2,1,1,1,bank0:D091
 common,2A84,FUN_CODE_2a84,no,bank1,2,2,0,0,0,1,1,1,common:2990
@@ -41,7 +42,6 @@ common,71B9,FUN_CODE_71b9,no,bank1,2,2,0,0,0,1,1,1,bank0:724B
 bank0,9277,FUN_CODE_9277,no,,1,1,0,0,0,1,1,1,bank0:924C
 bank0,A426,FUN_CODE_a426,no,,1,0,1,0,0,1,1,1,bank0:A678
 bank0,C49F,FUN_CODE_c49f,no,,1,1,0,0,0,1,1,1,bank0:90FE
-bank0,C4C9,FUN_CODE_c4c9,no,,1,1,0,0,0,1,1,1,bank0:CC64
 bank0,C4D1,FUN_CODE_c4d1,no,,1,1,0,0,0,1,1,1,bank0:CCFC
 bank0,D5DB,FUN_CODE_d5db,no,,1,0,1,0,0,1,0,1,bank0:D5D4
 bank0,E033,FUN_CODE_e033,no,,1,1,0,0,0,1,1,1,bank0:DF78
@@ -194,6 +194,7 @@ bank1,89F4,zero_xdata_bytes_r2r1_through_r2r3,yes,,8,8,0,0,0,3,2,0,
 bank1,BD10,mask_0491_with_c0,yes,,8,0,8,0,0,2,2,0,
 bank1,CDDA,clamp_r1r2_against_const_from_0491,yes,,8,8,0,0,0,7,7,0,
 bank1,E57E,push_r7_call_e5d6_pop_r7,yes,,8,8,0,0,0,7,7,0,
+common,2896,clear_iram_6d_7f_then_xdata_b00_bfe,yes,bank1,8,7,1,0,0,8,6,0,
 common,30B5,or_table_bytes_into_dptr_under_flag_87,yes,bank1,8,8,0,0,0,8,1,0,
 common,3239,increment_xdata_0a4d_then_ljmp_311d,yes,bank1,8,0,8,0,0,1,0,0,
 common,3BAE,load_dptr_high_from_a_low_from_code_table,yes,bank1,8,8,0,0,0,7,1,0,
@@ -206,7 +207,6 @@ bank1,BF3A,guard_then_store_pair_0834,yes,,7,0,7,0,0,4,2,0,
 bank1,C4D2,setup_1c00_block_with_arg_4c,yes,,7,7,0,0,0,2,0,0,
 common,0ECC,timer1_counted_delay_count_in_r7,yes,bank1,7,7,0,0,0,7,2,0,
 common,220A,increment_xdata_0a53,yes,bank1,7,7,0,0,0,1,0,0,
-common,2896,clear_iram_6d_7f_then_xdata_b00_bfe,yes,bank1,7,6,1,0,0,7,5,0,
 common,43A5,per_channel_state_sequence_on_15byte_stride_table_43a5,yes,bank1,7,7,0,0,0,6,0,0,
 common,4AFB,stop_timer1_and_set_et1_4afb,yes,bank1,7,7,0,0,0,5,0,0,
 pd,0F1F,shr_32bit_r4r7_by_r0,yes,,7,7,0,0,0,5,5,0,
@@ -396,6 +396,7 @@ bank0,BEA3,x044c_minus_r7,yes,,3,3,0,0,0,2,2,0,
 bank0,BEF0,read_0a4a_minus_carry,yes,,3,3,0,0,0,1,1,0,
 bank0,C478,set_160a_bit0_unless_b8f4_and_08eb,yes,,3,1,2,0,0,3,2,0,
 bank0,CA4C,read_fan_mode_bits_4_and_7,yes,,3,3,0,0,0,1,1,0,
+bank0,D084,set_0988_1,yes,,3,3,0,0,0,3,3,0,
 bank0,DC8D,write_1_to_1200,yes,,3,3,0,0,0,2,2,0,
 bank0,DE83,stage_3000_block_then_probe_3000_3007,yes,,3,3,0,0,0,3,3,0,
 bank0,EA94,three_calls_then_4777_r3_04,yes,,3,3,0,0,0,1,0,0,
@@ -623,6 +624,8 @@ bank0,CA1D,FUN_CODE_ca1d,no,,2,2,0,0,0,2,0,0,
 bank0,CA1E,set_support2_bit5_and_bios_oem2_bit6,yes,,2,2,0,0,0,2,0,0,
 bank0,CA2D,clear_kbd_status_bit1_return_0826,yes,,2,2,0,0,0,2,0,0,
 bank0,CA44,read_0490_and_leave_dptr_0826,yes,,2,2,0,0,0,2,0,0,
+bank0,CC3D,init_clear_00f5_and_1304_bit2,yes,,2,2,0,0,0,2,2,0,
+bank0,CC51,init_set_1304_bit4_and_clear_bit2,yes,,2,2,0,0,0,2,2,0,
 bank0,CFF6,load_stride5_table_word_into_06e8_pair,yes,,2,2,0,0,0,1,1,0,
 bank0,D01A,indirect_code_jump_via_stride5_table_6cd9,yes,,2,2,0,0,0,1,1,0,
 bank0,D041,read_06e7,yes,,2,2,0,0,0,2,2,0,
@@ -1055,14 +1058,11 @@ bank0,C44D,clear_1609_bit0_and_write_04_to_2006,yes,,1,1,0,0,0,1,0,0,
 bank0,C468,set_1609_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,C470,clear_1609_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,C497,set_160a_bit1,yes,,1,0,1,0,0,1,1,0,
-bank0,CC3D,init_clear_00f5_and_1304_bit2,yes,,1,1,0,0,0,1,1,0,
-bank0,CC51,init_set_1304_bit4_and_clear_bit2,yes,,1,1,0,0,0,1,1,0,
 bank0,CCFC,power_on_init_and_two_hang_paths,yes,,1,1,0,0,0,1,1,0,
 bank0,CDE4,walk_index_06e7_up_to_1e_table_6bca,yes,,1,0,1,0,0,1,1,0,
 bank0,CE37,walk_index_06e7_up_to_17_table_6c65,yes,,1,0,1,0,0,1,1,0,
 bank0,CE9E,load_index_06e7_head_of_cea2_loop,yes,,1,0,1,0,0,1,1,0,
 bank0,CEE9,walk_index_06e7_up_to_10_table_6d23,yes,,1,0,1,0,0,1,1,0,
-bank0,D084,set_0988_1,yes,,1,1,0,0,0,1,1,0,
 bank0,D236,poll_d6c2_then_branch,yes,,1,0,1,0,0,1,1,0,
 bank0,D284,write_ff_to_dptr_then_d28e,yes,,1,0,1,0,0,1,1,0,
 bank0,D28E,copy_0866_86b_to_1c04_1c3a,yes,,1,0,1,0,0,1,1,0,

@@ -21,8 +21,8 @@ void branch_on_06e6_eq_1(char param_1,undefined1 param_2)
   if (param_1 == '\x01') {
     uVar1 = DAT_EXTMEM_1821;
     FUN_CODE_dfa0(DAT_EXTMEM_1820);
-    DAT_EXTMEM_046c = param_2;
-    DAT_EXTMEM_046d = uVar1;
+    SECOND_FAN_RPM_0 = param_2;
+    SECOND_FAN_RPM_1 = uVar1;
   }
   return;
 }

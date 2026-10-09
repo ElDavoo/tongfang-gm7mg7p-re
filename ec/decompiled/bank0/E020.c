@@ -16,8 +16,8 @@ void move_a_to_r5_and_call_dfa0(undefined1 param_1,undefined1 param_2,undefined1
 
 {
   FUN_CODE_dfa0(param_1);
-  DAT_EXTMEM_046c = param_2;
-  DAT_EXTMEM_046d = param_3;
+  SECOND_FAN_RPM_0 = param_2;
+  SECOND_FAN_RPM_1 = param_3;
   return;
 }
 
