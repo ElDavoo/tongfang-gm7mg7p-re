@@ -54,9 +54,9 @@ The per-function byte readings are the committed listings, one `.asm` and one
 Measured over the committed export, by `index.csv` for the functions and
 `ghidra-functions.csv` for the names:
 
-- `exported functions` — 2764
-- `annotated function rows` — 2006
-- `rows the index marks annotated` — 2013
+- `exported functions` — 2793
+- `annotated function rows` — 2035
+- `rows the index marks annotated` — 2042
 - `unresolved rows` — 173
 
 By program, as exported minus annotated minus the rest:
@@ -65,7 +65,7 @@ By program, as exported minus annotated minus the rest:
 |---|---|---|---|
 | `bank0` | 758 | 706 | 52 (7%) |
 | `bank1` | 698 | 616 | 82 (12%) |
-| `pd` | 555 | 555 | 0 (0%) |
+| `pd` | 584 | 584 | 0 (0%) |
 | `common` | 753 | 136 | 617 (82%) |
 
 **The common area is the finding.** It is 28% of the export by row count and
@@ -157,13 +157,13 @@ uncounted:
 
 | prefix | rows | of which |
 |---|---|---|
-| `call_` | 101 | |
+| `call_` | 130 | |
 | `load_` | 120 | 83 `load_dptr_`, 37 register and table |
 | `trampoline_` | 29 | |
 | `ret_` | 27 | 19 `ret_only_`, 8 named beside them |
 | `nop_` | 9 | |
 | `seed_` | 6 | |
-| **total** | **292** | |
+| **total** | **321** | |
 
 `--check` recounts that table off `ghidra-functions.csv` and holds every row,
 every breakdown and the total to it, so a tranche that moves a prefix tally
@@ -630,9 +630,9 @@ The same four totals as §2, restated here so the remainder can be read on its
 own. `--check` compares both occurrences against the same recount, so they
 cannot drift apart silently:
 
-- `exported functions` — 2764
-- `annotated function rows` — 2006
-- `rows the index marks annotated` — 2013
+- `exported functions` — 2793
+- `annotated function rows` — 2035
+- `rows the index marks annotated` — 2042
 - `unresolved rows` — 173
 
 **617 of the 753 common-area functions are unannotated, and that is still the

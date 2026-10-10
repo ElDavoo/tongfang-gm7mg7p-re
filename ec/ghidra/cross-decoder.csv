@@ -1619,10 +1619,13 @@ pd,131B,read3_idata_to_r3r1,annotation,8,,,,vacuous
 pd,132D,read3_xdata_to_r3r1_132d,annotation,8,,,,vacuous
 pd,133F,clear_0807_0808_dispatch_0805,annotation,1,0803,0803,,agree
 pd,1820,store_r7_12_clear_bit_4d_tailcall,annotation,1,,,,vacuous
+pd,1870,call_f739_set_dptr_0803_01870,annotation,0,,,,vacuous
 pd,1E4B,read_0803_and_invert,annotation,7,0803,0803,,agree
 pd,1E9D,flag_from_f4ee,annotation,3,0803,0803,,agree
 pd,1EFE,gate_0803_then_dispatch_through_code_table,annotation,1,0803,0803,,agree
+pd,2544,call_f739_set_dptr_0803_02544,annotation,0,,,,vacuous
 pd,2726,invert_r7_after_f407,annotation,0,,,,vacuous
+pd,3423,call_f739_set_dptr_07d6_03423,annotation,0,,,,vacuous
 pd,347B,read_byte_to_r3_stride_60_alt,annotation,4,0408,0408,,agree
 pd,3494,load_b_60,annotation,1,,,,vacuous
 pd,3497,call_10bc,annotation,0,,,,vacuous
@@ -1706,6 +1709,7 @@ pd,4932,read_07d0_via_4c12_02,annotation,0,,,,vacuous
 pd,496C,read_07d0_via_4c19_01,annotation,0,,,,vacuous
 pd,4989,read_07d0_via_4c19_02,annotation,0,,,,vacuous
 pd,4AE9,read_07d0_via_4c20_01,annotation,0,,,,vacuous
+pd,4BA5,call_f739_set_dptr_07d0_04ba5,annotation,0,,,,vacuous
 pd,4C12,call_f739_then_return_dptr_07d0_4c12,annotation,0,,,,vacuous
 pd,4C19,call_f739_then_return_dptr_07d0_4c19,annotation,0,,,,vacuous
 pd,4C20,call_f739_then_return_dptr_07d0,annotation,0,,,,vacuous
@@ -1716,8 +1720,11 @@ pd,5131,read_07d0_via_52ef_01,annotation,0,,,,vacuous
 pd,51B2,read_07d0_via_52ef_02,annotation,0,,,,vacuous
 pd,51E6,read_07d0_via_531f_01,annotation,0,,,,vacuous
 pd,51FE,read_07d0_via_531f_02,annotation,0,,,,vacuous
+pd,5243,call_f739_set_dptr_07d0_05243,annotation,0,,,,vacuous
 pd,52EF,call_f739_then_return_dptr_07d0_52ef,annotation,0,,,,vacuous
 pd,531F,call_f739_then_return_dptr_07d0_531f,annotation,0,,,,vacuous
+pd,550E,call_f739_set_dptr_07da_0550e,annotation,0,,,,vacuous
+pd,5565,call_f739_set_dptr_07da_05565,annotation,0,,,,vacuous
 pd,567C,scale_dptr_from_a_times_77_plus_73,annotation,7,,,,vacuous
 pd,56CB,store_a_then_scaled_lookup_from_r7,annotation,10,,,,vacuous
 pd,56ED,read_xdata_0852,annotation,2,0852,0852,,agree
@@ -1728,8 +1735,13 @@ pd,5874,mul_dptr_byte_77_to_arg_6c,annotation,9,,,,vacuous
 pd,58AB,arg_89_from_r4r5_then_store_at_0864,annotation,7,0864,0864,,agree
 pd,58B9,scale_dptr_from_dptr_byte_77_plus_96,annotation,8,,,,vacuous
 pd,5950,index_stride_77_r7,annotation,5,,,,vacuous
+pd,5CCA,call_f739_set_dptr_085e_05cca,annotation,0,,,,vacuous
+pd,5E2D,call_f739_set_dptr_0868_05e2d,annotation,0,,,,vacuous
+pd,61A8,call_f739_set_dptr_07d0_061a8,annotation,0,,,,vacuous
+pd,6342,call_f739_set_dptr_07d0_06342,annotation,0,,,,vacuous
 pd,6673,dispatch_on_07f5_record_after_staging_07d2,annotation,4,07D2 07F3,07D2 07F3,,agree
 pd,68CE,store_a_and_copy_07f4_masked_to_07f5,annotation,10,07D2 07F3,07D2,07F3,disagree
+pd,6D21,call_f739_set_dptr_07da_06d21,annotation,0,,,,vacuous
 pd,6F96,call_122f_with_dptr_fffd_6f96,annotation,1,FFFD,FFFD,,agree
 pd,6FAD,read_dptr_byte_into_r7,annotation,2,,,,vacuous
 pd,6FAF,scaled_lookup_from_a_times_5e_plus_f8,annotation,8,,,,vacuous
@@ -1767,25 +1779,33 @@ pd,7182,pack_0108e3_plus_r6_r7_into_r1_r3,annotation,7,,,,vacuous
 pd,718D,store_a_to_dptr_and_zero_r2_r3,annotation,5,,,,vacuous
 pd,7392,count_07cb_up_to_3_over_07ca_records,annotation,14,07CA 07CB,07CA 07CB,,agree
 pd,7580,set_07d2_and_return_r7_zero_or_one,annotation,4,07D1 07D2,07D1 07D2,,agree
+pd,75CA,call_f739_set_dptr_07d1_075ca,annotation,0,,,,vacuous
+pd,75D9,call_f739_set_dptr_07d1_075d9,annotation,0,,,,vacuous
 pd,7753,call_f75c_with_07d1,annotation,3,07D1,07D1,,agree
 pd,775C,call_e4d0_return_r7,annotation,3,07D1,07D1,,agree
+pd,7787,call_f739_set_dptr_07d0_07787,annotation,0,,,,vacuous
 pd,79B3,read_07d0_via_7b0d_01,annotation,0,,,,vacuous
 pd,7A5A,read_07d0_via_7b0d_02,annotation,0,,,,vacuous
+pd,7A76,call_f739_set_dptr_07d0_07a76,annotation,0,,,,vacuous
 pd,7B0D,call_f739_then_return_dptr_07d0_7b0d,annotation,0,,,,vacuous
 pd,7B14,stage_07c9_index_then_dispatch_on_flag_bits,annotation,4,07C9,07C9,,agree
 pd,7CE0,dispatch_on_0a8c_command_then_write_0a8b_record,annotation,17,0A8B 0A8C 0A8D 0A8F 0A93,0A8B 0A8C 0A8D 0A8F 0A93,,agree
 pd,7E91,reload_0a8b_call_f75c,annotation,3,0A8B,0A8B,,agree
+pd,7F80,call_f739_set_dptr_0941_07f80,annotation,0,,,,vacuous
 pd,805E,update_07d4_state,annotation,5,07D4,07D4,,agree
 pd,8210,call_dc29_with_07d4,annotation,4,07D4,07D4,,agree
 pd,821B,fill_0849_0857_block,annotation,17,042F 0849 084A 0851,042F 0849 084A 0851,,agree
 pd,842F,read_07d0_via_856f_01,annotation,0,,,,vacuous
 pd,844B,read_07d0_via_856f_02,annotation,0,,,,vacuous
+pd,84E4,call_f739_set_dptr_07d0_084e4,annotation,0,,,,vacuous
 pd,856F,call_f739_then_return_dptr_07d0_856f,annotation,0,,,,vacuous
 pd,8576,step_state_07d0_07d1,annotation,9,07D0,07D0,,agree
 pd,8716,call_f22e_with_07d0,annotation,3,07D0,07D0,,agree
 pd,8814,store_3bytes_at_dptr_plus_1,annotation,1,,,,vacuous
 pd,88BE,update_07d6_table_entries,annotation,12,07D6,07D6,,agree
 pd,8A4A,dispatch_on_07d1_bits_then_update_07d1_07d2,annotation,8,07D1,07D1,,agree
+pd,8AF0,call_f739_set_dptr_07d1_08af0,annotation,0,,,,vacuous
+pd,8BA0,call_f739_set_dptr_07d1_08ba0,annotation,0,,,,vacuous
 pd,8BC0,call_f739_then_read_07d1,annotation,0,,,,vacuous
 pd,8D41,advance_07d2_counter_and_dispatch,annotation,3,07D2,07D2,,agree
 pd,8EA6,call_7ce0_with_r5_0b,annotation,1,,,,vacuous
@@ -1821,6 +1841,7 @@ pd,915E,load_r5_then_write_via_915f,annotation,1,,,,vacuous
 pd,915F,write_a_to_dptr_set_r6_r4_ret6,annotation,5,,,,vacuous
 pd,9166,read_xdata_07c9_into_r6,annotation,4,07C9,,07C9,disagree
 pd,9177,set_b60_dptr_04a3_tail_10bc,annotation,2,04A3,04A3,,agree
+pd,9398,call_f739_set_dptr_07d0_09398,annotation,0,,,,vacuous
 pd,96E8,dptr_07d1_then_scale_via_96ed,annotation,1,07D1,07D1,,agree
 pd,96EB,read_dptr_to_r7_then_scale,annotation,2,,,,vacuous
 pd,96ED,dptr_0a13_plus_17_times_a,annotation,7,,,,vacuous
@@ -1905,6 +1926,7 @@ pd,9CFB,read_xdata_to_r7_set_dptr_066c,annotation,4,066C,,066C,disagree
 pd,9D39,set_b_67_dptr_066e,annotation,2,066E,,066E,disagree
 pd,A000,begins_mid_statement_write_then_index_0a8c_and_dispatch,annotation,8,,,,vacuous
 pd,A0E6,stage_07d6_07d7_07d8_then_tail_to_f654,annotation,28,07D6 07D7 07D8,07D6 07D7 07D8,,agree
+pd,A32A,call_f739_set_dptr_0852_0a32a,annotation,0,,,,vacuous
 pd,A339,stash_args_dispatch_code_table,annotation,12,0A69 0A6A 0A6B,0A69 0A6A 0A6B,,agree
 pd,A571,dispatch_on_state_07d0,annotation,5,07D0,07D0,,agree
 pd,A5B3,and_16bit_fields_write_07d2_07d3,annotation,1,,,,vacuous
@@ -1974,6 +1996,8 @@ pd,B2E9,dptr_from_097d_plus_carry,annotation,4,,,,vacuous
 pd,B2F7,read3_from_dptr_then_set_dptr_0002,annotation,0,,,,vacuous
 pd,B2FE,read_0832_and_multiply_by_38,annotation,5,0832,0832,,agree
 pd,B311,write_07d2_then_dispatch_on_07d1,annotation,4,07D1 07D2,07D1 07D2,,agree
+pd,B3C5,call_f739_set_dptr_07d1_0b3c5,annotation,0,,,,vacuous
+pd,B3D4,call_f739_set_dptr_07d1_0b3d4,annotation,0,,,,vacuous
 pd,B3ED,write_r7_at_0d0d_then_load_0d0b,annotation,0,,,,vacuous
 pd,B73F,stage_07d6_index_and_store_args_at_07dc,annotation,12,07D6,07D6,,agree
 pd,B80E,write_r7_and_r3r2r1_to_0803,annotation,4,0803,0803,,agree
@@ -1993,6 +2017,7 @@ pd,C20C,cmp32be_0827_against_00001388,annotation,6,0827,0827,,agree
 pd,C23A,read_byte_at_ffdc_plus_a,annotation,8,,,,vacuous
 pd,C24E,write_080d_then_branch_on_70e7,annotation,4,080D,080D,,agree
 pd,C2FA,write_07d0_then_run_indexed_state_chain,annotation,11,07D0,07D0,,agree
+pd,C348,call_f739_set_dptr_07d0_0c348,annotation,0,,,,vacuous
 pd,C398,set_r7_r5_from_iram_then_read_07d0,annotation,1,,,,vacuous
 pd,C62B,write_00b8_pattern_then_copy_ffc0_to_00d5,annotation,6,,,,vacuous
 pd,C755,latch_07d2_07d3_then_zero_23_bytes,annotation,7,07D2,07D2,,agree
@@ -2003,18 +2028,22 @@ pd,CB2A,store_0803_0805_then_jump_c808,annotation,11,0803,0803,,agree
 pd,CBB0,write_r4_r5_indexed_flag_bits,annotation,0,,,,vacuous
 pd,CC36,call_122f_with_dptr_fffd_cc36,annotation,1,FFFD,FFFD,,agree
 pd,CCB7,store_0a94_0a97_then_add_0a94_times_60,annotation,14,0A94 0A95 0A98,0A94 0A95 0A98,,agree
+pd,CCDC,call_f739_set_dptr_0a94_0ccdc,annotation,0,,,,vacuous
 pd,CDB7,decide_r7_from_r6_r5_r4_and_write_indexed_byte,annotation,1,,,,vacuous
+pd,CF08,call_f739_set_dptr_07e2_0cf08,annotation,0,,,,vacuous
 pd,CFA0,store_4_at_07d6_then_branch_on_991a,annotation,1,07D6,07D6,,agree
 pd,D013,latch_07d4_07d5_and_call_7014_with_63_or_6c,annotation,8,07D4,07D4,,agree
 pd,D085,decrement_00e2_and_tail_jump_to_d07b,annotation,4,00E2,00E2,,agree
 pd,D0F0,require_nonzero_from_b074,annotation,5,07D6,07D6,,agree
 pd,D435,gate_0827_against_1388_then_set_0ffd4_bit0,annotation,4,0825,0825,,agree
+pd,D51C,call_f739_set_dptr_080d_0d51c,annotation,0,,,,vacuous
 pd,D6E0,inc_r0_then_reti,annotation,1,,,,vacuous
 pd,D72E,stage_07d1_set_0ffd4_bit5_then_tail_c755,annotation,5,07D1,07D1,,agree
 pd,D78A,return_one_when_arg_matches_queried_values,annotation,12,,,,vacuous
 pd,D83D,store_4_zero_bytes_at_0904_plus_0809_times_5e,annotation,17,0809,0809,,agree
 pd,D8EE,copy_0841_to_0984_when_083c_matches_097f,annotation,4,083C,083C,,agree
 pd,DA44,poll_0208_0209_then_spin,annotation,0,,,,vacuous
+pd,DB4F,call_f739_set_dptr_0851_0db4f,annotation,0,,,,vacuous
 pd,DB89,mov_dptr_07cf_and_call_10e8,annotation,1,07CF,,07CF,disagree
 pd,DBD9,loop_c901_per_index_0x07d0,annotation,9,07CF,07CF,,agree
 pd,DC29,call_122f_with_dptr_fffe,annotation,1,FFFE,FFFE,,agree

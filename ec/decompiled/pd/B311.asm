@@ -101,20 +101,3 @@ B3BC     eb - -   mov      A, R3
 B3BD     12 ac c0 lcall    0xacc0
 B3C0     12 ad 1e lcall    0xad1e
 B3C3     70 0f -  jnz      0xb3d4
-B3C5     12 f7 39 lcall    0xf739
-B3C8     90 07 d1 mov      DPTR, #0x7d1
-B3CB     12 ac bf lcall    0xacbf
-B3CE     12 10 41 lcall    0x1041
-B3D1     7f 00 -  mov      R7, #0x0
-B3D3     22 - -   ret      
-B3D4     12 f7 39 lcall    0xf739
-B3D7     90 07 d1 mov      DPTR, #0x7d1
-B3DA     12 ac b7 lcall    0xacb7
-B3DD     12 ad 4d lcall    0xad4d
-B3E0     7b 64 -  mov      R3, #0x64
-B3E2     12 ad 23 lcall    0xad23
-B3E5     50 03 -  jnc      0xb3ea
-B3E7     7f 00 -  mov      R7, #0x0
-B3E9     22 - -   ret      
-B3EA     7f 01 -  mov      R7, #0x1
-B3EC     22 - -   ret      
