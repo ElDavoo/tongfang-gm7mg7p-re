@@ -62,7 +62,8 @@ jobs:
           # LOCAL CHANGE (2026-10-02): 5 -> 16. It had been left at 5 when agent-retry.yml went
           # to 8 on 2026-09-26, so a hand-dispatched sweep saw too few free slots.
           # LOCAL CHANGE (2026-10-08): 16 -> 2, in step with agent-retry.yml.
-          MAX_PARALLEL_AGENTS: '2'
+                    # LOCAL CHANGE (2026-10-10): 2 -> 1, in step with agent-retry.yml.
+          MAX_PARALLEL_AGENTS: '1'
           MAX_ATTEMPTS: '3'
           PR: ${{ inputs.pr }}
         run: |

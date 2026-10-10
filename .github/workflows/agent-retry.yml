@@ -253,7 +253,8 @@ jobs:
           # shared with CI's three jobs per push: past it, runs queue rather than fail.
           # LOCAL CHANGE (2026-10-08): 16 -> 2, with agent-conflicts.yml. Set while Actions are
           # re-enabled after a pause, so the first sweeps start a couple of runs at a time.
-          MAX_PARALLEL_AGENTS: '2'
+                    # LOCAL CHANGE (2026-10-10): 2 -> 1, at the user's request. One pipeline run at a time.
+          MAX_PARALLEL_AGENTS: '1'
           # LOCAL CHANGE (2026-09-26): slots held back from the conflict, review and follow-up
           # sweeps for the two queue sweeps. All five shared one decrementing budget, the
           # opportunistic three run first, and they took all of it -- on every recent run both
