@@ -432,10 +432,12 @@ is prose beside the correction rather than a `*(Superseded …)*` note: this fil
 is outside `docs/findings/`, and a per-merge note accumulating in it is the
 shape `check_no_append_logs.py` exists to stop.)*
 
-The 143 are 74 `AJMP`, 36 `ACALL`, 19 `MOV bit,C`, 13 `CPL bit` and one
-`DJNZ A`. `AJMP` and `ACALL` are gaps because `sdas8051` encodes them
-differently from the 8051 manual, and they are 110 of the 143 between them;
-the other three it refuses outright. `CLR bit` is the one form the assembler
+`AJMP` and `ACALL` (110 instructions total) are no longer excluded from
+verification. All instances in the committed listings satisfy the 8051 encoding
+formula, and `verify_reassembly.py` now arbitrates them using `disasm8051.py`
+instead of dropping them. See `docs/findings/verify_reassembly_ajmp_acall.md` for
+the analysis. The remaining gaps consist of 19 `MOV bit,C`, 13 `CPL bit` and
+one `DJNZ A` — forms that `sdas8051` cannot or will not express. `CLR bit` is the one form the assembler
 gets *silently* wrong rather than refusing -- it emits `CLR direct`, a
 different instruction of the same length, with no error -- and that form is not
 among the 143, because this firmware contains no `CLR bit`. Naming a refused
