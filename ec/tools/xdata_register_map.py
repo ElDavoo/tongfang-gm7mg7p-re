@@ -723,6 +723,14 @@ NOT_IN_TREE_FORBIDDEN = ("absent", "does not exist", "no such", "unused",
 # Every line cites the grep or the site that re-derives it, because a reason
 # that cannot be re-derived is the thing this block is for.
 NOT_IN_TREE = {
+    # Internal RAM byte, not XDATA. This tool scans for XDATA addresses seeded
+    # by `mov DPTR,#imm16` instructions and accessed via `movx`. Internal RAM
+    # uses direct byte operands (clr, mov, inc, addc, add) which are not visible
+    # to the XDATA scanner. Cited in registers.yaml's INTMEM_0x32 entry and in
+    # docs/findings/intmem-0x32-census.md.
+    0x0032: "not found by this method: internal RAM address using direct byte "
+            "operands, not XDATA space seeded by `mov DPTR`; see "
+            "docs/findings/intmem-0x32-census.md",
     # bank1/E100.asm:E176 carries `mov DPTR,#0x390` to a `movx`, and the
     # committed export writes neither the token nor the name: the callee at
     # bank1 0x9EA1 renders the address as CONCAT11(r4_value,r3_value) over

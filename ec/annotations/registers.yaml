@@ -1234,6 +1234,23 @@ registers:
       ec/annotations/site-resolution.csv. A static direction is not behaviour;
       status stays present-untested.
 
+  - name: INTMEM_0x32
+    addr: 0x0032
+    sources: [docs/findings/intmem-0x32-census.md]
+    static_refs: 0
+    static_refs_main_ec: 0
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Active state-machine value in the common-area dispatcher (FUN_CODE_2f85,
+      FUN_CODE_3042). Used as table index and masked into XDATA 0x045A.
+      Six sites write or modify the byte; 26 sites read it. Thirty-seven direct
+      operand references in the firmware (36 main EC, 1 PD image), enumerated in
+      docs/findings/intmem-0x32-census.md. The static_refs count is zero because
+      the scanning tools (ec/tools/scan_refs.py and trace_xdata_refs.py) count
+      MOV DPTR sites only; internal RAM uses different addressing modes
+      (direct byte operands like clr/mov/inc) and is not scanned by those tools.
+
   - name: XDATA_0026
     addr: 0x0026
     sources: [xdata-refs, docs/findings/register-0x0026-mask.md]
@@ -2281,9 +2298,9 @@ registers:
       had both directions still has both. That does not settle whether the
       byte is packed by design: a masked-then-ORed low nibble is a shape
       consistent with one and equally consistent with a status byte whose
-      top nibble is independent. Internal RAM 0x32 has no entry here and its
-      role is not established; nothing in this work says what sets it. No
-      `status:` moves on a direction class.
+      top nibble is independent. Internal RAM 0x32's role as a state-machine
+      value is established in docs/findings/intmem-0x32-census.md (issue #1701).
+      No `status:` moves on a direction class.
 
   - name: XDATA_045B
     addr: 0x045B
