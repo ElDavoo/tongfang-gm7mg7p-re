@@ -20,7 +20,7 @@ void build_0795_0799_then_set_08ec(void)
   undefined1 *puVar1;
   
   puVar1 = (undefined1 *)0xa48;
-  DAT_EXTMEM_0a48 = 0x40;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x40;
   set_0a49_to_1_and_clear_0a4b(3,0xa48);
   set_dptr_0a59_b955();
   call_445e_40_88_then_load_0a49(3);

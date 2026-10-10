@@ -16,7 +16,7 @@
 void init_0a48_and_0a59_blocks(void)
 
 {
-  DAT_EXTMEM_0a48 = 0x54;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x54;
   DAT_EXTMEM_0a49 = 3;
   DAT_EXTMEM_0a4b = 0;
   DAT_EXTMEM_0a59 = 0;

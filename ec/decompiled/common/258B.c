@@ -20,12 +20,12 @@ undefined1 FUN_CODE_258b(undefined1 param_1,byte param_2,byte param_3,byte param
   }
   DAT_EXTMEM_0a4c = 0;
   DAT_EXTMEM_0a4e = param_3;
-  param_4 = ~DAT_EXTMEM_0026 & param_4;
+  param_4 = ~XDATA_0026 & param_4;
   DAT_EXTMEM_0a4d = param_4 == 0;
   bVar3 = param_3;
   bVar1 = (bool)DAT_EXTMEM_0a4d;
   if ((!(bool)DAT_EXTMEM_0a4d) &&
-     (param_2 = ~DAT_EXTMEM_0026 & (*(byte *)(param_3 + 0x6d) | param_4), param_2 == 0)) {
+     (param_2 = ~XDATA_0026 & (*(byte *)(param_3 + 0x6d) | param_4), param_2 == 0)) {
     DAT_EXTMEM_0a4d = true;
     bVar1 = true;
   }
@@ -39,7 +39,7 @@ undefined1 FUN_CODE_258b(undefined1 param_1,byte param_2,byte param_3,byte param
       bVar1 = true;
     }
     if (!bVar1) {
-      bVar4 = ~DAT_EXTMEM_0026 & *(byte *)(bVar3 + 0x6d);
+      bVar4 = ~XDATA_0026 & *(byte *)(bVar3 + 0x6d);
       bVar5 = 0;
       if (bVar4 != 0) {
         bVar5 = bVar4 & param_2;

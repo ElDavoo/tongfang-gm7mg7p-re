@@ -53,7 +53,7 @@ byte FUN_CODE_b737(undefined1 param_1,byte param_2)
           }
           else {
             MAILBOX_PUBLISH_VALUE = 100;
-            DAT_EXTMEM_0a48 = 0xeb;
+            MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0xeb;
           }
           goto LAB_CODE_b7bb;
         }

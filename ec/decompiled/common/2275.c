@@ -116,7 +116,7 @@ char FUN_CODE_2275(undefined1 param_1,undefined1 *param_2,char param_3)
       while (pcVar4 = pcVar4 + -1, pcVar4 != (char *)0x0) {
         bVar5 = bVar5 << 1;
       }
-      DAT_INTMEM_65 = bVar5 & DAT_EXTMEM_0026;
+      DAT_INTMEM_65 = bVar5 & XDATA_0026;
     }
     if (DAT_INTMEM_65 == 0) {
       DAT_INTMEM_4d = DAT_INTMEM_65;

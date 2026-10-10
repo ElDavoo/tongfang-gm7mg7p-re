@@ -17,7 +17,7 @@ char store_a_to_dptr_b994(undefined1 value_a,undefined1 *param_2)
 
 {
   *param_2 = value_a;
-  return DAT_EXTMEM_0a48 + '\x01';
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER + '\x01';
 }
 
 

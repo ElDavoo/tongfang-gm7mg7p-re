@@ -15,7 +15,7 @@ void FUN_CODE_3fa7(byte param_1)
   MAILBOX_PUBLISH_VALUE = param_1;
   store_r7_to_upper_internal_ram_byte_3835(0);
   cVar1 = DAT_INTMEM_ac;
-  DAT_EXTMEM_0a48 = 0;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0;
   DAT_EXTMEM_0a49 = 0;
   DAT_EXTMEM_0a4a = 0;
   if (DAT_INTMEM_ac == '\0') {
@@ -31,7 +31,7 @@ void FUN_CODE_3fa7(byte param_1)
     if (cVar1 != -0xd) {
       if (cVar1 == -0x13) {
         DAT_INTMEM_28 = MAILBOX_PUBLISH_VALUE;
-        DAT_EXTMEM_0a48 = -6;
+        MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = -6;
         if ((MAILBOX_PUBLISH_VALUE >> 2 & 1) == 0) {
           FUN_CODE_1618();
         }
@@ -41,21 +41,21 @@ void FUN_CODE_3fa7(byte param_1)
         _9_0 = _8_1 & 1;
       }
       else {
-        DAT_EXTMEM_0a48 = -2;
+        MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = -2;
       }
       goto LAB_CODE_4017;
     }
     DAT_INTMEM_94 = MAILBOX_PUBLISH_VALUE;
     FUN_CODE_28d1(0,MAILBOX_PUBLISH_VALUE);
   }
-  DAT_EXTMEM_0a48 = -6;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = -6;
 LAB_CODE_4017:
   if ((DAT_EXTMEM_0a4b == -0xd) || (DAT_EXTMEM_0a4b == -0x13)) {
     _3_2 = 1;
   }
   if (DAT_INTMEM_9c == '\0') {
-    if (DAT_EXTMEM_0a48 != '\0') {
-      FUN_CODE_0a39(DAT_EXTMEM_0a48);
+    if (MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER != '\0') {
+      FUN_CODE_0a39(MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER);
     }
   }
   else {

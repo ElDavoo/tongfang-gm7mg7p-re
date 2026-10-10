@@ -13,7 +13,8 @@ void FUN_CODE_412e(void)
   
   if (DAT_INTMEM_9c == '\0') {
     store_r7_to_upper_internal_ram_byte_3835(0);
-    if (((DAT_EXTMEM_0a48 != '\0') && (FUN_CODE_0a39(DAT_EXTMEM_0a48), DAT_EXTMEM_0a49 != '\0')) &&
+    if (((MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER != '\0') &&
+        (FUN_CODE_0a39(MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER), DAT_EXTMEM_0a49 != '\0')) &&
        (FUN_CODE_09e9(DAT_EXTMEM_0a49), DAT_EXTMEM_0a4a != '\0')) {
       FUN_CODE_09e9(DAT_EXTMEM_0a4a);
     }

@@ -9,7 +9,7 @@
 void FUN_CODE_2890(void)
 
 {
-  DAT_EXTMEM_0026 = 0;
+  XDATA_0026 = 0;
   return;
 }
 

@@ -16,7 +16,7 @@ void write_a_then_zero_at_0a47_0a48(undefined1 value_a)
 
 {
   MAILBOX_PUBLISH_VALUE = value_a;
-  DAT_EXTMEM_0a48 = 0;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0;
   return;
 }
 
