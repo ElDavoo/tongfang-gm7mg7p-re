@@ -32,6 +32,7 @@ addr,name,from_register,register_status,derivation,programs
 0x0401,BAT_POWER_UNIT_1,BAT_POWER_UNIT,present-untested,override,bank0;bank1
 0x0402,BAT_DESIGN_CAPACITY_0,BAT_DESIGN_CAPACITY,present-untested,override,bank0;bank1
 0x0403,BAT_DESIGN_CAPACITY_1,BAT_DESIGN_CAPACITY,present-untested,override,bank0;bank1
+0x0026,XDATA_0026,XDATA_0026,present-untested,scalar-name,bank0;bank1
 0x0390,XDATA_0390,XDATA_0390,present-untested,scalar-name,bank0;bank1
 0x0391,XDATA_0391,XDATA_0391,present-untested,scalar-name,bank0;bank1
 0x0404,BAT_FULL_CAPACITY_1,BAT_FULL_CAPACITY_1,present-untested,scalar-name,bank0;bank1

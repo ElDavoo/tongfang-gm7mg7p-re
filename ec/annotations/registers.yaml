@@ -1234,6 +1234,23 @@ registers:
       ec/annotations/site-resolution.csv. A static direction is not behaviour;
       status stays present-untested.
 
+  - name: XDATA_0026
+    addr: 0x0026
+    sources: [xdata-refs, docs/findings/register-0x0026-mask.md]
+    static_refs: 6
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Host-programmed bit mask. EC initializes to zero at 0x02891
+      (FUN_CODE_2890); five distinct sites read it as a mask in negated form
+      (`~0x0026 & ...`) for filtering table entries, in direct form
+      (`0x0026 | ...`) for flag ORing, and in shift-masked form
+      (`bVar5 & 0x0026`). The fact that the sole writer initializes to zero
+      is expected: the host (Windows driver, BIOS, or earlier EC firmware)
+      programs the actual mask values. See
+      docs/findings/register-0x0026-mask.md for the full analysis.
+
   - name: XDATA_0390
     addr: 0x0390
     sources: [xdata-refs]
