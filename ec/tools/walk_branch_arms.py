@@ -103,6 +103,9 @@ Usage:
 import argparse
 import collections
 import csv
+import difflib
+import io
+import os
 import sys
 
 from disasm8051 import (OPCODE_LEN, REL_OPCODES, mnemonic, paged_target,
@@ -891,8 +894,10 @@ def _code_immediates(arm):
     return " ; ".join(f"0x{c:04X}" for c in sorted(set(arm.code_immediates)))
 
 
-def write_csv(d, addrs, pd_verified, callee_depth, max_depth, max_insns) -> int:
-    w = csv.writer(sys.stdout)
+def write_csv(d, addrs, pd_verified, callee_depth, max_depth, max_insns) -> str:
+    """Generate CSV output as a string, for both stdout and --check modes."""
+    buf = io.StringIO()
+    w = csv.writer(buf)
     w.writerow(CSV_HEAD)
     for text in addrs:
         addr = int(text, 16)
@@ -913,7 +918,7 @@ def write_csv(d, addrs, pd_verified, callee_depth, max_depth, max_insns) -> int:
                     w.writerow([f"0x{addr:04X}", "callee", f"0x{rt:04X}",
                                 "", "", "", "", f"0x{callee:04X}", region]
                                + callee_row(d, region, callee, max_depth, max_insns))
-    return 0
+    return buf.getvalue()
 
 
 def callee_row(d, region, callee, max_depth, max_insns):
@@ -958,6 +963,31 @@ def callee_row(d, region, callee, max_depth, max_insns):
     return row(arm.insns, arm.accesses, _code_pointers(arm),
                _code_immediates(arm), arm.unattributed, causes, ends, status,
                arm.window)
+
+
+def check_table(generated: str, path: str) -> int:
+    """Exit code for `--check`: 0 when this run reproduces `path` exactly.
+
+    Read with `newline=""` for the same reason `trace_xdata_refs.check_table()`
+    does: the committed CSV carries the csv module's own CRLF terminator, and
+    universal-newline translation would report a difference on every run."""
+    try:
+        with open(path, newline="") as f:
+            on_disk = f.read()
+    except OSError as e:
+        print(f"note: {e}", file=sys.stderr)
+        return 1
+    if generated == on_disk:
+        print(f"{os.path.relpath(path)}: this run reproduces it byte for byte "
+              f"({generated.count(chr(10))} lines)")
+        return 0
+    print(f"note: {os.path.relpath(path)} differs from what this run produced; "
+          "the file is the product of the command on the page that names it, so "
+          "regenerate rather than edit", file=sys.stderr)
+    for line in difflib.unified_diff(on_disk.splitlines(), generated.splitlines(),
+                                     "committed", "generated", lineterm="", n=0):
+        print(line, file=sys.stderr)
+    return 1
 
 
 def census(addrs, d, pd_verified, callee_depth, max_depth, max_insns) -> int:
@@ -1011,6 +1041,71 @@ def census(addrs, d, pd_verified, callee_depth, max_depth, max_insns) -> int:
     return 0
 
 
+def _max_insns_default() -> int:
+    """Extract the --max-insns default from the argument parser, to validate
+    that --check runs at the same budget the committed CSV was cut with."""
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--max-insns", type=int, default=500)
+    args = ap.parse_known_args([])[0]
+    return args.max_insns
+
+
+def _check_committed_csv_params() -> int:
+    """Validate that explicitly-provided args match what the committed CSV was cut with.
+
+    The committed arms table for 0x0751 was generated with:
+    - callee-depth = 1 (includes callees)
+    - max-depth = 16
+    - max-insns = 500 (the default)
+
+    Exit non-zero if the user explicitly provided conflicting arguments, since
+    running --check with different parameters would diff a different table
+    against the committed one and report spurious differences. We detect
+    explicit arguments by checking sys.argv."""
+    CSV_CALLEE_DEPTH = 1
+    CSV_MAX_DEPTH = 16
+    CSV_MAX_INSNS = _max_insns_default()
+
+    # Check if user explicitly provided arguments that conflict with the CSV.
+    if "--callee-depth" in sys.argv:
+        idx = sys.argv.index("--callee-depth")
+        if idx + 1 < len(sys.argv):
+            user_callee_depth = int(sys.argv[idx + 1])
+            if user_callee_depth != CSV_CALLEE_DEPTH:
+                print(f"note: {os.path.relpath('ec/annotations/manual-fan-ctrl-0751-arms.csv')} "
+                      f"records --callee-depth {CSV_CALLEE_DEPTH} and this run was asked for "
+                      f"{user_callee_depth}; --check at a depth the file does not record would "
+                      "diff a different table against it and report a difference that says nothing",
+                      file=sys.stderr)
+                return 1
+
+    if "--max-depth" in sys.argv:
+        idx = sys.argv.index("--max-depth")
+        if idx + 1 < len(sys.argv):
+            user_max_depth = int(sys.argv[idx + 1])
+            if user_max_depth != CSV_MAX_DEPTH:
+                print(f"note: {os.path.relpath('ec/annotations/manual-fan-ctrl-0751-arms.csv')} "
+                      f"records --max-depth {CSV_MAX_DEPTH} and this run was asked for "
+                      f"{user_max_depth}; --check at a depth the file does not record would "
+                      "diff a different table against it and report a difference that says nothing",
+                      file=sys.stderr)
+                return 1
+
+    if "--max-insns" in sys.argv:
+        idx = sys.argv.index("--max-insns")
+        if idx + 1 < len(sys.argv):
+            user_max_insns = int(sys.argv[idx + 1])
+            if user_max_insns != CSV_MAX_INSNS:
+                print(f"note: {os.path.relpath('ec/annotations/manual-fan-ctrl-0751-arms.csv')} "
+                      f"records --max-insns {CSV_MAX_INSNS} and this run was asked for "
+                      f"{user_max_insns}; --check at a budget the file does not record would "
+                      "diff a different table against it and report a difference that says nothing",
+                      file=sys.stderr)
+                return 1
+
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1031,13 +1126,16 @@ def main() -> int:
     ap.add_argument("--max-insns", type=int, default=500,
                     help="instruction budget per arm (default 500, which covers "
                          "the largest of the 34 arms of 0x0751 whole)")
+    ap.add_argument("--check", nargs="?",
+                    const="ec/annotations/manual-fan-ctrl-0751-arms.csv",
+                    metavar="PATH",
+                    help="diff this run against the committed arms table and exit "
+                         "non-zero on any difference (default: "
+                         "ec/annotations/manual-fan-ctrl-0751-arms.csv)")
     args = ap.parse_args()
 
     if args.self_test:
         return self_test(args.firmware)
-
-    if not args.addrs:
-        ap.error("give a firmware image and at least one address, or --self-test")
 
     d = open(args.firmware, "rb").read()
     off, magic = PD_MARKER
@@ -1047,9 +1145,24 @@ def main() -> int:
               "the image the annotations were written against", file=sys.stderr)
         return 1
 
+    if args.check is not None:
+        # Validate that user-provided arguments match what the committed CSV was cut with.
+        exit_code = _check_committed_csv_params()
+        if exit_code != 0:
+            return exit_code
+        # Use the exact bounds the committed CSV was cut with.
+        default_max_insns = _max_insns_default()
+        table = write_csv(d, ["0x0751"], pd_verified, 1, 16, default_max_insns)
+        return check_table(table, args.check)
+
+    if not args.addrs:
+        ap.error("give a firmware image and at least one address, or --self-test")
+
     if args.csv:
-        return write_csv(d, args.addrs, pd_verified, args.callee_depth,
+        table = write_csv(d, args.addrs, pd_verified, args.callee_depth,
                          args.max_depth, args.max_insns)
+        sys.stdout.write(table)
+        return 0
 
     if args.census:
         return census(args.addrs, d, pd_verified, args.callee_depth,

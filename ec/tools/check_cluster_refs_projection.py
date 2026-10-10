@@ -97,6 +97,40 @@ def check(clusters_path=CLUSTERS, registers_path=REGISTERS):
     registers = {r["addr"]: r for r in read(registers_path)}
 
     problems = []
+
+    # Partition check: each address with a share appears in exactly one cluster
+    # per program, and no address appears in multiple clusters of the same program.
+    addr_to_cluster = {}  # (addr, program) -> cluster_id
+    clustered_addrs = {}  # (addr, program) -> True
+    for row in clusters:
+        members = addrs_of(row)
+        program = row["program"]
+        for addr in members:
+            key = (addr, program)
+            if key in addr_to_cluster:
+                problems.append(
+                    f"{addr}: appears in both {addr_to_cluster[key]} and "
+                    f"{row['cluster_id']}, both `program={program}`, so the "
+                    f"cluster membership for `{program}` is not a partition")
+            else:
+                addr_to_cluster[key] = row["cluster_id"]
+                clustered_addrs[key] = True
+
+    # Also check that every address with a ref share appears in a cluster of
+    # that program. A register's `refs_<program>` being nonzero means it has
+    # a share for that program.
+    for reg_row in registers.values():
+        for program, column in PER_PROGRAM_REFS.items():
+            if int(reg_row[column]) > 0:
+                key = (reg_row["addr"], program)
+                if key not in clustered_addrs:
+                    problems.append(
+                        f"{reg_row['addr']}: has `{column}={reg_row[column]}`"
+                        f" in {os.path.relpath(registers_path, REPO)} but does "
+                        f"not appear in any `program={program}` cluster in "
+                        f"{os.path.relpath(clusters_path, REPO)}, so the "
+                        f"cluster membership for `{program}` is not a partition")
+
     for row in clusters:
         cid = row["cluster_id"]
         column = PER_PROGRAM_REFS.get(row["program"])
