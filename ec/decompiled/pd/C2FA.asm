@@ -42,38 +42,3 @@ C33F     7b e8 -  mov      R3, #0xe8
 C341     7a 03 -  mov      R2, #0x3
 C343     12 ad 24 lcall    0xad24
 C346     50 13 -  jnc      0xc35b
-C348     12 f7 39 lcall    0xf739
-C34B     90 07 d0 mov      DPTR, #0x7d0
-C34E     e0 - -   movx     A, @DPTR
-C34F     fb - -   mov      R3, A
-C350     12 ad 75 lcall    0xad75
-C353     12 10 41 lcall    0x1041
-C356     af 03 -  mov      R7, 0x03
-C358     12 f0 35 lcall    0xf035
-C35B     12 ad 3c lcall    0xad3c
-C35E     12 ad 01 lcall    0xad01
-C361     60 13 -  jz       0xc376
-C363     12 c3 98 lcall    0xc398
-C366     12 75 80 lcall    0x7580
-C369     ef - -   mov      A, R7
-C36A     64 01 -  xrl      A, #0x1
-C36C     70 29 -  jnz      0xc397
-C36E     90 07 d0 mov      DPTR, #0x7d0
-C371     e0 - -   movx     A, @DPTR
-C372     ff - -   mov      R7, A
-C373     02 ae 9c ljmp     0xae9c
-C376     12 ad 3c lcall    0xad3c
-C379     f5 83 -  mov      DPH, A
-C37B     12 0f af lcall    0x0faf
-C37E     ef - -   mov      A, R7
-C37F     54 02 -  anl      A, #0x2
-C381     12 ad 09 lcall    0xad09
-C384     60 11 -  jz       0xc397
-C386     12 c3 98 lcall    0xc398
-C389     12 b3 11 lcall    0xb311
-C38C     bf 01 08 cjne     R7, #0x1, 0xc397
-C38F     90 07 d0 mov      DPTR, #0x7d0
-C392     e0 - -   movx     A, @DPTR
-C393     ff - -   mov      R7, A
-C394     12 d7 2e lcall    0xd72e
-C397     22 - -   ret      
