@@ -2439,13 +2439,13 @@ pd,718D,store_a_to_dptr_and_zero_r2_r3,match,c544811e29771119,6,0,,sdas8051 02.0
 pd,7392,count_07cb_up_to_3_over_07ca_records,match,8cecc09e0f834963,74,0,,sdas8051 02.00
 pd,7580,set_07d2_and_return_r7_zero_or_one,match,45f0efcb0d67973e,128,0,,sdas8051 02.00
 pd,75CA,call_f739_set_dptr_07d1_075ca,match,3ec3bb1d11d2a9a9,6,0,,sdas8051 02.00
-pd,75D9,call_f739_set_dptr_07d1_075d9,partial,0d11798fc42744d2,93,1,"1 of 94 instruction(s) unchecked, first: acall 0x76e0",sdas8051 02.00
+pd,75D9,call_f739_set_dptr_07d1_075d9,partial,0d11798fc42744d2,93,0,,sdas8051 02.00
 pd,7753,call_f75c_with_07d1,match,c5ab15a599f6a79d,5,0,,sdas8051 02.00
 pd,775C,call_e4d0_return_r7,match,3e694d1afc8ecade,6,0,,sdas8051 02.00
 pd,7787,call_f739_set_dptr_07d0_07787,match,fe04d3eeba86bca4,10,0,,sdas8051 02.00
 pd,79B3,read_07d0_via_7b0d_01,match,54836fdd5020180b,9,0,,sdas8051 02.00
 pd,7A5A,read_07d0_via_7b0d_02,mismatch,b6b802636f30d7fc,25,0,"78B6: assembled 78, firmware 01",sdas8051 02.00
-pd,7A76,call_f739_set_dptr_07d0_07a76,partial,359dfc589ad42fd0,6,1,"1 of 7 instruction(s) unchecked, first: ajmp 0x789a",sdas8051 02.00
+pd,7A76,call_f739_set_dptr_07d0_07a76,partial,359dfc589ad42fd0,6,0,,sdas8051 02.00
 pd,7B0D,call_f739_then_return_dptr_07d0_7b0d,match,a842d04676b07a46,3,0,,sdas8051 02.00
 pd,7B14,stage_07c9_index_then_dispatch_on_flag_bits,match,057b6576fe7273d8,242,0,,sdas8051 02.00
 pd,7CE0,dispatch_on_0a8c_command_then_write_0a8b_record,match,8c761ac18bb7732a,206,0,,sdas8051 02.00
@@ -2456,7 +2456,7 @@ pd,8210,call_dc29_with_07d4,match,9395f5b07b5422c3,6,0,,sdas8051 02.00
 pd,821B,fill_0849_0857_block,match,b5ed8f8d51048b20,33,0,,sdas8051 02.00
 pd,842F,read_07d0_via_856f_01,match,f52c3e82ab5a574d,17,0,,sdas8051 02.00
 pd,844B,read_07d0_via_856f_02,mismatch,a882ed01866b8092,42,0,"84C7: assembled 80, firmware 01",sdas8051 02.00
-pd,84E4,call_f739_set_dptr_07d0_084e4,partial,d3fae4afdbb79c49,6,1,"1 of 7 instruction(s) unchecked, first: ajmp 0x80e0",sdas8051 02.00
+pd,84E4,call_f739_set_dptr_07d0_084e4,partial,d3fae4afdbb79c49,6,0,,sdas8051 02.00
 pd,856F,call_f739_then_return_dptr_07d0_856f,match,c556a55b4e6e3aa3,3,0,,sdas8051 02.00
 pd,8576,step_state_07d0_07d1,match,b5bc9c10520f1710,136,0,,sdas8051 02.00
 pd,8716,call_f22e_with_07d0,match,b9c4c7e6fd526777,6,0,,sdas8051 02.00
