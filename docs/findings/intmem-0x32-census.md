@@ -9,8 +9,8 @@ alone.)
 The byte is measured, busy, and load-bearing in the firmware's state machine.
 `ec/tools/intmem_refs.py` over the firmware reports 37 direct references: 36 in
 the main EC firmware and 1 in the PD image (the separate firmware program, not
-the same address space). Ten of those are writes or read-modify-writes; the
-other 26 are reads. Twenty-four committed decompiles under `ec/decompiled/`
+the same address space). Nine of those are writes or read-modify-writes; the
+other 28 are reads. Twenty-four committed decompiles under `ec/decompiled/`
 reference `DAT_INTMEM_32` as a symbol.
 
 ## 1. Write sites and producers
