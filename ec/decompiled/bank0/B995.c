@@ -17,7 +17,7 @@
 char load_r3_r7_from_0a48_0a49(void)
 
 {
-  return DAT_EXTMEM_0a48 + '\x01';
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER + '\x01';
 }
 
 

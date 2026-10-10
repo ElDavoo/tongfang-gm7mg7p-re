@@ -1183,3 +1183,4 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0836,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),0x13F73,bank1,0xBF73,handed to lcall/ljmp -> callee reads,read,0xBF3A guard_then_store_pair_0834,0x8892,0x8892 read_xdata_pair_to_r3r4
 0x0836,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),0x13F9C,bank1,0xBF9C,handed to lcall/ljmp -> callee writes,write,0xBF3A guard_then_store_pair_0834,0x889E,0x889E write_r3r4_to_xdata_pair
 0x0837,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),0x127AC,bank1,0xA7AC,read,read,0xA750 dispatch_0832_event_bits,,
+0x0A48,CHARGE_TARGET_MULTIPLIER,0x0BEFE,bank0,0xBEFE,read,read,0xBEFE read_be16_0a48,,

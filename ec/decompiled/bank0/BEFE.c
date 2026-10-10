@@ -5,8 +5,9 @@
 
 
 /* Loads XDATA 0x0A49 into R7, then loads XDATA 0x0A48 into A and returns it, so the 16-bit value at
-   0x0A48/0x0A49 comes back big-endian across A and R7. Neither address has an entry in
-   ec/annotations/registers.yaml.
+   0x0A48/0x0A49 comes back big-endian across A and R7. 0x0A48 has an entry in
+   ec/annotations/registers.yaml (MAILBOX_PUBLISH_VALUE / CHARGE_TARGET_MULTIPLIER); 0x0A49 does
+   not.
    type: reader
    evidence: ec/decompiled/bank0/BEFE.asm; ec/decompiled/bank0/BEFE.c
    basis: hand-decoded
@@ -15,7 +16,7 @@
 undefined1 read_be16_0a48(void)
 
 {
-  return DAT_EXTMEM_0a48;
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER;
 }
 
 

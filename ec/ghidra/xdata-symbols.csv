@@ -269,7 +269,8 @@ addr,name,from_register,register_status,derivation,programs
 0x071E,EVENT_RING_SLOT0_SLOT14,EVENT_RING_SLOT0 / SLOT1 / SLOT2 / SLOT3 / SLOT4 / SLOT5 / SLOT6 / SLOT7 / SLOT8 / SLOT9 / SLOT10 / SLOT11 / SLOT12 / SLOT13 / SLOT14 / SLOT15,unknown-not-absent,name-split,bank0;bank1
 0x071F,EVENT_RING_SLOT0_SLOT15,EVENT_RING_SLOT0 / SLOT1 / SLOT2 / SLOT3 / SLOT4 / SLOT5 / SLOT6 / SLOT7 / SLOT8 / SLOT9 / SLOT10 / SLOT11 / SLOT12 / SLOT13 / SLOT14 / SLOT15,unknown-not-absent,name-split,bank0;bank1
 0x09EF,MAILBOX_PUBLISH_GUARD,MAILBOX_PUBLISH_GUARD,present-untested,scalar-name,bank0;bank1
-0x0A47,MAILBOX_PUBLISH_VALUE,MAILBOX_PUBLISH_VALUE,present-untested,scalar-name,bank0;bank1
+0x0A47,MAILBOX_PUBLISH_VALUE,MAILBOX_PUBLISH_VALUE / CHARGE_TARGET_MULTIPLIER,present-untested,name-split,bank0;bank1
+0x0A48,MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER,MAILBOX_PUBLISH_VALUE / CHARGE_TARGET_MULTIPLIER,present-untested,name-split,bank0;bank1
 0x04A0,XDATA_04A0,XDATA_04A0,present-untested,scalar-name,bank0;bank1
 0x04A1,XDATA_04A1,XDATA_04A1,present-untested,scalar-name,bank0;bank1
 0x04AE,XDATA_04AE_COUNTER_A_0,"XDATA_04AE_COUNTER_A (16-bit up-counter, gate 0x0490 bit 1)",present-untested,override,bank0;bank1

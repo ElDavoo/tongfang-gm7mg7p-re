@@ -16,13 +16,13 @@ byte FUN_CODE_b83b(byte param_1)
   if ((bVar2 == 0) && (bVar2 = DAT_EXTMEM_08e2, (DAT_EXTMEM_08e2 >> 3 & 1) != 0)) {
     bVar2 = read_0434_keep_0435_in_r4();
     MAILBOX_PUBLISH_VALUE = param_1;
-    DAT_EXTMEM_0a48 = bVar2;
+    MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = bVar2;
     add_0318_0319_into_r7_r6();
     if ((param_1 == 0x2e) && (bVar2 == 0xe0)) {
-      bVar1 = 0x18 - (((DAT_EXTMEM_0a48 < 0x89) << 7) >> 7);
+      bVar1 = 0x18 - (((MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER < 0x89) << 7) >> 7);
     }
     else {
-      bVar1 = 0xe - (((DAT_EXTMEM_0a48 < 0x75) << 7) >> 7);
+      bVar1 = 0xe - (((MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER < 0x75) << 7) >> 7);
     }
     bVar2 = MAILBOX_PUBLISH_VALUE - bVar1;
     if (MAILBOX_PUBLISH_VALUE < bVar1) {

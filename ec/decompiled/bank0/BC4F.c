@@ -26,7 +26,7 @@ void fan_table_base_offset_helper(void)
 
 {
   MAILBOX_PUBLISH_VALUE = DAT_EXTMEM_08e6;
-  DAT_EXTMEM_0a48 = DAT_EXTMEM_08e7;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = DAT_EXTMEM_08e7;
   return;
 }
 

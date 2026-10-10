@@ -16,7 +16,7 @@
 void init_0a48_to_40(void)
 
 {
-  DAT_EXTMEM_0a48 = 0x40;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x40;
   DAT_EXTMEM_0a49 = 1;
   DAT_EXTMEM_0a4b = 0;
   return;

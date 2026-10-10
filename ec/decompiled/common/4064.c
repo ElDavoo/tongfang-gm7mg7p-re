@@ -22,7 +22,7 @@ void FUN_CODE_4064(byte *param_1,byte param_2,byte *param_3,byte *param_4,byte p
     param_5 = bVar2 | (byte)param_3;
 LAB_CODE_4004:
     FUN_CODE_28d1(param_5,0);
-    DAT_EXTMEM_0a48 = 0xfa;
+    MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0xfa;
 LAB_CODE_4017:
     param_7 = DAT_EXTMEM_0a4b;
     if (DAT_EXTMEM_0a4b == -0xd) {
@@ -52,7 +52,7 @@ LAB_CODE_4053:
       bVar2 = MAILBOX_PUBLISH_VALUE;
       goto LAB_CODE_405d;
     }
-    param_1 = &DAT_EXTMEM_0a48;
+    param_1 = &MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER;
   }
   else {
     if ((char)in_PSW < '\0') goto LAB_CODE_4004;

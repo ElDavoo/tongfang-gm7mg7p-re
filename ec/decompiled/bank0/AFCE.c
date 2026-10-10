@@ -18,7 +18,7 @@ char copy_0a4b_0a4c_to_079b_079c(void)
   stage_and_commit_0a56_block(0xc);
   DAT_EXTMEM_079b = DAT_EXTMEM_0a4b;
   DAT_EXTMEM_079c = DAT_EXTMEM_0a4c;
-  return DAT_EXTMEM_0a48 + '\x01';
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER + '\x01';
 }
 
 

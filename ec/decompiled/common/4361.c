@@ -9,7 +9,7 @@
 void FUN_CODE_4361(void)
 
 {
-  DAT_EXTMEM_0a48 = 0xfa;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0xfa;
   return;
 }
 

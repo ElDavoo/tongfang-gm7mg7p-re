@@ -12,7 +12,7 @@ void FUN_CODE_4002(undefined1 *param_1)
   byte bVar1;
   
   FUN_CODE_28d1(0,*param_1);
-  DAT_EXTMEM_0a48 = 0xfa;
+  MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0xfa;
   if ((DAT_EXTMEM_0a4b == -0xd) || (DAT_EXTMEM_0a4b == -0x13)) {
     _3_2 = 1;
   }

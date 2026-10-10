@@ -16,7 +16,7 @@ char call_445e_40_88_then_load_0a49(void)
 
 {
   stage_and_commit_0a56_block(0x40,0x88);
-  return DAT_EXTMEM_0a48 + '\x01';
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER + '\x01';
 }
 
 

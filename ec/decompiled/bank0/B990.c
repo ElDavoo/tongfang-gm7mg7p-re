@@ -16,7 +16,7 @@ char read_dptr_byte_then_set_dptr_0792(undefined1 *entry_dptr)
 
 {
   uEXTMEM0792 = *entry_dptr;
-  return DAT_EXTMEM_0a48 + '\x01';
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER + '\x01';
 }
 
 

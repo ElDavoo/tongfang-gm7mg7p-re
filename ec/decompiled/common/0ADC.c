@@ -11,27 +11,27 @@ undefined1 FUN_CODE_0adc(undefined1 param_1,char param_2)
 {
   DAT_EXTMEM_0a49 = '\0';
   if (_0_6 == '\x01') {
-    DAT_EXTMEM_0a48 = param_1;
+    MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = param_1;
     FUN_CODE_0b25(param_1);
     if (param_2 == -1) {
-      DAT_EXTMEM_0a48 = 1;
+      MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 1;
     }
     else if (param_2 == '\0') {
-      DAT_EXTMEM_0a48 = 1;
+      MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 1;
     }
     else {
-      DAT_EXTMEM_0a48 = 0;
+      MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0;
       DAT_EXTMEM_0a49 = '\x01';
     }
   }
   else {
     DAT_EXTMEM_0a49 = '\x01';
-    DAT_EXTMEM_0a48 = 0;
+    MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0;
   }
   if (DAT_EXTMEM_0a49 != '\0') {
     call_0c7a_then_write_1300_1306();
   }
-  return DAT_EXTMEM_0a48;
+  return MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER;
 }
 
 

@@ -91,7 +91,7 @@ LAB_CODE_b211:
   XDATA_09C7 = XDATA_09C7 + 1;
   if (0x3b < XDATA_09C7) {
     XDATA_09C7 = 0;
-    bVar1 = DAT_EXTMEM_0a48 <
+    bVar1 = MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER <
             (byte)(DAT_EXTMEM_0a4a - (((DAT_EXTMEM_0a49 < DAT_EXTMEM_0a4b + 1) << 7) >> 7));
     if (!bVar1) {
       XDATA_09C8 = XDATA_09C8 + 1;

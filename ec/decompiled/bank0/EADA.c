@@ -30,8 +30,8 @@ void FUN_CODE_eada(undefined1 param_1,undefined1 param_2,undefined1 param_3)
   DAT_EXTMEM_0a5b = 0xc0;
   DAT_EXTMEM_0a5c = 0;
   cVar2 = '\x01';
-  cVar1 = DAT_EXTMEM_0a48;
-  stage_and_commit_0a56_block(DAT_EXTMEM_0a48,0xc,0);
+  cVar1 = MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER;
+  stage_and_commit_0a56_block(MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER,0xc,0);
   if (cVar2 == '\0') {
     cVar2 = write_0a59_block_then_445e();
     if (cVar2 == '\0') {
@@ -52,7 +52,7 @@ void FUN_CODE_eada(undefined1 param_1,undefined1 param_2,undefined1 param_3)
     forward_to_8648_after_1978_c43f();
     return;
   }
-  DAT_EXTMEM_0fa0 = DAT_EXTMEM_0a48;
+  DAT_EXTMEM_0fa0 = MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER;
   call_0ea2_with_0xfa();
   call_0ea2_with_0xfa();
   rmw_1603_and_wait_tf1_2500_times();

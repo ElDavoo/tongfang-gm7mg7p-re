@@ -36,20 +36,20 @@ void seed_tcc_defaults_from_ba36(undefined1 param_1,byte param_2)
   DAT_EXTMEM_0a4a = DAT_EXTMEM_098c;
   cVar2 = read_low_nibble_074c();
   if ((cVar2 == '\0') || (param_2 = *pbVar3 & 0xf, param_2 == 5)) {
-    DAT_EXTMEM_0a48 = 0x62;
+    MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x62;
   }
   else {
     cVar2 = read_low_nibble_074c();
     if ((cVar2 == '\b') || (param_2 = *pbVar3 & 0xf, param_2 == 9)) {
-      DAT_EXTMEM_0a48 = 0x7a;
+      MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x7a;
     }
     else {
       cVar2 = read_low_nibble_074c();
       if ((cVar2 == '\x03') || (param_2 = *pbVar3 & 0xf, param_2 == 7)) {
-        DAT_EXTMEM_0a48 = 0x86;
+        MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x86;
       }
       else {
-        DAT_EXTMEM_0a48 = 0x6e;
+        MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER = 0x6e;
       }
     }
   }

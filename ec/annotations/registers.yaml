@@ -7060,12 +7060,12 @@ registers:
       in the main EC. Its own role as a guard -- what it guards and who is
       expected to change it -- is not decoded by the walk. docs/findings/a73f-09f1-mailbox-payload.md.
 
-  - name: MAILBOX_PUBLISH_VALUE
-    addr: 0x0A47
-    sources: [xdata-refs, static-scan]
-    static_refs: 121
-    static_refs_main_ec: 121
-    static_refs_pd_image: 0
+  - name: MAILBOX_PUBLISH_VALUE / CHARGE_TARGET_MULTIPLIER
+    addr: [0x0A47, 0x0A48]
+    sources: [xdata-refs, static-scan, ghidra-functions.csv, docs/findings/charge-target-multiplier-visibility.md]
+    static_refs: [121, 36]
+    static_refs_main_ec: [121, 36]
+    static_refs_pd_image: [0, 0]
     status: present-untested
     note: >
       Read and written by bank0 0x9D9B and compared against 0x09EF to decide
@@ -7076,6 +7076,8 @@ registers:
       records is the one path that ties it to the mailbox, and a count this
       large is a reason to distrust any single claim built on it without a
       per-site table. No PD site. docs/findings/a73f-09f1-mailbox-payload.md.
+      See docs/findings/charge-target-multiplier-visibility.md for details on
+      the charge-target multiplier use and visibility constraints.
 
   - name: XDATA_04A0
     addr: 0x04A0

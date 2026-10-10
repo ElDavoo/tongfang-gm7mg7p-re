@@ -23,7 +23,7 @@ undefined1 write_0a59_block_then_445e(void)
   DAT_EXTMEM_0a5b = 0xc0;
   DAT_EXTMEM_0a5c = 0;
   uVar1 = 1;
-  stage_and_commit_0a56_block(DAT_EXTMEM_0a48,0xc,0,1);
+  stage_and_commit_0a56_block(MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER,0xc,0,1);
   return uVar1;
 }
 

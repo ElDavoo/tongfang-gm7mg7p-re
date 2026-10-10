@@ -16,8 +16,8 @@ void FUN_CODE_4016(undefined1 param_1,undefined1 *param_2)
     _3_2 = 1;
   }
   if (DAT_INTMEM_9c == '\0') {
-    if (DAT_EXTMEM_0a48 != '\0') {
-      FUN_CODE_0a39(DAT_EXTMEM_0a48);
+    if (MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER != '\0') {
+      FUN_CODE_0a39(MAILBOX_PUBLISH_VALUE_CHARGE_TARGET_MULTIPLIER);
     }
   }
   else {
