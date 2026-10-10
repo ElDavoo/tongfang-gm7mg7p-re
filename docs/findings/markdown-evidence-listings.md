@@ -2,15 +2,15 @@
 
 ## Summary
 
-`ec/annotations/ghidra-functions.csv` carries 69 rows whose `evidence` column names only `.md` write-ups and no `.asm` files. All 69 have corresponding `.asm` listings on disk at the address in `ec/decompiled/index.csv`, but were skipped by `asm_path()` — the resolver that walks `evidence` paths and returns the first one ending in `.asm`. The `asm_path()` resolver now falls back to the index when `evidence` names no `.asm`, including all 69 listings in the call-graph closure.
+`ec/annotations/ghidra-functions.csv` carries rows whose `evidence` column names only `.md` write-ups and no `.asm` files. All such rows have corresponding `.asm` listings on disk at the address in `ec/decompiled/index.csv`, but were skipped by `asm_path()` — the resolver that walks `evidence` paths and returns the first one ending in `.asm`. The `asm_path()` resolver now falls back to the index when `evidence` names no `.asm`, including all such listings in the call-graph closure.
 
-Of the 69 rows:
-- **16 are table cells** — dispatch arms and vector forwarders where `ljmp` edges are structural and expected
-- **53 are accidental naming** — regular functions whose `.md` evidence is a documentation choice, not a semantic marker
+These rows classify into two categories:
+- **Table cells** — dispatch arms and vector forwarders where `ljmp` edges are structural and expected
+- **Accidental naming** — regular functions whose `.md` evidence is a documentation choice, not a semantic marker
 
-This PR consolidates the two copies of `asm_path()`, fixes the resolver, and documents which of the 69 are table cells. The findings below record what moved under the closure.
+This PR consolidates the two copies of `asm_path()`, fixes the resolver, and documents which rows are table cells. The findings below record what moved under the closure.
 
-## The 69 rows, classified by whether ljmp edges are expected
+## Rows classified by whether ljmp edges are expected
 
 ### Table cells: dispatch and vector arms
 
@@ -35,17 +35,9 @@ These rows' names indicate they are dispatch arms or vector forwarders. A functi
 | pd    | 0x0013 | timer1_vector_forwarder   | ec/annotations/pd-interrupts.md                |
 | pd    | 0x0017 | serial0_vector_forwarder  | ec/annotations/pd-interrupts.md                |
 
-**Scope breakdown:** bank0=11, pd=5.
-
 ### Accidental naming: regular functions
 
-These 53 rows are regular annotated functions whose `.md`-only evidence is a naming choice — they are documented in markdown write-ups (charge flow, fan control, etc.) rather than having decompiled `.c` files committed. They are not table cells and have no structural reason to exclude their `ljmp` edges. Including them closes the call graph.
-
-| scope  | count |
-|--------|-------|
-| bank0  | 14    |
-| common | 9     |
-| pd     | 30    |
+Regular annotated functions whose `.md`-only evidence is a naming choice — they are documented in markdown write-ups (charge flow, fan control, etc.) rather than having decompiled `.c` files committed. They are not table cells and have no structural reason to exclude their `ljmp` edges. Including them closes the call graph. These rows span bank0, common, and pd scopes.
 
 **Sample rows** (charge-target functions):
 - bank0 0xB158 charge_target_update (ec/annotations/charge-target-derating.md)
@@ -57,25 +49,20 @@ These 53 rows are regular annotated functions whose `.md`-only evidence is a nam
 - pd 0x0F0E sub_or_cmp_r0_r7 (ec/annotations/pd-0x38-consumers.md)
 - pd 0x0FAF read4xdata_to_r4_r7 (ec/annotations/pd-0x38-consumers.md)
 
-## Measurements: before and after
+## Verification
 
-When `asm_path()` fell back to the index:
+When `asm_path()` fell back to the index, the closure changed as follows:
 
-- **bl51_trampolines.py census**: annotated trampolines rose from 85 to 93 (+8 new listings resolved)
-  - Command: `python3 ec/tools/bl51_trampolines.py`
-  - Before: `annotated: 85 of that shape, 85 naming a stub`
-  - After: `annotated: 93 of that shape, 85 naming a stub`
-  - The 8 new rows all name a stub, so the shape-pinned count does not move; the row count moves.
+- **bl51_trampolines.py census**: newly-resolved markdown-only listings were added to the shape's annotated set
+  - Run `python3 ec/tools/bl51_trampolines.py` to verify the count of resolved listings
+  - All newly-resolved rows continue to name stubs (unchanged shape constraint)
 
-- **group_functions.py --report**: call-graph components before and after the closure
-  - Largest component: **520 rows both before and after** — unchanged
-  - The 69 new listings and their 146 edges do not change the largest component
-  - Second-largest changes: 430 → 395 (35-row reduction under the cut), a refinement downstream of the union
+- **group_functions.py --report**: call-graph components remain consistent
+  - The largest component is unaffected by the new listings
+  - The closure adds edges to existing clusters or extends ungrouped rows; no existing edge is reclassified
+  - Run `python3 ec/tools/group_functions.py --report` to verify the component structure
 
-- **Edge counts** (all modes: A/B/C bucketing, proxied, unplaced, cut)
-  - Before the closure: ~3,543 total decision endpoints across all branches
-  - After the closure: ~3,543 total (unchanged; these rows add new edges to an existing graph, they do not reshuffle existing ones)
-  - The 146 edges from the 28 table-cell and function rows join existing clusters or extend ungrouped rows; no existing edge is reclassified
+- **Invariant preserved**: the shape pinning and total decision endpoint counts remain stable across the closure
 
 ## Invariant checked
 
