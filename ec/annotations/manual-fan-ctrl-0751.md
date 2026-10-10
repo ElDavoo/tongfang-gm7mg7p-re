@@ -78,9 +78,14 @@ still empty for all 29, so the arms walk in §9 is a new method rather than
 this one re-pointed — and the empty result is recorded here so a later reader
 does not take it for untried work.
 
-The last command regenerates §9's table from
-`manual-fan-ctrl-0751-arms.csv` and must produce an empty diff. Its own
-`--self-test` checks the branch split against hand transcriptions from `r2`;
+The diff above is the manual reproduction command. `--check` automates it:
+
+```console
+$ python3 ec/tools/walk_branch_arms.py ec/firmware/GMxMGxx_11.800 --check
+```
+
+must exit 0 when the committed table is up to date. Its own `--self-test`
+checks the branch split against hand transcriptions from `r2`;
 `python3 ec/tools/test_walk_branch_arms.py` covers the rest of the tool.
 
 Framing, in the `frame_onto`/`frame_over` sense of `bank-call-audit.md` §8:
@@ -1070,6 +1075,13 @@ Read the two arm columns with the sense of the branch in mind: `jnb acc.N,target
 16 of these 17 rows the **fall-through arm is the bit-set path** and the taken
 arm is the bit-clear one. `0x9432` is the exception — it masks and then `jnz`,
 so its **taken** arm is the USER-set path.
+
+The full CSV is committed as `manual-fan-ctrl-0751-arms.csv` and is validated by
+`--check`:
+
+```console
+$ python3 ec/tools/walk_branch_arms.py ec/firmware/GMxMGxx_11.800 --check
+```
 
 | site | test | taken arm | fall-through arm |
 | --- | --- | --- | --- |

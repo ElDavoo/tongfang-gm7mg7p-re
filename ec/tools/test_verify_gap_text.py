@@ -19,13 +19,13 @@ What it holds, and what it deliberately does not:
   behind it. `verify_gap_text.self_test()` drives `collect()` on its own tree
   already, and a suite that called the same functions would be the same
   coverage with a different caller.
-- **The five decline predicates, driven through `cross_listing()`.** The
+- **The decline predicates, driven through `cross_listing()`.** The
   self-test names a reason by calling `why()` with arguments it chose; that
   proves `why()` maps an instruction to a reason, not that the walk over a
   listing reaches it. These go through the path `--check` uses, on a synthetic
   listing and a synthetic image, so a regression in the walk cannot hide behind
-  a test that builds its own call. Two of the five (`acall`, `0xB2`) are not
-  named by `why()` in the self-test at all.
+  a test that builds its own call. (This test suite now tests three declining
+  forms; AJMP and ACALL are no longer declined as of issue #1727.)
 - **A sixth form fails rather than joining silently.** The guarantee is only
   worth something if it is exercised, so it is: an exclusion no predicate
   explains has to surface in `unclassified`, and must not acquire a verdict.
@@ -183,18 +183,16 @@ def walk_one(addr, hexbytes, text, image_len=0x10000):
         return G.cross_listing(row, bytes(image), path)
 
 
-# The five forms `to_sdas()` declines across the committed listings, with the
-# bytes disasm8051 decodes at each address. Byte columns and listing text are
-# the 8051's, not this file's invention: `ajmp` is the page rule at the site
-# `verify_gap_text.self_test()` cites (0x8044 & 0xF800 = 0x8000, 0x81 & 0xE0 =
-# 0x80 -> 0x8400, | 0x5D), and the `djnz` is the set's single DJNZ direct,
-# whose displacement is 0xA581 - 0xA59C = -27, or 0xE5. Each therefore reaches
-# `agree` rather than a disagreement, which is the point: what is under test is
-# which predicate declined it and that it was given a verdict at all, and a
-# disagreement here would mean this suite had mis-transcribed an opcode.
+# The three forms `to_sdas()` still declines across the committed listings, with
+# the bytes disasm8051 decodes at each address. Byte columns and listing text are
+# the 8051's, not this file's invention. The `djnz` is the set's single DJNZ
+# direct, whose displacement is 0xA581 - 0xA59C = -27, or 0xE5. Each therefore
+# reaches `agree` rather than a disagreement, which is the point: what is under
+# test is which predicate declined it and that it was given a verdict at all, and
+# a disagreement here would mean this suite had mis-transcribed an opcode.
+# (AJMP and ACALL are no longer declined; they are now arbitrated via
+# disasm8051.py in verify_reassembly.py.)
 DECLINED = (
-    ('ajmp',  0x8044, '81 5d',    'ajmp 0x845d',    'GAP_MNEMONICS ajmp'),
-    ('acall', 0x8040, '11 30',    'acall 0x8030',   'GAP_MNEMONICS acall'),
     ('mov-bit-carry', 0x0040, '92 d5', 'mov 0xd5, CY',
      'BIT_UNSUPPORTED 0x92'),
     ('cpl-bit', 0x0044, 'b2 d5',  'cpl 0xd5',       'BIT_UNSUPPORTED 0xB2'),
@@ -218,7 +216,7 @@ class ModeTests(unittest.TestCase):
 
 
 class DeclinedFormTests(unittest.TestCase):
-    """Each of the five forms, through the walk `--check` uses."""
+    """Each of the three forms, through the walk `--check` uses."""
 
     def test_each_declined_form_is_named_and_given_a_verdict(self):
         for name, addr, hexbytes, text, reason in DECLINED:
