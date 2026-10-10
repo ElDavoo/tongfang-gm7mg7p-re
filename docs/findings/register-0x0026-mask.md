@@ -90,13 +90,7 @@ The EC firmware initializes `0x0026` to zero in its initialization sequence, the
 
 This pattern matches **explanation #1: `0x0026` is a mask the host programs**.
 
-The fact that the EC's own image only initializes the byte to zero — rather than leaving it uninitialized or permanently setting a non-zero value — is the point of this design, not a contradiction to it. The EC expects the host (Windows userspace driver, BIOS, or earlier EC firmware stages) to program the actual mask values into this byte before the EC's usage sites are reached.
-
-This follows the same design pattern visible elsewhere:
-- `common/2896.c` and `common/311D.c` write `0x0A48`, `0x0A4C`, `0x0A4D`
-- `common/258B.c` reads them back as masks and flags
-
-The host-side writes are not visible in the EC firmware image — they are made by Windows or the BIOS — and the EC firmware only ever initializes `0x0026` to zero.
+The fact that the EC's own image only initializes the byte to zero — rather than leaving it uninitialized or permanently setting a non-zero value — is the point of this design, not a contradiction to it. The EC expects the host (Windows userspace driver, BIOS, or earlier EC firmware stages) to program the actual mask values into this byte before the EC's usage sites are reached. The host-side writes are not visible in the EC firmware image — they are made by Windows or the BIOS — and the EC firmware only ever initializes `0x0026` to zero.
 
 ## Calibration notes
 

@@ -1242,13 +1242,13 @@ registers:
     static_refs_pd_image: 0
     status: present-untested
     note: >
-      Host-programmed bit mask. EC initializes to zero at 0x02891
+      Suspected host-programmed bit mask. EC initializes to zero at 0x02891
       (FUN_CODE_2890); five distinct sites read it as a mask in negated form
       (`~0x0026 & ...`) for filtering table entries, in direct form
       (`0x0026 | ...`) for flag ORing, and in shift-masked form
-      (`bVar5 & 0x0026`). The fact that the sole writer initializes to zero
-      is expected: the host (Windows driver, BIOS, or earlier EC firmware)
-      programs the actual mask values. See
+      (`bVar5 & 0x0026`). The sole writer initializes to zero once and never
+      changes it, a pattern consistent with host programming of the actual
+      mask values, though not yet verified against Windows or BIOS code. See
       docs/findings/register-0x0026-mask.md for the full analysis.
 
   - name: XDATA_0390
