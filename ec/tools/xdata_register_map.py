@@ -691,6 +691,10 @@ PAIR_ALREADY_COUNTED = (0x0318, "bank1/DEE8.c", "bank1/DEF1.c")
 # the address space, and 0x0733 is not handed to such a callee. The self-test
 # asserts `code_only == {0x0733}` after the pass, not before it.
 BLIND_SPOT = (0x0733, 0x0735)
+# Issue #1484: eight CODE table addresses from the pack-temperature consumer tables
+# that are in the symbol table but never appear in the decompiled tree with direct
+# XDATA occurrence patterns.
+PACK_TEMP_CODE_ONLY = (0xAFF1, 0xAFB1, 0xB031, 0xB071, 0xAF91, 0xB0B1, 0xAFA1, 0xB0C1)
 
 # The addresses the generated symbol table names and the census does not reach:
 # `set(symbols) - everywhere`. Issue #280 pins this as a *set* rather than as
@@ -886,6 +890,25 @@ NOT_IN_TREE = {
             "lcall 0x9c8f",
     0x07C2: "not found by this method: as 0x07C0, at pd 0xE7FC handing DPTR to "
             "lcall 0x9c8f",
+    # Issue #1484: the eight pack-temperature consumer tables at CODE addresses
+    # 0xAFF1, 0xAFB1, 0xB031, 0xB071, 0xAF91, 0xB0B1, 0xAFA1, 0xB0C1. These are
+    # CODE addresses accessed through table lookup with a register-driven index,
+    # not direct XDATA references, so they do not appear in the decompiled tree
+    # with the occurrence patterns this tool scans for. The tables are extracted
+    # from the firmware and documented in docs/findings/pack-temp-consumer-tables.md.
+    0xAFF1: "not found by this method: CODE address accessed through table lookup "
+            "with a register-driven index, not direct XDATA reference; "
+            "docs/findings/pack-temp-consumer-tables.md documents the four main "
+            "consumer tables (0xAFF1, 0xAFB1, 0xB031, 0xB071)",
+    0xAFB1: "not found by this method: CODE address in a table lookup, as 0xAFF1",
+    0xB031: "not found by this method: CODE address in a table lookup, as 0xAFF1",
+    0xB071: "not found by this method: CODE address in a table lookup, as 0xAFF1",
+    0xAF91: "not found by this method: CODE address in a table lookup; "
+            "docs/findings/pack-temp-consumer-tables.md documents the four index "
+            "tables (0xAF91, 0xB0B1, 0xAFA1, 0xB0C1)",
+    0xB0B1: "not found by this method: CODE address in a table lookup, as 0xAF91",
+    0xAFA1: "not found by this method: CODE address in a table lookup, as 0xAF91",
+    0xB0C1: "not found by this method: CODE address in a table lookup, as 0xAF91",
 }
 
 # Issue #181: the ten pd-001 addresses in 0xFF00-0xFFFF, and the instruction
@@ -3481,12 +3504,15 @@ def self_test(args) -> int:
                  for a in CODE_TOKEN.findall(open(os.path.join(DECOMPILED, out_file)).read())
                  if int(a, 16) in symbols and int(a, 16) not in everywhere}
     spelled, unspelled = 0x0733, 0x0735
+    # The expected set includes BLIND_SPOT's findable address and the pack-temperature CODE tables
+    expected_code_only = {spelled} | set(PACK_TEMP_CODE_ONLY)
     check(f"the two blind-spot addresses are "
           f"{', '.join(hexaddr(a) for a in BLIND_SPOT)}; "
           f"of them the one that is spelled at all is {hexaddr(spelled)}, behind "
           f"a CODE pointer (got {', '.join(hexaddr(a) for a in sorted(code_only)) or 'none'}), "
-          f"and {hexaddr(unspelled)} is not findable by any spelling",
-          code_only == {spelled})
+          f"and {hexaddr(unspelled)} is not findable by any spelling; "
+          f"issue #1484 added eight pack-temperature CODE tables to the expected set",
+          code_only == expected_code_only)
 
     # Issue #181. Ten of pd-001's 34 addresses sit in 0xFF00-0xFFFF, and the
     # census counted them because Ghidra wrote `DAT_EXTMEM_ff80`. The address
