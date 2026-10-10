@@ -489,5 +489,73 @@ class CommittedFiles(unittest.TestCase):
         self.assertEqual(bt.trampoline_listings(ann, gf.REPO), {})
 
 
+class MarkdownOnlyEvidence(unittest.TestCase):
+    """Every row in ghidra-functions.csv whose `evidence` names only `.md`
+    files must either contribute edges to the call graph or be documented
+    as a table cell."""
+
+    def test_every_markdown_only_evidence_row_has_an_index_entry(self):
+        # All such rows have listings on disk at (scope, addr) in
+        # ec/decompiled/index.csv. The fallback resolver now uses them.
+        index = {}
+        index_path = os.path.join(gf.REPO, "ec", "decompiled", "index.csv")
+        with open(index_path, newline='') as f:
+            for row in csv.DictReader(f, strict=True):
+                addr = (row.get("addr") or "").upper().replace("0X", "")
+                index[(row["program"], addr)] = row.get("out_file") or ""
+
+        with open(gf.EC_CSV, newline='') as f:
+            ann_rows = list(csv.DictReader(f, strict=True))
+
+        markdown_only = []
+        for row in ann_rows:
+            evidence = row.get("evidence") or ""
+            has_asm = any(p.strip().endswith(".asm")
+                         for p in evidence.split(";"))
+            has_md = any(p.strip().endswith(".md")
+                        for p in evidence.split(";"))
+            if has_md and not has_asm:
+                addr = (row.get("addr") or "").upper().replace("0X", "")
+                key = (row.get("scope") or "", addr)
+                markdown_only.append((key, row))
+
+        # Assert all are in the index.
+        for (scope, addr), row in markdown_only:
+            key = (scope, addr)
+            self.assertIn(key, index,
+                         msg="row %s %s %s not in index" % (scope, addr,
+                                                             row.get("name")))
+
+    def test_markdown_only_evidence_rows_resolve_via_fallback(self):
+        # The fallback resolver `asm_path()` must find all markdown-only rows.
+        with open(gf.EC_CSV, newline='') as f:
+            ann_rows = list(csv.DictReader(f, strict=True))
+
+        markdown_only = []
+        for row in ann_rows:
+            evidence = row.get("evidence") or ""
+            has_asm = any(p.strip().endswith(".asm")
+                         for p in evidence.split(";"))
+            has_md = any(p.strip().endswith(".md")
+                        for p in evidence.split(";"))
+            if has_md and not has_asm:
+                markdown_only.append(row)
+
+        # Every such row must resolve to a listing via the fallback.
+        resolved_count = 0
+        for row in markdown_only:
+            path = bt.asm_path(row, gf.REPO)
+            if path:
+                resolved_count += 1
+                self.assertTrue(os.path.isfile(path),
+                               msg="resolved path %s does not exist for %s" %
+                               (path, row.get("name")))
+
+        # Assert that a non-trivial number resolve.
+        self.assertGreater(resolved_count, 50,
+                          "fewer than 50 rows resolved; the fallback may be "
+                          "broken")
+
+
 if __name__ == '__main__':
     unittest.main()

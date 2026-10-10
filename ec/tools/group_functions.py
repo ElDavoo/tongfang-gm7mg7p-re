@@ -184,7 +184,7 @@ from audit_call_targets import OTHER_BANK, bucket_of  # noqa: E402,F401
 # listing regex -- is taken from it rather than kept twice: the note above it
 # said local, to avoid an import cycle with grade_name_basis, and a leaf module
 # introduces none. Two copies of the regex would be two things to drift.
-from bl51_trampolines import LISTING, trampoline_listings  # noqa: E402
+from bl51_trampolines import LISTING, asm_path, trampoline_listings  # noqa: E402
 # The comparison `check()` runs against a fresh `group_rows()`, in its own
 # file. It imports nothing from here -- it takes both sides already keyed by
 # `norm_addr`, which keeps the drift logic out of this file without a cycle.
@@ -387,18 +387,6 @@ def listing_calls(path):
             if target:
                 edges[addr].append(int(target.group(1), 16))
     return edges
-
-
-def asm_path(row, repo=REPO):
-    """The row's committed `.asm`, the `.asm` first per the evidence
-    convention (the machine code is ground truth, the `.c` is a reading)."""
-    for path in (row.get("evidence") or "").split(";"):
-        path = path.strip()
-        if path.endswith(".asm"):
-            full = os.path.join(repo, path)
-            if os.path.isfile(full):
-                return full
-    return None
 
 
 def bucket_populations(rows, repo=REPO):

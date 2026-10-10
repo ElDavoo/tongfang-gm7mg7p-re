@@ -52,6 +52,20 @@ ANNOTATIONS = os.path.join(REPO, "ec", "annotations", "ghidra-functions.csv")
 GROUPS = os.path.join(REPO, "ec", "annotations", "function-groups.csv")
 INDEX = os.path.join(REPO, "ec", "decompiled", "index.csv")
 
+
+def _load_index():
+	"""Load index.csv keyed by (program, addr)."""
+	out = {}
+	if os.path.isfile(INDEX):
+		with open(INDEX, newline="") as f:
+			for row in csv.DictReader(f, strict=True):
+				addr = (row.get("addr") or "").upper().replace("0X", "")
+				out[(row["program"], addr)] = row.get("out_file") or ""
+	return out
+
+
+_INDEX_CACHE = _load_index()
+
 # `<addr> <bytes> <mnemonic> <operands>`, the shape the export writes. Read out
 # of the committed listings rather than reconstructed: `build_ec_decompile.py`
 # is what decides this format, and a second spelling of it here would be a
@@ -167,15 +181,24 @@ def is_trampoline(listing_path, stubs):
     return target if stubs is None or target in stubs else None
 
 
-def asm_path(row, repo=REPO):
+def asm_path(row, repo=REPO, index_cache=None):
     """The row's committed `.asm`, the `.asm` first per the evidence
-    convention (the machine code is ground truth, the `.c` is a reading)."""
+    convention (the machine code is ground truth, the `.c` is a reading).
+    Falls back to ec/decompiled/index.csv when evidence names no `.asm`."""
+    if index_cache is None:
+        index_cache = _INDEX_CACHE
     for path in (row.get("evidence") or "").split(";"):
         path = path.strip()
         if path.endswith(".asm"):
             full = os.path.join(repo, path)
             if os.path.isfile(full):
                 return full
+    addr = (row.get("addr") or "").upper().replace("0X", "")
+    out_file = index_cache.get((row.get("scope") or "", addr))
+    if out_file:
+        full = os.path.join(repo, "ec", "decompiled", out_file)
+        if os.path.isfile(full):
+            return full
     return None
 
 
