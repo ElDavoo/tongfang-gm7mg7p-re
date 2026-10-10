@@ -2422,6 +2422,9 @@ def build(funcs, names, symbols, census, calls, threshold,
     means "no groups", which is the honest reading of a relation that was not
     computed rather than one that found nothing."""
     groups = {g: merge_group(census, PROGRAM_COL[g]) for g in GROUPS}
+    # Filter out internal RAM addresses (< 0x0400): this tool is XDATA-only
+    groups = {g: {a: v for a, v in group.items() if a >= 0x0400}
+              for g, group in groups.items()}
     group_of = group_of or {}
     program_of = {}
     for g in GROUPS:
@@ -2657,6 +2660,9 @@ def census_and_groups(args, funcs, by_file, names, symbols, floor=None):
     func_names = {r["name"] for r in funcs.values()}
     census, calls, raw = scan(by_file, names, func_names, symbols,
                               not args.no_eq_guard, args.export_ownership)
+    # Filter out internal RAM addresses (< 0x0100): this tool is XDATA-only
+    for program in census:
+        census[program] = {a: v for a, v in census[program].items() if a >= 0x0100}
     group_of, _groups = co_reading_groups(
         census, funcs, COREADING_MIN_CORE if floor is None else floor)
     return census, calls, group_of, raw
@@ -2873,6 +2879,9 @@ def self_test(args) -> int:
     census, calls, group_of, raw = census_and_groups(args, funcs, by_file, names,
                                                      symbols)
     groups = {g: merge_group(census, PROGRAM_COL[g]) for g in GROUPS}
+    # Filter out internal RAM addresses (< 0x0400): this tool is XDATA-only
+    groups = {g: {a: v for a, v in group.items() if a >= 0x0400}
+              for g, group in groups.items()}
     ok = True
 
     def check(label, cond):

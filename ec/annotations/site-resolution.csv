@@ -1177,3 +1177,11 @@ addr,register,file_offset,region,runtime,depth1_class,resolution,function,callee
 0x0836,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),0x13F73,bank1,0xBF73,handed to lcall/ljmp -> callee reads,read,0xBF3A guard_then_store_pair_0834,0x8892,0x8892 read_xdata_pair_to_r3r4
 0x0836,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),0x13F9C,bank1,0xBF9C,handed to lcall/ljmp -> callee writes,write,0xBF3A guard_then_store_pair_0834,0x889E,0x889E write_r3r4_to_xdata_pair
 0x0837,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),0x127AC,bank1,0xA7AC,read,read,0xA750 dispatch_0832_event_bits,,
+0x0032,INTMEM_0x32,0x00CD5,common,0x0CD5,write,write,not exported,,
+0x0032,INTMEM_0x32,0x00E81,common,0x0E81,write,write,not exported,,
+0x0032,INTMEM_0x32,0x03038,common,0x3038,write,write,not exported,,
+0x0032,INTMEM_0x32,0x03E61,common,0x3E61,write,write,not exported,,
+0x0032,INTMEM_0x32,0x0438D,common,0x438D,write,write,not exported,,
+0x0032,INTMEM_0x32,0x0DD31,bank0,0xDD31,write,write,not exported,,
+0x0032,INTMEM_0x32,0x15FFF,bank1,0xDFFF,write,write,not exported,,
+0x0032,INTMEM_0x32,0x16B7C,bank1,0xEB7C,read-modify-write,write,not exported,,

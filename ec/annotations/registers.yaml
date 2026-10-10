@@ -2238,6 +2238,28 @@ registers:
       zero_045a_then_reset_0459_bit3_and_0456_low5, which does the `anl A,#0xf7`
       on this byte. docs/findings/0400-045f-site-owners.md.
 
+  - name: INTMEM_0x32
+    addr: 0x32
+    sources: [static-scan]
+    static_refs: 37
+    static_refs_main_ec: 36
+    static_refs_pd_image: 1
+    status: present-untested
+    note: >
+      Internal RAM byte `0x32` is a state byte active in the common-area
+      dispatcher, referenced at 36 EC sites and 1 PD site via direct addressing
+      (`mov a,0x32`, not `mov DPTR,#addr`). The byte is written by six producers
+      (clears, copies, accumulator store) and read by 26 sites across 24
+      decompiled exports. It branches the dispatcher across six cases (-0xe, -0xd,
+      -0xc, -0xb, -0x18, -1) and sets secondary state bytes. The byte's low
+      nibble is masked into XDATA_0x045A by or_intmem_32_low_nibble_into_045a
+      at bank0 0xDD4A, establishing a dependency between internal RAM and the
+      packed flag byte. Not behaviorally verified.
+      NOTE: static_refs counts (36 from ec/tools/intmem_refs.py) differ from
+      MOV DPTR scanning used by check_register_counts.py, which finds 0 sites
+      because internal RAM uses direct addressing, not XDATA/DPTR patterns.
+      Full census and dispatch analysis: docs/findings/intmem-0x32-census.md.
+
   - name: XDATA_045A
     addr: 0x045A
     sources: [xdata-refs]
@@ -2264,9 +2286,9 @@ registers:
       had both directions still has both. That does not settle whether the
       byte is packed by design: a masked-then-ORed low nibble is a shape
       consistent with one and equally consistent with a status byte whose
-      top nibble is independent. Internal RAM 0x32 has no entry here and its
-      role is not established; nothing in this work says what sets it. No
-      `status:` moves on a direction class.
+      top nibble is independent. Internal RAM 0x32 is now registered (see
+      INTMEM_0x32) and its role is documented: docs/findings/intmem-0x32-census.md.
+      No `status:` moves on a direction class.
 
   - name: XDATA_045B
     addr: 0x045B

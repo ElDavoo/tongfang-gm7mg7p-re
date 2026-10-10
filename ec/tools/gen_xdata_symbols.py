@@ -178,7 +178,9 @@ def build_rows(regs, overrides: dict) -> tuple:
     """(rows, unresolved) -- one row per address in registers.yaml order.
 
     Rows carry `from_register` and `register_status` verbatim so a reader
-    can see the source entry, parens and all."""
+    can see the source entry, parens and all.
+
+    Internal RAM addresses (< 0x0100) are skipped: this file is XDATA-only."""
     rows = []
     unresolved = {}
     for entry in regs:
@@ -191,6 +193,8 @@ def build_rows(regs, overrides: dict) -> tuple:
                 name, derivation = names[addr]
             else:
                 continue  # recorded in unresolved
+            if addr < 0x0100:
+                continue  # skip internal RAM (direct addressing), keep XDATA only
             rows.append({
                 "addr": f"0x{addr:04X}",
                 "name": name,
@@ -259,7 +263,7 @@ def self_test(registers_path: str) -> int:
         regs = yaml.safe_load(f)["registers"]
     overrides = load_overrides(OVERRIDES)
     rows, unresolved = build_rows(regs, overrides)
-    n_addrs = sum(len(as_addrs(e)) for e in regs)
+    n_xdata_addrs = sum(len([a for a in as_addrs(e) if a >= 0x0100]) for e in regs)
     names = {r["addr"]: r["name"] for r in rows}
     ok = True
 
@@ -270,10 +274,10 @@ def self_test(registers_path: str) -> int:
             ok = False
 
     print("gen_xdata_symbols.py --self-test")
-    check("every address in registers.yaml is named (nothing unresolved)",
+    check("every XDATA address in registers.yaml is named (nothing unresolved)",
           not unresolved)
-    check(f"symbol count == total address count in registers.yaml "
-          f"({len(rows)} == {n_addrs})", len(rows) == n_addrs)
+    check(f"symbol count == XDATA address count in registers.yaml "
+          f"({len(rows)} == {n_xdata_addrs})", len(rows) == n_xdata_addrs)
     check("every address appears in exactly one row",
           len({r["addr"] for r in rows}) == len(rows))
     check("every symbol name is a valid, unique C identifier",
@@ -323,16 +327,16 @@ def main() -> int:
         regs = yaml.safe_load(f)["registers"]
     overrides = load_overrides(args.overrides)
     rows, unresolved = build_rows(regs, overrides)
-    n_addrs = sum(len(as_addrs(e)) for e in regs)
+    n_xdata_addrs = sum(len([a for a in as_addrs(e) if a >= 0x0100]) for e in regs)
 
     if unresolved:
         report_unresolved(unresolved, args.overrides)
         return 1
 
     problems = check_invariants(rows)
-    if len(rows) != n_addrs:
-        print(f"{len(rows)} rows for {n_addrs} addresses in {args.registers} "
-              "-- row count must equal address count", file=sys.stderr)
+    if len(rows) != n_xdata_addrs:
+        print(f"{len(rows)} rows for {n_xdata_addrs} XDATA addresses in {args.registers} "
+              "-- row count must equal XDATA address count", file=sys.stderr)
         problems += 1
     if problems:
         return 1
@@ -363,7 +367,7 @@ def main() -> int:
 
     with open(args.out, "w", newline="") as f:
         f.write(text)
-    print(f"wrote {args.out}: {len(rows)} symbols for {n_addrs} addresses in "
+    print(f"wrote {args.out}: {len(rows)} symbols for {n_xdata_addrs} XDATA addresses in "
           f"{args.registers} (programs {PROGRAMS}, no PD)")
     return 0
 

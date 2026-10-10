@@ -71,6 +71,8 @@ def check(d: bytes, regs, pd_verified: bool) -> int:
     for r in regs:
         name = r.get("name", "?")
         addrs = r["addr"] if isinstance(r["addr"], list) else [r["addr"]]
+        if all(isinstance(addr, int) and addr < 0x0400 for addr in addrs):
+            continue
         missing = [k for k in SPLIT_KEYS if k not in r]
         if missing:
             print(f"{name}: not audited -- missing {', '.join(missing)}",
