@@ -137,6 +137,7 @@ check_ghidra_tooling() {
               ec/tools/grade_name_basis.py \
               ec/tools/group_functions.py \
               ec/tools/call_graph.py \
+              ec/tools/audit_call_targets.py \
               ec/tools/citation_gap_scan.py \
               ec/tools/xdata_register_map.py \
               ec/tools/check_status_vocabulary.py \
@@ -203,6 +204,19 @@ check_ghidra_tooling() {
       # accepting everything looks exactly like a check that is working.
       *call_graph.py)
         python3 "$tool" --check && python3 "$tool" --self-test || rc=1
+        ;;
+      # The call-target audit's three committed CSV tables. Like call_graph.py
+      # above, it takes no --work and has no scratch dir, and both modes need
+      # only python3 and the committed firmware image, no Ghidra and no network,
+      # which is what lets the check live in this cheap tier. What it holds is
+      # the 18,555-row combined call-target tables (5,998 absolute calls,
+      # 3,481 paged calls, 9,076 relative branches) against regeneration from
+      # the committed firmware, and its self-test's poisoned-case assertions are
+      # the half that matters: a check that has quietly started accepting
+      # everything looks exactly like a check that is working.
+      *audit_call_targets.py)
+        python3 "$tool" ec/firmware/GMxMGxx_11.800 --check && \
+        python3 "$tool" ec/firmware/GMxMGxx_11.800 --self-test || rc=1
         ;;
       # The call graph's own blind spot, measured. It reads the bytes Ghidra's
       # function boundary cut out of a citing listing and returns one of three

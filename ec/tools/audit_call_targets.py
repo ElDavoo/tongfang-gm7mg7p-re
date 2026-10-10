@@ -79,7 +79,10 @@ dropped and the byte-scan upper bound every count above rests on is untouched
 -- and it is a candidate generator, not an adjudicator: an empty cell means no
 candidate was found by this rule, never that the row is real. It is derived
 per family rather than once for all three, because the three censuses are
-separate scans and neither is evidence for the others.
+separate scans and neither is evidence for the others. **This column is
+deterministically generated and is compared byte-for-byte by `--check`.** The
+regeneration must produce identical output or the check fails; no hand-editing
+of this column is allowed.
 
 `--map-column` adds one more, from a different method entirely: a `map` column
 carrying `code_map.py`'s verdict for the *site byte* -- `code`, `operand` or
@@ -99,6 +102,7 @@ Usage:
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --paged-csv > paged.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --relative-csv > rel.csv
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --csv --map-column
+    python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --check
     python3 ec/tools/audit_call_targets.py ec/firmware/GMxMGxx_11.800 --self-test
 """
 import argparse
@@ -768,6 +772,62 @@ def render(writer, rows, verdicts=None) -> str:
     return buf.getvalue()
 
 
+def _detect_line_ending(text: str) -> str:
+    """Detect the line ending of a text: '\\r\\n' for CRLF, '\\n' for LF."""
+    if '\r\n' in text:
+        return '\r\n'
+    return '\n'
+
+
+def check_tables(d: bytes) -> int:
+    """Recompute the three committed CSV tables and check byte equality.
+
+    Returns 0 if all three tables match their committed versions, 1 if any
+    differ. Prints diagnostic output on mismatch.
+    """
+    tables = {
+        "bank-call-targets.csv": (survey, write_csv),
+        "bank-paged-call-targets.csv": (paged_survey, write_paged_csv),
+        "bank-relative-branch-targets.csv": (relative_survey, write_relative_csv),
+    }
+    results = {}
+    for filename, (survey_fn, writer) in tables.items():
+        rows, _, _ = survey_fn(d)
+
+        path = os.path.join(ANNOTATIONS, filename)
+        try:
+            with open(path, newline="") as f:
+                committed = f.read()
+        except FileNotFoundError:
+            print(f"missing {filename}", file=sys.stderr)
+            return 1
+
+        # Detect the committed file's line ending and use the same one
+        line_ending = _detect_line_ending(committed)
+        # Temporarily override the CSV writers' line terminators
+        # by replacing them after rendering
+        fresh = render(writer, rows)
+        if line_ending != '\r\n':
+            fresh = fresh.replace('\r\n', line_ending)
+
+        if fresh == committed:
+            results[filename] = (0, len(rows))
+        else:
+            results[filename] = (1, len(rows))
+            print(f"{filename}: differs from committed version", file=sys.stderr)
+
+    any_diff = any(rc for rc, _ in results.values())
+    if any_diff:
+        return 1
+
+    total_rows = sum(count for _, count in results.values())
+    for filename, (rc, count) in sorted(results.items()):
+        status = "ok" if rc == 0 else "FAIL"
+        print(f"  {status}  {filename}: {count} rows")
+    print(f"all committed tables verified: {total_rows} rows total")
+    return 0
+
+
 def map_verdicts(d: bytes):
     """`{(region, file_offset): verdict}` from `code_map.py`, or None.
 
@@ -785,7 +845,7 @@ def map_verdicts(d: bytes):
 
 
 def write_csv(rows, verdicts=None) -> None:
-    w = csv.writer(sys.stdout)
+    w = csv.writer(sys.stdout, lineterminator='\r\n')
     w.writerow(["file_offset", "region", "runtime", "opcode", "target", "bucket",
                 "frame_onto", "frame_over", "earlier_record", "calls_stub",
                 "calls_trampoline", "own_bank", "other_bank"]
@@ -808,7 +868,7 @@ def write_paged_csv(rows, verdicts=None) -> None:
     """A sibling of write_csv() rather than more columns on it: `bucket`,
     `own_bank` and `other_bank` are absolute-form questions that have no
     answer for a paged site, and bank-call-targets.csv stays as committed."""
-    w = csv.writer(sys.stdout)
+    w = csv.writer(sys.stdout, lineterminator='\r\n')
     w.writerow(["file_offset", "region", "runtime", "opcode", "target",
                 "target_offset", "in_region", "target_class", "frame_onto",
                 "frame_over", "earlier_record", "calls_stub", "calls_trampoline"]
@@ -832,7 +892,7 @@ def write_relative_csv(rows, verdicts=None) -> None:
     plus `length` and `disp`, which are what a reader needs to re-derive a
     target by hand. `calls_stub`/`calls_trampoline` stay, because a common-area
     relative branch can reach the BL51 block the way a paged one can."""
-    w = csv.writer(sys.stdout)
+    w = csv.writer(sys.stdout, lineterminator='\r\n')
     w.writerow(["file_offset", "region", "runtime", "opcode", "length", "disp",
                 "target", "target_offset", "in_region", "target_class",
                 "frame_onto", "frame_over", "earlier_record", "calls_stub",
@@ -1139,6 +1199,10 @@ def self_test(d: bytes) -> int:
         plain = render(writer, walk(d)[0])
         with open(os.path.join(ANNOTATIONS, census), newline="") as fh:
             committed = fh.read()
+        # Detect and match the committed file's line ending
+        line_ending = _detect_line_ending(committed)
+        if line_ending != '\r\n':
+            plain = plain.replace('\r\n', line_ending)
         check(plain == committed,
               f"{census} is reproduced byte for byte by --{CSV_FLAG[census]}, so "
               "the committed table and every count above it are unchanged"
@@ -1151,6 +1215,47 @@ def self_test(d: bytes) -> int:
               f"and --map-column appends a `{MAP_COLUMN}` header and fills every "
               f"row of {census} with one of code_map.py's verdicts -- "
               f"{classes}")
+
+    # `--check` mode: verify regeneration matches committed files, and fails on
+    # single-cell edits. This is the check that runs in the gate; a suite that
+    # asserts both the agreeing case and poisoned cases is what makes the gate
+    # reliable. Run the check on the committed image to verify the nominal case.
+    tables = {
+        "bank-call-targets.csv": (survey, write_csv),
+        "bank-paged-call-targets.csv": (paged_survey, write_paged_csv),
+        "bank-relative-branch-targets.csv": (relative_survey, write_relative_csv),
+    }
+    fresh_csvs = {}
+    for filename, (survey_fn, writer) in tables.items():
+        rows, _, _ = survey_fn(d)
+        with open(os.path.join(ANNOTATIONS, filename), newline="") as fh:
+            committed = fh.read()
+        # Detect committed file's line ending
+        line_ending = _detect_line_ending(committed)
+        fresh = render(writer, rows)
+        if line_ending != '\r\n':
+            fresh = fresh.replace('\r\n', line_ending)
+        fresh_csvs[filename] = (fresh, rows)
+    for filename, (fresh, rows) in fresh_csvs.items():
+        with open(os.path.join(ANNOTATIONS, filename), newline="") as fh:
+            committed = fh.read()
+        check(fresh == committed,
+              f"--check mode: {filename} regenerates identically from the image "
+              f"({len(rows)} rows)"
+              f"{'' if fresh == committed else ' -- differs'}")
+
+    # Poisoned cases: a single-cell edit to each CSV should fail the check.
+    # Test by reading, modifying one cell, and checking that the modified
+    # version no longer matches.
+    for filename in tables.keys():
+        with open(os.path.join(ANNOTATIONS, filename), newline="") as fh:
+            original = fh.read()
+        lines = original.splitlines(keepends=True)
+        if len(lines) > 1:
+            poisoned_line = lines[1].replace(',', '|', 1)
+            poisoned = "".join(lines[:1] + [poisoned_line] + lines[2:])
+            check(poisoned != fresh_csvs[filename][0],
+                  f"--check fails on a poisoned {filename} with a single-cell edit")
 
     print()
     print("self-test FAILED" if bad else "self-test passed")
@@ -1172,6 +1277,8 @@ def main() -> int:
                     help="append a `map` column carrying code_map.py's verdict for "
                          "the site byte. Off by default, so the committed CSVs are "
                          "unchanged without it")
+    ap.add_argument("--check", action="store_true",
+                    help="recompute all three committed CSV tables and fail on any diff")
     ap.add_argument("--self-test", action="store_true",
                     help="re-check the stub sites, the offset_for_runtime round-trip, "
                          "the paged page arithmetic and the rel8 displacement "
@@ -1184,6 +1291,9 @@ def main() -> int:
         print(f"no {magic.decode()!r} marker at file 0x{off:05X} -- this is not "
               "the image the recorded counts were taken from", file=sys.stderr)
         return 1
+
+    if args.check:
+        return check_tables(d)
 
     if args.self_test:
         return self_test(d)

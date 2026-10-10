@@ -229,5 +229,65 @@ class TheRegionBoundIsReported(unittest.TestCase):
         self.assertIsNone(status)
 
 
+class TheCheckModeValidatesCommittedTables(unittest.TestCase):
+    """The `--check` mode, which re-runs the three survey functions and
+    compares byte-for-byte against committed tables."""
+
+    def setUp(self):
+        if not FIRMWARE.is_file():
+            self.fail(f'{FIRMWARE} is not there. Every case in this file reads '
+                      'the committed image; nothing here can be measured '
+                      'without it, and a skip would hide that.')
+        self.image = FIRMWARE.read_bytes()
+
+    def test_check_mode_regenerates_all_three_tables(self):
+        # `--check` runs the three survey functions and compares their output
+        # byte-for-byte against the committed tables. All three should match.
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(HERE / "audit_call_targets.py"),
+             str(FIRMWARE), "--check"],
+            capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0,
+                         f"--check mode failed:\n{result.stderr}")
+        # The output should report rows and a pass for each table
+        self.assertIn("bank-call-targets.csv", result.stdout)
+        self.assertIn("bank-paged-call-targets.csv", result.stdout)
+        self.assertIn("bank-relative-branch-targets.csv", result.stdout)
+        self.assertIn("all committed tables verified", result.stdout)
+
+    def test_check_mode_detects_altered_committed_tables(self):
+        # If we modify one of the committed tables, `--check` should fail.
+        # This test works by temporarily modifying a CSV and verifying the
+        # check catches it.
+        import subprocess
+        import tempfile
+        import shutil
+
+        # Get the path to bank-call-targets.csv
+        csv_path = HERE.parent / "annotations" / "bank-call-targets.csv"
+        original_content = csv_path.read_text()
+
+        try:
+            # Poison the CSV by replacing a comma with a pipe in the first
+            # data row (second line overall)
+            lines = original_content.splitlines(keepends=True)
+            if len(lines) > 1:
+                poisoned = lines[0] + lines[1].replace(',', '|', 1) + "".join(lines[2:])
+                csv_path.write_text(poisoned)
+
+                # Run --check, which should now fail
+                result = subprocess.run(
+                    [sys.executable, str(HERE / "audit_call_targets.py"),
+                     str(FIRMWARE), "--check"],
+                    capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0,
+                                    "--check mode should have failed on poisoned CSV")
+                self.assertIn("differs from committed version", result.stderr)
+        finally:
+            # Restore the original content
+            csv_path.write_text(original_content)
+
+
 if __name__ == '__main__':
     unittest.main()
