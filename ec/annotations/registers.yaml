@@ -7259,3 +7259,163 @@ registers:
       either. Byte order is the pair helpers' as above, and is not settled for
       the whole word. Nothing was read back; `present-untested` is the static
       scan's grade.
+
+  - name: PACK_TEMP_CONSUMER_TABLE_0xAFF1
+    addr: [0xAFF1]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [2]
+    static_refs_main_ec: [2]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      First of four main comparison tables indexed by the low nibble of XDATA
+      0x056B, selected by the disassembly rule at bank1 0xB0D1 (step_index_056b_update_0495_0493).
+      16 entries of 4 bytes each, with low words forming a rising ladder
+      through entry 9 and saturating at 0xED2A for entries 10–15. Extracted
+      and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_TABLE_0xAFB1
+    addr: [0xAFB1]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Second of four main comparison tables. Differs from 0xAFF1 at entries 3–4
+      and saturation region. Extracted and documented in
+      `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_TABLE_0xB031
+    addr: [0xB031]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Third of four main comparison tables. Differs from 0xAFF1 at entries 7–15.
+      Extracted and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_TABLE_0xB071
+    addr: [0xB071]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Fourth of four main comparison tables. Differs from 0xAFF1 at entries 3–15.
+      Extracted and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_INDEX_0xAF91
+    addr: [0xAF91]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Index table for ORing into 0x0495 (selected when bit 0 of 0x0497 is clear).
+      16 bytes, 0C 08 00 00 00 00 00 10 30 B0 B0 B0 B0 B0 B0 B0.
+      Extracted and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_INDEX_0xB0B1
+    addr: [0xB0B1]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Index table for ORing into 0x0495 (selected when bit 0 of 0x0497 is set).
+      16 bytes, identical to 0xAF91.
+      Extracted and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_INDEX_0xAFA1
+    addr: [0xAFA1]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Index table for ORing into 0x0493 (selected when bit 0 of 0x0497 is clear).
+      16 bytes, 20 20 20 40 00 80 80 80 80 80 80 80 80 80 80 80.
+      Extracted and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_INDEX_0xB0C1
+    addr: [0xB0C1]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1]
+    static_refs_main_ec: [1]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Index table for ORing into 0x0493 (selected when bit 0 of 0x0497 is set).
+      16 bytes, identical to 0xAFA1.
+      Extracted and documented in `docs/findings/pack-temp-consumer-tables.md`.
+
+  - name: PACK_TEMP_CONSUMER_INDEX
+    addr: [0x056B]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [6]
+    static_refs_main_ec: [6]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Low nibble holds the index (left-shifted twice to yield byte offset) into
+      one of the four consumer tables (0xAFF1, 0xAFB1, 0xB031, 0xB071).
+      The table selection is determined by bit 0 of 0x0497, the value at 0x0398,
+      and the byte at 0x030D, per the rule derived in pack-temp-consumer-tables.md.
+
+  - name: PACK_TEMP_CONSUMER_DEST_HIGH
+    addr: [0x056E, 0x056F]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [2, 0]
+    static_refs_main_ec: [2, 0]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      Bytes 3–2 of the entry from the consumer table selected by 0x056B.
+      Written by step_index_056b_update_0495_0493 (bank1 0xB0D1) after table
+      lookup. Documented in pack-temp-consumer-tables.md.
+
+  - name: PACK_TEMP_CONSUMER_DEST_LOW
+    addr: [0x056C, 0x056D]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [1, 0]
+    static_refs_main_ec: [1, 0]
+    static_refs_pd_image: [0, 0]
+    status: present-untested
+    note: >
+      Bytes 1–0 of the entry from the consumer table selected by 0x056B.
+      Written by step_index_056b_update_0495_0493 (bank1 0xB0D1) after table
+      lookup. These bytes are then compared against 0x04A2/0x04A3 by the helper
+      at bank1 0x8863. Documented in pack-temp-consumer-tables.md.
+
+  - name: PACK_TEMP_CONSUMER_FLAG_0495
+    addr: [0x0495]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [20]
+    static_refs_main_ec: [12]
+    static_refs_pd_image: [8]
+    status: present-untested
+    note: >
+      Flag register ORed with values from the table at 0xAF91 (bit 0 of 0x0497
+      clear) or 0xB0B1 (bit 0 of 0x0497 set), indexed by the low nibble of
+      0x056B. Bits 0x43 are preserved. Updated by step_index_056b_update_0495_0493
+      (bank1 0xB0D1). Documented in pack-temp-consumer-tables.md.
+
+  - name: PACK_TEMP_CONSUMER_FLAG_0493
+    addr: [0x0493]
+    sources: [pack-temp-consumer-tables.md]
+    static_refs: [9]
+    static_refs_main_ec: [9]
+    static_refs_pd_image: [0]
+    status: present-untested
+    note: >
+      Flag register ORed with values from the table at 0xAFA1 (bit 0 of 0x0497
+      clear) or 0xB0C1 (bit 0 of 0x0497 set), indexed by the low nibble of
+      0x056B. Bits 0x1F are preserved. Updated by step_index_056b_update_0495_0493
+      (bank1 0xB0D1). Documented in pack-temp-consumer-tables.md.

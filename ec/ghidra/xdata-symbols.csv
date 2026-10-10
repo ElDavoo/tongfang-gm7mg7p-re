@@ -281,3 +281,18 @@ addr,name,from_register,register_status,derivation,programs
 0x0835,CHARGE_STAGE_WORD_1,CHARGE_STAGE_WORD (16-bit word the charge path stages and compares),present-untested,override,bank0;bank1
 0x0836,CHARGE_STAGE_CMP_WORD_0,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),present-untested,override,bank0;bank1
 0x0837,CHARGE_STAGE_CMP_WORD_1,CHARGE_STAGE_CMP_WORD (the word CHARGE_STAGE_WORD is compared against),present-untested,override,bank0;bank1
+0xAFF1,PACK_TEMP_CONSUMER_TABLE_0xAFF1,PACK_TEMP_CONSUMER_TABLE_0xAFF1,present-untested,scalar-name,bank0;bank1
+0xAFB1,PACK_TEMP_CONSUMER_TABLE_0xAFB1,PACK_TEMP_CONSUMER_TABLE_0xAFB1,present-untested,scalar-name,bank0;bank1
+0xB031,PACK_TEMP_CONSUMER_TABLE_0xB031,PACK_TEMP_CONSUMER_TABLE_0xB031,present-untested,scalar-name,bank0;bank1
+0xB071,PACK_TEMP_CONSUMER_TABLE_0xB071,PACK_TEMP_CONSUMER_TABLE_0xB071,present-untested,scalar-name,bank0;bank1
+0xAF91,PACK_TEMP_CONSUMER_INDEX_0xAF91,PACK_TEMP_CONSUMER_INDEX_0xAF91,present-untested,scalar-name,bank0;bank1
+0xB0B1,PACK_TEMP_CONSUMER_INDEX_0xB0B1,PACK_TEMP_CONSUMER_INDEX_0xB0B1,present-untested,scalar-name,bank0;bank1
+0xAFA1,PACK_TEMP_CONSUMER_INDEX_0xAFA1,PACK_TEMP_CONSUMER_INDEX_0xAFA1,present-untested,scalar-name,bank0;bank1
+0xB0C1,PACK_TEMP_CONSUMER_INDEX_0xB0C1,PACK_TEMP_CONSUMER_INDEX_0xB0C1,present-untested,scalar-name,bank0;bank1
+0x056B,PACK_TEMP_CONSUMER_INDEX,PACK_TEMP_CONSUMER_INDEX,present-untested,scalar-name,bank0;bank1
+0x056E,PACK_TEMP_CONSUMER_DEST_HIGH_0,PACK_TEMP_CONSUMER_DEST_HIGH,present-untested,override,bank0;bank1
+0x056F,PACK_TEMP_CONSUMER_DEST_HIGH_1,PACK_TEMP_CONSUMER_DEST_HIGH,present-untested,override,bank0;bank1
+0x056C,PACK_TEMP_CONSUMER_DEST_LOW_0,PACK_TEMP_CONSUMER_DEST_LOW,present-untested,override,bank0;bank1
+0x056D,PACK_TEMP_CONSUMER_DEST_LOW_1,PACK_TEMP_CONSUMER_DEST_LOW,present-untested,override,bank0;bank1
+0x0495,PACK_TEMP_CONSUMER_FLAG_0495,PACK_TEMP_CONSUMER_FLAG_0495,present-untested,scalar-name,bank0;bank1
+0x0493,PACK_TEMP_CONSUMER_FLAG_0493,PACK_TEMP_CONSUMER_FLAG_0493,present-untested,scalar-name,bank0;bank1
