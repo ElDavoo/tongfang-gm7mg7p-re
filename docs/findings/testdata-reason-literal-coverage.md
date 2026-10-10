@@ -20,14 +20,8 @@ but left in the functions.
 
 ## Reasons exercised by committed data
 
-The committed index has one dated sentence (row 7) that names one date, so it
-exercises five distinct reasons:
-
-- `capture/window bound` — 18 instances
-- `denial` — 3 instances
-- `dump-command argument` — 2 instances
-- `watched-set span` — 2 instances
-- `firmware code address` — 2 instances
+The committed index exercises five distinct reasons: `capture/window bound`,
+`denial`, `dump-command argument`, `watched-set span`, `firmware code address`.
 
 This is verified by `test_the_committed_tree_exercises_every_shape`, which
 reads the actual run over the committed index and asserts that the run
