@@ -1,6 +1,7 @@
 # derived from a 0x0000-0x07FF sweep every 0.4s, 2026-09-18T22:49:29..22:53:00+02:00,
 # covering the AC plug-in. Full 32499-row log not committed (1.7 MB of sensor churn);
-# this is the per-address change count plus every row for the charge-limit registers.
+# this is the per-address change count; the charge-limit registers (0x07B9, 0x07D0, 0x07D1,
+# 0x0522, 0x0523, 0x030E, 0x030F) are not found to move in this file.
 # hand-transcribed; the change_count column sums to 34710, which does not reconcile
 # with the 32499-row figure above. Neither figure can be checked from this tree.
 # first_old == last_new is a byte that moved and came back, not one that held:
