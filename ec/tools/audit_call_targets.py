@@ -992,7 +992,8 @@ def self_test(d: bytes) -> int:
     check(len(prologues) == 4,
           f"the `C0 08 74` prologue occurs 4 times in the main EC image "
           f"(got {len(prologues)})")
-    pd = [i for i in range(0x20000, 0x30000) if d[i:i + 3] == STUB_PROLOGUE]
+    pd_lo, pd_hi = region_bounds("pd-image")
+    pd = [i for i in range(pd_lo, pd_hi) if d[i:i + 3] == STUB_PROLOGUE]
     check(not pd, f"and 0 times in the PD image (got {len(pd)})")
 
     broken = []
