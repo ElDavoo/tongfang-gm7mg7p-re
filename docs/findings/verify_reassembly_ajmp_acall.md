@@ -33,12 +33,12 @@ for root, _d, fs in os.walk("ec/decompiled"):
         for addr, hexb, mn, op in pat.findall(open(os.path.join(root, f), errors="replace").read()):
             pc, tgt = int(addr, 16), int(op, 16)
             b = [int(x, 16) for x in hexb.split()]
-            if [((pc & 0xF800) | ((b[0] & 0xE0) << 3) | b[1]) >> 8] == [b[0]] and b[1] == tgt & 0xFF:
+            if ((pc & 0xF800) | ((b[0] & 0xE0) << 3) | b[1]) == tgt:
                 ok += 1
             else:
                 bad += 1
 print("ajmp/acall reproducing the decoded target:", ok, " not:", bad)
-# ajmp/acall reproducing the decoded target: 110  not: 0
+# ajmp/acall reproducing the decoded target: 121  not: 0
 ```
 
 ## Why this matters for the firmware
