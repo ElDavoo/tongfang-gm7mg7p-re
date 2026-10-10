@@ -26,6 +26,7 @@ presence read is exercised rather than stubbed. The last class is the
 committed tree itself, and it asserts the run reached something rather than any
 figure it reached.
 """
+import ast
 import collections
 import contextlib
 import csv
@@ -112,6 +113,49 @@ def check_every_shape(case, reasons):
         seen - named, set(),
         "the run produced these reasons and SHAPES does not name them: "
         f"{sorted(seen - named)}")
+
+
+def reason_literals_from_source():
+    """The reason strings extracted from `reason_for()` and `no_column_reason()`.
+
+    Parses the source code of the two functions using AST, walks the tree to
+    find return statements, and extracts string literals from those returns.
+    String literals may appear directly or inside conditional expressions.
+    Returns a list of unique reason strings in the order they first appear
+    in the functions.
+    """
+    def extract_string_constants(node):
+        """Yield all string constants from a node, including in conditionals."""
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            yield node.value
+        elif isinstance(node, ast.IfExp):
+            yield from extract_string_constants(node.body)
+            yield from extract_string_constants(node.orelse)
+
+    with open(HERE / 'check_testdata_row_claims.py', encoding='utf-8') as f:
+        source = f.read()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return []
+
+    seen = set()
+    literals = []
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        if node.name not in ('reason_for', 'no_column_reason'):
+            continue
+
+        for subnode in ast.walk(node):
+            if isinstance(subnode, ast.Return) and subnode.value:
+                for literal in extract_string_constants(subnode.value):
+                    if literal not in seen:
+                        seen.add(literal)
+                        literals.append(literal)
+
+    return literals
 
 
 class ScratchIndex:
@@ -1289,6 +1333,35 @@ class TheShapeListHasOneSource(unittest.TestCase):
         self.assertEqual(
             ctrc.shape_label(("a",) * 9, ()),
             "the 9 shapes and the zero dated refusals")
+
+    def test_reason_literals_match_shapes(self):
+        # The third copy of the closed list, extracted from the function source.
+        # `reason_for()` and `no_column_reason()` return string literals rather
+        # than reading SHAPES by index -- a deliberate choice for readability --
+        # but the copy is a *checked* copy. Issue #1457 revealed the gap: a
+        # reason added to the functions without being added to SHAPES was caught
+        # by nothing, because the committed run could not exercise the dated
+        # refusals and the set-difference check could not see them.
+        #
+        # This test holds the source code to SHAPES in both set and order. A
+        # reason added to either without the other is named by name rather than
+        # as a count, so a branch that adds a reason is named in the failure
+        # without the merge having to bump a number.
+        extracted = reason_literals_from_source()
+        self.assertEqual(
+            set(extracted), set(ctrc.SHAPES),
+            "the literals in reason_for() and no_column_reason() and SHAPES "
+            "are not the same set of reasons; "
+            f"literals {sorted(set(extracted))}, SHAPES {sorted(set(ctrc.SHAPES))}")
+        self.assertEqual(
+            extracted, list(ctrc.SHAPES),
+            "the literals in reason_for() and no_column_reason() and SHAPES "
+            "are not in the same order; "
+            f"extracted:\n  " + "\n  ".join(
+                f"{e!r} vs {s!r}"
+                for e, s in zip(extracted, ctrc.SHAPES) if e != s)
+            + f"\nextracted: {len(extracted)}, "
+              f"SHAPES: {len(ctrc.SHAPES)}")
 
 
 class TheCommittedTree(unittest.TestCase):
