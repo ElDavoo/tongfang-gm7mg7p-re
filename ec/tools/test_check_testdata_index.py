@@ -388,7 +388,7 @@ class AcceptsBothReachableDirectories(ScratchIndex, unittest.TestCase):
         result = self.check()
         self.assertEqual(result, ctti.Result([], [], [], [], [], [], [], [], [],
                                               [], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                                              0, 0, 0, 0))
+                                              0, 0, 0, 0, self.testdata))
 
 
 class RefusesARowWithNoFile(ScratchIndex, unittest.TestCase):
@@ -483,7 +483,7 @@ class ReadsTheFeedsColumn(ScratchIndex, unittest.TestCase):
                                (result.feeds_missing, result.feeds_unresolved),
                                (result.nested_missing, result.nested_unresolved),
                                (result.evidence_missing, result.evidence_unresolved),
-                               result.evidence_columnless)
+                               result.evidence_columnless, result.root)
         self.assertEqual(total, 1)
         self.assertIn('`Feeds` column names `../no_such_tool.py`',
                       err.getvalue())
@@ -552,7 +552,7 @@ class ReadsTheFeedsColumn(ScratchIndex, unittest.TestCase):
                                 (result.feeds_missing, result.feeds_unresolved),
                                 (result.nested_missing, result.nested_unresolved),
                                 (result.evidence_missing, result.evidence_unresolved),
-                                result.evidence_columnless)
+                                result.evidence_columnless, result.root)
         self.assertEqual(total, 0)
         self.assertEqual([token for _, token, _ in result.feeds_unresolved],
                          ["0x0700-0x07FF"])
@@ -643,7 +643,7 @@ class SaysUnresolvedRatherThanAbsent(ScratchIndex, unittest.TestCase):
         with contextlib.redirect_stderr(err):
             self.assertEqual(ctti.report(result.gaps, result.missing,
                                          result.unresolved, ([], []), ([], []),
-                                         ([], []), []), 0)
+                                         ([], []), [], result.root), 0)
         self.assertIn('not checked, not absent', err.getvalue())
 
     def test_the_shape_the_unresolved_note_prints_is_the_token(self):
@@ -845,7 +845,7 @@ class ReadsASelfIndexedReadme(ScratchIndex, unittest.TestCase):
                         (result.feeds_missing, result.feeds_unresolved),
                         (result.nested_missing, result.nested_unresolved),
                         (result.evidence_missing, result.evidence_unresolved),
-                        result.evidence_columnless)
+                        result.evidence_columnless, result.root)
         out = err.getvalue()
         feeds_where = [where for where, _, _ in result.feeds_missing]
         nested_where = [where for where, _, _ in result.nested_missing]
@@ -914,7 +914,7 @@ class ReadsTheEvidenceColumn(ScratchIndex, RunsTheTool, unittest.TestCase):
                                 (renamed.nested_missing, renamed.nested_unresolved),
                                 (renamed.evidence_missing,
                                  renamed.evidence_unresolved),
-                                renamed.evidence_columnless)
+                                renamed.evidence_columnless, renamed.root)
         self.assertEqual(total, 1)
         self.assertIn('the `evidence` column names '
                       '`ec/decompiled/common/00CF.asm`', err.getvalue())
@@ -946,7 +946,7 @@ class ReadsTheEvidenceColumn(ScratchIndex, RunsTheTool, unittest.TestCase):
                 (result.feeds_missing, result.feeds_unresolved),
                 (result.nested_missing, result.nested_unresolved),
                 (result.evidence_missing, result.evidence_unresolved),
-                result.evidence_columnless), 0)
+                result.evidence_columnless, result.root), 0)
         self.assertEqual(err.getvalue(), '')
 
     def test_a_csv_with_no_evidence_column_is_unresolved_and_not_missing(self):
@@ -975,7 +975,7 @@ class ReadsTheEvidenceColumn(ScratchIndex, RunsTheTool, unittest.TestCase):
                 (result.feeds_missing, result.feeds_unresolved),
                 (result.nested_missing, result.nested_unresolved),
                 (result.evidence_missing, result.evidence_unresolved),
-                result.evidence_columnless), 0)
+                result.evidence_columnless, result.root), 0)
         # Its own wording too, and the point of that is the clause this case
         # exists for: a column that is not in the file has not named anything,
         # so the line says the column was not found. The old wording opened
@@ -1078,7 +1078,7 @@ class ReadsTheEvidenceColumn(ScratchIndex, RunsTheTool, unittest.TestCase):
                 (result.feeds_missing, result.feeds_unresolved),
                 (result.nested_missing, result.nested_unresolved),
                 (result.evidence_missing, result.evidence_unresolved),
-                result.evidence_columnless), 0)
+                result.evidence_columnless, result.root), 0)
         self.assertIn('not checked, not absent', err.getvalue())
 
     def test_a_csv_named_twice_is_read_once(self):
@@ -1324,7 +1324,7 @@ class TheCommittedTree(TheReachedSomethingRule, unittest.TestCase):
                    'ec/decompiled/bank0/0EA2.asm',
                    'ec/decompiled/bank0/0EA2.asm')], []),
                 [('ec/tools/testdata/call-graph/index.csv', 'index.csv',
-                  'index.csv has no `evidence` column')]), 5)
+                  'index.csv has no `evidence` column')], ctti.TESTDATA), 5)
         lines = err.getvalue().splitlines()
         self.assertTrue(lines[0].startswith('ec/tools/testdata/newset/:'), lines[0])
         self.assertIn('ec/tools/testdata/README.md', lines[1])
@@ -1676,6 +1676,51 @@ class TheTalliesAreNotAFloor(ScratchIndex, TheReachedSomethingRule,
         with self.assertRaises(AssertionError) as caught:
             self.assert_the_run_reached_something(self.testdata, self.repo)
         self.assertIn('only the first is read', str(caught.exception))
+
+
+class ReportsTheScratchRootInTheSummaryLine(ScratchIndex, unittest.TestCase):
+    """The summary line names the actual root, not the module constant INDEX.
+
+    The `report()` function builds its summary line from the root parameter it
+    receives, not from the module-level `INDEX` constant. This ensures that
+    when checking a scratch tree, the output names the scratch index, not the
+    committed one. The test verifies that `root` is correctly passed through
+    the `Result` namedtuple and used in the summary line.
+    """
+
+    def test_report_summary_line_names_the_scratch_root(self):
+        # Create a disagreement so the summary line is printed.
+        self.row("`missing-fixture.csv`")
+        result = self.check()
+        self.assertGreater(len(result.missing), 0, "test setup: need a missing file")
+
+        # Verify that result.root holds the scratch testdata root.
+        self.assertEqual(result.root, self.testdata)
+
+        # Call report() and capture its output.
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            total = ctti.report(result.gaps, result.missing, result.unresolved,
+                               (result.feeds_missing, result.feeds_unresolved),
+                               (result.nested_missing, result.nested_unresolved),
+                               (result.evidence_missing, result.evidence_unresolved),
+                               result.evidence_columnless, result.root)
+        output = err.getvalue()
+
+        # The summary line should name the scratch index, not the committed one.
+        scratch_index_path = os.path.join(self.testdata, "README.md")
+        scratch_index_repo_relative = ctti.repo_path(scratch_index_path)
+        self.assertIn(scratch_index_repo_relative, output,
+                     f"Summary line should contain scratch index path "
+                     f"{scratch_index_repo_relative}, but got: {output}")
+        # Verify it's not using the committed INDEX constant.
+        committed_index_repo_relative = ctti.repo_path(ctti.INDEX)
+        self.assertNotEqual(scratch_index_repo_relative, committed_index_repo_relative,
+                           "test setup: scratch and committed paths should differ")
+        # The summary line should say "disagreement(s) between <index> and the tree".
+        self.assertIn("disagreement", output)
+        self.assertIn("between", output)
+        self.assertIn("and the tree", output)
 
 
 if __name__ == '__main__':

@@ -249,7 +249,7 @@ Result = collections.namedtuple(
     "evidence_columnless directories named "
     "self_indexed rows tokens feeds_cells feeds_tokens nested_indexes "
     "nested_tables nested_rows nested_checks evidence_csvs evidence_cells "
-    "evidence_tokens")
+    "evidence_tokens root")
 
 # What one self-indexed directory's own README named, over the same three
 # verdicts and carrying the same `where`/`token`/`note` triple as every other
@@ -767,7 +767,7 @@ def check(root, repo=None):
                   how.count("index"),
                   how.count("self"), len(cells), tokens, len(feeds), feeds_tokens,
                   indexes, tables, rows, checks, csv_read, cells_read,
-                  tokens_read)
+                  tokens_read, root)
 
 
 def report_evidence(missing, unresolved, columnless):
@@ -795,7 +795,7 @@ def report_evidence(missing, unresolved, columnless):
         print(f"{where}: {note} -- not checked, not absent", file=sys.stderr)
 
 
-def report(gaps, missing, unresolved, feeds, nested, evidence, columnless):
+def report(gaps, missing, unresolved, feeds, nested, evidence, columnless, root):
     """Print each disagreement, and return how many there were.
 
     A disagreement here is a defect in one of the two files, and it is not a
@@ -815,6 +815,9 @@ def report(gaps, missing, unresolved, feeds, nested, evidence, columnless):
     in it has not named anything, so the line says the column was not found
     rather than reusing the token wording, whose leading clause is the part a
     reader skims.
+
+    `root` is the testdata tree that was checked, used to build the label in the
+    summary line rather than the module constant `INDEX`.
     """
     for under, name in gaps:
         print(f"{under}/{name}/: no index names it, and it has no README.md of "
@@ -843,7 +846,8 @@ def report(gaps, missing, unresolved, feeds, nested, evidence, columnless):
     total = (len(gaps) + len(missing) + len(feeds[0]) + len(nested[0])
              + len(evidence[0]))
     if total:
-        print(f"{total} disagreement(s) between {repo_path(INDEX)} and the tree "
+        index_path = repo_path(os.path.join(root, "README.md"))
+        print(f"{total} disagreement(s) between {index_path} and the tree "
               f"under it", file=sys.stderr)
     return total
 
@@ -874,7 +878,7 @@ def main() -> int:
                    (result.feeds_missing, result.feeds_unresolved),
                    (result.nested_missing, result.nested_unresolved),
                    (result.evidence_missing, result.evidence_unresolved),
-                   result.evidence_columnless)
+                   result.evidence_columnless, result.root)
     print(f"{result.directories} testdata/ director"
           f"{'y' if result.directories == 1 else 'ies'}: {result.named} named in "
           f"the index, {result.self_indexed} self-indexed, {len(result.gaps)} gap(s)")
