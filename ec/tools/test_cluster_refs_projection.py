@@ -290,6 +290,164 @@ class TheRefusals(unittest.TestCase):
         self.assertIn("so a `main-ec` cluster's", "\n".join(problems))
 
 
+class ThePartitionOracleCannotTell(unittest.TestCase):
+    """Why the partition check exists: the corpus total cannot catch it.
+
+    A partition violation (an address in two clusters of the same program, or
+    an address with a ref share not in any cluster of that program) leaves
+    per-cluster fields intact and the corpus total unchanged, so only the
+    partition check can see it.
+    """
+
+    def test_an_address_in_two_clusters_of_same_program_is_refused(self):
+        # **The case that decides whether the check asserts partition
+        # membership.** Place an address in two clusters of the same program.
+        # The per-cluster `refs` and other fields recompute correctly from the
+        # new membership, the corpus total is unchanged, but the clusters no
+        # longer partition the address space. Only the partition check can see it.
+        _fields, registers = rows_of(REGISTERS)
+        _fields, clusters = rows_of(CLUSTERS)
+
+        # Derive the victim: an address with a ref share in some program.
+        by_addr = {r["addr"]: r for r in registers}
+        clusters_by_program = {}
+        for cluster in clusters:
+            prog = cluster["program"]
+            if prog not in clusters_by_program:
+                clusters_by_program[prog] = []
+            clusters_by_program[prog].append(cluster)
+
+        victim_addr = None
+        victim_program = None
+        victim_in_cluster = None
+        for cluster in clusters:
+            members = set(cluster["addrs"].split())
+            if len(members) >= 1:
+                for member in members:
+                    member_program = by_addr[member]["program"]
+                    # Member has a ref share for this program.
+                    if member_program == cluster["program"] or member_program == "both":
+                        column = proj.PER_PROGRAM_REFS.get(cluster["program"])
+                        if column and int(by_addr[member][column]) > 0:
+                            victim_addr = member
+                            victim_program = cluster["program"]
+                            victim_in_cluster = cluster["cluster_id"]
+                            break
+            if victim_addr:
+                break
+
+        self.assertIsNotNone(victim_addr,
+                            "no address found with a ref share")
+
+        # Find another cluster of the same program to add the address to.
+        candidates = [c for c in clusters_by_program[victim_program]
+                     if c["cluster_id"] != victim_in_cluster]
+        self.assertGreater(len(candidates), 0,
+                          f"no second {victim_program} cluster to add {victim_addr} to")
+
+        cid2 = candidates[0]["cluster_id"]
+
+        def add_to_second(rows):
+            # Add the address to a second cluster. It stays in its first cluster.
+            # Recompute both clusters' size, addr_range, refs based on their new
+            # membership (the address is now in both).
+            for r in rows:
+                if r["cluster_id"] == cid2 and victim_addr not in r["addrs"].split():
+                    members = r["addrs"].split()
+                    members.append(victim_addr)
+                    r["addrs"] = " ".join(members)
+                    r["size"] = str(len(members))
+                    addrs_int = [int(a, 16) for a in members]
+                    want_range = (f"{proj.hexaddr(min(addrs_int))}-"
+                                 f"{proj.hexaddr(max(addrs_int))}"
+                                 if len(members) > 1
+                                 else proj.hexaddr(addrs_int[0]))
+                    r["addr_range"] = want_range
+                    column = proj.PER_PROGRAM_REFS.get(victim_program)
+                    if column:
+                        r["refs"] = str(sum(int(by_addr[a][column])
+                                           for a in members))
+
+        problems = problems_of(clusters_edit=add_to_second)
+
+        # The partition check must catch this.
+        self.assertTrue(problems,
+                       f"{victim_addr} placed in both {victim_in_cluster} and {cid2} "
+                       f"({victim_program}) and the check passed")
+
+        # The error must name the address, proving the partition check caught it
+        # (not just some other check).
+        partition_errors = [p for p in problems if victim_addr in p and "partition" in p]
+        self.assertTrue(partition_errors,
+                       f"no partition error names {victim_addr}: {problems}")
+
+    def test_an_address_with_a_share_not_in_any_cluster_is_refused(self):
+        # An address with a nonzero ref_<program> is not in any cluster of
+        # that program. The per-cluster fields of the clusters that remain
+        # still recompute correctly, the corpus total is unchanged (the
+        # address's share just disappears from both totals together), but
+        # the clusters no longer partition the address space.
+        _fields, registers = rows_of(REGISTERS)
+        _fields, clusters = rows_of(CLUSTERS)
+
+        by_addr = {r["addr"]: r for r in registers}
+
+        # Derive victim: an address with a ref share in some program.
+        victim_addr = None
+        victim_program = None
+        victim_cluster = None
+        for cluster in clusters:
+            members = set(cluster["addrs"].split())
+            for member in members:
+                member_program = by_addr[member]["program"]
+                if member_program == cluster["program"] or member_program == "both":
+                    column = proj.PER_PROGRAM_REFS.get(cluster["program"])
+                    if column and int(by_addr[member][column]) > 0:
+                        victim_addr = member
+                        victim_program = cluster["program"]
+                        victim_cluster = cluster["cluster_id"]
+                        break
+            if victim_addr:
+                break
+
+        self.assertIsNotNone(victim_addr,
+                            "no address found with a ref share")
+
+        def remove(rows):
+            # Remove the address from its cluster membership (leaving the address
+            # in the registers CSV with a nonzero ref_<program>). Recompute the
+            # cluster's size, addr_range, refs so per-cluster checks pass.
+            for r in rows:
+                if r["cluster_id"] == victim_cluster:
+                    members = r["addrs"].split()
+                    members.remove(victim_addr)
+                    r["addrs"] = " ".join(members)
+                    r["size"] = str(len(members))
+                    if members:
+                        addrs_int = [int(a, 16) for a in members]
+                        want_range = (f"{proj.hexaddr(min(addrs_int))}-"
+                                     f"{proj.hexaddr(max(addrs_int))}"
+                                     if len(members) > 1
+                                     else proj.hexaddr(addrs_int[0]))
+                        r["addr_range"] = want_range
+                        column = proj.PER_PROGRAM_REFS.get(victim_program)
+                        if column:
+                            r["refs"] = str(sum(int(by_addr[a][column])
+                                               for a in members))
+
+        problems = problems_of(clusters_edit=remove)
+
+        # The partition check must catch this.
+        self.assertTrue(problems,
+                       f"{victim_addr} removed from all {victim_program} clusters "
+                       f"but still has a ref share, and the check passed")
+
+        # The error must name the address, proving the partition check caught it.
+        partition_errors = [p for p in problems if victim_addr in p and "partition" in p]
+        self.assertTrue(partition_errors,
+                       f"no partition error names {victim_addr}: {problems}")
+
+
 class TheCorpusTotalCannotTell(unittest.TestCase):
     """Why the per-cluster rule exists beside the total `--self-test` asserts.
 

@@ -180,6 +180,18 @@ middle column is the number a reader gets from the obvious arithmetic, and it is
 dominated by the `both` members — invisible on a large cluster, everything on a
 singleton.
 
+**The partition oracle is the second blindness.** The corpus total cannot
+tell whether a per-program projection is committed or a raw sum: moving one
+cluster's `refs` up and another's down by the same amount leaves the identity
+unchanged. It also cannot tell whether the clusters partition the address space.
+An address moved from cluster A to cluster B within the same program changes no
+cluster's computed `refs` (both recompute from their new membership), changes the
+address's own `refs_<program>` not at all, and leaves the corpus total exactly
+where it was — yet the clusters no longer describe the address space. A partition
+check, held per program, sees what the total cannot: that no address appears in
+two clusters of the same program and that every address with a share sits in
+exactly one of its program's clusters.
+
 **`xdata-register-map.md` §5's `pd-002` sentence is deliberately not
 edited.** It states a size and a range — "`pd-002` (20, `0x07F3`-`0x080C`)" —
 and no reference figure, so nothing in it is wrong today and there is no
