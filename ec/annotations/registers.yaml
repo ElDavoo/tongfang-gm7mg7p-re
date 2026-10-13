@@ -7079,6 +7079,27 @@ registers:
       See docs/findings/charge-target-multiplier-visibility.md for details on
       the charge-target multiplier use and visibility constraints.
 
+  - name: CHARGE_DERATING_MINUEND (charge-target formula minuend)
+    addr: [0x0A50, 0x0A51]
+    sources: [xdata-refs, static-scan, ghidra-functions.csv, docs/findings/charge-target-multiplier-visibility.md]
+    static_refs: [27, 42]
+    static_refs_main_ec: [19, 29]
+    static_refs_pd_image: [2, 3]
+    status: present-untested
+    note: >
+      Big-endian minuend in the charge-derating formula at bank0 0xB35E
+      (charge_target_minus_r3_times_0a47): the 16-bit value from which the
+      product (R3 x 0x0A47) is subtracted to produce CHARGE_TARGET_MV at
+      0x0522/0x0523. The decompile (ec/decompiled/bank0/B35E.c) reads both
+      bytes and forms `DAT_EXTMEM_0a50 - ((DAT_EXTMEM_0a51 >> n) & mask)`.
+      One writer site is at bank0 0xB378/0xB389 where the scheduler's
+      charge-path recomputation loads the pair and writes the difference.
+      Another writer is at common 0x2F1D which clears 0x0A4F-0x0A52 in a
+      loop (the GFID seeding path, see 0x0A49 notes). Many readers across
+      bank0 and common; the PD image also touches both bytes.
+      See docs/findings/charge-target-multiplier-visibility.md for the full
+      derating chain: 0x0A47 → R3×0x0A47 → 0x0A50/0x0A51 − product → 0x0522/0x0523.
+
   - name: XDATA_04A0
     addr: 0x04A0
     sources: [static-scan, xdata-refs]
