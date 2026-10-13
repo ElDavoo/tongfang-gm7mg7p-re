@@ -7280,3 +7280,261 @@ registers:
       either. Byte order is the pair helpers' as above, and is not settled for
       the whole word. Nothing was read back; `present-untested` is the static
       scan's grade.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x0502
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 7
+    static_refs_bank1: 7
+    static_refs_main_ec: 7
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      First of ten thermistor probe result slots written by bank1 AC84 after
+      probe step 1 (channel constant 0x08). The return value from the probe
+      call is checked for carry at AC84 0xAC97; if clear, A is stored here.
+      Seven committed writers, all in bank1, consistent with the ten-step
+      probe sequence where each step stores to a different slot. Carries the
+      raw probe result from step 1; what it encodes (temperature, channel ID,
+      device status) is not yet established. docs/findings/bank0-8590-probe-
+      channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x0506
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 9
+    static_refs_bank1: 9
+    static_refs_main_ec: 9
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Sixth thermistor probe result slot, written by bank1 AC84 after step 5
+      (channel constant 0x09). Nine committed writers in bank1. Carries the
+      raw probe result from step 5. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x0514
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 34
+    static_refs_bank1: 34
+    static_refs_main_ec: 34
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Fifth thermistor probe result slot, written by bank1 AC84 after step 4
+      (channel constant 0x0D). Thirty-four committed writers in bank1 -- far
+      more than the other probe slots, suggesting this result is consumed
+      actively (e.g. compared against thresholds, used in branching). The
+      high writer count makes any single claim built on it without a per-site
+      table less trustworthy. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x0518
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 5
+    static_refs_bank1: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Second thermistor probe result slot, written by bank1 AC84 after step 2
+      (channel constant 0x0F). Five committed writers in bank1. Carries the
+      raw probe result from step 2. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x052A
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 3
+    static_refs_bank1: 3
+    static_refs_main_ec: 3
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Third thermistor probe result slot, written by bank1 AC84 after step 3
+      (channel constant 0x18). Three committed writers in bank1. Carries the
+      raw probe result from step 3. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x052E
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 2
+    static_refs_bank1: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Fourth thermistor probe result slot, written by bank1 AC84 after step 4
+      (channel constant 0x19). Two committed writers in bank1. Carries the
+      raw probe result from step 4. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x053A
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 2
+    static_refs_bank1: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Seventh thermistor probe result slot, written by bank1 AC84 after step 6
+      (channel constant 0x3C). Two committed writers in bank1. Carries the
+      raw probe result from step 6. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x053C
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 2
+    static_refs_bank1: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Eighth thermistor probe result slot, written by bank1 AC84 after step 7
+      (channel constant 0x3D). Two committed writers in bank1. Carries the
+      raw probe result from step 7. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x053E
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 2
+    static_refs_bank1: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Ninth thermistor probe result slot, written by bank1 AC84 after step 8
+      (channel constant 0x3E). Two committed writers in bank1. Carries the
+      raw probe result from step 8. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (probe result accumulator)
+    addr: 0x0540
+    sources: [xdata-refs, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 2
+    static_refs_bank1: 2
+    static_refs_main_ec: 2
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Tenth thermistor probe result slot, written by bank1 AC84 after step 9
+      (channel constant 0x3F). Two committed writers in bank1. Carries the
+      raw probe result from step 9. docs/findings/bank0-8590-probe-channel.md §1.
+
+  - name: PROBE_CHANNEL_STAGING_0A56 (probe channel flag/selector)
+    addr: 0x0A56
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 52
+    static_refs_bank0: 19
+    static_refs_main_ec: 50
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      Set by bank0 0x8590 (probe_channel_logic) to the return value from
+      0xB9AE (always A on return, value unknown). Used as part of a DPL
+      calculation: (2*XDATA[0x0A56] + 0xD0) mod 256. Also read by bank1
+      routines that branch on bit patterns in this byte. Fifty-two direct
+      MOV DPTR sites across bank0, common, and the PD image.
+      docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_STAGING_0A57 (probe channel flag)
+    addr: 0x0A57
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 18
+    static_refs_bank0: 5
+    static_refs_main_ec: 18
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Set by bank0 0x8590 to 0x0C (from caller). Bit 7 tested for branching;
+      since 0x0C = 0b00001100, bit 7 is always clear, so the branch at
+      0x8590 always falls through. Eighteen direct MOV DPTR sites in bank0
+      and common. docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_STAGING_0A58 (probe channel flag)
+    addr: 0x0A58
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 28
+    static_refs_bank0: 13
+    static_refs_main_ec: 28
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Set by bank0 0x8590 to 0x16 (from caller).二十八 direct MOV DPTR sites
+      in bank0 and common. Its role in the probe sub-routine logic is not
+      yet decoded. docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_RESULT_SLOT (channel constant stage)
+    addr: 0x0A59
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 45
+    static_refs_bank0: 35
+    static_refs_main_ec: 43
+    static_refs_pd_image: 2
+    status: present-untested
+    note: >
+      Set by bank0 0x8590 to R4's value (the channel constant, ranging from
+      0x08 to 0x3F across the ten probe steps). Also written by the ten AC84
+      calls. Forty-five direct MOV DPTR sites; the high count reflects
+      repeated writes by both the main probe logic and AC84.
+      docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_STAGING_0A5A (probe channel flag)
+    addr: 0x0A5A
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 8
+    static_refs_bank0: 5
+    static_refs_main_ec: 8
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Set by bank0 0x8590 to 0x00. Eight direct MOV DPTR sites in bank0 and
+      common. Its purpose is not yet decoded.
+      docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_STAGING_0A5B (probe channel flag)
+    addr: 0x0A5B
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 6
+    static_refs_bank0: 4
+    static_refs_main_ec: 6
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Set by bank0 0x8590 to 0xC0. Six direct MOV DPTR sites in bank0 and
+      common. Its purpose is not yet decoded.
+      docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_SELECTOR (probe sub-routine selector)
+    addr: 0x0A5C
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 5
+    static_refs_main_ec: 5
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Used in branching at bank0 0x8590 to select which sub-routine to call.
+      Also written by the ten AC84 probe calls. Five direct MOV DPTR sites,
+      all in common. docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_FLAG_0A5E (probe flag)
+    addr: 0x0A5E
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Set to 0xEE by bank0 0x8590. Four direct MOV DPTR sites, all in
+      common. Its purpose is not yet decoded.
+      docs/findings/bank0-8590-probe-channel.md §4.
+
+  - name: PROBE_CHANNEL_FLAG_0A60 (probe flag)
+    addr: 0x0A60
+    sources: [xdata-refs, ghidra-functions.csv, docs/findings/bank0-8590-probe-channel.md]
+    static_refs: 4
+    static_refs_main_ec: 4
+    static_refs_pd_image: 0
+    status: present-untested
+    note: >
+      Cleared to zero by bank0 0x8590. Four direct MOV DPTR sites, all in
+      common. Its purpose is not yet decoded.
+      docs/findings/bank0-8590-probe-channel.md §4.
